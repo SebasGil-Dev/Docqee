@@ -23,42 +23,48 @@ export class MailService {
   }
 
   async sendVerificationCode(to: string, code: string) {
-    await this.transporter.sendMail({
-      from: `"Docqee" <${this.from}>`,
-      to,
-      subject: 'Verifica tu correo electrónico',
-      html: `
-        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
-          <h2>Verifica tu correo</h2>
-          <p>Tu código de verificación es:</p>
-          <div style="font-size: 32px; font-weight: bold; letter-spacing: 8px; text-align: center; padding: 24px; background: #f4f4f4; border-radius: 8px;">
-            ${code}
+    try {
+      await this.transporter.sendMail({
+        from: `"Docqee" <${this.from}>`,
+        to,
+        subject: 'Verifica tu correo electrónico',
+        html: `
+          <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+            <h2>Verifica tu correo</h2>
+            <p>Tu código de verificación es:</p>
+            <div style="font-size: 32px; font-weight: bold; letter-spacing: 8px; text-align: center; padding: 24px; background: #f4f4f4; border-radius: 8px;">
+              ${code}
+            </div>
+            <p style="color: #666; font-size: 14px;">Este código expira en 10 minutos.</p>
           </div>
-          <p style="color: #666; font-size: 14px;">Este código expira en 10 minutos.</p>
-        </div>
-      `,
-    });
-
-    this.logger.log(`Verification code sent to ${to}`);
+        `,
+      });
+      this.logger.log(`Verification code sent to ${to}`);
+    } catch (error) {
+      this.logger.error(`Failed to send verification code to ${to}`, error);
+    }
   }
 
   async sendPasswordResetCode(to: string, code: string) {
-    await this.transporter.sendMail({
-      from: `"Docqee" <${this.from}>`,
-      to,
-      subject: 'Recuperación de contraseña',
-      html: `
-        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
-          <h2>Recupera tu contraseña</h2>
-          <p>Tu código de recuperación es:</p>
-          <div style="font-size: 32px; font-weight: bold; letter-spacing: 8px; text-align: center; padding: 24px; background: #f4f4f4; border-radius: 8px;">
-            ${code}
+    try {
+      await this.transporter.sendMail({
+        from: `"Docqee" <${this.from}>`,
+        to,
+        subject: 'Recuperación de contraseña',
+        html: `
+          <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+            <h2>Recupera tu contraseña</h2>
+            <p>Tu código de recuperación es:</p>
+            <div style="font-size: 32px; font-weight: bold; letter-spacing: 8px; text-align: center; padding: 24px; background: #f4f4f4; border-radius: 8px;">
+              ${code}
+            </div>
+            <p style="color: #666; font-size: 14px;">Este código expira en 10 minutos. Si no solicitaste este cambio, ignora este mensaje.</p>
           </div>
-          <p style="color: #666; font-size: 14px;">Este código expira en 10 minutos. Si no solicitaste este cambio, ignora este mensaje.</p>
-        </div>
-      `,
-    });
-
-    this.logger.log(`Password reset code sent to ${to}`);
+        `,
+      });
+      this.logger.log(`Password reset code sent to ${to}`);
+    } catch (error) {
+      this.logger.error(`Failed to send password reset code to ${to}`, error);
+    }
   }
 }
