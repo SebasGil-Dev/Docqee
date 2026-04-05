@@ -1,7 +1,7 @@
 import { readAuthSession } from '@/lib/authSession';
 
 function getEnvValue(key: string) {
-  const envRecord: unknown = Reflect.get(import.meta, 'env');
+  const envRecord: unknown = import.meta.env;
 
   if (typeof envRecord !== 'object' || envRecord === null) {
     return undefined;
