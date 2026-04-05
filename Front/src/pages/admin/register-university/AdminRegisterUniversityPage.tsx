@@ -145,6 +145,21 @@ function createEmptyCatalogState<T>(
   };
 }
 
+function createInitialCatalogState<T>(
+  result: Promise<T[]> | T[],
+  emptyStatus: AsyncCatalogState<T>['status'],
+): AsyncCatalogState<T> {
+  if (Array.isArray(result) && result.length > 0) {
+    return {
+      error: null,
+      options: result,
+      status: 'ready',
+    };
+  }
+
+  return createEmptyCatalogState(emptyStatus);
+}
+
 function getDependentFields(field: RegisterUniversityFormField) {
   switch (field) {
     case 'cityId':
@@ -221,7 +236,7 @@ export function AdminRegisterUniversityPage({
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<RegisterUniversityFormErrors>({});
   const [citiesState, setCitiesState] = useState<AsyncCatalogState<CityOption>>(
-    createEmptyCatalogState('loading'),
+    () => createInitialCatalogState(catalogDataSource.getCities(), 'loading'),
   );
   const [localitiesState, setLocalitiesState] = useState<AsyncCatalogState<LocalityOption>>(
     createEmptyCatalogState('idle'),
@@ -232,7 +247,7 @@ export function AdminRegisterUniversityPage({
     let isCancelled = false;
 
     async function loadCities() {
-      setCitiesState(createEmptyCatalogState('loading'));
+      setCitiesState(createInitialCatalogState(catalogDataSource.getCities(), 'loading'));
 
       try {
         const cities = await resolveCatalogResult(catalogDataSource.loadCities ? catalogDataSource.loadCities() : catalogDataSource.getCities());

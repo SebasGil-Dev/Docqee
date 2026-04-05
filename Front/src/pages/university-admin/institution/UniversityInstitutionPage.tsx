@@ -53,6 +53,21 @@ function createEmptyCatalogState<T>(
   };
 }
 
+function createInitialCatalogState<T>(
+  result: Promise<T[]> | T[],
+  emptyStatus: AsyncCatalogState<T>['status'],
+): AsyncCatalogState<T> {
+  if (Array.isArray(result) && result.length > 0) {
+    return {
+      error: null,
+      options: result,
+      status: 'ready',
+    };
+  }
+
+  return createEmptyCatalogState(emptyStatus);
+}
+
 function resolveCatalogResult<T>(result: Promise<T[]> | T[]) {
   return Promise.resolve(result);
 }
@@ -150,7 +165,7 @@ export function UniversityInstitutionPage({
   const [values, setValues] = useState(() => getInstitutionInitialValues(institutionProfile));
   const [errors, setErrors] = useState<UniversityInstitutionFormErrors>({});
   const [citiesState, setCitiesState] = useState<AsyncCatalogState<CityOption>>(
-    createEmptyCatalogState('loading'),
+    () => createInitialCatalogState(catalogDataSource.getCities(), 'loading'),
   );
   const [localitiesState, setLocalitiesState] = useState<AsyncCatalogState<LocalityOption>>(
     createEmptyCatalogState('idle'),
@@ -191,7 +206,7 @@ export function UniversityInstitutionPage({
     let isCancelled = false;
 
     async function loadCities() {
-      setCitiesState(createEmptyCatalogState('loading'));
+      setCitiesState(createInitialCatalogState(catalogDataSource.getCities(), 'loading'));
 
       try {
         const cities = await resolveCatalogResult(catalogDataSource.loadCities ? catalogDataSource.loadCities() : catalogDataSource.getCities());

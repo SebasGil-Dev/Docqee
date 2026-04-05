@@ -142,6 +142,10 @@ let citiesCache = [...fallbackCities];
 const localitiesCache = new Map<string, LocalityOption[]>();
 const backendCityIdByFrontendId = new Map<string, number>();
 const cityLabelByFrontendId = new Map<string, string>();
+let citiesRequestPromise: Promise<CityOption[]> | null = null;
+let areCitiesLoadedFromApi = false;
+const loadedLocalityCityIds = new Set<string>();
+const localityRequestPromiseByCityId = new Map<string, Promise<LocalityOption[]>>();
 
 function seedLocalitiesCache() {
   localitiesCache.clear();
@@ -223,6 +227,8 @@ async function fetchCatalogOptions(path: string) {
 }
 
 function cacheCities(options: CatalogApiOption[]) {
+  backendCityIdByFrontendId.clear();
+
   const nextCities = options.map((option) => {
     const label = normalizeText(option.name);
     const id = buildCityId(label);
@@ -237,6 +243,30 @@ function cacheCities(options: CatalogApiOption[]) {
 
   citiesCache = nextCities.length > 0 ? nextCities : [...fallbackCities];
   refreshCityLabelCache(citiesCache);
+}
+
+function ensureCitiesLoaded() {
+  if (areCitiesLoadedFromApi) {
+    return Promise.resolve(getCities());
+  }
+
+  if (citiesRequestPromise) {
+    return citiesRequestPromise;
+  }
+
+  citiesRequestPromise = fetchCatalogOptions('/catalogs/cities')
+    .then((options) => {
+      cacheCities(options);
+      areCitiesLoadedFromApi = true;
+
+      return getCities();
+    })
+    .catch(() => getCities())
+    .finally(() => {
+      citiesRequestPromise = null;
+    });
+
+  return citiesRequestPromise;
 }
 
 async function resolveBackendCityId(cityId: string) {
@@ -259,13 +289,7 @@ async function loadCities() {
     return getCities();
   }
 
-  try {
-    const options = await fetchCatalogOptions('/catalogs/cities');
-    cacheCities(options);
-    return citiesCache;
-  } catch {
-    return getCities();
-  }
+  return ensureCitiesLoaded();
 }
 
 async function loadLocalitiesByCity(cityId: string) {
@@ -273,30 +297,46 @@ async function loadLocalitiesByCity(cityId: string) {
     return getLocalitiesByCity(cityId);
   }
 
-  const backendCityId = await resolveBackendCityId(cityId);
-
-  if (backendCityId === null) {
-    return getLocalitiesByCity(cityId);
-  }
-
-  try {
-    const options = await fetchCatalogOptions(`/catalogs/localities/${backendCityId}`);
-    const cityLabel = cityLabelByFrontendId.get(cityId) ?? '';
-    const nextLocalities = options.map((option) => ({
-      cityId,
-      id: buildLocalityId(cityLabel, option.name),
-      label: normalizeText(option.name),
-    })) satisfies LocalityOption[];
-
-    localitiesCache.set(
-      cityId,
-      nextLocalities.length > 0 ? nextLocalities : getFallbackLocalitiesByCity(cityId),
-    );
-
+  if (loadedLocalityCityIds.has(cityId)) {
     return getCachedLocalitiesByCity(cityId);
-  } catch {
-    return getLocalitiesByCity(cityId);
   }
+
+  const cachedRequestPromise = localityRequestPromiseByCityId.get(cityId);
+
+  if (cachedRequestPromise) {
+    return cachedRequestPromise;
+  }
+
+  const requestPromise = resolveBackendCityId(cityId)
+    .then(async (backendCityId) => {
+      if (backendCityId === null) {
+        return getLocalitiesByCity(cityId);
+      }
+
+      const options = await fetchCatalogOptions(`/catalogs/localities/${backendCityId}`);
+      const cityLabel = cityLabelByFrontendId.get(cityId) ?? '';
+      const nextLocalities = options.map((option) => ({
+        cityId,
+        id: buildLocalityId(cityLabel, option.name),
+        label: normalizeText(option.name),
+      })) satisfies LocalityOption[];
+
+      localitiesCache.set(
+        cityId,
+        nextLocalities.length > 0 ? nextLocalities : getFallbackLocalitiesByCity(cityId),
+      );
+      loadedLocalityCityIds.add(cityId);
+
+      return getCachedLocalitiesByCity(cityId);
+    })
+    .catch(() => getLocalitiesByCity(cityId))
+    .finally(() => {
+      localityRequestPromiseByCityId.delete(cityId);
+    });
+
+  localityRequestPromiseByCityId.set(cityId, requestPromise);
+
+  return requestPromise;
 }
 
 function getCities() {
