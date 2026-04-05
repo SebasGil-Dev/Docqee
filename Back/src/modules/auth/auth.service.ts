@@ -28,7 +28,7 @@ import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 
-const DEFAULT_PLATFORM_ADMIN_EMAIL = 'jsgil68@ucatolica.edu.co';
+const DEFAULT_PLATFORM_ADMIN_EMAIL = 'sebastiangildev@gmail.com';
 const DEFAULT_PLATFORM_ADMIN_PASSWORD = 'Admin123*';
 const EMAIL_CODE_EXPIRY_MINUTES = 10;
 const PASSWORD_RESET_EXPIRY_MINUTES = 5;
