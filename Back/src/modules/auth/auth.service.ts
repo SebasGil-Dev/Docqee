@@ -28,8 +28,6 @@ import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 
-const DEFAULT_PLATFORM_ADMIN_EMAIL = 'sebastiangildev@gmail.com';
-const DEFAULT_PLATFORM_ADMIN_PASSWORD = 'Admin123*';
 const EMAIL_CODE_EXPIRY_MINUTES = 10;
 const PASSWORD_RESET_EXPIRY_MINUTES = 5;
 
@@ -343,8 +341,11 @@ export class AuthService {
   }
 
   private async ensureDefaultPlatformAdmin() {
+    const adminEmail = this.configService.get<string>('auth.platformAdminEmail') ?? 'admin@docqee.local';
+    const adminPassword = this.configService.get<string>('auth.platformAdminPassword') ?? 'Admin123!';
+
     const existingAdmin = await this.prisma.cuenta_acceso.findUnique({
-      where: { correo: DEFAULT_PLATFORM_ADMIN_EMAIL },
+      where: { correo: adminEmail },
       select: { id_cuenta: true },
     });
 
@@ -352,13 +353,13 @@ export class AuthService {
       return;
     }
 
-    const passwordHash = await bcrypt.hash(DEFAULT_PLATFORM_ADMIN_PASSWORD, 10);
+    const passwordHash = await bcrypt.hash(adminPassword, 10);
 
     await this.prisma.$transaction(async (transaction) => {
       const account = await transaction.cuenta_acceso.create({
         data: {
           tipo_cuenta: tipo_cuenta_enum.ADMIN_PLATAFORMA,
-          correo: DEFAULT_PLATFORM_ADMIN_EMAIL,
+          correo: adminEmail,
           password_hash: passwordHash,
           correo_verificado: true,
           correo_verificado_at: new Date(),
