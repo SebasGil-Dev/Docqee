@@ -26,7 +26,7 @@ export class MailService {
             <div style="font-size: 32px; font-weight: bold; letter-spacing: 8px; text-align: center; padding: 24px; background: #f4f4f4; border-radius: 8px;">
               ${code}
             </div>
-            <p style="color: #666; font-size: 14px;">Este código expira en 10 minutos.</p>
+            <p style="color: #666; font-size: 14px;">Este código expira en 5 minutos.</p>
           </div>
         `,
       });
@@ -49,7 +49,7 @@ export class MailService {
             <div style="font-size: 32px; font-weight: bold; letter-spacing: 8px; text-align: center; padding: 24px; background: #f4f4f4; border-radius: 8px;">
               ${code}
             </div>
-            <p style="color: #666; font-size: 14px;">Este código expira en 10 minutos. Si no solicitaste este cambio, ignora este mensaje.</p>
+            <p style="color: #666; font-size: 14px;">Este código expira en 5 minutos. Si no solicitaste este cambio, ignora este mensaje.</p>
           </div>
         `,
       });

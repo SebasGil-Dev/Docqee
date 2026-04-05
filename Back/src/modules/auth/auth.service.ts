@@ -28,7 +28,7 @@ import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 
-const EMAIL_CODE_EXPIRY_MINUTES = 10;
+const EMAIL_CODE_EXPIRY_MINUTES = 5;
 const PASSWORD_RESET_EXPIRY_MINUTES = 5;
 
 type SessionAccount = {
