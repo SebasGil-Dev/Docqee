@@ -11,6 +11,7 @@ import { estado_simple_enum, tipo_cuenta_enum } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 import { PrismaService } from '@/shared/database/prisma.service';
+import { MailService } from '@/shared/mail/mail.service';
 import type { RequestUser } from '@/shared/types/request-user.type';
 import {
   buildCityFrontId,
@@ -56,6 +57,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly mailService: MailService,
   ) {}
 
   async login(input: LoginDto) {
@@ -179,8 +181,9 @@ export class AuthService {
       return account;
     });
 
+    await this.mailService.sendVerificationCode(createdAccount.correo, verificationCode);
+
     return {
-      debugCode: verificationCode,
       email: createdAccount.correo,
       ok: true,
     };
@@ -271,9 +274,10 @@ export class AuthService {
       },
     });
 
+    await this.mailService.sendVerificationCode(account.correo, verificationCode);
+
     return {
       cooldownSeconds: 60,
-      debugCode: verificationCode,
       message: 'Generamos un nuevo codigo de verificacion.',
       ok: true,
     };
@@ -304,9 +308,10 @@ export class AuthService {
       },
     });
 
+    await this.mailService.sendPasswordResetCode(account.correo, code);
+
     return {
       cooldownSeconds: 60,
-      debugCode: code,
       expiresAt: expiresAt.getTime(),
       ok: true,
     };
