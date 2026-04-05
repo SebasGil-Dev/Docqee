@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { estado_simple_enum, tipo_cuenta_enum } from '@prisma/client';
+import { tipo_cuenta_enum } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 import { PrismaService } from '@/shared/database/prisma.service';
@@ -15,7 +15,6 @@ import { MailService } from '@/shared/mail/mail.service';
 import type { RequestUser } from '@/shared/types/request-user.type';
 import {
   buildCityFrontId,
-  buildDocumentTypeFrontId,
   buildLocalityFrontId,
   extractNumericId,
   generateSixDigitCode,
@@ -32,7 +31,7 @@ import { VerifyEmailDto } from './dto/verify-email.dto';
 const DEFAULT_PLATFORM_ADMIN_EMAIL = 'admin@docqee.local';
 const DEFAULT_PLATFORM_ADMIN_PASSWORD = 'Admin123!';
 const EMAIL_CODE_EXPIRY_MINUTES = 10;
-const PASSWORD_RESET_EXPIRY_MINUTES = 10;
+const PASSWORD_RESET_EXPIRY_MINUTES = 5;
 
 type SessionAccount = {
   id_cuenta: number;

@@ -17,7 +17,7 @@ import {
 export const FORGOT_PASSWORD_RECOVERY_SESSION_KEY = 'docqee.forgot-password-recovery-session';
 export const PASSWORD_RESET_SUCCESS_NOTICE_KEY = 'docqee.password-reset-success-notice';
 
-const CODE_EXPIRY_SECONDS = 10 * 60;
+const CODE_EXPIRY_SECONDS = 5 * 60;
 const RESEND_COOLDOWN_SECONDS = 60;
 const MAX_FAILED_ATTEMPTS = 5;
 const BLOCK_DURATION_SECONDS = 15 * 60;
@@ -431,21 +431,16 @@ async function requestResetCodeRuntime(
 
   try {
     const result = await requestPasswordResetRequest(email);
+    const cooldownSeconds = result.cooldownSeconds ?? RESEND_COOLDOWN_SECONDS;
+    const expiresAt = result.expiresAt ?? Date.now() + CODE_EXPIRY_SECONDS * 1000;
 
-    if (typeof result.debugCode === 'string') {
-      writeForgotPasswordRecoverySession(
-        buildRuntimeRecoverySession(
-          email,
-          result.debugCode,
-          result.cooldownSeconds ?? RESEND_COOLDOWN_SECONDS,
-          result.expiresAt ?? Date.now() + CODE_EXPIRY_SECONDS * 1000,
-        ),
-      );
-    }
+    writeForgotPasswordRecoverySession(
+      buildRuntimeRecoverySession(email, '', cooldownSeconds, expiresAt),
+    );
 
     return {
-      cooldownSeconds: result.cooldownSeconds ?? RESEND_COOLDOWN_SECONDS,
-      expiresAt: result.expiresAt ?? Date.now() + CODE_EXPIRY_SECONDS * 1000,
+      cooldownSeconds,
+      expiresAt,
       ok: true,
     };
   } catch {
@@ -471,22 +466,16 @@ async function resendResetCodeRuntime(
   try {
     const result = await requestPasswordResetRequest(email);
     const currentSession = readForgotPasswordRecoverySession();
+    const cooldownSeconds = result.cooldownSeconds ?? RESEND_COOLDOWN_SECONDS;
+    const expiresAt = result.expiresAt ?? Date.now() + CODE_EXPIRY_SECONDS * 1000;
 
-    if (typeof result.debugCode === 'string') {
-      writeForgotPasswordRecoverySession(
-        buildRuntimeRecoverySession(
-          email,
-          result.debugCode,
-          result.cooldownSeconds ?? RESEND_COOLDOWN_SECONDS,
-          result.expiresAt ?? Date.now() + CODE_EXPIRY_SECONDS * 1000,
-          currentSession,
-        ),
-      );
-    }
+    writeForgotPasswordRecoverySession(
+      buildRuntimeRecoverySession(email, '', cooldownSeconds, expiresAt, currentSession),
+    );
 
     return {
-      cooldownSeconds: result.cooldownSeconds ?? RESEND_COOLDOWN_SECONDS,
-      expiresAt: result.expiresAt ?? Date.now() + CODE_EXPIRY_SECONDS * 1000,
+      cooldownSeconds,
+      expiresAt,
       ok: true,
     };
   } catch {
