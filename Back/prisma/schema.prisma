@@ -1,0 +1,190 @@
+﻿generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  PLATFORM_ADMIN
+  UNIVERSITY_ADMIN
+}
+
+enum UniversityStatus {
+  PENDING
+  ACTIVE
+  INACTIVE
+}
+
+enum PersonStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum CredentialStatus {
+  GENERATED
+  SENT
+}
+
+enum BulkUploadEntityType {
+  STUDENT
+  TEACHER
+}
+
+enum BulkUploadStatus {
+  FILE_SELECTED
+  INVALID
+  VALIDATED
+  PROCESSED
+}
+
+enum BulkUploadRowStatus {
+  PENDING
+  PROCESSED
+  ERROR
+}
+
+enum DocumentType {
+  CC
+  CE
+  TI
+  PASSPORT
+}
+
+model User {
+  id            String                   @id @default(cuid())
+  email         String                   @unique
+  passwordHash  String?
+  role          Role
+  firstName     String
+  lastName      String
+  phone         String?
+  isActive      Boolean                  @default(true)
+  adminProfile  UniversityAdminProfile?
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
+}
+
+model UniversityAdminProfile {
+  id           String     @id @default(cuid())
+  userId       String     @unique
+  universityId String     @unique
+  user         User       @relation(fields: [userId], references: [id])
+  university   University @relation(fields: [universityId], references: [id])
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model City {
+  id           String       @id @default(cuid())
+  name         String       @unique
+  slug         String       @unique
+  localities   Locality[]
+  universities University[]
+}
+
+model Locality {
+  id            String       @id @default(cuid())
+  cityId        String
+  name          String
+  slug          String
+  city          City         @relation(fields: [cityId], references: [id])
+  universities  University[] @relation("UniversityMainLocality")
+
+  @@unique([cityId, name])
+  @@unique([cityId, slug])
+}
+
+model University {
+  id             String                  @id @default(cuid())
+  name           String                  @unique
+  slug           String                  @unique
+  status         UniversityStatus        @default(PENDING)
+  logoUrl        String?
+  cityId         String
+  mainLocalityId String
+  city           City                    @relation(fields: [cityId], references: [id])
+  mainLocality   Locality                @relation("UniversityMainLocality", fields: [mainLocalityId], references: [id])
+  adminProfile   UniversityAdminProfile?
+  students       Student[]
+  teachers       Teacher[]
+  bulkUploadJobs BulkUploadJob[]
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+}
+
+model Student {
+  id             String        @id @default(cuid())
+  universityId   String
+  firstName      String
+  lastName       String
+  documentType   DocumentType
+  documentNumber String
+  email          String
+  phone          String?
+  semester       Int
+  status         PersonStatus  @default(ACTIVE)
+  university     University    @relation(fields: [universityId], references: [id])
+  credential     Credential?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([universityId, documentType, documentNumber])
+}
+
+model Teacher {
+  id             String        @id @default(cuid())
+  universityId   String
+  firstName      String
+  lastName       String
+  documentType   DocumentType
+  documentNumber String
+  status         PersonStatus  @default(ACTIVE)
+  university     University    @relation(fields: [universityId], references: [id])
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([universityId, documentType, documentNumber])
+}
+
+model Credential {
+  id                    String           @id @default(cuid())
+  studentId             String           @unique
+  email                 String
+  temporaryPasswordHash String?
+  status                CredentialStatus @default(GENERATED)
+  lastSentAt            DateTime?
+  student               Student          @relation(fields: [studentId], references: [id])
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+}
+
+model BulkUploadJob {
+  id          String               @id @default(cuid())
+  universityId String
+  entityType  BulkUploadEntityType
+  status      BulkUploadStatus     @default(FILE_SELECTED)
+  fileName    String
+  storagePath String?
+  summaryJson Json?
+  university  University           @relation(fields: [universityId], references: [id])
+  rows        BulkUploadRow[]
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+}
+
+model BulkUploadRow {
+  id          String              @id @default(cuid())
+  jobId       String
+  rowNumber   Int
+  status      BulkUploadRowStatus @default(PENDING)
+  message     String?
+  payloadJson Json?
+  job         BulkUploadJob       @relation(fields: [jobId], references: [id])
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@unique([jobId, rowNumber])
+}
