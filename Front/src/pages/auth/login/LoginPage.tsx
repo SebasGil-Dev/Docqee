@@ -1,14 +1,18 @@
 import { Mail } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
+import { useAuth } from '@/app/providers/AuthProvider';
 import { AuthCard } from '@/components/auth/AuthCard';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { PasswordField } from '@/components/auth/PasswordField';
 import { Seo } from '@/components/ui/Seo';
 import { ROUTES } from '@/constants/routes';
 import { authContent } from '@/content/authContent';
+import { IS_TEST_MODE } from '@/lib/apiClient';
+import { login as loginRequest } from '@/lib/authApi';
+import { getDefaultRouteForRole } from '@/lib/authRouting';
 import type { LoginFormErrors, LoginFormState, LoginFormValues } from '@/content/types';
 import { classNames } from '@/lib/classNames';
 import {
@@ -64,6 +68,7 @@ function validateLoginForm(values: LoginFormValues): LoginFormErrors {
 }
 
 export function LoginPage() {
+  const { session, setSession } = useAuth();
   const [formState, setFormState] = useState<LoginFormState>({
     errors: {},
     generalError: null,
@@ -79,8 +84,10 @@ export function LoginPage() {
     return message;
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const emailInputRef = useRef<HTMLInputElement>(null);
   const passwordInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
   const content = authContent.login;
   const emailErrorId = 'login-email-error';
   const forgotPasswordPath =
@@ -103,6 +110,14 @@ export function LoginPage() {
       window.clearTimeout(timeoutId);
     };
   }, [successNotice]);
+
+  useEffect(() => {
+    if (IS_TEST_MODE || !session) {
+      return;
+    }
+
+    navigate(getDefaultRouteForRole(session.user.role), { replace: true });
+  }, [navigate, session]);
 
   const updateFieldValue = <K extends keyof LoginFormValues>(
     field: K,
@@ -182,22 +197,49 @@ export function LoginPage() {
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const nextErrors = validateLoginForm(formState.values);
+    void (async () => {
+      const nextErrors = validateLoginForm(formState.values);
 
-    setFormState((currentState) => ({
-      ...currentState,
-      errors: nextErrors,
-      generalError: null,
-    }));
+      setFormState((currentState) => ({
+        ...currentState,
+        errors: nextErrors,
+        generalError: null,
+      }));
 
-    if (nextErrors.email) {
-      emailInputRef.current?.focus();
-      return;
-    }
+      if (nextErrors.email) {
+        emailInputRef.current?.focus();
+        return;
+      }
 
-    if (nextErrors.password) {
-      passwordInputRef.current?.focus();
-    }
+      if (nextErrors.password) {
+        passwordInputRef.current?.focus();
+        return;
+      }
+
+      if (IS_TEST_MODE) {
+        return;
+      }
+
+      setIsSubmitting(true);
+
+      try {
+        const authSession = await loginRequest(
+          formState.values.email.trim(),
+          formState.values.password,
+        );
+
+        setSession(authSession);
+        navigate(getDefaultRouteForRole(authSession.user.role), { replace: true });
+      } catch (error) {
+        setFormState((currentState) => ({
+          ...currentState,
+          generalError:
+            error instanceof Error ? error.message : content.generalErrorMessage,
+        }));
+      } finally {
+        setIsSubmitting(false);
+      }
+    })();
   };
 
   return (
@@ -304,6 +346,7 @@ export function LoginPage() {
 
               <button
                 className="w-full rounded-xl bg-brand-gradient px-5 py-3 font-headline text-[15px] font-extrabold text-white shadow-ambient transition-all duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 sm:text-base"
+                disabled={isSubmitting}
                 type="submit"
               >
                 {content.submitLabel}

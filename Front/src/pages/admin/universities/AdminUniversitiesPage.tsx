@@ -30,7 +30,7 @@ function getLocationState(locationState: unknown): UniversitiesLocationState {
 }
 
 export function AdminUniversitiesPage() {
-  const { toggleUniversityStatus, universities } = useAdminModuleStore();
+  const { errorMessage, isLoading, toggleUniversityStatus, universities } = useAdminModuleStore();
   const [searchTerm, setSearchTerm] = useState('');
   const location = useLocation();
   const navigate = useNavigate();
@@ -80,6 +80,14 @@ export function AdminUniversitiesPage() {
             </span>{' '}
             {successNotice}
           </p>
+        </SurfaceCard>
+      ) : null}
+      {errorMessage ? (
+        <SurfaceCard
+          className="border border-rose-200 bg-rose-50/90 text-sm font-medium text-rose-800"
+          paddingClassName="p-3.5"
+        >
+          <p role="alert">{errorMessage}</p>
         </SurfaceCard>
       ) : null}
       <div className="flex flex-col gap-3 md:flex-row md:items-stretch">
@@ -224,7 +232,9 @@ export function AdminUniversitiesPage() {
                                   : 'bg-primary/10 text-primary hover:bg-primary/15',
                               )}
                               type="button"
-                              onClick={() => toggleUniversityStatus(university.id)}
+                              onClick={() => {
+                                void toggleUniversityStatus(university.id);
+                              }}
                             >
                               {university.status === 'active' ? (
                                 <PowerOff aria-hidden="true" className="h-3.5 w-3.5" />
@@ -249,7 +259,7 @@ export function AdminUniversitiesPage() {
         ) : (
           <div className="px-4 py-8 text-center sm:px-5">
             <p className="text-sm font-medium text-ink-muted">
-              {adminContent.universitiesPage.emptyState}
+              {isLoading ? 'Cargando universidades...' : adminContent.universitiesPage.emptyState}
             </p>
           </div>
         )}

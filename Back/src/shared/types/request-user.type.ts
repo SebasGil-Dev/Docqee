@@ -1,5 +1,8 @@
 export type RequestUser = {
-  id: string;
   email: string;
-  role: 'PLATFORM_ADMIN' | 'UNIVERSITY_ADMIN';
+  firstName: string;
+  id: number;
+  lastName: string;
+  role: 'PATIENT' | 'PLATFORM_ADMIN' | 'STUDENT' | 'UNIVERSITY_ADMIN';
+  universityId?: number;
 };

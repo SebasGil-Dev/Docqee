@@ -60,7 +60,7 @@ function validateField(
 export function UniversityRegisterTeacherPage({
   catalogDataSource = patientRegisterCatalogDataSource,
 }: UniversityRegisterTeacherPageProps) {
-  const { registerTeacher } = useUniversityAdminModuleStore();
+  const { errorMessage, isLoading, registerTeacher } = useUniversityAdminModuleStore();
   const navigate = useNavigate();
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<RegisterTeacherFormErrors>({});
@@ -89,7 +89,11 @@ export function UniversityRegisterTeacherPage({
     let isCancelled = false;
 
     async function loadDocumentTypes() {
-      const nextDocumentTypes = await resolveCatalogResult(catalogDataSource.getDocumentTypes());
+      const nextDocumentTypes = await resolveCatalogResult(
+        catalogDataSource.loadDocumentTypes
+          ? catalogDataSource.loadDocumentTypes()
+          : catalogDataSource.getDocumentTypes(),
+      );
 
       if (isCancelled) {
         return;
@@ -168,13 +172,21 @@ export function UniversityRegisterTeacherPage({
       return;
     }
 
-    setIsSubmitting(true);
-    registerTeacher(values);
-    navigate(ROUTES.universityTeachers, {
-      state: {
-        successNotice: universityAdminContent.registerTeacherPage.successMessage,
-      },
-    });
+    void (async () => {
+      setIsSubmitting(true);
+      const result = await registerTeacher(values);
+
+      if (!result) {
+        setIsSubmitting(false);
+        return;
+      }
+
+      navigate(ROUTES.universityTeachers, {
+        state: {
+          successNotice: universityAdminContent.registerTeacherPage.successMessage,
+        },
+      });
+    })();
   };
 
   return (
@@ -197,6 +209,11 @@ export function UniversityRegisterTeacherPage({
         description={universityAdminContent.registerTeacherPage.description}
         title={universityAdminContent.registerTeacherPage.title}
       />
+      {errorMessage ? (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700" role="alert">
+          {errorMessage}
+        </div>
+      ) : null}
       <AdminPanelCard className="flex-1" panelClassName="bg-slate-50">
         <div className="border-b border-slate-200/80 bg-white px-6 py-5 sm:px-7">
           <div className="flex items-start gap-4">
@@ -267,7 +284,7 @@ export function UniversityRegisterTeacherPage({
           <div className="flex flex-wrap items-center justify-center gap-3 border-t border-slate-200/80 bg-white px-6 py-4 sm:px-7">
             <button
               className="inline-flex items-center justify-center rounded-2xl bg-brand-gradient px-5 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-70"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isLoading}
               type="submit"
             >
               {isSubmitting ? 'Registrando...' : universityAdminContent.registerTeacherPage.submitLabel}

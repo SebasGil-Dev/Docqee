@@ -29,7 +29,7 @@ function formatDocumentLabel(documentTypeCode: string, documentNumber: string) {
 }
 
 export function UniversityTeachersPage() {
-  const { teachers, toggleTeacherStatus } = useUniversityAdminModuleStore();
+  const { errorMessage, isLoading, teachers, toggleTeacherStatus } = useUniversityAdminModuleStore();
   const [searchTerm, setSearchTerm] = useState('');
   const location = useLocation();
   const navigate = useNavigate();
@@ -84,6 +84,14 @@ export function UniversityTeachersPage() {
             </span>{' '}
             {successNotice}
           </p>
+        </SurfaceCard>
+      ) : null}
+      {errorMessage ? (
+        <SurfaceCard
+          className="border border-rose-200 bg-rose-50/90 text-sm font-medium text-rose-800"
+          paddingClassName="p-3.5"
+        >
+          <p role="alert">{errorMessage}</p>
         </SurfaceCard>
       ) : null}
       <div className="flex flex-col gap-3 md:flex-row md:items-stretch">
@@ -211,9 +219,11 @@ export function UniversityTeachersPage() {
                             teacher.status === 'active'
                               ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
                               : 'bg-primary/10 text-primary hover:bg-primary/15',
-                          )}
+                        )}
                           type="button"
-                          onClick={() => toggleTeacherStatus(teacher.id)}
+                          onClick={() => {
+                            void toggleTeacherStatus(teacher.id);
+                          }}
                         >
                           {teacher.status === 'active' ? (
                             <PowerOff aria-hidden="true" className="h-3.5 w-3.5" />
@@ -236,7 +246,7 @@ export function UniversityTeachersPage() {
         ) : (
           <div className="px-4 py-8 text-center sm:px-5">
             <p className="text-sm font-medium text-ink-muted">
-              {universityAdminContent.teachersPage.emptyState}
+              {isLoading ? 'Cargando docentes...' : universityAdminContent.teachersPage.emptyState}
             </p>
           </div>
         )}

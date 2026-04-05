@@ -48,7 +48,7 @@ function isSupportedFile(fileName: string) {
 }
 
 export function UniversityBulkUploadPage() {
-  const { processBulkUpload } = useUniversityAdminModuleStore();
+  const { errorMessage, isLoading, processBulkUpload } = useUniversityAdminModuleStore();
   const [uploadState, setUploadState] = useState<UniversityBulkUploadState>(
     getInitialUploadState('students'),
   );
@@ -144,20 +144,27 @@ export function UniversityBulkUploadPage() {
       return;
     }
 
-    setIsProcessing(true);
-    const result = processBulkUpload(uploadState.templateType);
+    void (async () => {
+      setIsProcessing(true);
+      const result = await processBulkUpload(uploadState.templateType);
 
-    setUploadState((currentState) => ({
-      ...currentState,
-      status: 'processed',
-    }));
+      if (!result) {
+        setIsProcessing(false);
+        return;
+      }
 
-    setProcessedSummary(
-      uploadState.templateType === 'students'
-        ? `${universityAdminContent.bulkUploadPage.processedStudentsMessage} Se agregaron ${result.createdStudents} estudiantes y ${result.createdCredentials} credenciales.`
-        : `${universityAdminContent.bulkUploadPage.processedTeachersMessage} Se agregaron ${result.createdTeachers} docentes.`,
-    );
-    setIsProcessing(false);
+      setUploadState((currentState) => ({
+        ...currentState,
+        status: 'processed',
+      }));
+
+      setProcessedSummary(
+        uploadState.templateType === 'students'
+          ? `${universityAdminContent.bulkUploadPage.processedStudentsMessage} Se agregaron ${result.createdStudents} estudiantes y ${result.createdCredentials} credenciales.`
+          : `${universityAdminContent.bulkUploadPage.processedTeachersMessage} Se agregaron ${result.createdTeachers} docentes.`,
+      );
+      setIsProcessing(false);
+    })();
   };
 
   return (
@@ -184,6 +191,14 @@ export function UniversityBulkUploadPage() {
         description={universityAdminContent.bulkUploadPage.description}
         title={universityAdminContent.bulkUploadPage.title}
       />
+      {errorMessage ? (
+        <SurfaceCard
+          className="border border-rose-200 bg-rose-50/90 text-sm text-rose-800 shadow-none"
+          paddingClassName="p-4"
+        >
+          <p role="alert">{errorMessage}</p>
+        </SurfaceCard>
+      ) : null}
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
         <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-7">
           <div className="grid gap-6 xl:grid-cols-[minmax(18rem,22rem)_minmax(0,1fr)]">
@@ -345,7 +360,7 @@ export function UniversityBulkUploadPage() {
                   </button>
                   <button
                     className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-5 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
-                    disabled={uploadState.status !== 'validated' || isProcessing}
+                    disabled={uploadState.status !== 'validated' || isLoading || isProcessing}
                     type="button"
                     onClick={handleProcess}
                   >

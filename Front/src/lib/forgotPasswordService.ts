@@ -7,6 +7,12 @@ import type {
   ForgotPasswordVerifyCodeInput,
   ForgotPasswordVerifyCodeResult,
 } from '@/content/types';
+import { IS_TEST_MODE } from '@/lib/apiClient';
+import {
+  requestPasswordReset as requestPasswordResetRequest,
+  resetPassword as resetPasswordRequest,
+  verifyPasswordResetCode as verifyPasswordResetCodeRequest,
+} from '@/lib/authApi';
 
 export const FORGOT_PASSWORD_RECOVERY_SESSION_KEY = 'docqee.forgot-password-recovery-session';
 export const PASSWORD_RESET_SUCCESS_NOTICE_KEY = 'docqee.password-reset-success-notice';
@@ -199,7 +205,7 @@ function upsertRecoverySession(email: string) {
   };
 }
 
-function requestResetCode(input: ForgotPasswordRequestCodeInput): ForgotPasswordRequestCodeResult {
+function requestResetCodeMock(input: ForgotPasswordRequestCodeInput): ForgotPasswordRequestCodeResult {
   const email = normalizeEmail(input.email);
 
   if (!email) {
@@ -229,7 +235,7 @@ function requestResetCode(input: ForgotPasswordRequestCodeInput): ForgotPassword
   };
 }
 
-function resendResetCode(input: ForgotPasswordRequestCodeInput): ForgotPasswordRequestCodeResult {
+function resendResetCodeMock(input: ForgotPasswordRequestCodeInput): ForgotPasswordRequestCodeResult {
   const email = normalizeEmail(input.email);
 
   if (!email) {
@@ -259,7 +265,7 @@ function resendResetCode(input: ForgotPasswordRequestCodeInput): ForgotPasswordR
   };
 }
 
-function verifyResetCode(input: ForgotPasswordVerifyCodeInput): ForgotPasswordVerifyCodeResult {
+function verifyResetCodeMock(input: ForgotPasswordVerifyCodeInput): ForgotPasswordVerifyCodeResult {
   const email = normalizeEmail(input.email);
   const code = input.code.trim();
 
@@ -347,7 +353,7 @@ function verifyResetCode(input: ForgotPasswordVerifyCodeInput): ForgotPasswordVe
   return { ok: true };
 }
 
-function resetPassword(input: ForgotPasswordResetPasswordInput): ForgotPasswordResetPasswordResult {
+function resetPasswordMock(input: ForgotPasswordResetPasswordInput): ForgotPasswordResetPasswordResult {
   const email = normalizeEmail(input.email);
   const code = input.code.trim();
   const password = input.password;
@@ -393,9 +399,218 @@ function resetPassword(input: ForgotPasswordResetPasswordInput): ForgotPasswordR
   return { ok: true };
 }
 
+function buildRuntimeRecoverySession(
+  email: string,
+  code: string,
+  cooldownSeconds: number,
+  expiresAt: number,
+  currentSession?: ForgotPasswordRecoverySession | null,
+) {
+  return {
+    attemptCount: currentSession?.attemptCount ?? 0,
+    blockedUntil: currentSession?.blockedUntil ?? null,
+    code,
+    codeValidated: false,
+    cooldownUntil: Date.now() + cooldownSeconds * 1000,
+    email,
+    expiresAt,
+  } satisfies ForgotPasswordRecoverySession;
+}
+
+async function requestResetCodeRuntime(
+  input: ForgotPasswordRequestCodeInput,
+): Promise<ForgotPasswordRequestCodeResult> {
+  const email = normalizeEmail(input.email);
+
+  if (!email) {
+    return {
+      ok: false,
+      reason: 'unexpected',
+    };
+  }
+
+  try {
+    const result = await requestPasswordResetRequest(email);
+
+    if (typeof result.debugCode === 'string') {
+      writeForgotPasswordRecoverySession(
+        buildRuntimeRecoverySession(
+          email,
+          result.debugCode,
+          result.cooldownSeconds ?? RESEND_COOLDOWN_SECONDS,
+          result.expiresAt ?? Date.now() + CODE_EXPIRY_SECONDS * 1000,
+        ),
+      );
+    }
+
+    return {
+      cooldownSeconds: result.cooldownSeconds ?? RESEND_COOLDOWN_SECONDS,
+      expiresAt: result.expiresAt ?? Date.now() + CODE_EXPIRY_SECONDS * 1000,
+      ok: true,
+    };
+  } catch {
+    return {
+      ok: false,
+      reason: 'unexpected',
+    };
+  }
+}
+
+async function resendResetCodeRuntime(
+  input: ForgotPasswordRequestCodeInput,
+): Promise<ForgotPasswordRequestCodeResult> {
+  const email = normalizeEmail(input.email);
+
+  if (!email) {
+    return {
+      ok: false,
+      reason: 'unexpected',
+    };
+  }
+
+  try {
+    const result = await requestPasswordResetRequest(email);
+    const currentSession = readForgotPasswordRecoverySession();
+
+    if (typeof result.debugCode === 'string') {
+      writeForgotPasswordRecoverySession(
+        buildRuntimeRecoverySession(
+          email,
+          result.debugCode,
+          result.cooldownSeconds ?? RESEND_COOLDOWN_SECONDS,
+          result.expiresAt ?? Date.now() + CODE_EXPIRY_SECONDS * 1000,
+          currentSession,
+        ),
+      );
+    }
+
+    return {
+      cooldownSeconds: result.cooldownSeconds ?? RESEND_COOLDOWN_SECONDS,
+      expiresAt: result.expiresAt ?? Date.now() + CODE_EXPIRY_SECONDS * 1000,
+      ok: true,
+    };
+  } catch {
+    return {
+      ok: false,
+      reason: 'unexpected',
+    };
+  }
+}
+
+async function verifyResetCodeRuntime(
+  input: ForgotPasswordVerifyCodeInput,
+): Promise<ForgotPasswordVerifyCodeResult> {
+  const email = normalizeEmail(input.email);
+  const code = input.code.trim();
+
+  if (!isSixDigitCode(code)) {
+    return {
+      ok: false,
+      reason: 'invalid_format',
+    };
+  }
+
+  try {
+    await verifyPasswordResetCodeRequest(email, code);
+
+    const currentSession = readForgotPasswordRecoverySession();
+
+    if (currentSession?.email === email) {
+      writeForgotPasswordRecoverySession({
+        ...currentSession,
+        attemptCount: 0,
+        blockedUntil: null,
+        code,
+        codeValidated: true,
+      });
+    }
+
+    return { ok: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message.toLowerCase() : '';
+
+    return {
+      ok: false,
+      reason: message.includes('expiro') ? 'expired' : 'invalid',
+    };
+  }
+}
+
+async function resetPasswordRuntime(
+  input: ForgotPasswordResetPasswordInput,
+): Promise<ForgotPasswordResetPasswordResult> {
+  const email = normalizeEmail(input.email);
+  const currentSession = readForgotPasswordRecoverySession();
+
+  if (currentSession?.email !== email || currentSession.codeValidated !== true) {
+    return {
+      ok: false,
+      reason: 'session_invalid',
+    };
+  }
+
+  try {
+    await resetPasswordRequest(email, input.code.trim(), input.password);
+    clearForgotPasswordRecoverySession();
+    return { ok: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message.toLowerCase() : '';
+
+    if (message.includes('expiro')) {
+      return {
+        ok: false,
+        reason: 'code_expired',
+      };
+    }
+
+    if (message.includes('no es valido')) {
+      return {
+        ok: false,
+        reason: 'code_invalid',
+      };
+    }
+
+    if (message.includes('contrasena') || message.includes('contraseña')) {
+      return {
+        ok: false,
+        reason: 'password_invalid',
+      };
+    }
+
+    return {
+      ok: false,
+      reason: 'unexpected',
+    };
+  }
+}
+
 export const forgotPasswordService: ForgotPasswordService = {
-  requestResetCode,
-  resendResetCode,
-  resetPassword,
-  verifyResetCode,
+  requestResetCode(input) {
+    if (IS_TEST_MODE) {
+      return requestResetCodeMock(input);
+    }
+
+    return requestResetCodeRuntime(input);
+  },
+  resendResetCode(input) {
+    if (IS_TEST_MODE) {
+      return resendResetCodeMock(input);
+    }
+
+    return resendResetCodeRuntime(input);
+  },
+  resetPassword(input) {
+    if (IS_TEST_MODE) {
+      return resetPasswordMock(input);
+    }
+
+    return resetPasswordRuntime(input);
+  },
+  verifyResetCode(input) {
+    if (IS_TEST_MODE) {
+      return verifyResetCodeMock(input);
+    }
+
+    return verifyResetCodeRuntime(input);
+  },
 };

@@ -54,6 +54,8 @@ export function UniversityCredentialsPage() {
     credentials,
     deleteStudentCredential,
     editStudentCredentialEmail,
+    errorMessage,
+    isLoading,
     resendStudentCredential,
     sendAllStudentCredentials,
     sendStudentCredential,
@@ -90,27 +92,31 @@ export function UniversityCredentialsPage() {
       return;
     }
 
-    const updated = editStudentCredentialEmail(credentialId, normalizedEmail);
+    void (async () => {
+      const updated = await editStudentCredentialEmail(credentialId, normalizedEmail);
 
-    if (!updated) {
-      setEmailError('No pudimos actualizar el correo en este momento.');
-      return;
-    }
+      if (!updated) {
+        setEmailError('No pudimos actualizar el correo en este momento.');
+        return;
+      }
 
-    setEditingCredentialId(null);
-    setEmailDraft('');
-    setEmailError(null);
-    setFeedbackMessage(`El correo de ${studentName} se actualizo correctamente.`);
+      setEditingCredentialId(null);
+      setEmailDraft('');
+      setEmailError(null);
+      setFeedbackMessage(`El correo de ${studentName} se actualizo correctamente.`);
+    })();
   };
 
   const handleSendAll = () => {
-    const sentCount = sendAllStudentCredentials();
+    void (async () => {
+      const sentCount = await sendAllStudentCredentials();
 
-    setFeedbackMessage(
-      sentCount > 0
-        ? `Se enviaron ${sentCount} credenciales pendientes.`
-        : 'No hay credenciales generated por enviar en este momento.',
-    );
+      setFeedbackMessage(
+        sentCount > 0
+          ? `Se enviaron ${sentCount} credenciales pendientes.`
+          : 'No hay credenciales generated por enviar en este momento.',
+      );
+    })();
   };
 
   return (
@@ -124,6 +130,7 @@ export function UniversityCredentialsPage() {
         action={
           <button
             className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-4 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+            disabled={isLoading}
             type="button"
             onClick={handleSendAll}
           >
@@ -145,6 +152,14 @@ export function UniversityCredentialsPage() {
             </span>{' '}
             {feedbackMessage}
           </p>
+        </SurfaceCard>
+      ) : null}
+      {errorMessage ? (
+        <SurfaceCard
+          className="border border-rose-200 bg-rose-50/90 text-sm font-medium text-rose-800"
+          paddingClassName="p-3.5"
+        >
+          <p role="alert">{errorMessage}</p>
         </SurfaceCard>
       ) : null}
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
@@ -264,6 +279,7 @@ export function UniversityCredentialsPage() {
                             <>
                               <button
                                 className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-2 text-xs font-semibold text-primary transition duration-200 hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                                disabled={isLoading}
                                 type="button"
                                 onClick={() =>
                                   handleSaveEmail(credential.id, credential.studentName)
@@ -276,6 +292,7 @@ export function UniversityCredentialsPage() {
                               </button>
                               <button
                                 className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200"
+                                disabled={isLoading}
                                 type="button"
                                 onClick={handleCancelEmailEdit}
                               >
@@ -292,19 +309,24 @@ export function UniversityCredentialsPage() {
                                     ? 'bg-primary/10 text-primary hover:bg-primary/15'
                                     : 'bg-sky-50 text-sky-700 hover:bg-sky-100',
                                 )}
+                                disabled={isLoading}
                                 type="button"
                                 onClick={() => {
-                                  if (isGenerated) {
-                                    sendStudentCredential(credential.id);
+                                  void (async () => {
+                                    const updated = isGenerated
+                                      ? await sendStudentCredential(credential.id)
+                                      : await resendStudentCredential(credential.id);
+
+                                    if (!updated) {
+                                      return;
+                                    }
+
                                     setFeedbackMessage(
-                                      `La credencial de ${credential.studentName} quedo enviada.`,
+                                      isGenerated
+                                        ? `La credencial de ${credential.studentName} quedo enviada. Contrasena temporal: ${updated}`
+                                        : `La credencial de ${credential.studentName} se reenvio correctamente. Contrasena temporal: ${updated}`,
                                     );
-                                  } else {
-                                    resendStudentCredential(credential.id);
-                                    setFeedbackMessage(
-                                      `La credencial de ${credential.studentName} se reenvio correctamente.`,
-                                    );
-                                  }
+                                  })();
                                 }}
                               >
                                 {isGenerated ? (
@@ -320,6 +342,7 @@ export function UniversityCredentialsPage() {
                               </button>
                               <button
                                 className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200"
+                                disabled={isLoading}
                                 type="button"
                                 onClick={() => handleStartEmailEdit(credential)}
                               >
@@ -330,15 +353,24 @@ export function UniversityCredentialsPage() {
                               </button>
                               <button
                                 className="inline-flex items-center gap-2 rounded-full bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 transition duration-200 hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200/70"
+                                disabled={isLoading}
                                 type="button"
                                 onClick={() => {
-                                  deleteStudentCredential(credential.id);
-                                  if (editingCredentialId === credential.id) {
-                                    handleCancelEmailEdit();
-                                  }
-                                  setFeedbackMessage(
-                                    `La credencial de ${credential.studentName} se elimino correctamente.`,
-                                  );
+                                  void (async () => {
+                                    const deleted = await deleteStudentCredential(credential.id);
+
+                                    if (!deleted) {
+                                      return;
+                                    }
+
+                                    if (editingCredentialId === credential.id) {
+                                      handleCancelEmailEdit();
+                                    }
+
+                                    setFeedbackMessage(
+                                      `La credencial de ${credential.studentName} se elimino correctamente.`,
+                                    );
+                                  })();
                                 }}
                               >
                                 <Trash2 aria-hidden="true" className="h-4 w-4" />
@@ -359,7 +391,7 @@ export function UniversityCredentialsPage() {
         ) : (
           <div className="px-4 py-8 text-center sm:px-5">
             <p className="text-sm font-medium text-ink-muted">
-              {universityAdminContent.credentialsPage.emptyState}
+              {isLoading ? 'Cargando credenciales...' : universityAdminContent.credentialsPage.emptyState}
             </p>
           </div>
         )}

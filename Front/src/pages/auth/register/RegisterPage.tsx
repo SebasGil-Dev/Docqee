@@ -24,8 +24,13 @@ import type {
   RegisterPasswordRuleKey,
 } from '@/content/types';
 import { classNames } from '@/lib/classNames';
+import { IS_TEST_MODE } from '@/lib/apiClient';
+import { registerPatient as registerPatientRequest } from '@/lib/authApi';
 import { patientRegisterCatalogDataSource } from '@/lib/patientRegisterCatalogDataSource';
-import { persistPendingVerificationEmail } from '@/lib/verifyEmailService';
+import {
+  persistPendingVerificationEmail,
+  persistVerifyEmailDebugCode,
+} from '@/lib/verifyEmailService';
 
 type RegisterPageProps = {
   catalogDataSource?: PatientRegisterCatalogDataSource;
@@ -749,6 +754,8 @@ export function RegisterPage({
   );
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const passwordInputRef = useRef<HTMLInputElement>(null);
   const confirmPasswordInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
@@ -764,7 +771,11 @@ export function RegisterPage({
 
       try {
         const [documentTypes, cities] = await Promise.all([
-          resolveCatalogResult(catalogDataSource.getDocumentTypes()),
+          resolveCatalogResult(
+            catalogDataSource.loadDocumentTypes
+              ? catalogDataSource.loadDocumentTypes()
+              : catalogDataSource.getDocumentTypes(),
+          ),
           resolveCatalogResult(catalogDataSource.loadCities ? catalogDataSource.loadCities() : catalogDataSource.getCities()),
         ]);
 
@@ -899,6 +910,8 @@ export function RegisterPage({
         values: nextValues,
       };
     });
+
+    setSubmissionError(null);
   };
 
   const handleFieldBlur = (field: RegisterFormField) => {
@@ -929,6 +942,8 @@ export function RegisterPage({
         errors: nextErrors,
       };
     });
+
+    setSubmissionError(null);
   };
 
   const focusField = (field: RegisterFormField) => {
@@ -952,45 +967,72 @@ export function RegisterPage({
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const validationErrors = validateRegisterForm(formState.values, currentDate);
+    void (async () => {
+      const validationErrors = validateRegisterForm(formState.values, currentDate);
 
-    setFormState((currentState) => ({
-      ...currentState,
-      errors: validationErrors,
-    }));
+      setFormState((currentState) => ({
+        ...currentState,
+        errors: validationErrors,
+      }));
+      setSubmissionError(null);
 
-    const fieldOrder: RegisterFormField[] = [
-      'firstName',
-      'lastName',
-      'documentTypeId',
-      'documentNumber',
-      'sex',
-      'birthDate',
-      'cityId',
-      'localityId',
-      'email',
-      'phone',
-      'password',
-      'confirmPassword',
-      ...(showTutor ? tutorFieldNames : []),
-      'acceptTerms',
-      'acceptPrivacyPolicy',
-    ];
+      const fieldOrder: RegisterFormField[] = [
+        'firstName',
+        'lastName',
+        'documentTypeId',
+        'documentNumber',
+        'sex',
+        'birthDate',
+        'cityId',
+        'localityId',
+        'email',
+        'phone',
+        'password',
+        'confirmPassword',
+        ...(showTutor ? tutorFieldNames : []),
+        'acceptTerms',
+        'acceptPrivacyPolicy',
+      ];
 
-    const firstInvalidField = fieldOrder.find((fieldName) => Boolean(validationErrors[fieldName]));
+      const firstInvalidField = fieldOrder.find((fieldName) => Boolean(validationErrors[fieldName]));
 
-    if (firstInvalidField) {
-      focusField(firstInvalidField);
-      return;
-    }
+      if (firstInvalidField) {
+        focusField(firstInvalidField);
+        return;
+      }
 
-    const normalizedPayload = normalizeRegisterPayload(formState.values, showTutor);
+      const normalizedPayload = normalizeRegisterPayload(formState.values, showTutor);
 
-    persistPendingVerificationEmail(normalizedPayload.patient.email);
+      if (IS_TEST_MODE) {
+        persistPendingVerificationEmail(normalizedPayload.patient.email);
+        navigate(ROUTES.verifyEmail, {
+          state: { email: normalizedPayload.patient.email },
+        });
+        return;
+      }
 
-    navigate(ROUTES.verifyEmail, {
-      state: { email: normalizedPayload.patient.email },
-    });
+      setIsSubmitting(true);
+
+      try {
+        const result = await registerPatientRequest(normalizedPayload);
+        const nextEmail = result.email ?? normalizedPayload.patient.email;
+
+        persistPendingVerificationEmail(nextEmail);
+        if (typeof result.debugCode === 'string') {
+          persistVerifyEmailDebugCode(result.debugCode);
+        }
+
+        navigate(ROUTES.verifyEmail, {
+          state: { email: nextEmail },
+        });
+      } catch (error) {
+        setSubmissionError(
+          error instanceof Error ? error.message : 'No pudimos completar el registro.',
+        );
+      } finally {
+        setIsSubmitting(false);
+      }
+    })();
   };
 
   const documentTypePlaceholder =
@@ -1380,8 +1422,18 @@ export function RegisterPage({
             </section>
 
             <div className="flex flex-col items-center gap-4 border-t border-slate-200/70 pt-2 text-center">
+              {submissionError ? (
+                <div
+                  aria-live="polite"
+                  className="w-full rounded-xl bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700"
+                  role="alert"
+                >
+                  {submissionError}
+                </div>
+              ) : null}
               <button
                 className="inline-flex min-w-[14rem] items-center justify-center rounded-xl bg-brand-gradient px-6 py-3 font-headline text-[15px] font-extrabold text-white shadow-ambient transition-all duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 sm:text-base"
+                disabled={isSubmitting}
                 type="submit"
               >
                 {content.submitLabel}

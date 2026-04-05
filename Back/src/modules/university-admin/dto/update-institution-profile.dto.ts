@@ -16,4 +16,8 @@ export class UpdateInstitutionProfileDto {
   @IsOptional()
   @IsString()
   adminPhone?: string;
+
+  @IsOptional()
+  @IsString()
+  logoSrc?: string | null;
 }

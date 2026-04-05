@@ -215,7 +215,7 @@ function validateForm(values: RegisterUniversityFormValues): RegisterUniversityF
 export function AdminRegisterUniversityPage({
   catalogDataSource = patientRegisterCatalogDataSource,
 }: AdminRegisterUniversityPageProps) {
-  const { registerUniversity } = useAdminModuleStore();
+  const { errorMessage, isLoading, registerUniversity } = useAdminModuleStore();
   const navigate = useNavigate();
   const nameRef = useRef<HTMLInputElement>(null);
   const cityRef = useRef<HTMLSelectElement>(null);
@@ -399,13 +399,21 @@ export function AdminRegisterUniversityPage({
       return;
     }
 
-    setIsSubmitting(true);
-    registerUniversity(values);
-    navigate(ROUTES.adminUniversities, {
-      state: {
-        successNotice: adminContent.registerPage.successMessage,
-      },
-    });
+    void (async () => {
+      setIsSubmitting(true);
+      const result = await registerUniversity(values);
+
+      if (!result) {
+        setIsSubmitting(false);
+        return;
+      }
+
+      navigate(ROUTES.adminUniversities, {
+        state: {
+          successNotice: adminContent.registerPage.successMessage,
+        },
+      });
+    })();
   };
 
   const cityPlaceholder =
@@ -457,6 +465,11 @@ export function AdminRegisterUniversityPage({
         description={adminContent.registerPage.description}
         title={adminContent.registerPage.title}
       />
+      {errorMessage ? (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700" role="alert">
+          {errorMessage}
+        </div>
+      ) : null}
       <AdminPanelCard className="flex flex-1 flex-col" panelClassName="bg-slate-50">
         <div className="border-b border-slate-200/80 bg-[#e9eef5] px-6 py-5 sm:px-7">
           <div className="flex items-start gap-4">
@@ -717,7 +730,7 @@ export function AdminRegisterUniversityPage({
               <div className="flex justify-center border-t border-slate-200/80 pt-6">
                 <button
                   className="inline-flex items-center justify-center rounded-2xl bg-brand-gradient px-5 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-70"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isLoading}
                   type="submit"
                 >
                   {isSubmitting ? 'Registrando...' : adminContent.registerPage.submitLabel}

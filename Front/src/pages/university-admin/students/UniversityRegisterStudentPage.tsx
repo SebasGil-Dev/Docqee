@@ -85,7 +85,7 @@ function validateField(
 export function UniversityRegisterStudentPage({
   catalogDataSource = patientRegisterCatalogDataSource,
 }: UniversityRegisterStudentPageProps) {
-  const { registerStudent } = useUniversityAdminModuleStore();
+  const { errorMessage, isLoading, registerStudent } = useUniversityAdminModuleStore();
   const navigate = useNavigate();
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<RegisterStudentFormErrors>({});
@@ -120,7 +120,11 @@ export function UniversityRegisterStudentPage({
     let isCancelled = false;
 
     async function loadDocumentTypes() {
-      const nextDocumentTypes = await resolveCatalogResult(catalogDataSource.getDocumentTypes());
+      const nextDocumentTypes = await resolveCatalogResult(
+        catalogDataSource.loadDocumentTypes
+          ? catalogDataSource.loadDocumentTypes()
+          : catalogDataSource.getDocumentTypes(),
+      );
 
       if (isCancelled) {
         return;
@@ -202,13 +206,21 @@ export function UniversityRegisterStudentPage({
       return;
     }
 
-    setIsSubmitting(true);
-    registerStudent(values);
-    navigate(ROUTES.universityStudents, {
-      state: {
-        successNotice: universityAdminContent.registerStudentPage.successMessage,
-      },
-    });
+    void (async () => {
+      setIsSubmitting(true);
+      const result = await registerStudent(values);
+
+      if (!result) {
+        setIsSubmitting(false);
+        return;
+      }
+
+      navigate(ROUTES.universityStudents, {
+        state: {
+          successNotice: universityAdminContent.registerStudentPage.successMessage,
+        },
+      });
+    })();
   };
 
   return (
@@ -231,6 +243,11 @@ export function UniversityRegisterStudentPage({
         description={universityAdminContent.registerStudentPage.description}
         title={universityAdminContent.registerStudentPage.title}
       />
+      {errorMessage ? (
+        <SurfaceCard className="border border-rose-200 bg-rose-50/90 text-sm text-rose-800 shadow-none" paddingClassName="p-4">
+          <p role="alert">{errorMessage}</p>
+        </SurfaceCard>
+      ) : null}
       <AdminPanelCard className="flex-1" panelClassName="bg-slate-50">
         <div className="border-b border-slate-200/80 bg-white px-6 py-5 sm:px-7">
           <div className="flex items-start gap-4">
@@ -347,7 +364,7 @@ export function UniversityRegisterStudentPage({
           <div className="flex flex-wrap items-center justify-center gap-3 border-t border-slate-200/80 bg-white px-6 py-4 sm:px-7">
             <button
               className="inline-flex items-center justify-center rounded-2xl bg-brand-gradient px-5 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-70"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isLoading}
               type="submit"
             >
               {isSubmitting ? 'Registrando...' : universityAdminContent.registerStudentPage.submitLabel}

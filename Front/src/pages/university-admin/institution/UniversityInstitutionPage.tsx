@@ -161,7 +161,8 @@ function validatePasswordField(
 export function UniversityInstitutionPage({
   catalogDataSource = patientRegisterCatalogDataSource,
 }: UniversityInstitutionPageProps) {
-  const { institutionProfile, updateInstitutionProfile } = useUniversityAdminModuleStore();
+  const { changePassword, errorMessage, institutionProfile, isLoading, updateInstitutionProfile } =
+    useUniversityAdminModuleStore();
   const [values, setValues] = useState(() => getInstitutionInitialValues(institutionProfile));
   const [errors, setErrors] = useState<UniversityInstitutionFormErrors>({});
   const [citiesState, setCitiesState] = useState<AsyncCatalogState<CityOption>>(
@@ -387,8 +388,15 @@ export function UniversityInstitutionPage({
       return;
     }
 
-    updateInstitutionProfile(values);
-    setSaveMessage(universityAdminContent.institutionPage.successMessage);
+    void (async () => {
+      const updated = await updateInstitutionProfile(values);
+
+      if (!updated) {
+        return;
+      }
+
+      setSaveMessage(universityAdminContent.institutionPage.successMessage);
+    })();
   };
 
   const handleReset = () => {
@@ -463,8 +471,16 @@ export function UniversityInstitutionPage({
       return;
     }
 
-    setPasswordValues(passwordInitialValues);
-    setPasswordMessage(universityAdminContent.institutionPage.passwordSuccessMessage);
+    void (async () => {
+      const updated = await changePassword(passwordValues);
+
+      if (!updated) {
+        return;
+      }
+
+      setPasswordValues(passwordInitialValues);
+      setPasswordMessage(universityAdminContent.institutionPage.passwordSuccessMessage);
+    })();
   };
 
   const cityPlaceholder =
@@ -505,6 +521,14 @@ export function UniversityInstitutionPage({
           paddingClassName="p-3.5"
         >
           <p role="status">{saveMessage}</p>
+        </SurfaceCard>
+      ) : null}
+      {errorMessage ? (
+        <SurfaceCard
+          className="border border-rose-200 bg-rose-50/90 text-sm font-medium text-rose-800"
+          paddingClassName="p-3.5"
+        >
+          <p role="alert">{errorMessage}</p>
         </SurfaceCard>
       ) : null}
       <AdminPanelCard className="flex-1" panelClassName="bg-slate-50">
@@ -790,6 +814,7 @@ export function UniversityInstitutionPage({
                           <div className="flex justify-end">
                             <button
                               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-5 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
+                              disabled={isLoading}
                               type="submit"
                             >
                               <Save aria-hidden="true" className="h-4 w-4" />
@@ -806,6 +831,7 @@ export function UniversityInstitutionPage({
           <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-200/80 bg-white px-6 py-4 sm:px-7">
             <button
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-ink transition duration-300 hover:bg-slate-100"
+              disabled={isLoading}
               type="button"
               onClick={handleReset}
             >
@@ -814,6 +840,7 @@ export function UniversityInstitutionPage({
             </button>
             <button
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-5 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
+              disabled={isLoading}
               type="button"
               onClick={() => handleInstitutionSubmit()}
             >

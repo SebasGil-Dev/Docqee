@@ -29,7 +29,7 @@ function formatDocumentLabel(documentTypeCode: string, documentNumber: string) {
 }
 
 export function UniversityStudentsPage() {
-  const { students, toggleStudentStatus } = useUniversityAdminModuleStore();
+  const { errorMessage, isLoading, students, toggleStudentStatus } = useUniversityAdminModuleStore();
   const [searchTerm, setSearchTerm] = useState('');
   const location = useLocation();
   const navigate = useNavigate();
@@ -84,6 +84,14 @@ export function UniversityStudentsPage() {
             </span>{' '}
             {successNotice}
           </p>
+        </SurfaceCard>
+      ) : null}
+      {errorMessage ? (
+        <SurfaceCard
+          className="border border-rose-200 bg-rose-50/90 text-sm font-medium text-rose-800"
+          paddingClassName="p-3.5"
+        >
+          <p role="alert">{errorMessage}</p>
         </SurfaceCard>
       ) : null}
       <div className="flex flex-col gap-3 md:flex-row md:items-stretch">
@@ -226,7 +234,9 @@ export function UniversityStudentsPage() {
                               : 'bg-primary/10 text-primary hover:bg-primary/15',
                           )}
                           type="button"
-                          onClick={() => toggleStudentStatus(student.id)}
+                          onClick={() => {
+                            void toggleStudentStatus(student.id);
+                          }}
                         >
                           {student.status === 'active' ? (
                             <PowerOff aria-hidden="true" className="h-3.5 w-3.5" />
@@ -249,7 +259,7 @@ export function UniversityStudentsPage() {
         ) : (
           <div className="px-4 py-8 text-center sm:px-5">
             <p className="text-sm font-medium text-ink-muted">
-              {universityAdminContent.studentsPage.emptyState}
+              {isLoading ? 'Cargando estudiantes...' : universityAdminContent.studentsPage.emptyState}
             </p>
           </div>
         )}

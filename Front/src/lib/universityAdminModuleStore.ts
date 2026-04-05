@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 
 import type {
   DocumentTypeOption,
@@ -9,11 +9,30 @@ import type {
   UniversityBulkTemplateType,
   UniversityInstitutionFormValues,
   UniversityInstitutionProfile,
+  UniversityPasswordFormValues,
   UniversityStudent,
   UniversityStudentCredential,
   UniversityTeacher,
 } from '@/content/types';
+import { IS_TEST_MODE } from '@/lib/apiClient';
 import { patientRegisterCatalogDataSource } from '@/lib/patientRegisterCatalogDataSource';
+import {
+  changeUniversityAdminPassword,
+  createUniversityStudent,
+  createUniversityTeacher,
+  deleteUniversityStudentCredential,
+  editUniversityStudentCredentialEmail,
+  getUniversityAdminProfile,
+  listUniversityStudentCredentials,
+  listUniversityStudents,
+  listUniversityTeachers,
+  resendUniversityStudentCredential,
+  sendAllUniversityStudentCredentials,
+  sendUniversityStudentCredential,
+  toggleUniversityStudentStatus,
+  toggleUniversityTeacherStatus,
+  updateUniversityAdminProfile,
+} from '@/lib/universityAdminApi';
 
 type BulkProcessResult = {
   createdCredentials: number;
@@ -22,27 +41,35 @@ type BulkProcessResult = {
 };
 
 type UniversityAdminModuleActions = {
-  deleteStudentCredential: (credentialId: string) => void;
-  editStudentCredentialEmail: (credentialId: string, email: string) => boolean;
-  processBulkUpload: (templateType: UniversityBulkTemplateType) => BulkProcessResult;
-  registerStudent: (values: RegisterStudentFormValues) => {
+  changePassword: (values: UniversityPasswordFormValues) => Promise<boolean>;
+  deleteStudentCredential: (credentialId: string) => Promise<boolean>;
+  editStudentCredentialEmail: (credentialId: string, email: string) => Promise<boolean>;
+  processBulkUpload: (templateType: UniversityBulkTemplateType) => Promise<BulkProcessResult | null>;
+  refresh: () => Promise<void>;
+  registerStudent: (values: RegisterStudentFormValues) => Promise<{
     credentialId: string;
     studentId: string;
-  };
-  registerTeacher: (values: RegisterTeacherFormValues) => {
+  } | null>;
+  registerTeacher: (values: RegisterTeacherFormValues) => Promise<{
     teacherId: string;
-  };
-  resendStudentCredential: (credentialId: string) => void;
-  sendAllStudentCredentials: () => number;
-  sendStudentCredential: (credentialId: string) => void;
-  toggleStudentStatus: (studentId: string) => PersonOperationalStatus | null;
-  toggleTeacherStatus: (teacherId: string) => PersonOperationalStatus | null;
-  updateInstitutionProfile: (values: UniversityInstitutionFormValues) => void;
+  } | null>;
+  resendStudentCredential: (credentialId: string) => Promise<string | null>;
+  sendAllStudentCredentials: () => Promise<number>;
+  sendStudentCredential: (credentialId: string) => Promise<string | null>;
+  toggleStudentStatus: (studentId: string) => Promise<PersonOperationalStatus | null>;
+  toggleTeacherStatus: (teacherId: string) => Promise<PersonOperationalStatus | null>;
+  updateInstitutionProfile: (values: UniversityInstitutionFormValues) => Promise<boolean>;
 };
 
 const listeners = new Set<() => void>();
 
-function createInitialState(): UniversityAdminModuleState {
+type UniversityAdminStoreState = UniversityAdminModuleState & {
+  errorMessage: string | null;
+  isLoading: boolean;
+  isReady: boolean;
+};
+
+function createMockState(): UniversityAdminStoreState {
   const institutionProfile: UniversityInstitutionProfile = {
     adminEmail: 'coordinacion@clinicadelnorte.edu.co',
     adminPhone: '3005550134',
@@ -175,16 +202,50 @@ function createInitialState(): UniversityAdminModuleState {
 
   return {
     credentials,
+    errorMessage: null,
     institutionProfile,
+    isLoading: false,
+    isReady: true,
     students,
     teachers,
   };
 }
 
-let state = createInitialState();
-let nextStudentSequence = state.students.length + 1;
-let nextTeacherSequence = state.teachers.length + 1;
-let nextCredentialSequence = state.credentials.length + 1;
+function createRuntimeInitialState(): UniversityAdminStoreState {
+  return {
+    credentials: [],
+    errorMessage: null,
+    institutionProfile: {
+      adminEmail: '',
+      adminPhone: '',
+      id: '',
+      logoAlt: 'Logo institucional',
+      logoFileName: null,
+      logoSrc: null,
+      mainCity: '',
+      mainCityId: '',
+      mainLocality: '',
+      mainLocalityId: '',
+      name: '',
+    },
+    isLoading: false,
+    isReady: false,
+    students: [],
+    teachers: [],
+  };
+}
+
+function getErrorMessage(error: unknown, fallbackMessage: string) {
+  return error instanceof Error ? error.message : fallbackMessage;
+}
+
+const initialMockState = createMockState();
+
+let state = IS_TEST_MODE ? createMockState() : createRuntimeInitialState();
+let nextStudentSequence = initialMockState.students.length + 1;
+let nextTeacherSequence = initialMockState.teachers.length + 1;
+let nextCredentialSequence = initialMockState.credentials.length + 1;
+let runtimeLoadPromise: Promise<UniversityAdminStoreState> | null = null;
 
 function emitChange() {
   listeners.forEach((listener) => {
@@ -204,9 +265,16 @@ function getSnapshot() {
   return state;
 }
 
-function updateState(nextState: UniversityAdminModuleState) {
+function updateState(nextState: UniversityAdminStoreState) {
   state = nextState;
   emitChange();
+}
+
+function patchState(partialState: Partial<UniversityAdminStoreState>) {
+  updateState({
+    ...state,
+    ...partialState,
+  });
 }
 
 function normalizeText(value: string) {
@@ -267,7 +335,7 @@ function markStudentCredentialAsSent(credentialId: string) {
   });
 }
 
-function registerStudent(values: RegisterStudentFormValues) {
+function registerStudentMock(values: RegisterStudentFormValues) {
   const studentId = `student-${nextStudentSequence}`;
   const credentialId = `student-cred-${nextCredentialSequence}`;
   const documentType = createStudentDocumentType(values.documentTypeId);
@@ -310,7 +378,7 @@ function registerStudent(values: RegisterStudentFormValues) {
   };
 }
 
-function registerTeacher(values: RegisterTeacherFormValues) {
+function registerTeacherMock(values: RegisterTeacherFormValues) {
   const teacherId = `teacher-${nextTeacherSequence}`;
   const documentType = getDocumentTypeById(values.documentTypeId);
 
@@ -337,7 +405,7 @@ function registerTeacher(values: RegisterTeacherFormValues) {
   };
 }
 
-function toggleStudentStatus(studentId: string) {
+function toggleStudentStatusMock(studentId: string) {
   const currentStudent = state.students.find((student) => student.id === studentId);
 
   if (!currentStudent) {
@@ -357,7 +425,7 @@ function toggleStudentStatus(studentId: string) {
   return nextStatus;
 }
 
-function toggleTeacherStatus(teacherId: string) {
+function toggleTeacherStatusMock(teacherId: string) {
   const currentTeacher = state.teachers.find((teacher) => teacher.id === teacherId);
 
   if (!currentTeacher) {
@@ -377,15 +445,17 @@ function toggleTeacherStatus(teacherId: string) {
   return nextStatus;
 }
 
-function sendStudentCredential(credentialId: string) {
+function sendStudentCredentialMock(credentialId: string) {
   markStudentCredentialAsSent(credentialId);
+  return 'TempStudent123!';
 }
 
-function resendStudentCredential(credentialId: string) {
+function resendStudentCredentialMock(credentialId: string) {
   markStudentCredentialAsSent(credentialId);
+  return 'TempStudent123!';
 }
 
-function sendAllStudentCredentials() {
+function sendAllStudentCredentialsMock() {
   const generatedCredentials = state.credentials.filter(
     (credential) => credential.deliveryStatus === 'generated',
   );
@@ -411,7 +481,7 @@ function sendAllStudentCredentials() {
   return generatedCredentials.length;
 }
 
-function editStudentCredentialEmail(credentialId: string, email: string) {
+function editStudentCredentialEmailMock(credentialId: string, email: string) {
   const credential = state.credentials.find((item) => item.id === credentialId);
 
   if (!credential) {
@@ -433,7 +503,7 @@ function editStudentCredentialEmail(credentialId: string, email: string) {
   return true;
 }
 
-function deleteStudentCredential(credentialId: string) {
+function deleteStudentCredentialMock(credentialId: string) {
   const credential = state.credentials.find((item) => item.id === credentialId);
 
   if (!credential) {
@@ -449,7 +519,7 @@ function deleteStudentCredential(credentialId: string) {
   });
 }
 
-function updateInstitutionProfile(values: UniversityInstitutionFormValues) {
+function updateInstitutionProfileMock(values: UniversityInstitutionFormValues) {
   const city = getCityById(values.cityId);
   const locality = getLocalityById(values.cityId, values.mainLocalityId);
 
@@ -527,7 +597,7 @@ function buildMockTeacher(sequence: number) {
   } satisfies UniversityTeacher;
 }
 
-function processBulkUpload(templateType: UniversityBulkTemplateType) {
+function processBulkUploadMock(templateType: UniversityBulkTemplateType) {
   if (templateType === 'students') {
     const createdStudents = [buildMockStudent(nextStudentSequence), buildMockStudent(nextStudentSequence + 1)];
 
@@ -565,21 +635,404 @@ function processBulkUpload(templateType: UniversityBulkTemplateType) {
   };
 }
 
+async function loadRuntimeState(forceRefresh = false) {
+  if (IS_TEST_MODE) {
+    return state;
+  }
+
+  if (state.isReady && !forceRefresh) {
+    return state;
+  }
+
+  if (runtimeLoadPromise) {
+    return runtimeLoadPromise;
+  }
+
+  patchState({
+    errorMessage: null,
+    isLoading: true,
+  });
+
+  runtimeLoadPromise = Promise.all([
+    getUniversityAdminProfile(),
+    listUniversityStudents(),
+    listUniversityTeachers(),
+    listUniversityStudentCredentials(),
+  ])
+    .then(([institutionProfile, students, teachers, credentials]) => {
+      updateState({
+        credentials,
+        errorMessage: null,
+        institutionProfile,
+        isLoading: false,
+        isReady: true,
+        students,
+        teachers,
+      });
+
+      return state;
+    })
+    .catch((error) => {
+      patchState({
+        errorMessage: getErrorMessage(error, 'No pudimos cargar el modulo universitario.'),
+        isLoading: false,
+      });
+
+      return state;
+    })
+    .finally(() => {
+      runtimeLoadPromise = null;
+    });
+
+  return runtimeLoadPromise;
+}
+
+async function refreshRuntimeState() {
+  await loadRuntimeState(true);
+}
+
+async function registerStudent(values: RegisterStudentFormValues) {
+  if (IS_TEST_MODE) {
+    return registerStudentMock(values);
+  }
+
+  patchState({
+    errorMessage: null,
+    isLoading: true,
+  });
+
+  try {
+    const student = await createUniversityStudent(values);
+    await refreshRuntimeState();
+
+    return {
+      credentialId: student.credentialId ?? '',
+      studentId: student.id,
+    };
+  } catch (error) {
+    patchState({
+      errorMessage: getErrorMessage(error, 'No pudimos registrar el estudiante.'),
+      isLoading: false,
+    });
+    return null;
+  }
+}
+
+async function registerTeacher(values: RegisterTeacherFormValues) {
+  if (IS_TEST_MODE) {
+    return registerTeacherMock(values);
+  }
+
+  patchState({
+    errorMessage: null,
+    isLoading: true,
+  });
+
+  try {
+    const teacher = await createUniversityTeacher(values);
+    await refreshRuntimeState();
+
+    return {
+      teacherId: teacher.id,
+    };
+  } catch (error) {
+    patchState({
+      errorMessage: getErrorMessage(error, 'No pudimos registrar el docente.'),
+      isLoading: false,
+    });
+    return null;
+  }
+}
+
+async function toggleStudentStatus(studentId: string) {
+  if (IS_TEST_MODE) {
+    return toggleStudentStatusMock(studentId);
+  }
+
+  patchState({
+    errorMessage: null,
+    isLoading: true,
+  });
+
+  try {
+    const result = await toggleUniversityStudentStatus(studentId);
+
+    updateState({
+      ...state,
+      isLoading: false,
+      isReady: true,
+      students: state.students.map((student) =>
+        student.id === result.studentId ? { ...student, status: result.status } : student,
+      ),
+    });
+
+    return result.status;
+  } catch (error) {
+    patchState({
+      errorMessage: getErrorMessage(error, 'No pudimos actualizar el estado del estudiante.'),
+      isLoading: false,
+    });
+    return null;
+  }
+}
+
+async function toggleTeacherStatus(teacherId: string) {
+  if (IS_TEST_MODE) {
+    return toggleTeacherStatusMock(teacherId);
+  }
+
+  patchState({
+    errorMessage: null,
+    isLoading: true,
+  });
+
+  try {
+    const result = await toggleUniversityTeacherStatus(teacherId);
+
+    updateState({
+      ...state,
+      isLoading: false,
+      isReady: true,
+      teachers: state.teachers.map((teacher) =>
+        teacher.id === result.teacherId ? { ...teacher, status: result.status } : teacher,
+      ),
+    });
+
+    return result.status;
+  } catch (error) {
+    patchState({
+      errorMessage: getErrorMessage(error, 'No pudimos actualizar el estado del docente.'),
+      isLoading: false,
+    });
+    return null;
+  }
+}
+
+async function sendStudentCredential(credentialId: string) {
+  if (IS_TEST_MODE) {
+    return sendStudentCredentialMock(credentialId);
+  }
+
+  patchState({
+    errorMessage: null,
+    isLoading: true,
+  });
+
+  try {
+    const result = await sendUniversityStudentCredential(credentialId);
+    await refreshRuntimeState();
+    return result.temporaryPassword;
+  } catch (error) {
+    patchState({
+      errorMessage: getErrorMessage(error, 'No pudimos enviar la credencial del estudiante.'),
+      isLoading: false,
+    });
+    return null;
+  }
+}
+
+async function resendStudentCredential(credentialId: string) {
+  if (IS_TEST_MODE) {
+    return resendStudentCredentialMock(credentialId);
+  }
+
+  patchState({
+    errorMessage: null,
+    isLoading: true,
+  });
+
+  try {
+    const result = await resendUniversityStudentCredential(credentialId);
+    await refreshRuntimeState();
+    return result.temporaryPassword;
+  } catch (error) {
+    patchState({
+      errorMessage: getErrorMessage(error, 'No pudimos reenviar la credencial del estudiante.'),
+      isLoading: false,
+    });
+    return null;
+  }
+}
+
+async function sendAllStudentCredentials() {
+  if (IS_TEST_MODE) {
+    return sendAllStudentCredentialsMock();
+  }
+
+  patchState({
+    errorMessage: null,
+    isLoading: true,
+  });
+
+  try {
+    const result = await sendAllUniversityStudentCredentials();
+    await refreshRuntimeState();
+    return result.sentCount;
+  } catch (error) {
+    patchState({
+      errorMessage: getErrorMessage(error, 'No pudimos enviar las credenciales pendientes.'),
+      isLoading: false,
+    });
+    return 0;
+  }
+}
+
+async function editStudentCredentialEmail(credentialId: string, email: string) {
+  if (IS_TEST_MODE) {
+    return editStudentCredentialEmailMock(credentialId, email);
+  }
+
+  patchState({
+    errorMessage: null,
+    isLoading: true,
+  });
+
+  try {
+    await editUniversityStudentCredentialEmail(credentialId, email);
+    const credential = state.credentials.find((item) => item.id === credentialId);
+
+    updateState({
+      ...state,
+      isLoading: false,
+      isReady: true,
+      students: state.students.map((student) =>
+        student.id === credential?.studentId ? { ...student, email: email.trim().toLowerCase() } : student,
+      ),
+    });
+
+    return true;
+  } catch (error) {
+    patchState({
+      errorMessage: getErrorMessage(error, 'No pudimos actualizar el correo del estudiante.'),
+      isLoading: false,
+    });
+    return false;
+  }
+}
+
+async function deleteStudentCredential(credentialId: string) {
+  if (IS_TEST_MODE) {
+    deleteStudentCredentialMock(credentialId);
+    return true;
+  }
+
+  patchState({
+    errorMessage: null,
+    isLoading: true,
+  });
+
+  try {
+    await deleteUniversityStudentCredential(credentialId);
+    await refreshRuntimeState();
+    return true;
+  } catch (error) {
+    patchState({
+      errorMessage: getErrorMessage(error, 'No pudimos eliminar la credencial del estudiante.'),
+      isLoading: false,
+    });
+    return false;
+  }
+}
+
+async function updateInstitutionProfile(values: UniversityInstitutionFormValues) {
+  if (IS_TEST_MODE) {
+    updateInstitutionProfileMock(values);
+    return true;
+  }
+
+  patchState({
+    errorMessage: null,
+    isLoading: true,
+  });
+
+  try {
+    const institutionProfile = await updateUniversityAdminProfile(values);
+
+    updateState({
+      ...state,
+      errorMessage: null,
+      institutionProfile,
+      isLoading: false,
+      isReady: true,
+    });
+
+    return true;
+  } catch (error) {
+    patchState({
+      errorMessage: getErrorMessage(error, 'No pudimos guardar la informacion institucional.'),
+      isLoading: false,
+    });
+    return false;
+  }
+}
+
+async function changePassword(values: UniversityPasswordFormValues) {
+  if (IS_TEST_MODE) {
+    return true;
+  }
+
+  patchState({
+    errorMessage: null,
+    isLoading: true,
+  });
+
+  try {
+    await changeUniversityAdminPassword(values);
+    patchState({
+      errorMessage: null,
+      isLoading: false,
+      isReady: true,
+    });
+    return true;
+  } catch (error) {
+    patchState({
+      errorMessage: getErrorMessage(error, 'No pudimos actualizar la contrasena.'),
+      isLoading: false,
+    });
+    return false;
+  }
+}
+
+async function processBulkUpload(templateType: UniversityBulkTemplateType) {
+  if (IS_TEST_MODE) {
+    return processBulkUploadMock(templateType);
+  }
+
+  patchState({
+    errorMessage:
+      'La carga masiva aun requiere procesamiento real de archivos y un endpoint dedicado.',
+    isLoading: false,
+  });
+
+  return null;
+}
+
 export function resetUniversityAdminModuleState() {
-  state = createInitialState();
-  nextStudentSequence = state.students.length + 1;
-  nextTeacherSequence = state.teachers.length + 1;
-  nextCredentialSequence = state.credentials.length + 1;
+  state = IS_TEST_MODE ? createMockState() : createRuntimeInitialState();
+  nextStudentSequence = initialMockState.students.length + 1;
+  nextTeacherSequence = initialMockState.teachers.length + 1;
+  nextCredentialSequence = initialMockState.credentials.length + 1;
+  runtimeLoadPromise = null;
   emitChange();
 }
 
 export function useUniversityAdminModuleStore() {
   const snapshot = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
+  useEffect(() => {
+    if (IS_TEST_MODE || snapshot.isLoading || snapshot.isReady) {
+      return;
+    }
+
+    void loadRuntimeState();
+  }, [snapshot.isLoading, snapshot.isReady]);
+
   const actions: UniversityAdminModuleActions = {
+    changePassword,
     deleteStudentCredential,
     editStudentCredentialEmail,
     processBulkUpload,
+    refresh: refreshRuntimeState,
     registerStudent,
     registerTeacher,
     resendStudentCredential,

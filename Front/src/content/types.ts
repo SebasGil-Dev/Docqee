@@ -101,6 +101,7 @@ export type PatientRegisterCatalogDataSource = {
   getDocumentTypes: () => Promise<DocumentTypeOption[]> | DocumentTypeOption[];
   getLocalitiesByCity: (cityId: string) => Promise<LocalityOption[]> | LocalityOption[];
   loadCities?: () => Promise<CityOption[]>;
+  loadDocumentTypes?: () => Promise<DocumentTypeOption[]>;
   loadLocalitiesByCity?: (cityId: string) => Promise<LocalityOption[]>;
 };
 

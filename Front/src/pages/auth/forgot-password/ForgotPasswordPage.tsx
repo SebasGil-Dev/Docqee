@@ -16,6 +16,7 @@ import type {
   ForgotPasswordService,
   RegisterPasswordRuleKey,
 } from '@/content/types';
+import { IS_TEST_MODE } from '@/lib/apiClient';
 import { classNames } from '@/lib/classNames';
 import {
   clearForgotPasswordRecoverySession,
@@ -146,6 +147,7 @@ export function ForgotPasswordPage({ service = forgotPasswordService }: ForgotPa
   const passwordInputRef = useRef<HTMLInputElement>(null);
   const confirmPasswordInputRef = useRef<HTMLInputElement>(null);
   const codeValue = formState.values.codeDigits.join('');
+  const recoverySession = readForgotPasswordRecoverySession();
   const hasConfirmedEmail = Boolean(formState.email);
   const isEmailDirty =
     hasConfirmedEmail && normalizeEmail(formState.values.draftEmail) !== normalizeEmail(formState.email);
@@ -803,6 +805,11 @@ export function ForgotPasswordPage({ service = forgotPasswordService }: ForgotPa
                   {content.codeInstructionsPrefix}{' '}
                   <span className="font-semibold text-primary-strong">{formState.email}</span>
                 </p>
+                {!IS_TEST_MODE && recoverySession?.code ? (
+                  <p className="rounded-[1.1rem] border border-sky-200/80 bg-sky-50/85 px-4 py-2.5 text-[13px] font-medium leading-[1.35rem] text-sky-900 sm:text-sm">
+                    Codigo de prueba para desarrollo: <span className="font-semibold">{recoverySession.code}</span>
+                  </p>
+                ) : null}
               </div>
 
               <form className="space-y-4" noValidate onSubmit={handleVerifyCode}>

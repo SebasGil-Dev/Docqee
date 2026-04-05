@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 
 import type {
   AdminModuleState,
@@ -7,22 +7,38 @@ import type {
   RegisterUniversityFormValues,
   UniversityStatus,
 } from '@/content/types';
+import { IS_TEST_MODE } from '@/lib/apiClient';
 import { patientRegisterCatalogDataSource } from '@/lib/patientRegisterCatalogDataSource';
+import {
+  createPlatformAdminUniversity,
+  deletePlatformAdminCredential,
+  listPlatformAdminCredentials,
+  listPlatformAdminUniversities,
+  resendPlatformAdminCredential,
+  sendPlatformAdminCredential,
+  togglePlatformAdminUniversityStatus,
+} from '@/lib/platformAdminApi';
+
+type AdminModuleStoreState = AdminModuleState & {
+  errorMessage: string | null;
+  isLoading: boolean;
+  isReady: boolean;
+};
 
 type AdminModuleActions = {
-  deleteCredential: (credentialId: string) => void;
-  registerUniversity: (values: RegisterUniversityFormValues) => {
-    credentialId: string;
-    universityId: string;
-  };
-  resendCredential: (credentialId: string) => void;
-  sendCredential: (credentialId: string) => void;
-  toggleUniversityStatus: (universityId: string) => UniversityStatus | null;
+  deleteCredential: (credentialId: string) => Promise<boolean>;
+  refresh: () => Promise<void>;
+  registerUniversity: (
+    values: RegisterUniversityFormValues,
+  ) => Promise<{ credentialId: string; universityId: string } | null>;
+  resendCredential: (credentialId: string) => Promise<string | null>;
+  sendCredential: (credentialId: string) => Promise<string | null>;
+  toggleUniversityStatus: (universityId: string) => Promise<UniversityStatus | null>;
 };
 
 const listeners = new Set<() => void>();
 
-function createInitialState(): AdminModuleState {
+function createMockState(): AdminModuleStoreState {
   const universities: AdminUniversity[] = [
     {
       adminEmail: 'ana.velasquez@clinicadelnorte.edu.co',
@@ -105,13 +121,33 @@ function createInitialState(): AdminModuleState {
 
   return {
     credentials,
+    errorMessage: null,
+    isLoading: false,
+    isReady: true,
     universities,
   };
 }
 
-let state = createInitialState();
-let nextUniversitySequence = state.universities.length + 1;
-let nextCredentialSequence = state.credentials.length + 1;
+function createRuntimeInitialState(): AdminModuleStoreState {
+  return {
+    credentials: [],
+    errorMessage: null,
+    isLoading: false,
+    isReady: false,
+    universities: [],
+  };
+}
+
+function getErrorMessage(error: unknown, fallbackMessage: string) {
+  return error instanceof Error ? error.message : fallbackMessage;
+}
+
+const initialMockState = createMockState();
+
+let state = IS_TEST_MODE ? createMockState() : createRuntimeInitialState();
+let nextUniversitySequence = initialMockState.universities.length + 1;
+let nextCredentialSequence = initialMockState.credentials.length + 1;
+let runtimeLoadPromise: Promise<AdminModuleStoreState> | null = null;
 
 function emitChange() {
   listeners.forEach((listener) => {
@@ -131,9 +167,16 @@ function getSnapshot() {
   return state;
 }
 
-function updateState(nextState: AdminModuleState) {
+function updateState(nextState: AdminModuleStoreState) {
   state = nextState;
   emitChange();
+}
+
+function patchState(partialState: Partial<AdminModuleStoreState>) {
+  updateState({
+    ...state,
+    ...partialState,
+  });
 }
 
 function normalizeText(value: string) {
@@ -165,7 +208,7 @@ function getLocalityById(cityId: string, localityId: string) {
   return localities.find((locality) => locality.id === localityId) ?? null;
 }
 
-function markCredentialAsSent(credentialId: string) {
+function markCredentialAsSentMock(credentialId: string) {
   updateState({
     ...state,
     credentials: state.credentials.map((credential) =>
@@ -181,7 +224,7 @@ function markCredentialAsSent(credentialId: string) {
   });
 }
 
-function registerUniversity(values: RegisterUniversityFormValues) {
+function registerUniversityMock(values: RegisterUniversityFormValues) {
   const universityId = `uni-${nextUniversitySequence}`;
   const credentialId = `cred-${nextCredentialSequence}`;
   const city = getCityById(values.cityId);
@@ -215,6 +258,7 @@ function registerUniversity(values: RegisterUniversityFormValues) {
   };
 
   updateState({
+    ...state,
     credentials: [nextCredential, ...state.credentials],
     universities: [nextUniversity, ...state.universities],
   });
@@ -225,7 +269,7 @@ function registerUniversity(values: RegisterUniversityFormValues) {
   };
 }
 
-function toggleUniversityStatus(universityId: string) {
+function toggleUniversityStatusMock(universityId: string) {
   const currentUniversity = state.universities.find((university) => university.id === universityId);
 
   if (!currentUniversity || currentUniversity.status === 'pending') {
@@ -245,15 +289,17 @@ function toggleUniversityStatus(universityId: string) {
   return nextStatus;
 }
 
-function sendCredential(credentialId: string) {
-  markCredentialAsSent(credentialId);
+function sendCredentialMock(credentialId: string) {
+  markCredentialAsSentMock(credentialId);
+  return 'TempAdmin123!';
 }
 
-function resendCredential(credentialId: string) {
-  markCredentialAsSent(credentialId);
+function resendCredentialMock(credentialId: string) {
+  markCredentialAsSentMock(credentialId);
+  return 'TempAdmin123!';
 }
 
-function deleteCredential(credentialId: string) {
+function deleteCredentialMock(credentialId: string) {
   const currentCredential = state.credentials.find((credential) => credential.id === credentialId);
 
   if (!currentCredential) {
@@ -261,6 +307,7 @@ function deleteCredential(credentialId: string) {
   }
 
   updateState({
+    ...state,
     credentials: state.credentials.filter((credential) => credential.id !== credentialId),
     universities: state.universities.filter(
       (university) =>
@@ -273,18 +320,209 @@ function deleteCredential(credentialId: string) {
   });
 }
 
+async function loadRuntimeState(forceRefresh = false) {
+  if (IS_TEST_MODE) {
+    return state;
+  }
+
+  if (state.isReady && !forceRefresh) {
+    return state;
+  }
+
+  if (runtimeLoadPromise) {
+    return runtimeLoadPromise;
+  }
+
+  patchState({
+    errorMessage: null,
+    isLoading: true,
+  });
+
+  runtimeLoadPromise = Promise.all([
+    listPlatformAdminUniversities(),
+    listPlatformAdminCredentials(),
+  ])
+    .then(([universities, credentials]) => {
+      updateState({
+        credentials,
+        errorMessage: null,
+        isLoading: false,
+        isReady: true,
+        universities,
+      });
+
+      return state;
+    })
+    .catch((error) => {
+      patchState({
+        errorMessage: getErrorMessage(error, 'No pudimos cargar el modulo administrativo.'),
+        isLoading: false,
+      });
+
+      return state;
+    })
+    .finally(() => {
+      runtimeLoadPromise = null;
+    });
+
+  return runtimeLoadPromise;
+}
+
+async function refreshRuntimeState() {
+  await loadRuntimeState(true);
+}
+
+async function registerUniversity(values: RegisterUniversityFormValues) {
+  if (IS_TEST_MODE) {
+    return registerUniversityMock(values);
+  }
+
+  patchState({
+    errorMessage: null,
+    isLoading: true,
+  });
+
+  try {
+    const university = await createPlatformAdminUniversity(values);
+    await refreshRuntimeState();
+
+    return {
+      credentialId: university.credentialId ?? '',
+      universityId: university.id,
+    };
+  } catch (error) {
+    patchState({
+      errorMessage: getErrorMessage(error, 'No pudimos registrar la universidad.'),
+      isLoading: false,
+    });
+    return null;
+  }
+}
+
+async function toggleUniversityStatus(universityId: string) {
+  if (IS_TEST_MODE) {
+    return toggleUniversityStatusMock(universityId);
+  }
+
+  patchState({
+    errorMessage: null,
+    isLoading: true,
+  });
+
+  try {
+    const updatedUniversity = await togglePlatformAdminUniversityStatus(universityId);
+
+    updateState({
+      ...state,
+      isLoading: false,
+      isReady: true,
+      universities: state.universities.map((university) =>
+        university.id === updatedUniversity.id ? updatedUniversity : university,
+      ),
+    });
+
+    return updatedUniversity.status;
+  } catch (error) {
+    patchState({
+      errorMessage: getErrorMessage(error, 'No pudimos actualizar el estado de la universidad.'),
+      isLoading: false,
+    });
+    return null;
+  }
+}
+
+async function sendCredential(credentialId: string) {
+  if (IS_TEST_MODE) {
+    return sendCredentialMock(credentialId);
+  }
+
+  patchState({
+    errorMessage: null,
+    isLoading: true,
+  });
+
+  try {
+    const result = await sendPlatformAdminCredential(credentialId);
+    await refreshRuntimeState();
+    return result.temporaryPassword;
+  } catch (error) {
+    patchState({
+      errorMessage: getErrorMessage(error, 'No pudimos enviar la credencial.'),
+      isLoading: false,
+    });
+    return null;
+  }
+}
+
+async function resendCredential(credentialId: string) {
+  if (IS_TEST_MODE) {
+    return resendCredentialMock(credentialId);
+  }
+
+  patchState({
+    errorMessage: null,
+    isLoading: true,
+  });
+
+  try {
+    const result = await resendPlatformAdminCredential(credentialId);
+    await refreshRuntimeState();
+    return result.temporaryPassword;
+  } catch (error) {
+    patchState({
+      errorMessage: getErrorMessage(error, 'No pudimos reenviar la credencial.'),
+      isLoading: false,
+    });
+    return null;
+  }
+}
+
+async function deleteCredential(credentialId: string) {
+  if (IS_TEST_MODE) {
+    deleteCredentialMock(credentialId);
+    return true;
+  }
+
+  patchState({
+    errorMessage: null,
+    isLoading: true,
+  });
+
+  try {
+    await deletePlatformAdminCredential(credentialId);
+    await refreshRuntimeState();
+    return true;
+  } catch (error) {
+    patchState({
+      errorMessage: getErrorMessage(error, 'No pudimos eliminar la credencial.'),
+      isLoading: false,
+    });
+    return false;
+  }
+}
+
 export function resetAdminModuleState() {
-  state = createInitialState();
-  nextUniversitySequence = state.universities.length + 1;
-  nextCredentialSequence = state.credentials.length + 1;
+  state = IS_TEST_MODE ? createMockState() : createRuntimeInitialState();
+  nextUniversitySequence = initialMockState.universities.length + 1;
+  nextCredentialSequence = initialMockState.credentials.length + 1;
+  runtimeLoadPromise = null;
   emitChange();
 }
 
 export function useAdminModuleStore() {
   const snapshot = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
+  useEffect(() => {
+    if (IS_TEST_MODE || snapshot.isLoading || snapshot.isReady) {
+      return;
+    }
+
+    void loadRuntimeState();
+  }, [snapshot.isLoading, snapshot.isReady]);
+
   const actions: AdminModuleActions = {
     deleteCredential,
+    refresh: refreshRuntimeState,
     registerUniversity,
     resendCredential,
     sendCredential,

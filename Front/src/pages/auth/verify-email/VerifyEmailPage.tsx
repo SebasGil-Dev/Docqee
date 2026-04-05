@@ -10,11 +10,13 @@ import { Seo } from '@/components/ui/Seo';
 import { ROUTES } from '@/constants/routes';
 import { authContent } from '@/content/authContent';
 import type { VerifyEmailFormState, VerifyEmailService } from '@/content/types';
+import { IS_TEST_MODE } from '@/lib/apiClient';
 import { classNames } from '@/lib/classNames';
 import {
   clearPendingVerificationEmail,
   clearVerifyEmailCooldown,
   persistPendingVerificationEmail,
+  readVerifyEmailDebugCode,
   persistVerifyEmailCooldown,
   readPendingVerificationEmail,
   readVerifyEmailCooldownSeconds,
@@ -52,6 +54,7 @@ export function VerifyEmailPage({ service = verifyEmailService }: VerifyEmailPag
   const storedEmail = useMemo(() => readPendingVerificationEmail()?.trim() ?? '', []);
   const verificationEmail = emailFromState || storedEmail;
   const displayEmail = verificationEmail || content.emailFallback;
+  const debugCode = readVerifyEmailDebugCode();
   const [formState, setFormState] = useState<VerifyEmailFormState>({
     errors: {},
     status: 'idle',
@@ -264,6 +267,11 @@ export function VerifyEmailPage({ service = verifyEmailService }: VerifyEmailPag
               {!verificationEmail ? (
                 <p className="rounded-[1.1rem] border border-amber-200/80 bg-amber-50/85 px-4 py-2.5 text-[13px] font-medium leading-[1.35rem] text-amber-900 sm:text-sm">
                   {content.emailRequiredMessage}
+                </p>
+              ) : null}
+              {!IS_TEST_MODE && debugCode ? (
+                <p className="rounded-[1.1rem] border border-sky-200/80 bg-sky-50/85 px-4 py-2.5 text-[13px] font-medium leading-[1.35rem] text-sky-900 sm:text-sm">
+                  Codigo de prueba para desarrollo: <span className="font-semibold">{debugCode}</span>
                 </p>
               ) : null}
             </div>

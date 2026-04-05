@@ -24,7 +24,7 @@ function getEnvValue(key: string) {
 const API_BASE_URL = (getEnvValue('VITE_API_URL') ?? 'http://localhost:3000').replace(/\/+$/, '');
 const IS_TEST_MODE = getEnvValue('MODE') === 'test';
 
-const documentTypes: DocumentTypeOption[] = [
+const fallbackDocumentTypes: DocumentTypeOption[] = [
   {
     code: 'CC',
     id: 'document-cc',
@@ -139,11 +139,14 @@ const fallbackLocalities: LocalityOption[] = [
 ];
 
 let citiesCache = [...fallbackCities];
+let documentTypesCache = [...fallbackDocumentTypes];
 const localitiesCache = new Map<string, LocalityOption[]>();
 const backendCityIdByFrontendId = new Map<string, number>();
 const cityLabelByFrontendId = new Map<string, string>();
 let citiesRequestPromise: Promise<CityOption[]> | null = null;
+let documentTypesRequestPromise: Promise<DocumentTypeOption[]> | null = null;
 let areCitiesLoadedFromApi = false;
+let areDocumentTypesLoadedFromApi = false;
 const loadedLocalityCityIds = new Set<string>();
 const localityRequestPromiseByCityId = new Map<string, Promise<LocalityOption[]>>();
 
@@ -187,6 +190,10 @@ function buildCityId(cityName: string) {
 
 function buildLocalityId(cityName: string, localityName: string) {
   return `locality-${toSlug(cityName)}-${toSlug(localityName)}`;
+}
+
+function buildDocumentTypeId(documentTypeCode: string) {
+  return `document-${toSlug(documentTypeCode)}`;
 }
 
 function getFallbackLocalitiesByCity(cityId: string) {
@@ -245,6 +252,22 @@ function cacheCities(options: CatalogApiOption[]) {
   refreshCityLabelCache(citiesCache);
 }
 
+function cacheDocumentTypes(options: CatalogApiOption[]) {
+  const nextDocumentTypes = options.map((option) => {
+    const [codePart, labelPart] = normalizeText(option.name).split('|');
+    const code = normalizeText(codePart ?? option.name).toUpperCase();
+    const label = normalizeText(labelPart ?? option.name);
+
+    return {
+      code,
+      id: buildDocumentTypeId(code),
+      label,
+    } satisfies DocumentTypeOption;
+  });
+
+  documentTypesCache = nextDocumentTypes.length > 0 ? nextDocumentTypes : [...fallbackDocumentTypes];
+}
+
 function ensureCitiesLoaded() {
   if (areCitiesLoadedFromApi) {
     return Promise.resolve(getCities());
@@ -269,6 +292,30 @@ function ensureCitiesLoaded() {
   return citiesRequestPromise;
 }
 
+function ensureDocumentTypesLoaded() {
+  if (areDocumentTypesLoadedFromApi) {
+    return Promise.resolve(getDocumentTypes());
+  }
+
+  if (documentTypesRequestPromise) {
+    return documentTypesRequestPromise;
+  }
+
+  documentTypesRequestPromise = fetchCatalogOptions('/catalogs/document-types')
+    .then((options) => {
+      cacheDocumentTypes(options);
+      areDocumentTypesLoadedFromApi = true;
+
+      return getDocumentTypes();
+    })
+    .catch(() => getDocumentTypes())
+    .finally(() => {
+      documentTypesRequestPromise = null;
+    });
+
+  return documentTypesRequestPromise;
+}
+
 async function resolveBackendCityId(cityId: string) {
   if (/^\d+$/.test(cityId)) {
     return Number(cityId);
@@ -290,6 +337,14 @@ async function loadCities() {
   }
 
   return ensureCitiesLoaded();
+}
+
+async function loadDocumentTypes() {
+  if (IS_TEST_MODE) {
+    return getDocumentTypes();
+  }
+
+  return ensureDocumentTypesLoaded();
 }
 
 async function loadLocalitiesByCity(cityId: string) {
@@ -343,16 +398,19 @@ function getCities() {
   return citiesCache;
 }
 
+function getDocumentTypes() {
+  return documentTypesCache;
+}
+
 function getLocalitiesByCity(cityId: string) {
   return getCachedLocalitiesByCity(cityId);
 }
 
 export const patientRegisterCatalogDataSource: PatientRegisterCatalogDataSource = {
   getCities,
-  getDocumentTypes() {
-    return documentTypes;
-  },
+  getDocumentTypes,
   getLocalitiesByCity,
   loadCities,
+  loadDocumentTypes,
   loadLocalitiesByCity,
 };

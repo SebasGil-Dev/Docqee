@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
+import { useAuth } from '@/app/providers/AuthProvider';
 import { LogoMark } from '@/components/ui/LogoMark';
 import { ROUTES } from '@/constants/routes';
 import { adminContent } from '@/content/adminContent';
@@ -49,10 +50,13 @@ function getStoredSidebarState() {
 }
 
 export function AdminShell({ children, content = adminContent.shell }: AdminShellProps) {
+  const { logout, session } = useAuth();
   const location = useLocation();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(getStoredSidebarState);
-  const adminInitials = `${content.adminUser.firstName.charAt(0)}${content.adminUser.lastName.charAt(0)}`.toUpperCase();
-  const adminFullName = `${content.adminUser.firstName} ${content.adminUser.lastName}`;
+  const adminFirstName = session?.user.firstName ?? content.adminUser.firstName;
+  const adminLastName = session?.user.lastName ?? content.adminUser.lastName;
+  const adminInitials = `${adminFirstName.charAt(0)}${adminLastName.charAt(0)}`.toUpperCase();
+  const adminFullName = `${adminFirstName} ${adminLastName}`;
   const sidebarToggleLabel = isSidebarCollapsed ? 'Abrir menu lateral' : 'Cerrar menu lateral';
   const homePath = content.homePath ?? ROUTES.home;
 
@@ -206,6 +210,7 @@ export function AdminShell({ children, content = adminContent.shell }: AdminShel
                     )}
                     title={isSidebarCollapsed ? content.logoutCta.label : undefined}
                     to={content.logoutCta.to}
+                    onClick={() => logout()}
                   >
                     <LogOut aria-hidden="true" className="h-4.5 w-4.5 shrink-0" />
                     <span

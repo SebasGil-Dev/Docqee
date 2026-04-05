@@ -1,4 +1,5 @@
 import { Mail, RotateCcw, Send, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
@@ -27,8 +28,9 @@ function formatLastSentAt(value: string | null) {
 }
 
 export function AdminCredentialsPage() {
-  const { credentials, deleteCredential, resendCredential, sendCredential, universities } =
+  const { credentials, deleteCredential, errorMessage, isLoading, resendCredential, sendCredential, universities } =
     useAdminModuleStore();
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
 
   const credentialRows: CredentialRow[] = credentials
     .map((credential) => {
@@ -60,6 +62,16 @@ export function AdminCredentialsPage() {
         eyebrow={adminContent.credentialsPage.eyebrow}
         title={adminContent.credentialsPage.title}
       />
+      {feedbackMessage ? (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800" role="status">
+          {feedbackMessage}
+        </div>
+      ) : null}
+      {errorMessage ? (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700" role="alert">
+          {errorMessage}
+        </div>
+      ) : null}
       <AdminPanelCard className="flex-1" panelClassName="bg-white">
         <div className="border-b border-slate-200/80 px-6 py-6 sm:px-7">
           <h2 className="font-headline text-2xl font-extrabold tracking-tight text-ink">
@@ -125,11 +137,26 @@ export function AdminCredentialsPage() {
                                   : 'bg-sky-50 text-sky-700 hover:bg-sky-100',
                               )}
                               type="button"
-                              onClick={() =>
-                                isGenerated
-                                  ? sendCredential(credential.id)
-                                  : resendCredential(credential.id)
-                              }
+                              onClick={() => {
+                                void (async () => {
+                                  if (isGenerated) {
+                                    const temporaryPassword = await sendCredential(credential.id);
+                                    if (temporaryPassword) {
+                                      setFeedbackMessage(
+                                        `Credencial enviada. Contrasena temporal: ${temporaryPassword}`,
+                                      );
+                                    }
+                                    return;
+                                  }
+
+                                  const temporaryPassword = await resendCredential(credential.id);
+                                  if (temporaryPassword) {
+                                    setFeedbackMessage(
+                                      `Credencial reenviada. Contrasena temporal: ${temporaryPassword}`,
+                                    );
+                                  }
+                                })();
+                              }}
                             >
                               {isGenerated ? (
                                 <Send aria-hidden="true" className="h-4 w-4" />
@@ -145,7 +172,15 @@ export function AdminCredentialsPage() {
                             <button
                               className="inline-flex items-center gap-2 rounded-full bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 transition duration-200 hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200/70"
                               type="button"
-                              onClick={() => deleteCredential(credential.id)}
+                              onClick={() => {
+                                void (async () => {
+                                  const deleted = await deleteCredential(credential.id);
+
+                                  if (deleted) {
+                                    setFeedbackMessage('La credencial pendiente se elimino correctamente.');
+                                  }
+                                })();
+                              }}
                             >
                               <Trash2 aria-hidden="true" className="h-4 w-4" />
                               <span>{adminContent.credentialsPage.actionLabels.delete}</span>
@@ -163,7 +198,7 @@ export function AdminCredentialsPage() {
         ) : (
           <div className="px-6 py-10 text-center sm:px-7">
             <p className="text-sm font-medium text-ink-muted">
-              {adminContent.credentialsPage.emptyState}
+              {isLoading ? 'Cargando credenciales...' : adminContent.credentialsPage.emptyState}
             </p>
           </div>
         )}
