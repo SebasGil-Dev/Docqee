@@ -234,18 +234,18 @@ export function StudentAgendaPage() {
   };
 
   return (
-    <div className="mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-3 overflow-hidden 2xl:max-w-[96rem]">
+    <div className="mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-2.5 overflow-hidden 2xl:max-w-[96rem]">
       <Seo
         description={studentContent.agendaPage.meta.description}
         noIndex
         title={studentContent.agendaPage.meta.title}
       />
       <AdminPageHeader
-        className="gap-3"
+        className="gap-2"
         description={studentContent.agendaPage.description}
-        descriptionClassName="text-sm leading-6 sm:text-base"
+        descriptionClassName="text-sm leading-5 sm:text-[0.95rem]"
         title={studentContent.agendaPage.title}
-        titleClassName="text-[2rem] sm:text-[2.35rem]"
+        titleClassName="text-[1.8rem] sm:text-[2.1rem]"
       />
       {saveMessage ? (
         <SurfaceCard
@@ -268,50 +268,50 @@ export function StudentAgendaPage() {
           <p role="alert">{errorMessage}</p>
         </SurfaceCard>
       ) : null}
-      <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="px-3 py-2.5 sm:px-4 sm:py-3">
-        <div className="flex flex-wrap items-center gap-2.5 xl:flex-nowrap xl:justify-between">
-          <div className="inline-flex min-w-0 items-center gap-2 rounded-full bg-brand-gradient px-3 py-1.5 text-white">
-            <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/14 ring-1 ring-white/18">
-              <CalendarDays aria-hidden="true" className="h-3.5 w-3.5" />
+      <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="px-3 py-2 sm:px-3.5 sm:py-2.5">
+        <div className="flex flex-wrap items-center gap-2 xl:flex-nowrap xl:justify-between">
+          <div className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-brand-gradient px-2.5 py-1.25 text-white">
+            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/14 ring-1 ring-white/18">
+              <CalendarDays aria-hidden="true" className="h-3.25 w-3.25" />
             </span>
-            <span className="font-headline text-[1rem] font-extrabold tracking-tight">{pendingAppointmentsCount}</span>
-            <span className="truncate text-[0.72rem] font-semibold text-white/90">Por aceptar</span>
+            <span className="font-headline text-[0.94rem] font-extrabold tracking-tight">{pendingAppointmentsCount}</span>
+            <span className="truncate text-[0.68rem] font-semibold text-white/90">Por aceptar</span>
           </div>
-          <div className="inline-flex min-w-0 items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-emerald-800">
-            <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-emerald-100">
-              <CalendarDays aria-hidden="true" className="h-3.5 w-3.5" />
+          <div className="inline-flex min-w-0 items-center gap-1.5 rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1.25 text-emerald-800">
+            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-emerald-100">
+              <CalendarDays aria-hidden="true" className="h-3.25 w-3.25" />
             </span>
-            <span className="font-headline text-[1rem] font-extrabold tracking-tight">{acceptedAppointmentsCount}</span>
-            <span className="truncate text-[0.72rem] font-semibold text-emerald-800/85">Confirmadas</span>
+            <span className="font-headline text-[0.94rem] font-extrabold tracking-tight">{acceptedAppointmentsCount}</span>
+            <span className="truncate text-[0.68rem] font-semibold text-emerald-800/85">Confirmadas</span>
           </div>
-          <div className="inline-flex min-w-0 items-center gap-2 rounded-full bg-brand-gradient px-3 py-1.5 text-white">
-            <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/14 ring-1 ring-white/18">
-              <Repeat aria-hidden="true" className="h-3.5 w-3.5" />
+          <div className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-brand-gradient px-2.5 py-1.25 text-white">
+            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/14 ring-1 ring-white/18">
+              <Repeat aria-hidden="true" className="h-3.25 w-3.25" />
             </span>
-            <span className="font-headline text-[1rem] font-extrabold tracking-tight">{reprogrammingAppointmentsCount}</span>
-            <span className="truncate text-[0.72rem] font-semibold text-white/90">En reprogramacion</span>
+            <span className="font-headline text-[0.94rem] font-extrabold tracking-tight">{reprogrammingAppointmentsCount}</span>
+            <span className="truncate text-[0.68rem] font-semibold text-white/90">En reprogramacion</span>
           </div>
-          <div className="inline-flex min-w-0 items-center gap-2 rounded-full border border-primary/10 bg-primary/5 px-3 py-1.5 text-primary">
-            <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-primary/10">
-              <Repeat aria-hidden="true" className="h-3.5 w-3.5" />
+          <div className="inline-flex min-w-0 items-center gap-1.5 rounded-full border border-primary/10 bg-primary/5 px-2.5 py-1.25 text-primary">
+            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-primary/10">
+              <Repeat aria-hidden="true" className="h-3.25 w-3.25" />
             </span>
-            <span className="font-headline text-[1rem] font-extrabold tracking-tight">{activeBlocksCount}</span>
-            <span className="truncate text-[0.72rem] font-semibold text-primary/80">Bloqueos activos</span>
+            <span className="font-headline text-[0.94rem] font-extrabold tracking-tight">{activeBlocksCount}</span>
+            <span className="truncate text-[0.68rem] font-semibold text-primary/80">Bloqueos activos</span>
           </div>
         </div>
       </SurfaceCard>
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
-        <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-4 py-3.5 sm:px-5 sm:py-4">
-          <div className="grid gap-3 xl:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.85fr)] 2xl:grid-cols-[minmax(0,1.45fr)_minmax(23rem,0.8fr)]">
+        <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-3.5 py-3 sm:px-4 sm:py-3.5">
+          <div className="grid gap-2.5 xl:grid-cols-[minmax(0,1.42fr)_minmax(18.5rem,0.78fr)] 2xl:grid-cols-[minmax(0,1.48fr)_minmax(21rem,0.75fr)]">
             <StudentAgendaCalendar appointments={appointments} scheduleBlocks={scheduleBlocks} />
             <div className="space-y-3">
-              <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-4">
-                <div className="space-y-4">
+              <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-3.5">
+                <div className="space-y-3">
                   <div>
-                    <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
+                    <h2 className="font-headline text-lg font-extrabold tracking-tight text-ink">
                       {editingBlockId ? 'Editar bloqueo' : 'Nuevo bloqueo'}
                     </h2>
-                    <p className="mt-1 text-sm leading-6 text-ink-muted">
+                    <p className="mt-1 text-[0.84rem] leading-5 text-ink-muted">
                       Define franjas no disponibles para evitar propuestas de cita en esos horarios.
                     </p>
                   </div>
@@ -412,7 +412,7 @@ export function StudentAgendaPage() {
                       Motivo opcional
                     </label>
                     <textarea
-                      className="min-h-[5.5rem] w-full rounded-[1.4rem] border border-slate-200 bg-surface px-4 py-3 text-sm text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                      className="min-h-[4.4rem] w-full rounded-[1.2rem] border border-slate-200 bg-surface px-3.5 py-2.5 text-sm text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
                       id="student-schedule-reason"
                       placeholder="Describe brevemente la razon del bloqueo."
                       value={values.reason}
@@ -422,7 +422,7 @@ export function StudentAgendaPage() {
                   <div className="flex flex-wrap items-center justify-center gap-3">
                     {editingBlockId ? (
                       <button
-                        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-ink transition duration-300 hover:bg-slate-100"
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-ink transition duration-300 hover:bg-slate-100"
                         type="button"
                         onClick={handleReset}
                       >
@@ -431,7 +431,7 @@ export function StudentAgendaPage() {
                       </button>
                     ) : null}
                     <button
-                      className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-3.5 py-2 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
                       disabled={isLoading}
                       type="button"
                       onClick={handleSubmit}
@@ -446,13 +446,13 @@ export function StudentAgendaPage() {
                   </div>
                 </div>
               </SurfaceCard>
-              <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-4">
+              <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-3.5">
                 <div className="space-y-3.5">
                   <div>
-                    <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
+                    <h2 className="font-headline text-lg font-extrabold tracking-tight text-ink">
                       Bloqueos registrados
                     </h2>
-                    <p className="mt-1 text-sm leading-6 text-ink-muted">
+                    <p className="mt-1 text-[0.84rem] leading-5 text-ink-muted">
                       Activa, inactiva o ajusta cada bloqueo segun la operacion de tu agenda.
                     </p>
                   </div>
@@ -462,7 +462,7 @@ export function StudentAgendaPage() {
                         <div
                           key={block.id}
                           data-testid={`student-schedule-block-${block.id}`}
-                          className="flex flex-col gap-3 rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-3.5 py-3"
+                          className="flex flex-col gap-2.5 rounded-[1.2rem] border border-slate-200/80 bg-slate-50 px-3 py-2.5"
                         >
                           <div className="flex flex-wrap items-start justify-between gap-3">
                             <div className="space-y-1">

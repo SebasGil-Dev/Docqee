@@ -242,19 +242,31 @@ export function StudentAgendaCalendar({
   };
 
   return (
-    <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-4">
-      <div className="space-y-4">
-        <div className="flex flex-col gap-3 border-b border-slate-200/80 pb-4">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+    <SurfaceCard
+      className="border border-slate-200/80 bg-white shadow-none"
+      paddingClassName="p-3 sm:p-3.5"
+    >
+      <div className="space-y-3">
+        <div className="flex flex-col gap-2.5 border-b border-slate-200/80 pb-3">
+          <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">Calendario de citas</h2>
-              <p className="mt-1 text-sm leading-6 text-ink-muted">Visualiza tus citas asignadas y los bloqueos activos por dia, semana o mes.</p>
+              <h2 className="font-headline text-lg font-extrabold tracking-tight text-ink sm:text-[1.1rem]">
+                Calendario de citas
+              </h2>
+              <p className="mt-0.5 text-[0.8rem] leading-5 text-ink-muted sm:text-[0.84rem]">
+                Revisa citas y bloqueos por dia, semana o mes.
+              </p>
             </div>
             <div className="inline-flex rounded-full bg-slate-100 p-1">
               {(['day', 'week', 'month'] as const).map((option) => (
                 <button
                   key={option}
-                  className={classNames('rounded-full px-3.5 py-1.5 text-xs font-semibold transition duration-200', viewMode === option ? 'bg-white text-primary shadow-[0_10px_28px_-20px_rgba(15,23,42,0.38)]' : 'text-ink-muted hover:text-ink')}
+                  className={classNames(
+                    'rounded-full px-3 py-1.25 text-[0.7rem] font-semibold transition duration-200',
+                    viewMode === option
+                      ? 'bg-white text-primary shadow-[0_10px_28px_-20px_rgba(15,23,42,0.38)]'
+                      : 'text-ink-muted hover:text-ink',
+                  )}
                   type="button"
                   onClick={() => setViewMode(option)}
                 >
@@ -263,22 +275,47 @@ export function StudentAgendaCalendar({
               ))}
             </div>
           </div>
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex flex-col gap-2.5 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex flex-wrap items-center gap-2">
-              <button aria-label="Periodo anterior" className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-ink transition duration-200 hover:bg-slate-50" type="button" onClick={() => stepCalendar('previous')}>
-                <ChevronLeft aria-hidden="true" className="h-4.5 w-4.5" />
+              <button
+                aria-label="Periodo anterior"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-ink transition duration-200 hover:bg-slate-50"
+                type="button"
+                onClick={() => stepCalendar('previous')}
+              >
+                <ChevronLeft aria-hidden="true" className="h-4 w-4" />
               </button>
-              <button className="inline-flex rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-ink transition duration-200 hover:bg-slate-50" type="button" onClick={() => setSelectedDateKey(DEFAULT_SELECTED_DATE_KEY)}>
+              <button
+                className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[0.82rem] font-semibold text-ink transition duration-200 hover:bg-slate-50"
+                type="button"
+                onClick={() => setSelectedDateKey(DEFAULT_SELECTED_DATE_KEY)}
+              >
                 Hoy
               </button>
-              <button aria-label="Periodo siguiente" className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-ink transition duration-200 hover:bg-slate-50" type="button" onClick={() => stepCalendar('next')}>
-                <ChevronRight aria-hidden="true" className="h-4.5 w-4.5" />
+              <button
+                aria-label="Periodo siguiente"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-ink transition duration-200 hover:bg-slate-50"
+                type="button"
+                onClick={() => stepCalendar('next')}
+              >
+                <ChevronRight aria-hidden="true" className="h-4 w-4" />
               </button>
-              <span className="rounded-full bg-slate-100 px-3.5 py-2 text-sm font-semibold text-ink">{rangeLabel}</span>
+              <span className="rounded-full bg-slate-100 px-3 py-1.5 text-[0.82rem] font-semibold text-ink">
+                {rangeLabel}
+              </span>
             </div>
-            <div className="flex flex-wrap items-center gap-2 text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-ink-muted">
-              {[['Pendiente', 'proposal'], ['Aceptada', 'accepted'], ['Cancelada', 'cancelled'], ['Reprogramacion', 'reschedule'], ['Bloqueo', 'block']].map(([label, tone]) => (
-                <span key={label} className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1.5">
+            <div className="flex flex-wrap items-center gap-1.5 text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-ink-muted">
+              {[
+                ['Pendiente', 'proposal'],
+                ['Aceptada', 'accepted'],
+                ['Cancelada', 'cancelled'],
+                ['Reprogramacion', 'reschedule'],
+                ['Bloqueo', 'block'],
+              ].map(([label, tone]) => (
+                <span
+                  key={label}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-2.5 py-1.25"
+                >
                   <span className={classNames('h-2.5 w-2.5 rounded-full', getToneClasses(tone as AgendaTone).dot)} />
                   <span>{label}</span>
                 </span>
@@ -286,31 +323,204 @@ export function StudentAgendaCalendar({
             </div>
           </div>
         </div>
-        <div className={classNames(viewMode === 'month' ? 'grid grid-cols-7 gap-2' : viewMode === 'week' ? 'grid gap-2 xl:grid-cols-7' : 'space-y-2.5')}>
+        <div
+          className={classNames(
+            viewMode === 'month'
+              ? 'grid grid-cols-7 gap-1.5'
+              : viewMode === 'week'
+                ? 'grid gap-1.5 xl:grid-cols-7'
+                : 'space-y-2',
+          )}
+        >
           {visibleDays.map((day) => {
             const dayKey = toDateKey(day);
             const dayEvents = eventsByDate[dayKey] ?? [];
 
             if (viewMode === 'day') {
-              return dayEvents.length > 0 ? dayEvents.map((event) => {
-                const tone = getToneClasses(event.tone);
-                return <div key={event.id} className={classNames('rounded-[1rem] border px-3 py-3', tone.card)}><div className="flex items-start justify-between gap-3"><div><p className="text-sm font-semibold">{event.title}</p><p className="text-xs opacity-80">{event.subtitle}</p></div><span className={classNames('rounded-full px-2 py-1 text-[0.66rem] font-semibold', tone.pill)}>{event.statusLabel}</span></div><div className="mt-2 flex items-center gap-2 text-[0.72rem] font-semibold"><span className={classNames('h-2 w-2 rounded-full', tone.dot)} />{event.timeLabel}</div></div>;
-              }) : <div key={dayKey} className="rounded-[1.25rem] border border-dashed border-slate-200 bg-slate-50 px-5 py-8 text-center text-sm text-ink-muted">No hay citas ni bloqueos visibles para este dia.</div>;
+              return dayEvents.length > 0 ? (
+                dayEvents.map((event) => {
+                  const tone = getToneClasses(event.tone);
+
+                  return (
+                    <div
+                      key={event.id}
+                      className={classNames('rounded-[0.95rem] border px-2.5 py-2.5', tone.card)}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-[0.84rem] font-semibold">{event.title}</p>
+                          <p className="text-[0.72rem] opacity-80">{event.subtitle}</p>
+                        </div>
+                        <span
+                          className={classNames(
+                            'rounded-full px-2 py-1 text-[0.64rem] font-semibold',
+                            tone.pill,
+                          )}
+                        >
+                          {event.statusLabel}
+                        </span>
+                      </div>
+                      <div className="mt-1.5 flex items-center gap-2 text-[0.7rem] font-semibold">
+                        <span className={classNames('h-2 w-2 rounded-full', tone.dot)} />
+                        {event.timeLabel}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div
+                  key={dayKey}
+                  className="rounded-[1.1rem] border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-[0.84rem] text-ink-muted"
+                >
+                  No hay citas ni bloqueos visibles para este dia.
+                </div>
+              );
             }
 
             if (viewMode === 'week') {
-              return <div key={dayKey} className={classNames('rounded-[1.2rem] border px-3 py-3', dayKey === selectedDateKey ? 'border-primary bg-primary/[0.05]' : 'border-slate-200 bg-slate-50/65')}><button className="mb-3 w-full text-left" type="button" onClick={() => setSelectedDateKey(dayKey)}><p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-ink-muted">{dayFormatter.format(day).replace('.', '')}</p><p className="font-headline text-lg font-extrabold tracking-tight text-ink">{day.getDate()}</p></button><div className="space-y-2">{dayEvents.length > 0 ? dayEvents.map((event) => { const tone = getToneClasses(event.tone); return <div key={event.id} className={classNames('rounded-[1rem] border px-3 py-2', tone.card)}><p className="truncate text-[0.74rem] font-semibold">{event.title}</p><p className="truncate text-[0.67rem] opacity-80">{event.subtitle}</p><div className="mt-1 flex items-center gap-2 text-[0.7rem] font-semibold"><span className={classNames('h-2 w-2 rounded-full', tone.dot)} />{event.timeLabel}</div></div>; }) : <div className="rounded-[1rem] border border-dashed border-slate-200 bg-white/70 px-3 py-4 text-center text-[0.72rem] font-medium text-ink-muted">Sin movimientos</div>}</div></div>;
+              return (
+                <div
+                  key={dayKey}
+                  className={classNames(
+                    'rounded-[1rem] border px-2.5 py-2.5',
+                    dayKey === selectedDateKey
+                      ? 'border-primary bg-primary/[0.05]'
+                      : 'border-slate-200 bg-slate-50/65',
+                  )}
+                >
+                  <button
+                    className="mb-2.5 w-full text-left"
+                    type="button"
+                    onClick={() => setSelectedDateKey(dayKey)}
+                  >
+                    <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-ink-muted">
+                      {dayFormatter.format(day).replace('.', '')}
+                    </p>
+                    <p className="font-headline text-base font-extrabold tracking-tight text-ink">
+                      {day.getDate()}
+                    </p>
+                  </button>
+                  <div className="space-y-1.5">
+                    {dayEvents.length > 0 ? (
+                      dayEvents.map((event) => {
+                        const tone = getToneClasses(event.tone);
+
+                        return (
+                          <div
+                            key={event.id}
+                            className={classNames('rounded-[0.9rem] border px-2.5 py-2', tone.card)}
+                          >
+                            <p className="truncate text-[0.72rem] font-semibold">{event.title}</p>
+                            <p className="truncate text-[0.64rem] opacity-80">{event.subtitle}</p>
+                            <div className="mt-1 flex items-center gap-2 text-[0.66rem] font-semibold">
+                              <span className={classNames('h-2 w-2 rounded-full', tone.dot)} />
+                              {event.timeLabel}
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="rounded-[0.95rem] border border-dashed border-slate-200 bg-white/70 px-2.5 py-3.5 text-center text-[0.68rem] font-medium text-ink-muted">
+                        Sin movimientos
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
             }
 
-            return <button key={dayKey} className={classNames('flex min-h-[7.8rem] flex-col rounded-[1.2rem] border px-2.5 py-2 text-left transition duration-200', dayKey === selectedDateKey ? 'border-primary bg-primary/[0.06]' : 'border-slate-200 bg-slate-50/70 hover:border-primary/25 hover:bg-white', day.getMonth() !== selectedDate.getMonth() && 'opacity-55')} type="button" onClick={() => setSelectedDateKey(dayKey)}><div className="mb-2 flex items-center justify-between"><span className={classNames('inline-flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold', dayKey === DEFAULT_SELECTED_DATE_KEY ? 'bg-brand-gradient text-white' : 'text-ink')}>{day.getDate()}</span><span className="text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-ink-muted">{dayEvents.length}</span></div><div className="space-y-1.5">{dayEvents.slice(0, 3).map((event) => <div key={event.id} className={classNames('truncate rounded-[0.8rem] px-2 py-1 text-[0.66rem] font-semibold', getToneClasses(event.tone).pill)}>{event.timeLabel} | {event.title}</div>)}{dayEvents.length > 3 ? <p className="text-[0.64rem] font-semibold text-ink-muted">+{dayEvents.length - 3} mas</p> : null}</div></button>;
+            return (
+              <button
+                key={dayKey}
+                className={classNames(
+                  'flex min-h-[6.2rem] flex-col rounded-[1rem] border px-2 py-1.5 text-left transition duration-200 xl:min-h-[6.6rem]',
+                  dayKey === selectedDateKey
+                    ? 'border-primary bg-primary/[0.06]'
+                    : 'border-slate-200 bg-slate-50/70 hover:border-primary/25 hover:bg-white',
+                  day.getMonth() !== selectedDate.getMonth() && 'opacity-55',
+                )}
+                type="button"
+                onClick={() => setSelectedDateKey(dayKey)}
+              >
+                <div className="mb-1.5 flex items-center justify-between">
+                  <span
+                    className={classNames(
+                      'inline-flex h-6 w-6 items-center justify-center rounded-full text-[0.82rem] font-bold',
+                      dayKey === DEFAULT_SELECTED_DATE_KEY ? 'bg-brand-gradient text-white' : 'text-ink',
+                    )}
+                  >
+                    {day.getDate()}
+                  </span>
+                  <span className="text-[0.58rem] font-semibold uppercase tracking-[0.12em] text-ink-muted">
+                    {dayEvents.length}
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  {dayEvents.slice(0, 2).map((event) => (
+                    <div
+                      key={event.id}
+                      className={classNames(
+                        'truncate rounded-[0.72rem] px-2 py-1 text-[0.61rem] font-semibold',
+                        getToneClasses(event.tone).pill,
+                      )}
+                    >
+                      {event.timeLabel} | {event.title}
+                    </div>
+                  ))}
+                  {dayEvents.length > 2 ? (
+                    <p className="text-[0.6rem] font-semibold text-ink-muted">
+                      +{dayEvents.length - 2} mas
+                    </p>
+                  ) : null}
+                </div>
+              </button>
+            );
           })}
         </div>
         {viewMode !== 'day' ? (
-          <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50/85 p-4">
-            <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-ink-muted">Detalle del dia</p>
-            <h3 className="font-headline text-lg font-extrabold tracking-tight text-ink">{longDateFormatter.format(selectedDate)}</h3>
-            <div className="mt-3 space-y-2.5">
-              {selectedDateEvents.length > 0 ? selectedDateEvents.map((event) => { const tone = getToneClasses(event.tone); return <div key={event.id} className={classNames('rounded-[1rem] border px-3 py-3', tone.card)}><div className="flex items-start justify-between gap-3"><div><p className="text-sm font-semibold">{event.title}</p><p className="text-xs opacity-80">{event.subtitle}</p></div><span className={classNames('rounded-full px-2 py-1 text-[0.66rem] font-semibold', tone.pill)}>{event.statusLabel}</span></div><div className="mt-2 flex items-center gap-2 text-[0.72rem] font-semibold"><span className={classNames('h-2 w-2 rounded-full', tone.dot)} />{event.timeLabel}</div></div>; }) : <div className="rounded-[1.1rem] border border-dashed border-slate-200 bg-white px-4 py-6 text-center text-sm text-ink-muted">No hay movimientos registrados para el dia seleccionado.</div>}
+          <div className="rounded-[1.1rem] border border-slate-200 bg-slate-50/85 p-3">
+            <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-ink-muted">
+              Detalle del dia
+            </p>
+            <h3 className="font-headline text-base font-extrabold tracking-tight text-ink sm:text-[1.05rem]">
+              {longDateFormatter.format(selectedDate)}
+            </h3>
+            <div className="mt-2.5 space-y-2">
+              {selectedDateEvents.length > 0 ? (
+                selectedDateEvents.map((event) => {
+                  const tone = getToneClasses(event.tone);
+
+                  return (
+                    <div
+                      key={event.id}
+                      className={classNames('rounded-[0.95rem] border px-2.5 py-2.5', tone.card)}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-[0.84rem] font-semibold">{event.title}</p>
+                          <p className="text-[0.72rem] opacity-80">{event.subtitle}</p>
+                        </div>
+                        <span
+                          className={classNames(
+                            'rounded-full px-2 py-1 text-[0.64rem] font-semibold',
+                            tone.pill,
+                          )}
+                        >
+                          {event.statusLabel}
+                        </span>
+                      </div>
+                      <div className="mt-1.5 flex items-center gap-2 text-[0.7rem] font-semibold">
+                        <span className={classNames('h-2 w-2 rounded-full', tone.dot)} />
+                        {event.timeLabel}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="rounded-[1rem] border border-dashed border-slate-200 bg-white px-4 py-5 text-center text-[0.84rem] text-ink-muted">
+                  No hay movimientos registrados para el dia seleccionado.
+                </div>
+              )}
             </div>
           </div>
         ) : null}
