@@ -47,10 +47,8 @@ export const universityAdminContent = {
       send: 'Enviar',
       sendAll: 'Enviar todas',
     },
-    description:
-      'Gestiona las credenciales iniciales de los estudiantes registrados por la universidad.',
-    editEmailHelp:
-      'Editar el correo actualiza tambien el estudiante y no modifica ni la contrasena ni el estado de la credencial.',
+    description: '',
+    editEmailHelp: '',
     emailInvalidMessage: 'Ingresa un correo electronico valido',
     emptyState: 'No hay credenciales pendientes por gestionar en este momento.',
     meta: {
@@ -58,8 +56,7 @@ export const universityAdminContent = {
         'Gestiona las credenciales pendientes de los estudiantes del modulo universitario de Docqee.',
       title: 'Docqee | Credenciales',
     },
-    subtitle:
-      'Cada credencial puede enviarse, reenviarse o actualizar su correo antes del ingreso inicial.',
+    subtitle: '',
     successNoticePrefix: 'Actualizacion completada:',
     tableTitle: 'Credenciales pendientes',
     title: 'Credenciales',

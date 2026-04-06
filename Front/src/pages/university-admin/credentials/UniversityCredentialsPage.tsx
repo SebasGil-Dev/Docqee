@@ -138,7 +138,7 @@ export function UniversityCredentialsPage() {
             <span>{universityAdminContent.credentialsPage.actionLabels.sendAll}</span>
           </button>
         }
-        description={universityAdminContent.credentialsPage.description}
+        description=""
         title={universityAdminContent.credentialsPage.title}
       />
       {feedbackMessage ? (
@@ -164,20 +164,24 @@ export function UniversityCredentialsPage() {
       ) : null}
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
         <div className="flex flex-col gap-3 border-b border-slate-200/80 px-4 py-4 sm:px-5 sm:py-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] lg:items-start lg:gap-5">
-          <div className="space-y-1">
+          <div className={classNames('space-y-1', !universityAdminContent.credentialsPage.subtitle && 'lg:self-center')}>
             <h2 className="font-headline text-[1.35rem] font-extrabold tracking-tight text-ink sm:text-[1.5rem]">
               {universityAdminContent.credentialsPage.tableTitle}
             </h2>
-            <p className="max-w-3xl text-sm leading-6 text-ink-muted">
-              {universityAdminContent.credentialsPage.subtitle}
-            </p>
+            {universityAdminContent.credentialsPage.subtitle ? (
+              <p className="max-w-3xl text-sm leading-6 text-ink-muted">
+                {universityAdminContent.credentialsPage.subtitle}
+              </p>
+            ) : null}
           </div>
-          <SurfaceCard
-            className="border border-slate-200/80 bg-white text-sm leading-6 text-ink-muted shadow-none"
-            paddingClassName="p-4"
-          >
-            <p>{universityAdminContent.credentialsPage.editEmailHelp}</p>
-          </SurfaceCard>
+          {universityAdminContent.credentialsPage.editEmailHelp ? (
+            <SurfaceCard
+              className="border border-slate-200/80 bg-white text-sm leading-6 text-ink-muted shadow-none"
+              paddingClassName="p-4"
+            >
+              <p>{universityAdminContent.credentialsPage.editEmailHelp}</p>
+            </SurfaceCard>
+          ) : null}
         </div>
         {credentialRows.length > 0 ? (
           <div
