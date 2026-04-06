@@ -96,10 +96,10 @@ export function AdminUniversitiesPage() {
           paddingClassName="p-0"
         >
           <div className="flex items-center gap-2.5 px-3.5 py-2 sm:gap-3 sm:px-4 sm:py-2.25">
-            <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[0.85rem] bg-white/12 text-white ring-1 ring-white/20 sm:h-8 sm:w-8">
-              <Building2 aria-hidden="true" className="h-3.5 w-3.5" />
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/12 text-white sm:h-11 sm:w-11">
+              <Building2 aria-hidden="true" className="h-5 w-5 sm:h-5.5 sm:w-5.5" />
             </span>
-            <span className="font-headline text-[1.45rem] font-extrabold tracking-tight text-white sm:text-[1.65rem]">
+            <span className="font-headline text-[1.2rem] font-extrabold tracking-tight text-white sm:text-[1.4rem]">
               {universities.length}
             </span>
             <p className="min-w-0 text-[0.78rem] font-semibold text-white/90 sm:text-[0.86rem]">
