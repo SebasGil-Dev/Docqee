@@ -227,7 +227,9 @@ export const router = createBrowserRouter([
       {
         path: 'mi-perfil',
         lazy: async () => {
-          const { StudentProfilePage } = await import('@/pages/student/profile/StudentProfilePage');
+          const { StudentProfilePage } = await import(
+            '@/pages/student/profile/StudentProfilePortalPage'
+          );
           return { Component: StudentProfilePage };
         },
       },

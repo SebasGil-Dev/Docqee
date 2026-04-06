@@ -9,7 +9,7 @@ import { resetStudentModuleState } from '@/lib/studentModuleStore';
 import { StudentAgendaPage } from '@/pages/student/agenda/StudentAgendaPage';
 import { StudentConversationsPage } from '@/pages/student/conversations/StudentConversationsPage';
 import { StudentLayout } from '@/pages/student/StudentLayout';
-import { StudentProfilePage } from '@/pages/student/profile/StudentProfilePage';
+import { StudentProfilePage } from '@/pages/student/profile/StudentProfilePortalPage';
 import { StudentRequestsPage } from '@/pages/student/requests/StudentRequestsPage';
 import { StudentTreatmentsPage } from '@/pages/student/treatments/StudentTreatmentsPage';
 
@@ -102,6 +102,42 @@ describe('Student pages', () => {
         within(screen.getByTestId('student-practice-site-card-practice-site-1')).getByText(
           /^Inactivo$/i,
         ),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it('permite gestionar tratamientos y sedes desde mi perfil', async () => {
+    const user = userEvent.setup();
+
+    renderStudentApp([ROUTES.studentProfile]);
+
+    await user.click(
+      within(
+        screen.getByTestId('student-profile-treatment-card-treatment-1'),
+      ).getByRole('button', {
+        name: /inactivar/i,
+      }),
+    );
+    await waitFor(() => {
+      expect(
+        within(
+          screen.getByTestId('student-profile-treatment-card-treatment-1'),
+        ).getByText(/^Inactivo$/i),
+      ).toBeInTheDocument();
+    });
+
+    await user.click(
+      within(
+        screen.getByTestId('student-profile-practice-site-card-practice-site-1'),
+      ).getByRole('button', {
+        name: /inactivar/i,
+      }),
+    );
+    await waitFor(() => {
+      expect(
+        within(
+          screen.getByTestId('student-profile-practice-site-card-practice-site-1'),
+        ).getByText(/^Inactivo$/i),
       ).toBeInTheDocument();
     });
   });

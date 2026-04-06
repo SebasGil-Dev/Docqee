@@ -87,6 +87,8 @@ function createMockState(): StudentStoreState {
       },
     ],
     semester: '8',
+    universityLogoAlt: 'Logo de Universidad Clinica del Norte',
+    universityLogoSrc: '/Logo_plataforma.ico',
     universityName: 'Universidad Clinica del Norte',
   };
 
@@ -326,6 +328,8 @@ function createRuntimeInitialState(): StudentStoreState {
       lastName: '',
       links: [],
       semester: '',
+      universityLogoAlt: 'Logo de la universidad',
+      universityLogoSrc: null,
       universityName: '',
     },
     requests: [],

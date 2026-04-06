@@ -814,6 +814,8 @@ export type StudentProfile = {
   lastName: string;
   links: StudentProfessionalLink[];
   semester: string;
+  universityLogoAlt: string;
+  universityLogoSrc: string | null;
   universityName: string;
 };
 

@@ -44,8 +44,7 @@ export const studentContent = {
       save: 'Guardar cambios',
       uploadPhoto: 'Subir foto',
     },
-    description:
-      'Actualiza la informacion publica que veran los pacientes durante la busqueda y consulta de tu perfil.',
+    description: '',
     helperText:
       'Tu perfil visible depende de tener tratamientos y sedes activos, ademas de una descripcion clara.',
     invalidLinkMessage: 'Ingresa un enlace valido con http:// o https://',
