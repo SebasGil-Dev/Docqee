@@ -17,12 +17,12 @@ export function AdminPanelCard({
 }: AdminPanelCardProps) {
   return (
     <SurfaceCard
-      className={classNames('min-h-0 overflow-hidden bg-[#f4f8ff] shadow-none', className)}
+      className={classNames('admin-panel-card-shell min-h-0 overflow-hidden bg-[#f4f8ff] shadow-none', className)}
       paddingClassName={shellPaddingClassName}
     >
       <div
         className={classNames(
-          'flex h-full min-h-0 flex-col overflow-hidden rounded-[1.45rem] bg-white',
+          'admin-panel-card-body flex h-full min-h-0 flex-col overflow-hidden rounded-[1.45rem] bg-white',
           panelClassName,
         )}
       >
