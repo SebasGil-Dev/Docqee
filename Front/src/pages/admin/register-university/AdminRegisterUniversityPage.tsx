@@ -462,6 +462,7 @@ export function AdminRegisterUniversityPage({
             <span>{adminContent.registerPage.backLabel}</span>
           </Link>
         }
+        className="gap-3 sm:flex-row sm:items-center sm:justify-between"
         description={adminContent.registerPage.description}
         title={adminContent.registerPage.title}
       />

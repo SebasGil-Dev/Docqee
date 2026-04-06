@@ -26,8 +26,7 @@ export const adminContent = {
   registerPage: {
     administratorSectionTitle: 'Datos del administrador universitario',
     backLabel: 'Volver a universidades',
-    description:
-      'Completa los datos basicos para registrar una nueva universidad y dejar su credencial inicial lista para gestion.',
+    description: '',
     fields: {
       adminEmail: {
         invalidMessage: 'Ingresa un correo electronico valido',
