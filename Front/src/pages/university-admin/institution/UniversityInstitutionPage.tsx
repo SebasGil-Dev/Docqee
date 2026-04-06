@@ -1246,7 +1246,7 @@ export function UniversityInstitutionPage({
                         onBlur={() => handleInstitutionFieldBlur('adminLastName')}
                         onChange={(value) => handleInstitutionFieldChange('adminLastName', value)}
                       />
-                      <div className="lg:col-span-2">
+                      <div className="grid gap-5 md:grid-cols-[minmax(0,1.45fr)_minmax(13rem,0.75fr)] lg:col-span-2 lg:gap-4">
                         <AdminTextField
                           error={errors.adminEmail}
                           icon={Mail}
@@ -1260,21 +1260,21 @@ export function UniversityInstitutionPage({
                           onBlur={() => handleInstitutionFieldBlur('adminEmail')}
                           onChange={(value) => handleInstitutionFieldChange('adminEmail', value)}
                         />
+                        <AdminTextField
+                          error={errors.adminPhone}
+                          icon={Phone}
+                          id="university-institution-admin-phone"
+                          inputRef={phoneRef}
+                          label="Celular"
+                          name="adminPhone"
+                          placeholder="3001234567"
+                          type="tel"
+                          value={values.adminPhone}
+                          onBlur={() => handleInstitutionFieldBlur('adminPhone')}
+                          onChange={(value) => handleInstitutionFieldChange('adminPhone', value)}
+                        />
                       </div>
-                      <AdminTextField
-                        error={errors.adminPhone}
-                        icon={Phone}
-                        id="university-institution-admin-phone"
-                        inputRef={phoneRef}
-                        label="Celular"
-                        name="adminPhone"
-                        placeholder="3001234567"
-                        type="tel"
-                        value={values.adminPhone}
-                        onBlur={() => handleInstitutionFieldBlur('adminPhone')}
-                        onChange={(value) => handleInstitutionFieldChange('adminPhone', value)}
-                      />
-                      <div className="flex items-end lg:col-span-2">
+                      <div className="flex justify-center lg:col-span-2">
                         <button
                           className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-primary transition duration-300 hover:bg-slate-100"
                           type="button"
@@ -1339,9 +1339,11 @@ export function UniversityInstitutionPage({
                   >
                     {universityAdminContent.institutionPage.passwordPanelTitle}
                   </h2>
-                  <p className="max-w-[34rem] text-sm leading-6 text-ink-muted">
-                    {universityAdminContent.institutionPage.passwordPanelDescription}
-                  </p>
+                  {universityAdminContent.institutionPage.passwordPanelDescription ? (
+                    <p className="max-w-[34rem] text-sm leading-6 text-ink-muted">
+                      {universityAdminContent.institutionPage.passwordPanelDescription}
+                    </p>
+                  ) : null}
                 </div>
                 <button
                   aria-label="Cerrar dialogo de cambio de contrasena"

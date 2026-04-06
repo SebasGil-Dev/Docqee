@@ -77,8 +77,7 @@ export const universityAdminContent = {
         'Edita la informacion institucional del modulo universitario de Docqee.',
       title: 'Docqee | Informacion Institucional',
     },
-    passwordPanelDescription:
-      'Ingresa tu contrasena actual, define una nueva y confirmala siguiendo las reglas de seguridad del sistema.',
+    passwordPanelDescription: '',
     passwordPanelTitle: 'Actualizar contrasena',
     passwordSuccessMessage:
       'La contrasena se actualizo correctamente en esta demo frontend.',
