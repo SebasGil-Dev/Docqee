@@ -253,7 +253,7 @@ export function UniversityRegisterStudentPage({
         </SurfaceCard>
       ) : null}
       <AdminPanelCard
-        className="flex-1 lg:flex-none lg:self-start lg:overflow-visible"
+        className="flex-1 lg:w-full lg:flex-none lg:overflow-visible"
         panelClassName="bg-slate-50 lg:h-auto lg:overflow-visible"
       >
         <form
