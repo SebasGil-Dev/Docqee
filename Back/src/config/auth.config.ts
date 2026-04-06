@@ -7,4 +7,6 @@ export default registerAs('auth', () => ({
   jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '7d',
   platformAdminEmail: process.env.PLATFORM_ADMIN_EMAIL ?? 'admin@docqee.local',
   platformAdminPassword: process.env.PLATFORM_ADMIN_PASSWORD ?? 'Admin123!',
+  platformAdminNombres: process.env.PLATFORM_ADMIN_NOMBRES ?? 'Admin',
+  platformAdminApellidos: process.env.PLATFORM_ADMIN_APELLIDOS ?? 'Docqee',
 }));
