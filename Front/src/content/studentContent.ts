@@ -8,11 +8,11 @@ export const studentContent = {
       save: 'Guardar bloqueo',
     },
     description:
-      'Define tus bloqueos especificos o recurrentes para evitar programaciones en horarios no disponibles.',
+      'Revisa tus citas en calendario por dia, semana o mes y bloquea franjas para evitar asignaciones no deseadas.',
     emptyState: 'Aun no tienes bloqueos registrados en la agenda.',
     meta: {
       description:
-        'Gestiona la disponibilidad operativa del estudiante dentro de Docqee.',
+        'Consulta citas y bloqueos operativos del estudiante dentro de Docqee.',
       title: 'Docqee | Agenda del Estudiante',
     },
     successNoticePrefix: 'Agenda actualizada:',

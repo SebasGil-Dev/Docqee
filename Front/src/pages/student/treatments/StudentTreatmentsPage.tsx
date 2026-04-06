@@ -28,7 +28,11 @@ const reviewDateFormatter = new Intl.DateTimeFormat('es-CO', {
   year: 'numeric',
 });
 
-function renderStars(value: number, sizeClassName = 'h-4.5 w-4.5') {
+function renderStars(
+  value: number,
+  sizeClassName = 'h-4.5 w-4.5',
+  tone: 'dark' | 'light' = 'light',
+) {
   return Array.from({ length: 5 }, (_, index) => {
     const isFilled = index < Math.round(value);
 
@@ -36,13 +40,20 @@ function renderStars(value: number, sizeClassName = 'h-4.5 w-4.5') {
       <Star
         key={`star-${value}-${index}`}
         aria-hidden="true"
-        className={`${sizeClassName} ${isFilled ? 'fill-amber-300 text-amber-300' : 'text-white/35'}`}
+        className={`${sizeClassName} ${
+          isFilled
+            ? 'fill-amber-300 text-amber-300'
+            : tone === 'light'
+              ? 'text-white/35'
+              : 'text-slate-300/85'
+        }`}
       />
     );
   });
 }
 
 type StudentAvailabilityFilter = PersonOperationalStatus | 'all';
+type StudentReviewRatingFilter = 'all' | 1 | 2 | 3 | 4 | 5;
 
 export function StudentTreatmentsPage() {
   const {
@@ -60,11 +71,22 @@ export function StudentTreatmentsPage() {
   const [statusFilter, setStatusFilter] = useState<StudentAvailabilityFilter>('all');
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
+  const [reviewRatingFilter, setReviewRatingFilter] = useState<StudentReviewRatingFilter>('all');
+  const [isReviewRatingMenuOpen, setIsReviewRatingMenuOpen] = useState(false);
+  const reviewRatingMenuRef = useRef<HTMLDivElement | null>(null);
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const filterOptions: Array<{ label: string; value: StudentAvailabilityFilter }> = [
     { label: 'Todos', value: 'all' },
     { label: 'Activo', value: 'active' },
     { label: 'Inactivo', value: 'inactive' },
+  ];
+  const reviewRatingOptions: Array<{ label: string; value: StudentReviewRatingFilter }> = [
+    { label: 'Todas las estrellas', value: 'all' },
+    { label: '5 estrellas', value: 5 },
+    { label: '4 estrellas', value: 4 },
+    { label: '3 estrellas', value: 3 },
+    { label: '2 estrellas', value: 2 },
+    { label: '1 estrella', value: 1 },
   ];
   const activeTreatmentsCount = useMemo(
     () => treatments.filter((treatment) => treatment.status === 'active').length,
@@ -103,6 +125,17 @@ export function StudentTreatmentsPage() {
     const totalRating = reviews.reduce((total, review) => total + review.rating, 0);
     return totalRating / reviews.length;
   }, [reviews]);
+  const commentsCount = useMemo(
+    () => reviews.filter((review) => Boolean(review.comment?.trim())).length,
+    [reviews],
+  );
+  const filteredReviews = useMemo(() => {
+    if (reviewRatingFilter === 'all') {
+      return reviews;
+    }
+
+    return reviews.filter((review) => Math.round(review.rating) === reviewRatingFilter);
+  }, [reviewRatingFilter, reviews]);
   const filteredTreatments = treatments.filter((treatment) => {
     const matchesSearch =
       treatment.name.toLowerCase().includes(normalizedSearch) ||
@@ -145,6 +178,32 @@ export function StudentTreatmentsPage() {
     };
   }, [isStatusMenuOpen]);
 
+  useEffect(() => {
+    if (!isReviewRatingMenuOpen) {
+      return undefined;
+    }
+
+    function handlePointerDown(event: MouseEvent) {
+      if (!reviewRatingMenuRef.current?.contains(event.target as Node)) {
+        setIsReviewRatingMenuOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsReviewRatingMenuOpen(false);
+      }
+    }
+
+    window.addEventListener('mousedown', handlePointerDown);
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('mousedown', handlePointerDown);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isReviewRatingMenuOpen]);
+
   return (
     <div className="mx-auto flex h-full max-w-[90rem] min-h-0 flex-col gap-3 overflow-hidden 2xl:max-w-[98rem]">
       <Seo
@@ -186,19 +245,24 @@ export function StudentTreatmentsPage() {
                 </span>
               </div>
               <div className="flex min-w-0 flex-wrap items-center gap-2">
+                <span className="inline-flex min-w-0 items-center rounded-full bg-white/12 px-2.5 py-1 text-[0.75rem] font-semibold text-white/88 ring-1 ring-white/16">
+                  <span className="max-w-[10rem] truncate sm:max-w-[12rem] xl:max-w-[14rem]">
+                    {profile.universityName}
+                  </span>
+                </span>
                 <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-[0.75rem] font-semibold text-white/88 ring-1 ring-white/16">
                   <GraduationCap aria-hidden="true" className="h-3.5 w-3.5" />
                   <span>Semestre {profile.semester}</span>
                 </span>
-                <span className="inline-flex min-w-0 items-center gap-2 rounded-full bg-white/12 px-2.5 py-1 text-white/92 ring-1 ring-white/16">
+                <span className="inline-flex items-center gap-2 rounded-full bg-white/12 px-2.5 py-1 text-white/92 ring-1 ring-white/16">
                   <div className="flex shrink-0 items-center gap-0.5">
                     {renderStars(averageRating, 'h-3.5 w-3.5')}
                   </div>
-                  <span className="max-w-[10rem] truncate text-[0.75rem] font-semibold sm:max-w-[12rem] xl:max-w-[14rem]">
-                    {reviews.length > 0
-                      ? `${averageRating.toFixed(1)} de 5 en ${reviews.length} valoraciones`
-                      : 'Aun no tienes valoraciones registradas'}
-                  </span>
+                  {reviews.length > 0 ? (
+                    <span className="max-w-[10rem] truncate text-[0.75rem] font-semibold sm:max-w-[12rem] xl:max-w-[14rem]">
+                      {`${averageRating.toFixed(1)} de 5 en ${reviews.length} valoraciones`}
+                    </span>
+                  ) : null}
                 </span>
               </div>
             </div>
@@ -244,27 +308,113 @@ export function StudentTreatmentsPage() {
               <h2 className="font-headline text-[1.45rem] font-extrabold tracking-tight text-ink">
                 Comentarios de tus citas
               </h2>
-              <p className="max-w-2xl text-sm leading-6 text-ink-muted">
-                Consulta lo que los pacientes han compartido despues de atenderse contigo en la plataforma.
-              </p>
             </div>
-            <div className="inline-flex items-center gap-3 self-start rounded-[1.25rem] border border-amber-200/80 bg-amber-50 px-3.5 py-2.5 text-amber-900 shadow-[0_16px_34px_-24px_rgba(180,83,9,0.45)]">
-              <div className="flex items-center gap-1">{renderStars(averageRating, 'h-4 w-4')}</div>
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-700/80">
-                  Promedio actual
-                </p>
-                <p className="text-sm font-semibold">
-                  {reviews.length > 0 ? `${averageRating.toFixed(1)} / 5` : 'Sin valoraciones'}
-                </p>
+            <div className="flex flex-wrap items-center gap-2.5 self-start">
+              <div
+                className="inline-flex items-center gap-2.5 rounded-[1.2rem] border border-sky-200/80 bg-sky-50 px-3.5 py-2.5 text-sky-950 shadow-[0_16px_34px_-24px_rgba(14,116,144,0.38)]"
+                data-testid="student-review-comments-dashboard"
+              >
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-[0.95rem] bg-white text-primary shadow-[0_14px_24px_-20px_rgba(14,116,144,0.55)]">
+                  <MessageSquareMore aria-hidden="true" className="h-4.5 w-4.5" />
+                </span>
+                <div className="space-y-0.5">
+                  <p className="text-[0.64rem] font-bold uppercase tracking-[0.18em] text-sky-700/80">
+                    Comentarios
+                  </p>
+                  <p className="font-headline text-[1.28rem] font-extrabold tracking-tight text-sky-950">
+                    {commentsCount}
+                  </p>
+                </div>
+              </div>
+              <div className="relative" ref={reviewRatingMenuRef}>
+                <button
+                  aria-controls="student-review-rating-menu"
+                  aria-expanded={isReviewRatingMenuOpen}
+                  aria-haspopup="menu"
+                  aria-label="Filtrar comentarios por estrellas"
+                  className={classNames(
+                    'relative inline-flex h-11 w-11 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                    reviewRatingFilter === 'all'
+                      ? 'border-slate-200/90 hover:border-primary/30 hover:bg-white'
+                      : 'border-primary/30 bg-primary/10 text-primary',
+                  )}
+                  data-testid="student-review-rating-filter-button"
+                  type="button"
+                  onClick={() => {
+                    setIsReviewRatingMenuOpen((current) => !current);
+                  }}
+                >
+                  <SlidersHorizontal aria-hidden="true" className="h-[1.02rem] w-[1.02rem]" />
+                  {reviewRatingFilter !== 'all' ? (
+                    <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary" />
+                  ) : null}
+                </button>
+                {isReviewRatingMenuOpen ? (
+                  <div
+                    className="absolute right-0 top-[calc(100%+0.45rem)] z-20 w-[min(15rem,calc(100vw-2.5rem))] overflow-hidden rounded-[1rem] border border-slate-200/80 bg-white/95 p-1 shadow-[0_20px_46px_-32px_rgba(15,23,42,0.22)] backdrop-blur"
+                    id="student-review-rating-menu"
+                    role="menu"
+                  >
+                    <div className="px-2 pb-1 pt-0.5">
+                      <p className="text-[0.6rem] font-bold uppercase tracking-[0.18em] text-primary/70">
+                        Filtrar por estrellas
+                      </p>
+                    </div>
+                    <div className="admin-scrollbar max-h-[10rem] space-y-0.5 overflow-y-auto pr-0.5">
+                      {reviewRatingOptions.map((option) => {
+                        const isSelected = option.value === reviewRatingFilter;
+
+                        return (
+                          <button
+                            key={option.label}
+                            aria-checked={isSelected}
+                            className={classNames(
+                              'flex w-full items-center justify-between rounded-[0.8rem] px-2.5 py-2 text-left text-[0.76rem] font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                              isSelected
+                                ? 'bg-primary text-white shadow-[0_14px_30px_-20px_rgba(22,78,99,0.9)]'
+                                : 'bg-slate-50/70 text-ink hover:bg-slate-100',
+                            )}
+                            role="menuitemradio"
+                            type="button"
+                            onClick={() => {
+                              setReviewRatingFilter(option.value);
+                              setIsReviewRatingMenuOpen(false);
+                            }}
+                          >
+                            <div className="flex min-w-0 items-center gap-2">
+                              {option.value === 'all' ? (
+                                <span>{option.label}</span>
+                              ) : (
+                                <>
+                                  <div className="flex items-center gap-0.5">
+                    {renderStars(option.value, 'h-3.5 w-3.5', 'dark')}
+                                  </div>
+                                  <span>{option.label}</span>
+                                </>
+                              )}
+                            </div>
+                            <span
+                              className={classNames(
+                                'inline-flex h-4.5 w-4.5 items-center justify-center rounded-full',
+                                isSelected ? 'bg-white/18 text-white' : 'bg-white text-slate-300',
+                              )}
+                            >
+                              <Check aria-hidden="true" className="h-3 w-3" />
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>
         </div>
         <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-4 py-3.5 sm:px-5 sm:py-4">
-          {reviews.length > 0 ? (
+          {filteredReviews.length > 0 ? (
             <div className="grid gap-3 lg:grid-cols-2 2xl:grid-cols-3 2xl:gap-4">
-              {reviews.map((review) => (
+              {filteredReviews.map((review) => (
                 <SurfaceCard
                   key={review.id}
                   className="border border-slate-200/80 bg-white shadow-none"
@@ -281,7 +431,9 @@ export function StudentTreatmentsPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1">{renderStars(review.rating, 'h-4 w-4')}</div>
+                      <div className="flex items-center gap-1">
+                        {renderStars(review.rating, 'h-4 w-4', 'dark')}
+                      </div>
                       <span className="text-sm font-semibold text-ink">{review.rating.toFixed(1)}</span>
                     </div>
                     <p className="rounded-[1.2rem] bg-slate-50 px-3.5 py-3 text-sm leading-6 text-ink">
@@ -308,10 +460,14 @@ export function StudentTreatmentsPage() {
             >
               <div className="space-y-2 text-center">
                 <p className="font-headline text-xl font-extrabold tracking-tight text-ink">
-                  Aun no tienes comentarios registrados
+                  {reviews.length === 0
+                    ? 'Aun no tienes comentarios registrados'
+                    : 'No hay comentarios para este filtro'}
                 </p>
                 <p className="mx-auto max-w-xl text-sm leading-6 text-ink-muted">
-                  Cuando se finalicen citas con valoracion del paciente, aqui podras revisar sus estrellas y comentarios.
+                  {reviews.length === 0
+                    ? 'Cuando se finalicen citas con valoracion del paciente, aqui podras revisar sus estrellas y comentarios.'
+                    : 'Prueba con otra cantidad de estrellas para ver mas valoraciones en esta seccion.'}
                 </p>
               </div>
             </SurfaceCard>
@@ -442,7 +598,9 @@ export function StudentTreatmentsPage() {
               </p>
             </div>
             <div className="inline-flex items-center gap-3 self-start rounded-[1.25rem] border border-amber-200/80 bg-amber-50 px-4 py-3 text-amber-900 shadow-[0_16px_34px_-24px_rgba(180,83,9,0.45)]">
-              <div className="flex items-center gap-1">{renderStars(averageRating, 'h-4 w-4')}</div>
+              <div className="flex items-center gap-1">
+                {renderStars(averageRating, 'h-4 w-4', 'dark')}
+              </div>
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-700/80">
                   Promedio actual

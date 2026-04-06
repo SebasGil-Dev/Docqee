@@ -796,6 +796,13 @@ export type StudentConversationMessageAuthor = 'ESTUDIANTE' | 'PACIENTE';
 
 export type StudentScheduleBlockType = 'ESPECIFICO' | 'RECURRENTE';
 
+export type StudentAgendaAppointmentStatus =
+  | 'PROPUESTA'
+  | 'ACEPTADA'
+  | 'CANCELADA'
+  | 'FINALIZADA'
+  | 'REPROGRAMACION_PENDIENTE';
+
 export type StudentProfessionalLink = {
   id: string;
   type: StudentProfessionalLinkType;
@@ -843,6 +850,18 @@ export type StudentAppointmentReview = {
   patientName: string;
   rating: number;
   siteName: string;
+};
+
+export type StudentAgendaAppointment = {
+  additionalInfo: string | null;
+  appointmentType: string;
+  city: string;
+  endAt: string;
+  id: string;
+  patientName: string;
+  siteName: string;
+  startAt: string;
+  status: StudentAgendaAppointmentStatus;
 };
 
 export type StudentScheduleBlock = {
@@ -893,6 +912,7 @@ export type StudentConversation = {
 };
 
 export type StudentModuleState = {
+  appointments: StudentAgendaAppointment[];
   conversations: StudentConversation[];
   practiceSites: StudentPracticeSite[];
   profile: StudentProfile;
