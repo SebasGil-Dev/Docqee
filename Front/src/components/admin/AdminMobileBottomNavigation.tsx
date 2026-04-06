@@ -67,10 +67,10 @@ export function AdminMobileBottomNavigation({
   const navigate = useNavigate();
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-30 px-3 pb-3 [padding-bottom:calc(env(safe-area-inset-bottom)+0.75rem)] lg:hidden">
+    <div className="fixed inset-x-0 bottom-0 z-30 px-2 pb-2 [padding-bottom:calc(env(safe-area-inset-bottom)+0.5rem)] lg:hidden">
       <nav
         aria-label="Navegacion inferior administrativa"
-        className="mx-auto w-full max-w-[16rem] rounded-[1.5rem] bg-primary p-1.5 shadow-[0_-10px_28px_rgba(0,100,124,0.2)]"
+        className="w-full rounded-[1.35rem] bg-primary p-1.5 shadow-[0_-10px_28px_rgba(0,100,124,0.2)]"
       >
         <div className="grid grid-cols-3 gap-1">
           {items.map((item) => {
