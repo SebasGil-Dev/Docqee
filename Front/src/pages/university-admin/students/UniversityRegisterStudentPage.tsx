@@ -261,8 +261,8 @@ export function UniversityRegisterStudentPage({
           noValidate
           onSubmit={handleSubmit}
         >
-          <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-7 sm:py-5 lg:min-h-fit lg:flex-none lg:overflow-visible">
-            <div className="space-y-4 pb-4 sm:space-y-5 sm:pb-5 lg:pb-3">
+          <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-7 sm:py-5 lg:min-h-fit lg:flex-none lg:overflow-visible lg:py-4">
+            <div className="space-y-4 pb-4 sm:space-y-5 sm:pb-5 lg:pb-1">
               <div className="grid gap-4 sm:gap-5 lg:grid-cols-2">
                 <AdminTextField
                   containerClassName="space-y-1"
@@ -361,7 +361,7 @@ export function UniversityRegisterStudentPage({
                     name="semester"
                     options={semesterOptions}
                     placeholder="Selecciona un semestre"
-                    triggerClassName="py-2.5 sm:py-3"
+                    triggerClassName="py-2.25 sm:py-2.5"
                     triggerRef={semesterRef}
                     value={values.semester}
                     onBlur={() => handleFieldBlur('semester')}
@@ -371,7 +371,7 @@ export function UniversityRegisterStudentPage({
               </div>
             </div>
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-3 border-t border-slate-200/80 bg-white px-5 py-3.5 sm:px-7 sm:py-4">
+          <div className="flex flex-wrap items-center justify-center gap-3 border-t border-slate-200/80 bg-white px-5 py-3 sm:px-7 sm:py-3 lg:py-2.5">
             <button
               className="inline-flex items-center justify-center rounded-2xl bg-brand-gradient px-5 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-70"
               disabled={isSubmitting || isLoading}
