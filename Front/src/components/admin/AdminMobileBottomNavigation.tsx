@@ -1,10 +1,14 @@
 import {
   Badge,
   Building2,
+  CalendarDays,
+  ClipboardList,
   GraduationCap,
   KeyRound,
   LogOut,
+  Stethoscope,
   Upload,
+  UserRound,
   type LucideIcon,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -26,8 +30,12 @@ type AdminMobileBottomNavigationProps = {
 const navigationIcons: Record<AdminShellNavigationIcon, LucideIcon> = {
   badge: Badge,
   building2: Building2,
+  'calendar-days': CalendarDays,
+  'clipboard-list': ClipboardList,
   'graduation-cap': GraduationCap,
   'key-round': KeyRound,
+  stethoscope: Stethoscope,
+  'user-round': UserRound,
   upload: Upload,
 };
 
@@ -40,19 +48,25 @@ function isNavigationItemActive(
 }
 
 type ActionContentProps = {
+  compact?: boolean;
   icon: LucideIcon;
   isActive?: boolean;
 };
 
-function ActionContent({ icon: Icon, isActive = false }: ActionContentProps) {
+function ActionContent({
+  compact = false,
+  icon: Icon,
+  isActive = false,
+}: ActionContentProps) {
   return (
     <span
       className={classNames(
-        'inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-200',
+        'inline-flex items-center justify-center rounded-full transition-colors duration-200',
+        compact ? 'h-8 w-8' : 'h-9 w-9',
         isActive ? 'bg-primary/10 text-primary' : 'bg-white/12 text-white',
       )}
     >
-      <Icon aria-hidden="true" className="h-4.5 w-4.5 shrink-0" />
+      <Icon aria-hidden="true" className={classNames('shrink-0', compact ? 'h-4 w-4' : 'h-4.5 w-4.5')} />
     </span>
   );
 }
@@ -65,6 +79,8 @@ export function AdminMobileBottomNavigation({
   onLogout,
 }: AdminMobileBottomNavigationProps) {
   const navigate = useNavigate();
+  const totalActions = items.length + 1;
+  const isCompact = totalActions > 4;
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-30 px-2 pb-2 [padding-bottom:calc(env(safe-area-inset-bottom)+0.5rem)] lg:hidden">
@@ -72,7 +88,10 @@ export function AdminMobileBottomNavigation({
         aria-label="Navegacion inferior administrativa"
         className="w-full rounded-[1.35rem] bg-primary p-1.5 shadow-[0_-10px_28px_rgba(0,100,124,0.2)]"
       >
-        <div className="grid grid-cols-3 gap-1">
+        <div
+          className="grid gap-1"
+          style={{ gridTemplateColumns: `repeat(${totalActions}, minmax(0, 1fr))` }}
+        >
           {items.map((item) => {
             const Icon = navigationIcons[item.icon];
             const isActive = isNavigationItemActive(
@@ -94,7 +113,7 @@ export function AdminMobileBottomNavigation({
                 )}
                 to={item.to}
               >
-                <ActionContent icon={Icon} isActive={isActive} />
+                <ActionContent compact={isCompact} icon={Icon} isActive={isActive} />
               </Link>
             );
           })}
@@ -107,7 +126,7 @@ export function AdminMobileBottomNavigation({
               navigate(logoutTo);
             }}
           >
-            <ActionContent icon={LogOut} />
+            <ActionContent compact={isCompact} icon={LogOut} />
           </button>
         </div>
       </nav>

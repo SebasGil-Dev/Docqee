@@ -156,6 +156,53 @@ export const router = createBrowserRouter([
     ],
   },
   {
+    path: ROUTES.studentRoot,
+    lazy: async () => {
+      const { StudentLayout } = await import('@/pages/student/StudentLayout');
+      return { Component: StudentLayout };
+    },
+    children: [
+      {
+        index: true,
+        Component: function StudentIndexRedirect() {
+          return <Navigate replace to={ROUTES.studentProfile} />;
+        },
+      },
+      {
+        path: 'mi-perfil',
+        lazy: async () => {
+          const { StudentProfilePage } = await import('@/pages/student/profile/StudentProfilePage');
+          return { Component: StudentProfilePage };
+        },
+      },
+      {
+        path: 'tratamientos-y-sedes',
+        lazy: async () => {
+          const { StudentTreatmentsPage } = await import(
+            '@/pages/student/treatments/StudentTreatmentsPage'
+          );
+          return { Component: StudentTreatmentsPage };
+        },
+      },
+      {
+        path: 'agenda',
+        lazy: async () => {
+          const { StudentAgendaPage } = await import('@/pages/student/agenda/StudentAgendaPage');
+          return { Component: StudentAgendaPage };
+        },
+      },
+      {
+        path: 'solicitudes',
+        lazy: async () => {
+          const { StudentRequestsPage } = await import(
+            '@/pages/student/requests/StudentRequestsPage'
+          );
+          return { Component: StudentRequestsPage };
+        },
+      },
+    ],
+  },
+  {
     path: ROUTES.forgotPassword,
     lazy: async () => {
       const { ForgotPasswordPage } = await import('@/pages/auth/forgot-password/ForgotPasswordPage');

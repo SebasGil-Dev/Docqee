@@ -125,6 +125,7 @@ export const universityAdminContent = {
       lastName: 'Quintero',
     },
     homePath: ROUTES.home,
+    mobileTitle: 'Admin Universidad',
     logoutCta: {
       label: 'Cerrar sesion',
       to: ROUTES.login,

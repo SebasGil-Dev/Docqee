@@ -3,12 +3,16 @@ import { useEffect, useState } from 'react';
 import {
   Badge,
   Building2,
+  CalendarDays,
   ChevronLeft,
   ChevronRight,
+  ClipboardList,
   GraduationCap,
   KeyRound,
   LogOut,
+  Stethoscope,
   Upload,
+  UserRound,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -33,8 +37,12 @@ const MOBILE_ADMIN_MEDIA_QUERY = '(max-width: 1023px)';
 const navigationIcons: Record<AdminShellNavigationIcon, typeof Building2> = {
   badge: Badge,
   building2: Building2,
+  'calendar-days': CalendarDays,
+  'clipboard-list': ClipboardList,
   'graduation-cap': GraduationCap,
   'key-round': KeyRound,
+  stethoscope: Stethoscope,
+  'user-round': UserRound,
   upload: Upload,
 };
 
@@ -152,7 +160,7 @@ export function AdminShell({
                       Docqee
                     </p>
                     <p className="mt-[0.2rem] truncate whitespace-nowrap text-[0.58rem] font-extrabold uppercase leading-none tracking-[0.16em] text-primary sm:text-[0.62rem] sm:tracking-[0.18em]">
-                      <span className="sm:hidden">Admin Plataforma</span>
+                      <span className="sm:hidden">{content.mobileTitle ?? content.title}</span>
                       <span className="hidden sm:inline">{content.title}</span>
                     </p>
                   </div>

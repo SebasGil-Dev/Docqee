@@ -604,8 +604,12 @@ export type RegisterUniversityFormErrors = Partial<Record<RegisterUniversityForm
 export type AdminShellNavigationIcon =
   | 'badge'
   | 'building2'
+  | 'calendar-days'
+  | 'clipboard-list'
   | 'graduation-cap'
   | 'key-round'
+  | 'stethoscope'
+  | 'user-round'
   | 'upload';
 
 export type AdminShellNavigationItem = {
@@ -621,6 +625,7 @@ export type AdminShellContent = {
     lastName: string;
   };
   homePath?: `/${string}`;
+  mobileTitle?: string;
   logoutCta: {
     label: string;
     to: `/${string}`;
@@ -769,3 +774,118 @@ export type RegisterTeacherFormValues = {
 export type RegisterTeacherFormField = keyof RegisterTeacherFormValues;
 
 export type RegisterTeacherFormErrors = Partial<Record<RegisterTeacherFormField, string>>;
+
+export type StudentProfessionalLinkType =
+  | 'RED_PROFESIONAL'
+  | 'PORTAFOLIO'
+  | 'HOJA_DE_VIDA'
+  | 'OTRO';
+
+export type StudentRequestStatus =
+  | 'PENDIENTE'
+  | 'ACEPTADA'
+  | 'RECHAZADA'
+  | 'CERRADA'
+  | 'CANCELADA';
+
+export type StudentScheduleBlockType = 'ESPECIFICO' | 'RECURRENTE';
+
+export type StudentProfessionalLink = {
+  id: string;
+  type: StudentProfessionalLinkType;
+  url: string;
+};
+
+export type StudentProfile = {
+  avatarAlt: string;
+  avatarFileName: string | null;
+  avatarSrc: string | null;
+  availabilityGeneral: string;
+  biography: string;
+  email: string;
+  firstName: string;
+  id: string;
+  lastName: string;
+  links: StudentProfessionalLink[];
+  semester: string;
+  universityName: string;
+};
+
+export type StudentTreatment = {
+  description: string;
+  id: string;
+  name: string;
+  status: PersonOperationalStatus;
+};
+
+export type StudentPracticeSite = {
+  address: string;
+  city: string;
+  id: string;
+  locality: string;
+  name: string;
+  status: PersonOperationalStatus;
+};
+
+export type StudentScheduleBlock = {
+  dayOfWeek: number | null;
+  endTime: string;
+  id: string;
+  reason: string | null;
+  recurrenceEndDate: string | null;
+  recurrenceStartDate: string | null;
+  specificDate: string | null;
+  startTime: string;
+  status: PersonOperationalStatus;
+  type: StudentScheduleBlockType;
+};
+
+export type StudentRequest = {
+  appointmentsCount: number;
+  conversationEnabled: boolean;
+  id: string;
+  patientAge: number;
+  patientCity: string;
+  patientName: string;
+  reason: string | null;
+  responseAt: string | null;
+  sentAt: string;
+  status: StudentRequestStatus;
+};
+
+export type StudentModuleState = {
+  practiceSites: StudentPracticeSite[];
+  profile: StudentProfile;
+  requests: StudentRequest[];
+  scheduleBlocks: StudentScheduleBlock[];
+  treatments: StudentTreatment[];
+};
+
+export type StudentProfileFormValues = {
+  avatarFileName: string | null;
+  avatarSrc: string | null;
+  availabilityGeneral: string;
+  biography: string;
+  links: StudentProfessionalLink[];
+};
+
+export type StudentProfileFormField = keyof StudentProfileFormValues;
+
+export type StudentProfileFormErrors = Partial<Record<StudentProfileFormField, string>>;
+
+export type StudentScheduleBlockFormValues = {
+  dayOfWeek: string;
+  endTime: string;
+  reason: string;
+  recurrenceEndDate: string;
+  recurrenceStartDate: string;
+  specificDate: string;
+  startTime: string;
+  type: StudentScheduleBlockType;
+};
+
+export type StudentScheduleBlockFormField = keyof StudentScheduleBlockFormValues;
+
+export type StudentScheduleBlockFormErrors = Partial<
+  Record<StudentScheduleBlockFormField, string>
+>;

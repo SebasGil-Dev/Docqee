@@ -88,6 +88,7 @@ export const adminContent = {
       lastName: 'Gomez',
     },
     homePath: ROUTES.home,
+    mobileTitle: 'Admin Plataforma',
     eyebrow: 'Panel administrativo',
     logoutCta: {
       kind: 'internal',
