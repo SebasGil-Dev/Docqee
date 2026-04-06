@@ -15,6 +15,8 @@ export function shouldRequireFirstLoginPasswordChange(
 
 export function getDefaultRouteForRole(role: SessionUserRole) {
   switch (role) {
+    case 'PATIENT':
+      return ROUTES.patientSearchStudents;
     case 'PLATFORM_ADMIN':
       return ROUTES.adminUniversities;
     case 'STUDENT':

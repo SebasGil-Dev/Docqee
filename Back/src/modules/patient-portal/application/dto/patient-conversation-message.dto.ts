@@ -1,0 +1,7 @@
+export class PatientConversationMessageDto {
+  author!: 'PACIENTE' | 'ESTUDIANTE';
+  authorName!: string;
+  content!: string;
+  id!: string;
+  sentAt!: string;
+}

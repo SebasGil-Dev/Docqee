@@ -609,6 +609,7 @@ export type AdminShellNavigationIcon =
   | 'graduation-cap'
   | 'key-round'
   | 'message-square-more'
+  | 'search'
   | 'stethoscope'
   | 'user-round'
   | 'upload';
@@ -916,3 +917,128 @@ export type StudentScheduleBlockFormField = keyof StudentScheduleBlockFormValues
 export type StudentScheduleBlockFormErrors = Partial<
   Record<StudentScheduleBlockFormField, string>
 >;
+
+export type PatientDiscoveryAvailability = 'available' | 'limited';
+
+export type PatientRequestStatus =
+  | 'PENDIENTE'
+  | 'ACEPTADA'
+  | 'RECHAZADA'
+  | 'CERRADA'
+  | 'CANCELADA';
+
+export type PatientConversationStatus = 'ACTIVA' | 'SOLO_LECTURA' | 'CERRADA';
+
+export type PatientConversationMessageAuthor = 'PACIENTE' | 'ESTUDIANTE';
+
+export type PatientAppointmentStatus =
+  | 'PROPUESTA'
+  | 'ACEPTADA'
+  | 'RECHAZADA'
+  | 'CANCELADA'
+  | 'FINALIZADA';
+
+export type PatientTutorProfile = {
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+};
+
+export type PatientProfile = {
+  avatarAlt: string;
+  avatarFileName: string | null;
+  avatarSrc: string | null;
+  birthDate: string;
+  city: string;
+  email: string;
+  firstName: string;
+  id: string;
+  lastName: string;
+  locality: string;
+  phone: string;
+  sex: PatientSex;
+  tutor: PatientTutorProfile | null;
+};
+
+export type PatientStudentDirectoryItem = {
+  availabilityGeneral: string;
+  availabilityStatus: PatientDiscoveryAvailability;
+  biography: string;
+  city: string;
+  id: string;
+  lastName: string;
+  locality: string;
+  practiceSite: string;
+  semester: string;
+  firstName: string;
+  treatments: string[];
+  universityName: string;
+};
+
+export type PatientRequest = {
+  appointmentsCount: number;
+  conversationId: string | null;
+  id: string;
+  reason: string | null;
+  responseAt: string | null;
+  sentAt: string;
+  status: PatientRequestStatus;
+  studentId: string;
+  studentName: string;
+  universityName: string;
+};
+
+export type PatientConversationMessage = {
+  author: PatientConversationMessageAuthor;
+  authorName: string;
+  content: string;
+  id: string;
+  sentAt: string;
+};
+
+export type PatientConversation = {
+  id: string;
+  messages: PatientConversationMessage[];
+  reason: string | null;
+  requestId: string;
+  status: PatientConversationStatus;
+  studentId: string;
+  studentName: string;
+  universityName: string;
+  unreadCount: number;
+};
+
+export type PatientAppointment = {
+  additionalInfo: string | null;
+  appointmentType: string;
+  city: string;
+  endAt: string;
+  id: string;
+  siteName: string;
+  startAt: string;
+  status: PatientAppointmentStatus;
+  studentName: string;
+  teacherName: string;
+  universityName: string;
+};
+
+export type PatientModuleState = {
+  appointments: PatientAppointment[];
+  conversations: PatientConversation[];
+  profile: PatientProfile;
+  requests: PatientRequest[];
+  students: PatientStudentDirectoryItem[];
+};
+
+export type PatientProfileFormValues = {
+  avatarFileName: string | null;
+  avatarSrc: string | null;
+  city: string;
+  locality: string;
+  phone: string;
+};
+
+export type PatientProfileFormField = keyof PatientProfileFormValues;
+
+export type PatientProfileFormErrors = Partial<Record<PatientProfileFormField, string>>;

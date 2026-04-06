@@ -156,6 +156,62 @@ export const router = createBrowserRouter([
     ],
   },
   {
+    path: ROUTES.patientRoot,
+    lazy: async () => {
+      const { PatientLayout } = await import('@/pages/patient/PatientLayout');
+      return { Component: PatientLayout };
+    },
+    children: [
+      {
+        index: true,
+        Component: function PatientIndexRedirect() {
+          return <Navigate replace to={ROUTES.patientSearchStudents} />;
+        },
+      },
+      {
+        path: 'buscar-estudiantes',
+        lazy: async () => {
+          const { PatientSearchStudentsPage } = await import(
+            '@/pages/patient/search/PatientSearchStudentsPage'
+          );
+          return { Component: PatientSearchStudentsPage };
+        },
+      },
+      {
+        path: 'solicitudes',
+        lazy: async () => {
+          const { PatientRequestsPage } = await import('@/pages/patient/requests/PatientRequestsPage');
+          return { Component: PatientRequestsPage };
+        },
+      },
+      {
+        path: 'conversaciones',
+        lazy: async () => {
+          const { PatientConversationsPage } = await import(
+            '@/pages/patient/conversations/PatientConversationsPage'
+          );
+          return { Component: PatientConversationsPage };
+        },
+      },
+      {
+        path: 'citas',
+        lazy: async () => {
+          const { PatientAppointmentsPage } = await import(
+            '@/pages/patient/appointments/PatientAppointmentsPage'
+          );
+          return { Component: PatientAppointmentsPage };
+        },
+      },
+      {
+        path: 'mi-perfil',
+        lazy: async () => {
+          const { PatientProfilePage } = await import('@/pages/patient/profile/PatientProfilePage');
+          return { Component: PatientProfilePage };
+        },
+      },
+    ],
+  },
+  {
     path: ROUTES.studentRoot,
     lazy: async () => {
       const { StudentLayout } = await import('@/pages/student/StudentLayout');
