@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { MemoryRouterProps } from 'react-router-dom';
 import { MemoryRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ROUTES } from '@/constants/routes';
 import { AdminLayout } from '@/pages/admin/AdminLayout';
@@ -11,7 +11,11 @@ import { AdminRegisterUniversityPage } from '@/pages/admin/register-university/A
 import { AdminUniversitiesPage } from '@/pages/admin/universities/AdminUniversitiesPage';
 import { resetAdminModuleState } from '@/lib/adminModuleStore';
 
-function renderAdminApp(initialEntries: MemoryRouterProps['initialEntries'] = [ROUTES.adminUniversities]) {
+function renderAdminApp(
+  initialEntries: MemoryRouterProps['initialEntries'] = [
+    ROUTES.adminUniversities,
+  ],
+) {
   return render(
     <MemoryRouter initialEntries={initialEntries}>
       <Routes>
@@ -21,7 +25,10 @@ function renderAdminApp(initialEntries: MemoryRouterProps['initialEntries'] = [R
             index
           />
           <Route element={<AdminUniversitiesPage />} path="universidades" />
-          <Route element={<AdminRegisterUniversityPage />} path="universidades/registrar" />
+          <Route
+            element={<AdminRegisterUniversityPage />}
+            path="universidades/registrar"
+          />
           <Route element={<AdminCredentialsPage />} path="credenciales" />
         </Route>
       </Routes>
@@ -29,12 +36,36 @@ function renderAdminApp(initialEntries: MemoryRouterProps['initialEntries'] = [R
   );
 }
 
-async function fillRegisterUniversityForm(user: ReturnType<typeof userEvent.setup>) {
-  await user.type(screen.getByLabelText(/nombre de la universidad/i), 'Universidad del Sur Clinico');
+function mockMatchMedia(matches: boolean) {
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+      addEventListener: vi.fn(),
+      addListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+      matches,
+      media: query,
+      onchange: null,
+      removeEventListener: vi.fn(),
+      removeListener: vi.fn(),
+    })),
+  });
+}
+
+async function fillRegisterUniversityForm(
+  user: ReturnType<typeof userEvent.setup>,
+) {
+  await user.type(
+    screen.getByLabelText(/nombre de la universidad/i),
+    'Universidad del Sur Clinico',
+  );
   await screen.findByRole('option', { name: /^Pereira$/i });
   await user.selectOptions(screen.getByLabelText(/^ciudad$/i), 'city-pereira');
   await screen.findByRole('option', { name: /Comuna Centro/i });
-  await user.selectOptions(screen.getByLabelText(/localidad principal/i), 'locality-pereira-centro');
+  await user.selectOptions(
+    screen.getByLabelText(/localidad principal/i),
+    'locality-pereira-centro',
+  );
   await user.type(
     screen.getByLabelText(/nombres del administrador universitario/i),
     'Camila',
@@ -52,27 +83,27 @@ async function fillRegisterUniversityForm(user: ReturnType<typeof userEvent.setu
 
 describe('Admin pages', () => {
   beforeEach(() => {
+    window.localStorage.clear();
+    mockMatchMedia(false);
     resetAdminModuleState();
   });
 
   it('mantiene Universidades activa en listado y registro', () => {
     const firstRender = renderAdminApp([ROUTES.adminUniversities]);
 
-    expect(screen.getByRole('link', { name: /^Universidades$/i })).toHaveAttribute(
-      'aria-current',
-      'page',
-    );
-    expect(screen.getByRole('link', { name: /Envio de Credenciales/i })).not.toHaveAttribute(
-      'aria-current',
-    );
+    expect(
+      screen.getByRole('link', { name: /^Universidades$/i }),
+    ).toHaveAttribute('aria-current', 'page');
+    expect(
+      screen.getByRole('link', { name: /Envio de Credenciales/i }),
+    ).not.toHaveAttribute('aria-current');
 
     firstRender.unmount();
     renderAdminApp([ROUTES.adminRegisterUniversity]);
 
-    expect(screen.getByRole('link', { name: /^Universidades$/i })).toHaveAttribute(
-      'aria-current',
-      'page',
-    );
+    expect(
+      screen.getByRole('link', { name: /^Universidades$/i }),
+    ).toHaveAttribute('aria-current', 'page');
   });
 
   it('filtra universidades por nombre', async () => {
@@ -82,8 +113,12 @@ describe('Admin pages', () => {
 
     await user.type(screen.getByLabelText(/buscar universidad/i), 'Pacifico');
 
-    expect(screen.getByText(/Universidad del Pacifico Dental/i)).toBeInTheDocument();
-    expect(screen.queryByText(/Universidad Clinica del Norte/i)).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/Universidad del Pacifico Dental/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Universidad Clinica del Norte/i),
+    ).not.toBeInTheDocument();
   });
 
   it('valida campos requeridos y el formato de correo al registrar una universidad', async () => {
@@ -91,27 +126,54 @@ describe('Admin pages', () => {
 
     renderAdminApp([ROUTES.adminRegisterUniversity]);
 
-    await user.click(screen.getByRole('button', { name: /registrar universidad/i }));
+    await user.click(
+      screen.getByRole('button', { name: /registrar universidad/i }),
+    );
 
-    expect(screen.getByText(/el nombre de la universidad es obligatorio/i)).toBeInTheDocument();
-    expect(screen.getByText(/la ciudad es obligatoria/i)).toBeInTheDocument();
-    expect(screen.getByText(/la localidad principal es obligatoria/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/los nombres del administrador universitario son obligatorios/i),
+      screen.getByText(/el nombre de la universidad es obligatorio/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/la ciudad es obligatoria/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/la localidad principal es obligatoria/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /los nombres del administrador universitario son obligatorios/i,
+      ),
     ).toBeInTheDocument();
     expect(screen.getByLabelText(/nombre de la universidad/i)).toHaveFocus();
 
-    await user.type(screen.getByLabelText(/nombre de la universidad/i), 'Universidad Nova');
+    await user.type(
+      screen.getByLabelText(/nombre de la universidad/i),
+      'Universidad Nova',
+    );
     await screen.findByRole('option', { name: /^(Bogota|Bogotá)$/i });
     await user.selectOptions(screen.getByLabelText(/^ciudad$/i), 'city-bogota');
     await screen.findByRole('option', { name: /^Suba$/i });
-    await user.selectOptions(screen.getByLabelText(/localidad principal/i), 'locality-bogota-suba');
-    await user.type(screen.getByLabelText(/nombres del administrador universitario/i), 'Luisa');
-    await user.type(screen.getByLabelText(/apellidos del administrador universitario/i), 'Gomez');
-    await user.type(screen.getByLabelText(/correo del administrador universitario/i), 'correo-invalido');
-    await user.click(screen.getByRole('button', { name: /registrar universidad/i }));
+    await user.selectOptions(
+      screen.getByLabelText(/localidad principal/i),
+      'locality-bogota-suba',
+    );
+    await user.type(
+      screen.getByLabelText(/nombres del administrador universitario/i),
+      'Luisa',
+    );
+    await user.type(
+      screen.getByLabelText(/apellidos del administrador universitario/i),
+      'Gomez',
+    );
+    await user.type(
+      screen.getByLabelText(/correo del administrador universitario/i),
+      'correo-invalido',
+    );
+    await user.click(
+      screen.getByRole('button', { name: /registrar universidad/i }),
+    );
 
-    expect(screen.getByText(/ingresa un correo electronico valido/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/ingresa un correo electronico valido/i),
+    ).toBeInTheDocument();
   });
 
   it('solo permite escoger una localidad despues de seleccionar ciudad', async () => {
@@ -139,19 +201,33 @@ describe('Admin pages', () => {
 
     renderAdminApp([ROUTES.adminUniversities]);
 
-    await user.click(screen.getByRole('link', { name: /registrar universidad/i }));
+    await user.click(
+      screen.getByRole('link', { name: /registrar universidad/i }),
+    );
     await fillRegisterUniversityForm(user);
-    await user.click(screen.getByRole('button', { name: /registrar universidad/i }));
+    await user.click(
+      screen.getByRole('button', { name: /registrar universidad/i }),
+    );
 
-    expect(await screen.findByText(/Universidad del Sur Clinico/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/Universidad del Sur Clinico/i),
+    ).toBeInTheDocument();
 
-    const universityRow = screen.getByText(/Universidad del Sur Clinico/i).closest('tr');
+    const universityRow = screen
+      .getByText(/Universidad del Sur Clinico/i)
+      .closest('tr');
     expect(universityRow).not.toBeNull();
-    expect(within(universityRow!).getAllByText(/^Pendiente$/i)).not.toHaveLength(0);
+    expect(
+      within(universityRow!).getAllByText(/^Pendiente$/i),
+    ).not.toHaveLength(0);
 
-    await user.click(screen.getByRole('link', { name: /Envio de Credenciales/i }));
+    await user.click(
+      screen.getByRole('link', { name: /Envio de Credenciales/i }),
+    );
 
-    const credentialRow = (await screen.findByText(/Universidad del Sur Clinico/i)).closest('tr');
+    const credentialRow = (
+      await screen.findByText(/Universidad del Sur Clinico/i)
+    ).closest('tr');
     expect(credentialRow).not.toBeNull();
     expect(within(credentialRow!).getByText(/^Generada$/i)).toBeInTheDocument();
   });
@@ -161,13 +237,19 @@ describe('Admin pages', () => {
 
     renderAdminApp([ROUTES.adminUniversities]);
 
-    const activeRow = screen.getByText(/Universidad Clinica del Norte/i).closest('tr');
+    const activeRow = screen
+      .getByText(/Universidad Clinica del Norte/i)
+      .closest('tr');
     expect(activeRow).not.toBeNull();
 
-    await user.click(within(activeRow!).getByRole('button', { name: /inactivar/i }));
+    await user.click(
+      within(activeRow!).getByRole('button', { name: /inactivar/i }),
+    );
 
     expect(within(activeRow!).getByText(/^Inactiva$/i)).toBeInTheDocument();
-    expect(within(activeRow!).getByRole('button', { name: /activar/i })).toBeInTheDocument();
+    expect(
+      within(activeRow!).getByRole('button', { name: /activar/i }),
+    ).toBeInTheDocument();
   });
 
   it('enviar solo cambia la credencial y mantiene la universidad en pending', async () => {
@@ -175,20 +257,30 @@ describe('Admin pages', () => {
 
     renderAdminApp([ROUTES.adminCredentials]);
 
-    const credentialRow = screen.getByText(/Universidad del Pacifico Dental/i).closest('tr');
+    const credentialRow = screen
+      .getByText(/Universidad del Pacifico Dental/i)
+      .closest('tr');
     expect(credentialRow).not.toBeNull();
 
-    await user.click(within(credentialRow!).getByRole('button', { name: /^Enviar$/i }));
+    await user.click(
+      within(credentialRow!).getByRole('button', { name: /^Enviar$/i }),
+    );
 
     expect(within(credentialRow!).getByText(/^Enviada$/i)).toBeInTheDocument();
-    expect(within(credentialRow!).getByRole('button', { name: /reenviar/i })).toBeInTheDocument();
+    expect(
+      within(credentialRow!).getByRole('button', { name: /reenviar/i }),
+    ).toBeInTheDocument();
 
     await user.click(screen.getByRole('link', { name: /^Universidades$/i }));
 
-    const universityRow = await screen.findByText(/Universidad del Pacifico Dental/i);
+    const universityRow = await screen.findByText(
+      /Universidad del Pacifico Dental/i,
+    );
     const pendingRow = universityRow.closest('tr');
     expect(pendingRow).not.toBeNull();
-    expect(within(pendingRow!).getAllByText(/^Pendiente$/i)).not.toHaveLength(0);
+    expect(within(pendingRow!).getAllByText(/^Pendiente$/i)).not.toHaveLength(
+      0,
+    );
   });
 
   it('eliminar remueve la credencial pendiente y la universidad asociada', async () => {
@@ -196,32 +288,93 @@ describe('Admin pages', () => {
 
     renderAdminApp([ROUTES.adminCredentials]);
 
-    const credentialRow = screen.getByText(/Corporacion Oral del Caribe/i).closest('tr');
+    const credentialRow = screen
+      .getByText(/Corporacion Oral del Caribe/i)
+      .closest('tr');
     expect(credentialRow).not.toBeNull();
 
-    await user.click(within(credentialRow!).getByRole('button', { name: /eliminar/i }));
+    await user.click(
+      within(credentialRow!).getByRole('button', { name: /eliminar/i }),
+    );
 
-    expect(screen.queryByText(/Corporacion Oral del Caribe/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Corporacion Oral del Caribe/i),
+    ).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('link', { name: /^Universidades$/i }));
 
-    expect(screen.queryByText(/Corporacion Oral del Caribe/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Corporacion Oral del Caribe/i),
+    ).not.toBeInTheDocument();
   });
 
   it('restaura el seed inicial al simular un nuevo arranque de la app', async () => {
     const user = userEvent.setup();
 
     const firstRender = renderAdminApp([ROUTES.adminCredentials]);
-    const credentialRow = screen.getByText(/Corporacion Oral del Caribe/i).closest('tr');
+    const credentialRow = screen
+      .getByText(/Corporacion Oral del Caribe/i)
+      .closest('tr');
     expect(credentialRow).not.toBeNull();
 
-    await user.click(within(credentialRow!).getByRole('button', { name: /eliminar/i }));
-    expect(screen.queryByText(/Corporacion Oral del Caribe/i)).not.toBeInTheDocument();
+    await user.click(
+      within(credentialRow!).getByRole('button', { name: /eliminar/i }),
+    );
+    expect(
+      screen.queryByText(/Corporacion Oral del Caribe/i),
+    ).not.toBeInTheDocument();
 
     firstRender.unmount();
     resetAdminModuleState();
     renderAdminApp([ROUTES.adminCredentials]);
 
-    expect(screen.getByText(/Corporacion Oral del Caribe/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Corporacion Oral del Caribe/i),
+    ).toBeInTheDocument();
+  });
+
+  it('muestra una bottom navigation movil solo en universidades y permite navegar a credenciales', async () => {
+    mockMatchMedia(true);
+    const user = userEvent.setup();
+
+    renderAdminApp([ROUTES.adminUniversities]);
+
+    expect(
+      screen.queryByRole('button', { name: /cerrar menu lateral/i }),
+    ).not.toBeInTheDocument();
+
+    const mobileNavigation = screen.getByRole('navigation', {
+      name: /navegacion inferior administrativa/i,
+    });
+
+    expect(
+      within(mobileNavigation).getByRole('link', { name: /^Universidades$/i }),
+    ).toHaveAttribute('aria-current', 'page');
+    expect(
+      within(mobileNavigation).getByRole('link', {
+        name: /Envio de Credenciales/i,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      within(mobileNavigation).getByRole('button', { name: /cerrar sesion/i }),
+    ).toBeInTheDocument();
+
+    await user.click(
+      within(mobileNavigation).getByRole('link', {
+        name: /Envio de Credenciales/i,
+      }),
+    );
+
+    expect(
+      await screen.findByRole('heading', { name: /Envio de Credenciales/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('navigation', {
+        name: /navegacion inferior administrativa/i,
+      }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /cerrar menu lateral/i }),
+    ).toBeInTheDocument();
   });
 });

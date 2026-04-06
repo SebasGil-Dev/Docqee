@@ -1,0 +1,128 @@
+import {
+  Badge,
+  Building2,
+  GraduationCap,
+  KeyRound,
+  LogOut,
+  Upload,
+  type LucideIcon,
+} from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+
+import type {
+  AdminShellNavigationIcon,
+  AdminShellNavigationItem,
+} from '@/content/types';
+import { classNames } from '@/lib/classNames';
+
+type AdminMobileBottomNavigationProps = {
+  activePathname: string;
+  items: readonly AdminShellNavigationItem[];
+  logoutLabel: string;
+  logoutTo: `/${string}`;
+  onLogout: () => void;
+};
+
+const navigationIcons: Record<AdminShellNavigationIcon, LucideIcon> = {
+  badge: Badge,
+  building2: Building2,
+  'graduation-cap': GraduationCap,
+  'key-round': KeyRound,
+  upload: Upload,
+};
+
+function isNavigationItemActive(
+  targetPath: string,
+  pathname: string,
+  matchPrefix?: string,
+) {
+  return pathname.startsWith(matchPrefix ?? targetPath);
+}
+
+type ActionContentProps = {
+  icon: LucideIcon;
+  isActive?: boolean;
+  label: string;
+};
+
+function ActionContent({
+  icon: Icon,
+  isActive = false,
+  label,
+}: ActionContentProps) {
+  return (
+    <>
+      <span
+        className={classNames(
+          'inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors duration-200',
+          isActive ? 'bg-primary/10 text-primary' : 'bg-white/12 text-white',
+        )}
+      >
+        <Icon aria-hidden="true" className="h-4.5 w-4.5 shrink-0" />
+      </span>
+      <span className="max-w-[4.8rem] text-center text-[0.62rem] font-bold leading-[1.15]">
+        {label}
+      </span>
+    </>
+  );
+}
+
+export function AdminMobileBottomNavigation({
+  activePathname,
+  items,
+  logoutLabel,
+  logoutTo,
+  onLogout,
+}: AdminMobileBottomNavigationProps) {
+  const navigate = useNavigate();
+
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-30 px-3 pb-3 [padding-bottom:calc(env(safe-area-inset-bottom)+0.75rem)] lg:hidden">
+      <nav
+        aria-label="Navegacion inferior administrativa"
+        className="mx-auto w-full max-w-[31rem] rounded-[1.9rem] bg-primary p-2 shadow-[0_-10px_28px_rgba(0,100,124,0.2)]"
+      >
+        <div className="grid grid-cols-3 gap-1.5">
+          {items.map((item) => {
+            const Icon = navigationIcons[item.icon];
+            const isActive = isNavigationItemActive(
+              item.to,
+              activePathname,
+              item.matchPrefix,
+            );
+
+            return (
+              <Link
+                aria-current={isActive ? 'page' : undefined}
+                key={item.to}
+                className={classNames(
+                  'flex min-w-0 flex-col items-center justify-center gap-1.5 rounded-[1.2rem] px-2 py-2.5 text-center transition-all duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/25',
+                  isActive
+                    ? 'bg-white text-primary shadow-[0_10px_24px_rgba(255,255,255,0.16)]'
+                    : 'text-white/86 hover:bg-white/10 hover:text-white',
+                )}
+                to={item.to}
+              >
+                <ActionContent
+                  icon={Icon}
+                  isActive={isActive}
+                  label={item.label}
+                />
+              </Link>
+            );
+          })}
+          <button
+            className="flex min-w-0 flex-col items-center justify-center gap-1.5 rounded-[1.2rem] px-2 py-2.5 text-center text-white/86 transition-all duration-200 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/25"
+            type="button"
+            onClick={() => {
+              onLogout();
+              navigate(logoutTo);
+            }}
+          >
+            <ActionContent icon={LogOut} label={logoutLabel} />
+          </button>
+        </div>
+      </nav>
+    </div>
+  );
+}
