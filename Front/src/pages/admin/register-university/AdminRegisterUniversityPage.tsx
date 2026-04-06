@@ -462,8 +462,10 @@ export function AdminRegisterUniversityPage({
             <span>{adminContent.registerPage.backLabel}</span>
           </Link>
         }
-        className="gap-3 sm:flex-row sm:items-center sm:justify-between"
+        actionClassName="sm:absolute sm:right-0 sm:top-1/2 sm:-translate-y-1/2"
+        className="relative gap-3 sm:min-h-[4rem] sm:justify-center"
         description={adminContent.registerPage.description}
+        titleClassName="text-center"
         title={adminContent.registerPage.title}
       />
       {errorMessage ? (
@@ -472,18 +474,6 @@ export function AdminRegisterUniversityPage({
         </div>
       ) : null}
       <AdminPanelCard className="flex flex-1 flex-col" panelClassName="bg-slate-50">
-        <div className="border-b border-slate-200/80 bg-[#e9eef5] px-6 py-5 sm:px-7">
-          <div className="flex items-start gap-4">
-            <span className="inline-flex h-12 w-12 items-center justify-center rounded-[1.5rem] bg-primary/12 text-primary">
-              <Building2 aria-hidden="true" className="h-5 w-5" />
-            </span>
-            <div>
-              <h2 className="font-headline text-2xl font-extrabold tracking-tight text-ink">
-                {adminContent.registerPage.title}
-              </h2>
-            </div>
-          </div>
-        </div>
         <form className="flex min-h-0 flex-1 flex-col overflow-hidden" noValidate onSubmit={handleSubmit}>
           <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-7">
             <div className="space-y-8 pb-6">

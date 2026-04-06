@@ -407,8 +407,8 @@ export function AdminCredentialsPage() {
                     <th className="px-4 py-3.5 lg:w-[26%] sm:px-5">Universidad</th>
                     <th className="px-4 py-3.5 lg:w-[16%] lg:pr-7">Administrador</th>
                     <th className="px-4 py-3.5 lg:w-[26%] lg:pl-7">Correo electronico</th>
-                    <th className="px-4 py-3.5 text-center lg:w-[10%]">Estado</th>
-                    <th className="px-4 py-3.5 text-center lg:w-[22%] sm:px-5">Acciones</th>
+                    <th className="px-4 py-3.5 text-center lg:w-[10%] lg:pl-6">Estado</th>
+                    <th className="px-4 py-3.5 text-center lg:w-[22%] lg:pl-5 sm:px-5">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200/80">
@@ -489,7 +489,7 @@ export function AdminCredentialsPage() {
                         </td>
                         <td
                           className={classNames(
-                            'px-4 pt-3.5 text-center',
+                            'px-4 pt-3.5 text-center lg:pl-6',
                             isLast ? 'pb-4' : 'pb-3.5',
                           )}
                         >
@@ -499,7 +499,7 @@ export function AdminCredentialsPage() {
                         </td>
                         <td
                           className={classNames(
-                            'px-4 pt-3.5 sm:px-5',
+                            'px-4 pt-3.5 lg:pl-5 sm:px-5',
                             isLast ? 'pb-4' : 'pb-3.5',
                           )}
                         >
