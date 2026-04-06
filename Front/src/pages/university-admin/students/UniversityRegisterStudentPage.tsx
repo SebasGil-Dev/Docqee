@@ -225,7 +225,7 @@ export function UniversityRegisterStudentPage({
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden sm:gap-6">
+    <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden sm:gap-6 lg:h-auto lg:min-h-fit lg:overflow-visible">
       <Seo
         description={universityAdminContent.registerStudentPage.meta.description}
         noIndex
@@ -252,14 +252,17 @@ export function UniversityRegisterStudentPage({
           <p role="alert">{errorMessage}</p>
         </SurfaceCard>
       ) : null}
-      <AdminPanelCard className="flex-1 lg:flex-none" panelClassName="bg-slate-50">
+      <AdminPanelCard
+        className="flex-1 lg:flex-none lg:self-start lg:overflow-visible"
+        panelClassName="bg-slate-50 lg:h-auto lg:overflow-visible"
+      >
         <form
-          className="flex min-h-0 flex-1 flex-col overflow-hidden lg:min-h-fit lg:overflow-visible"
+          className="flex min-h-0 flex-1 flex-col overflow-hidden lg:min-h-fit lg:flex-none lg:overflow-visible"
           noValidate
           onSubmit={handleSubmit}
         >
           <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-7 sm:py-5 lg:min-h-fit lg:flex-none lg:overflow-visible">
-            <div className="space-y-4 pb-4 sm:space-y-5 sm:pb-5">
+            <div className="space-y-4 pb-4 sm:space-y-5 sm:pb-5 lg:pb-3">
               <div className="grid gap-4 sm:gap-5 lg:grid-cols-2">
                 <AdminTextField
                   containerClassName="space-y-1"
