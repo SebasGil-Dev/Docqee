@@ -1,21 +1,29 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Resend } from 'resend';
+import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
-  private readonly resend: Resend;
+  private readonly transporter: nodemailer.Transporter;
   private readonly from: string;
 
   constructor(private readonly configService: ConfigService) {
     this.from = this.configService.get<string>('mail.from') ?? 'no-reply@docqee.com';
-    this.resend = new Resend(this.configService.get<string>('mail.resendApiKey'));
+    this.transporter = nodemailer.createTransport({
+      host: this.configService.get<string>('mail.smtpHost'),
+      port: this.configService.get<number>('mail.smtpPort') ?? 587,
+      secure: false,
+      auth: {
+        user: this.configService.get<string>('mail.smtpUser'),
+        pass: this.configService.get<string>('mail.smtpPass'),
+      },
+    });
   }
 
   async sendVerificationCode(to: string, code: string) {
     try {
-      await this.resend.emails.send({
+      await this.transporter.sendMail({
         from: this.from,
         to,
         subject: 'Verifica tu correo electrónico',
@@ -38,7 +46,7 @@ export class MailService {
 
   async sendPasswordResetCode(to: string, code: string) {
     try {
-      await this.resend.emails.send({
+      await this.transporter.sendMail({
         from: this.from,
         to,
         subject: 'Recuperación de contraseña',
