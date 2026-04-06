@@ -411,7 +411,26 @@ async function registerUniversity(values: RegisterUniversityFormValues) {
 
   try {
     const university = await createPlatformAdminUniversity(values);
-    await refreshRuntimeState();
+
+    const newCredential: PendingCredential | null = university.credentialId
+      ? {
+          deliveryStatus: 'generated',
+          id: university.credentialId,
+          lastSentAt: null,
+          sentCount: 0,
+          universityId: university.id,
+        }
+      : null;
+
+    updateState({
+      ...state,
+      isLoading: false,
+      isReady: true,
+      universities: [university, ...state.universities],
+      credentials: newCredential
+        ? [newCredential, ...state.credentials]
+        : state.credentials,
+    });
 
     return {
       credentialId: university.credentialId ?? '',
@@ -470,7 +489,22 @@ async function sendCredential(credentialId: string) {
 
   try {
     const result = await sendPlatformAdminCredential(credentialId);
-    await refreshRuntimeState();
+    const updatedCredential = result.credential;
+
+    updateState({
+      ...state,
+      isLoading: false,
+      isReady: true,
+      credentials: state.credentials.map((credential) =>
+        credential.id === credentialId ? updatedCredential : credential,
+      ),
+      universities: state.universities.map((university) =>
+        university.credentialId === credentialId
+          ? { ...university, status: 'active' }
+          : university,
+      ),
+    });
+
     return result.temporaryPassword;
   } catch (error) {
     patchState({
@@ -493,7 +527,17 @@ async function resendCredential(credentialId: string) {
 
   try {
     const result = await resendPlatformAdminCredential(credentialId);
-    await refreshRuntimeState();
+    const updatedCredential = result.credential;
+
+    updateState({
+      ...state,
+      isLoading: false,
+      isReady: true,
+      credentials: state.credentials.map((credential) =>
+        credential.id === credentialId ? updatedCredential : credential,
+      ),
+    });
+
     return result.temporaryPassword;
   } catch (error) {
     patchState({
@@ -517,7 +561,19 @@ async function deleteCredential(credentialId: string) {
 
   try {
     await deletePlatformAdminCredential(credentialId);
-    await refreshRuntimeState();
+    const credential = state.credentials.find((item) => item.id === credentialId);
+
+    updateState({
+      ...state,
+      isLoading: false,
+      isReady: true,
+      credentials: state.credentials.filter((item) => item.id !== credentialId),
+      universities: state.universities.filter(
+        (university) =>
+          !(university.id === credential?.universityId && university.status === 'pending'),
+      ),
+    });
+
     return true;
   } catch (error) {
     patchState({
