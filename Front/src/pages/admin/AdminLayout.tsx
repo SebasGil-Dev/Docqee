@@ -4,7 +4,10 @@ import { useAuth } from '@/app/providers/AuthProvider';
 import { AdminShell } from '@/components/admin/AdminShell';
 import { ROUTES } from '@/constants/routes';
 import { IS_TEST_MODE } from '@/lib/apiClient';
-import { getDefaultRouteForRole } from '@/lib/authRouting';
+import {
+  getDefaultRouteForRole,
+  shouldRequireFirstLoginPasswordChange,
+} from '@/lib/authRouting';
 
 export function AdminLayout() {
   const { session } = useAuth();
@@ -17,6 +20,10 @@ export function AdminLayout() {
 
     if (session.user.role !== 'PLATFORM_ADMIN') {
       return <Navigate replace to={getDefaultRouteForRole(session.user.role)} />;
+    }
+
+    if (shouldRequireFirstLoginPasswordChange(session)) {
+      return <Navigate replace to={ROUTES.firstLoginPassword} />;
     }
   }
 

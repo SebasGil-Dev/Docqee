@@ -5,7 +5,9 @@ import type { MemoryRouterProps } from 'react-router-dom';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { AppProviders } from '@/app/providers/AppProviders';
 import { ROUTES } from '@/constants/routes';
+import { FirstLoginPasswordPage } from '@/pages/auth/first-login/FirstLoginPasswordPage';
 import { ForgotPasswordPage } from '@/pages/auth/forgot-password/ForgotPasswordPage';
 import { LoginPage } from '@/pages/auth/login/LoginPage';
 import { RegisterPage } from '@/pages/auth/register/RegisterPage';
@@ -16,6 +18,7 @@ import {
   persistForgotPasswordRecoverySession,
   readForgotPasswordRecoverySession,
 } from '@/lib/forgotPasswordService';
+import { clearAuthSession, persistAuthSession } from '@/lib/authSession';
 import { persistVerifyEmailCooldown } from '@/lib/verifyEmailService';
 
 function renderAuthApp({
@@ -38,6 +41,40 @@ function renderAuthApp({
         <Route element={<NotFoundPage />} path="*" />
       </Routes>
     </MemoryRouter>,
+  );
+}
+
+function renderFirstLoginApp({
+  firstLoginPageProps,
+  initialEntries = [ROUTES.firstLoginPassword],
+  session,
+}: {
+  firstLoginPageProps?: ComponentProps<typeof FirstLoginPasswordPage>;
+  initialEntries?: MemoryRouterProps['initialEntries'];
+  session?: Parameters<typeof persistAuthSession>[0];
+} = {}) {
+  if (session) {
+    persistAuthSession(session);
+  } else {
+    clearAuthSession();
+  }
+
+  return render(
+    <AppProviders>
+      <MemoryRouter initialEntries={initialEntries}>
+        <Routes>
+          <Route element={<HomePage />} path={ROUTES.home} />
+          <Route element={<LoginPage />} path={ROUTES.login} />
+          <Route
+            element={<FirstLoginPasswordPage {...firstLoginPageProps} />}
+            path={ROUTES.firstLoginPassword}
+          />
+          <Route element={<div>Panel universidad</div>} path={ROUTES.universityInstitution} />
+          <Route element={<div>Inicio admin</div>} path={ROUTES.adminUniversities} />
+          <Route element={<NotFoundPage />} path="*" />
+        </Routes>
+      </MemoryRouter>
+    </AppProviders>,
   );
 }
 
@@ -87,6 +124,7 @@ async function requestForgotPasswordCode(
 
 describe('Auth pages', () => {
   beforeEach(() => {
+    window.localStorage.clear();
     window.sessionStorage.clear();
   });
 
@@ -269,6 +307,68 @@ describe('Auth pages', () => {
 
     expect(await screen.findByRole('heading', { level: 1, name: /bienvenido/i })).toBeInTheDocument();
     expect(screen.getByText(/contrase.a cambiada correctamente/i)).toBeInTheDocument();
+  });
+
+  it('renderiza la pantalla de primer ingreso y valida la nueva contrasena', async () => {
+    const user = userEvent.setup();
+
+    renderFirstLoginApp({
+      session: {
+        accessToken: 'token-1',
+        requiresPasswordChange: true,
+        user: {
+          email: 'admin.uni@docqee.com',
+          firstName: 'Laura',
+          id: 10,
+          lastName: 'Gomez',
+          role: 'UNIVERSITY_ADMIN',
+          universityId: 8,
+        },
+      },
+    });
+
+    expect(
+      screen.getByRole('heading', { level: 1, name: /actualiza tu contrase.a/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/admin.uni@docqee.com/i)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /guardar y continuar/i }));
+
+    expect(screen.getByText(/la contrase.a es obligatoria/i)).toBeInTheDocument();
+    expect(screen.getByText(/debes confirmar la contrase.a/i)).toBeInTheDocument();
+  });
+
+  it('al completar el primer ingreso redirige a la ruta del rol y limpia la bandera', async () => {
+    const user = userEvent.setup();
+
+    renderFirstLoginApp({
+      firstLoginPageProps: {
+        service: {
+          changePassword: async () => undefined,
+        },
+      },
+      session: {
+        accessToken: 'token-2',
+        requiresPasswordChange: true,
+        user: {
+          email: 'admin.uni@docqee.com',
+          firstName: 'Laura',
+          id: 10,
+          lastName: 'Gomez',
+          role: 'UNIVERSITY_ADMIN',
+          universityId: 8,
+        },
+      },
+    });
+
+    await user.type(screen.getByLabelText(/^contrase.a$/i), 'ClaveSegura1!');
+    await user.type(screen.getByLabelText(/confirmar contrase.a/i), 'ClaveSegura1!');
+    await user.click(screen.getByRole('button', { name: /guardar y continuar/i }));
+
+    expect(await screen.findByText(/panel universidad/i)).toBeInTheDocument();
+    expect(JSON.parse(window.localStorage.getItem('docqee.auth-session') ?? '{}')).toMatchObject({
+      requiresPasswordChange: false,
+    });
   });
 
   it('renderiza la ruta real de registro con sus campos principales', async () => {

@@ -31,6 +31,15 @@ export const router = createBrowserRouter([
     },
   },
   {
+    path: ROUTES.firstLoginPassword,
+    lazy: async () => {
+      const { FirstLoginPasswordPage } = await import(
+        '@/pages/auth/first-login/FirstLoginPasswordPage'
+      );
+      return { Component: FirstLoginPasswordPage };
+    },
+  },
+  {
     path: ROUTES.adminRoot,
     lazy: async () => {
       const { AdminLayout } = await import('@/pages/admin/AdminLayout');

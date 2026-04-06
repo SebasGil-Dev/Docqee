@@ -5,7 +5,10 @@ import { AdminShell } from '@/components/admin/AdminShell';
 import { ROUTES } from '@/constants/routes';
 import { universityAdminContent } from '@/content/universityAdminContent';
 import { IS_TEST_MODE } from '@/lib/apiClient';
-import { getDefaultRouteForRole } from '@/lib/authRouting';
+import {
+  getDefaultRouteForRole,
+  shouldRequireFirstLoginPasswordChange,
+} from '@/lib/authRouting';
 
 export function UniversityAdminLayout() {
   const { session } = useAuth();
@@ -18,6 +21,10 @@ export function UniversityAdminLayout() {
 
     if (session.user.role !== 'UNIVERSITY_ADMIN') {
       return <Navigate replace to={getDefaultRouteForRole(session.user.role)} />;
+    }
+
+    if (shouldRequireFirstLoginPasswordChange(session)) {
+      return <Navigate replace to={ROUTES.firstLoginPassword} />;
     }
   }
 

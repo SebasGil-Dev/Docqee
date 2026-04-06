@@ -67,6 +67,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
           const nextSession = {
             ...currentSession,
+            ...(typeof payload.requiresPasswordChange === 'boolean'
+              ? { requiresPasswordChange: payload.requiresPasswordChange }
+              : {}),
             user: payload.user,
           };
 

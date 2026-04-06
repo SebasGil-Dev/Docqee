@@ -26,7 +26,17 @@ export function login(email: string, password: string) {
 }
 
 export function readCurrentSession() {
-  return apiRequest<{ user: AuthSession['user'] }>('/auth/me');
+  return apiRequest<{
+    requiresPasswordChange?: boolean;
+    user: AuthSession['user'];
+  }>('/auth/me');
+}
+
+export function changeFirstLoginPassword(password: string) {
+  return apiRequest<{ ok: boolean }>('/auth/first-login/change-password', {
+    body: { password },
+    method: 'POST',
+  });
 }
 
 export function registerPatient(payload: NormalizedPatientRegisterPayload) {

@@ -3,6 +3,7 @@ export const ROUTES = {
   adminRegisterUniversity: '/admin/universidades/registrar',
   adminRoot: '/admin',
   adminUniversities: '/admin/universidades',
+  firstLoginPassword: '/primer-ingreso/cambiar-contrasena',
   forgotPassword: '/recuperar-contrasena',
   home: '/',
   login: '/login',

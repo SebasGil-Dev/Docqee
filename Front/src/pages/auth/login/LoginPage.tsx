@@ -12,7 +12,7 @@ import { ROUTES } from '@/constants/routes';
 import { authContent } from '@/content/authContent';
 import { IS_TEST_MODE } from '@/lib/apiClient';
 import { login as loginRequest } from '@/lib/authApi';
-import { getDefaultRouteForRole } from '@/lib/authRouting';
+import { getLandingRouteForSession } from '@/lib/authRouting';
 import type { LoginFormErrors, LoginFormState, LoginFormValues } from '@/content/types';
 import { classNames } from '@/lib/classNames';
 import {
@@ -116,7 +116,7 @@ export function LoginPage() {
       return;
     }
 
-    navigate(getDefaultRouteForRole(session.user.role), { replace: true });
+    navigate(getLandingRouteForSession(session), { replace: true });
   }, [navigate, session]);
 
   const updateFieldValue = <K extends keyof LoginFormValues>(
@@ -229,7 +229,7 @@ export function LoginPage() {
         );
 
         setSession(authSession);
-        navigate(getDefaultRouteForRole(authSession.user.role), { replace: true });
+        navigate(getLandingRouteForSession(authSession), { replace: true });
       } catch (error) {
         setFormState((currentState) => ({
           ...currentState,

@@ -244,7 +244,7 @@ export function UniversityRegisterStudentPage({
         actionClassName="sm:absolute sm:right-0 sm:top-1/2 sm:-translate-y-1/2"
         className="relative gap-2.5 sm:min-h-[4rem] sm:justify-center"
         description=""
-        titleClassName="text-center"
+        titleClassName="text-center sm:-mt-1"
         title={universityAdminContent.registerStudentPage.title}
       />
       {errorMessage ? (

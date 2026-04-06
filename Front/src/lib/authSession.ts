@@ -11,6 +11,7 @@ export type SessionUser = {
 
 export type AuthSession = {
   accessToken: string;
+  requiresPasswordChange?: boolean;
   user: SessionUser;
 };
 
