@@ -9,39 +9,45 @@ type SelectOption = {
 };
 
 type AdminSelectFieldProps = {
+  containerClassName?: string;
   disabled?: boolean;
   error?: string | undefined;
   helpText?: string | undefined;
   icon: LucideIcon;
   id: string;
   label: string;
+  labelClassName?: string;
   name: string;
   onBlur?: (() => void) | undefined;
   onChange: (value: string) => void;
   options: SelectOption[];
   placeholder: string;
+  selectClassName?: string;
   selectRef?: Ref<HTMLSelectElement> | undefined;
   value: string;
 };
 
 export function AdminSelectField({
+  containerClassName,
   disabled = false,
   error,
   helpText,
   icon: Icon,
   id,
   label,
+  labelClassName,
   name,
   onBlur,
   onChange,
   options,
   placeholder,
+  selectClassName,
   selectRef,
   value,
 }: AdminSelectFieldProps) {
   return (
-    <div className="space-y-1.5">
-      <label className="block text-sm font-semibold text-ink" htmlFor={id}>
+    <div className={classNames('space-y-1.5', containerClassName)}>
+      <label className={classNames('block text-sm font-semibold text-ink', labelClassName)} htmlFor={id}>
         {label}
       </label>
       <div className="relative">
@@ -54,6 +60,7 @@ export function AdminSelectField({
           aria-invalid={Boolean(error)}
           className={classNames(
             'w-full rounded-2xl border bg-surface py-3 pl-11 pr-4 text-sm text-ink transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+            selectClassName,
             disabled ? 'cursor-not-allowed text-ghost' : '',
             error
               ? 'border-rose-300 focus-visible:border-rose-400 focus-visible:ring-rose-200/70'

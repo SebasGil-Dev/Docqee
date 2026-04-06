@@ -4,13 +4,16 @@ import type { HTMLInputTypeAttribute, Ref } from 'react';
 import { classNames } from '@/lib/classNames';
 
 type AdminTextFieldProps = {
+  containerClassName?: string;
   disabled?: boolean;
   error?: string | undefined;
   helpText?: string | undefined;
   icon: LucideIcon;
   id: string;
+  inputClassName?: string;
   inputRef?: Ref<HTMLInputElement> | undefined;
   label: string;
+  labelClassName?: string;
   name: string;
   onBlur?: (() => void) | undefined;
   onChange: (value: string) => void;
@@ -20,13 +23,16 @@ type AdminTextFieldProps = {
 };
 
 export function AdminTextField({
+  containerClassName,
   disabled = false,
   error,
   helpText,
   icon: Icon,
   id,
+  inputClassName,
   inputRef,
   label,
+  labelClassName,
   name,
   onBlur,
   onChange,
@@ -35,8 +41,8 @@ export function AdminTextField({
   value,
 }: AdminTextFieldProps) {
   return (
-    <div className="space-y-1.5">
-      <label className="block text-sm font-semibold text-ink" htmlFor={id}>
+    <div className={classNames('space-y-1.5', containerClassName)}>
+      <label className={classNames('block text-sm font-semibold text-ink', labelClassName)} htmlFor={id}>
         {label}
       </label>
       <div className="relative">
@@ -50,6 +56,7 @@ export function AdminTextField({
           aria-invalid={Boolean(error)}
           className={classNames(
             'w-full rounded-2xl border bg-surface py-3 pl-11 pr-4 text-sm text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+            inputClassName,
             disabled ? 'cursor-not-allowed text-ghost' : '',
             error
               ? 'border-rose-300 focus-visible:border-rose-400 focus-visible:ring-rose-200/70'
