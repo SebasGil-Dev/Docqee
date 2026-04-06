@@ -129,7 +129,6 @@ export function AdminCredentialsPage() {
 
     return credential.deliveryStatus === statusFilter;
   });
-  const shouldEnableTableScroll = filteredCredentialRows.length > 2;
   const emptyStateMessage = isLoading
     ? 'Cargando credenciales...'
     : normalizedSearch || statusFilter !== 'all'
@@ -395,14 +394,8 @@ export function AdminCredentialsPage() {
           </div>
         </div>
         {filteredCredentialRows.length > 0 ? (
-          <div
-            className={classNames(
-              'admin-scrollbar min-h-0 overflow-x-auto',
-              'lg:overflow-x-visible',
-              shouldEnableTableScroll && 'h-[15.25rem] overflow-y-auto sm:h-[16rem]',
-            )}
-          >
-            <div className={classNames(shouldEnableTableScroll && 'pb-5 sm:pb-6')}>
+          <div className="admin-scrollbar min-h-0 flex-1 overflow-x-auto overflow-y-auto lg:overflow-x-visible">
+            <div className="min-w-full">
               <table className="min-w-[63rem] w-full lg:min-w-0 lg:table-fixed">
                 <thead className="sticky top-0 z-10 bg-surface text-left">
                   <tr className="text-xs font-bold uppercase tracking-[0.22em] text-ink-muted">
@@ -601,11 +594,10 @@ export function AdminCredentialsPage() {
                   })}
                 </tbody>
               </table>
-              {shouldEnableTableScroll ? <div aria-hidden="true" className="h-2 sm:h-2.5" /> : null}
             </div>
           </div>
         ) : (
-          <div className="px-4 py-8 text-center sm:px-5">
+          <div className="flex flex-1 items-center justify-center px-4 py-8 text-center sm:px-5">
             <p className="text-sm font-medium text-ink-muted">{emptyStateMessage}</p>
           </div>
         )}
