@@ -79,8 +79,14 @@ export function AdminDropdownField({
   }, [isOpen]);
 
   return (
-    <div className={classNames('space-y-1.5', containerClassName)}>
-      <label className={classNames('block text-sm font-semibold text-ink', labelClassName)} htmlFor={id}>
+    <div className={classNames('admin-dropdown-field space-y-1.5', containerClassName)}>
+      <label
+        className={classNames(
+          'admin-dropdown-field__label block text-sm font-semibold text-ink',
+          labelClassName,
+        )}
+        htmlFor={id}
+      >
         {label}
       </label>
       <div
@@ -105,7 +111,7 @@ export function AdminDropdownField({
           aria-haspopup="listbox"
           aria-invalid={Boolean(error)}
           className={classNames(
-            'w-full rounded-[1.45rem] border bg-white/98 py-3 pl-11 pr-11 text-left text-sm text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+            'admin-dropdown-field__trigger w-full rounded-[1.45rem] border bg-white/98 py-3 pl-11 pr-11 text-left text-sm text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
             triggerClassName,
             disabled ? 'cursor-not-allowed text-ghost' : '',
             error
@@ -135,7 +141,7 @@ export function AdminDropdownField({
         />
         {isOpen ? (
           <div
-            className="absolute bottom-[calc(100%+0.35rem)] left-1/2 z-20 w-[min(14rem,calc(100%-2rem))] -translate-x-1/2 overflow-hidden rounded-[1rem] border border-slate-200/80 bg-white/95 p-1 shadow-[0_-20px_46px_-28px_rgba(15,23,42,0.32),0_20px_46px_-32px_rgba(15,23,42,0.22)] backdrop-blur sm:w-[min(15rem,calc(100%-2.5rem))]"
+            className="admin-dropdown-field__menu absolute bottom-[calc(100%+0.35rem)] left-1/2 z-20 w-[min(14rem,calc(100%-2rem))] -translate-x-1/2 overflow-hidden rounded-[1rem] border border-slate-200/80 bg-white/95 p-1 shadow-[0_-20px_46px_-28px_rgba(15,23,42,0.32),0_20px_46px_-32px_rgba(15,23,42,0.22)] backdrop-blur sm:w-[min(15rem,calc(100%-2.5rem))]"
             id={`${id}-menu`}
             role="listbox"
           >

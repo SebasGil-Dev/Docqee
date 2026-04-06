@@ -144,13 +144,13 @@ export function AdminShell({
   }, [isSidebarCollapsed]);
 
   return (
-    <div className="relative h-screen overflow-hidden bg-[#f4f8ff]">
+    <div className="admin-shell-density relative h-screen overflow-hidden bg-[#f4f8ff]">
       <a className="skip-link" href="#admin-main-content">
         Saltar al contenido principal
       </a>
-      <div className="relative z-10 mx-auto flex h-full max-w-[98rem] flex-col px-4 py-4 sm:px-6 lg:px-8">
-        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-[2.25rem] bg-[#f4f8ff] p-1 sm:p-1.5">
-          <header className="overflow-hidden rounded-[1.5rem] bg-[#ffffff] px-4 py-2 shadow-ambient backdrop-blur-sm sm:px-5 sm:py-2.5 lg:px-6">
+      <div className="relative z-10 mx-auto flex h-full max-w-[98rem] flex-col px-4 py-4 sm:px-6 lg:px-5 lg:py-3 xl:px-7">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-[2.25rem] bg-[#f4f8ff] p-1 sm:p-1.5 lg:gap-3">
+          <header className="overflow-hidden rounded-[1.5rem] bg-[#ffffff] px-4 py-2 shadow-ambient backdrop-blur-sm sm:px-5 sm:py-2.5 lg:px-5 lg:py-2">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="-translate-y-0.5 min-w-0">
                 <Link
@@ -183,7 +183,7 @@ export function AdminShell({
           <div
             className={classNames(
               'flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row lg:items-stretch',
-              showMobileBottomNavigation ? 'gap-0 lg:gap-6' : 'gap-6',
+              showMobileBottomNavigation ? 'gap-0 lg:gap-4' : 'gap-4',
             )}
           >
             {!showMobileBottomNavigation ? (
@@ -191,15 +191,15 @@ export function AdminShell({
                 className={classNames(
                   'min-h-0 w-full overflow-hidden transition-[max-height,opacity,width] duration-300 ease-out lg:shrink-0',
                   isSidebarCollapsed
-                    ? 'max-h-[4.75rem] opacity-100 lg:max-h-none lg:w-[5.5rem]'
-                    : 'max-h-[32rem] opacity-100 lg:max-h-none lg:w-[18rem]',
+                    ? 'max-h-[4.75rem] opacity-100 lg:max-h-none lg:w-[5.25rem]'
+                    : 'max-h-[32rem] opacity-100 lg:max-h-none lg:w-[17rem] xl:w-[17.5rem]',
                 )}
                 id="admin-sidebar"
               >
                 <div
                   className={classNames(
                     'flex h-full flex-col overflow-hidden rounded-[2rem] bg-[#ffffff] shadow-none transition-[padding,background-color,box-shadow] duration-300 lg:h-full',
-                    isSidebarCollapsed ? 'p-4 lg:p-3.5' : 'p-5 sm:p-6',
+                    isSidebarCollapsed ? 'p-4 lg:p-3' : 'p-5 sm:p-6 lg:p-4.5 xl:p-5',
                   )}
                 >
                   <div
@@ -251,8 +251,8 @@ export function AdminShell({
                     className={classNames(
                       'space-y-2 transition-all duration-200',
                       isSidebarCollapsed
-                        ? 'mt-0 hidden lg:mt-5 lg:block'
-                        : 'mt-5',
+                        ? 'mt-0 hidden lg:mt-4 lg:block'
+                        : 'mt-4',
                     )}
                     id="admin-sidebar-navigation"
                   >
@@ -271,8 +271,8 @@ export function AdminShell({
                           className={classNames(
                             'flex items-center rounded-2xl text-sm font-semibold transition-all duration-200',
                             isSidebarCollapsed
-                              ? 'justify-center px-0 py-3'
-                              : 'gap-3 px-4 py-3',
+                              ? 'justify-center px-0 py-2.5'
+                              : 'gap-3 px-4 py-2.5',
                             isActive
                               ? 'bg-primary text-white shadow-ambient'
                               : 'text-ink-muted hover:bg-surface hover:text-primary',
@@ -302,16 +302,16 @@ export function AdminShell({
                     className={classNames(
                       'mt-auto transition-all duration-200',
                       isSidebarCollapsed
-                        ? 'hidden pt-0 lg:block lg:pt-6'
-                        : 'block pt-6',
+                        ? 'hidden pt-0 lg:block lg:pt-4'
+                        : 'block pt-4',
                     )}
                   >
                     <Link
                       className={classNames(
                         'flex items-center rounded-2xl text-sm font-semibold text-ink-muted transition-all duration-200 hover:bg-surface hover:text-primary',
                         isSidebarCollapsed
-                          ? 'justify-center px-0 py-3'
-                          : 'gap-3 px-4 py-3',
+                          ? 'justify-center px-0 py-2.5'
+                          : 'gap-3 px-4 py-2.5',
                       )}
                       title={
                         isSidebarCollapsed ? content.logoutCta.label : undefined

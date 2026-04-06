@@ -25,7 +25,12 @@ export function AdminPageHeader({
   title,
 }: AdminPageHeaderProps) {
   return (
-    <div className={classNames('flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between', className)}>
+    <div
+      className={classNames(
+        'admin-page-header flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between',
+        className,
+      )}
+    >
       <SectionHeading
         {...(eyebrow ? { eyebrow } : {})}
         description={description}

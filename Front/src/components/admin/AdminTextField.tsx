@@ -41,8 +41,11 @@ export function AdminTextField({
   value,
 }: AdminTextFieldProps) {
   return (
-    <div className={classNames('space-y-1.5', containerClassName)}>
-      <label className={classNames('block text-sm font-semibold text-ink', labelClassName)} htmlFor={id}>
+    <div className={classNames('admin-text-field space-y-1.5', containerClassName)}>
+      <label
+        className={classNames('admin-text-field__label block text-sm font-semibold text-ink', labelClassName)}
+        htmlFor={id}
+      >
         {label}
       </label>
       <div className="relative">
@@ -55,7 +58,7 @@ export function AdminTextField({
           aria-describedby={error ? `${id}-error` : helpText ? `${id}-help` : undefined}
           aria-invalid={Boolean(error)}
           className={classNames(
-            'w-full rounded-2xl border bg-surface py-3 pl-11 pr-4 text-sm text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+            'admin-text-field__input w-full rounded-2xl border bg-surface py-3 pl-11 pr-4 text-sm text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
             inputClassName,
             disabled ? 'cursor-not-allowed text-ghost' : '',
             error

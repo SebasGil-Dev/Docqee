@@ -17,7 +17,7 @@ export function SurfaceCard({
   return (
     <div
       className={classNames(
-        'rounded-[1.75rem] bg-surface-card shadow-ambient',
+        'surface-card rounded-[1.75rem] bg-surface-card shadow-ambient',
         paddingClassName,
         interactive && 'transition-transform duration-300 hover:-translate-y-1 hover:shadow-float',
         className,
