@@ -142,8 +142,7 @@ export const adminContent = {
     pendingActionLabel: 'Pendiente',
     searchLabel: 'Buscar universidad',
     searchPlaceholder: 'Buscar por nombre de universidad...',
-    subtitle:
-      'Las universidades pending ya fueron registradas y tienen credencial generada, pero aun no se consolidan operativamente.',
+    subtitle: '',
     successNoticePrefix: 'Actualizacion completada:',
     summaryLabel: 'Universidades registradas',
     tableTitle: 'Instituciones registradas',

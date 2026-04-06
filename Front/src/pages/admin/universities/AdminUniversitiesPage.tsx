@@ -121,9 +121,11 @@ export function AdminUniversitiesPage() {
             <h2 className="font-headline text-[1.35rem] font-extrabold tracking-tight text-ink sm:text-[1.5rem]">
               {adminContent.universitiesPage.tableTitle}
             </h2>
-            <p className="max-w-3xl text-sm leading-6 text-ink-muted">
-              {adminContent.universitiesPage.subtitle}
-            </p>
+            {adminContent.universitiesPage.subtitle ? (
+              <p className="max-w-3xl text-sm leading-6 text-ink-muted">
+                {adminContent.universitiesPage.subtitle}
+              </p>
+            ) : null}
           </div>
           <label className="relative block w-full lg:justify-self-end" htmlFor="admin-university-search">
             <span className="sr-only">{adminContent.universitiesPage.searchLabel}</span>

@@ -159,7 +159,7 @@ export function AdminShell({
                 </Link>
               </div>
               <div className="inline-flex max-w-full items-center gap-2 self-start sm:self-center">
-                <span className="flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-full bg-primary text-[0.68rem] font-extrabold uppercase tracking-[0.12em] text-white sm:h-8 sm:w-8 sm:text-[0.72rem]">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-[0.8rem] font-extrabold uppercase tracking-[0.12em] text-white sm:h-8 sm:w-8 sm:text-[0.72rem]">
                   {adminInitials}
                 </span>
                 <p className="hidden truncate text-[0.78rem] font-semibold text-ink sm:block sm:text-[0.82rem]">
