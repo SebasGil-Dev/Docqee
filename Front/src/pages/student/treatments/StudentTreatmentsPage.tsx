@@ -174,42 +174,46 @@ export function StudentTreatmentsPage() {
                 {studentInitials}
               </span>
             )}
-            <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-2.5 lg:flex-nowrap">
-              <h2 className="max-w-[14rem] truncate font-headline text-[1.05rem] font-extrabold tracking-tight text-white sm:max-w-[16rem] sm:text-[1.18rem] xl:max-w-[20rem]">
+            <div className="flex min-w-0 flex-col gap-1.5">
+              <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-2.5">
+                <h2 className="max-w-[14rem] truncate font-headline text-[1.05rem] font-extrabold tracking-tight text-white sm:max-w-[16rem] sm:text-[1.18rem] xl:max-w-[20rem]">
                   Bienvenido, {profile.firstName} {profile.lastName}
-              </h2>
-              <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 ring-1 ring-white/16">
-                <span className="inline-flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-white/90 text-primary">
-                  {profile.universityLogoSrc ? (
-                    <img
-                      alt={profile.universityLogoAlt}
-                      className="h-full w-full object-cover"
-                      src={profile.universityLogoSrc ?? undefined}
-                    />
-                  ) : (
-                    <span className="text-[0.6rem] font-extrabold uppercase">
-                      {profile.universityName.charAt(0)}
-                    </span>
-                  )}
+                </h2>
+                <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 ring-1 ring-white/16">
+                  <span className="inline-flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-white/90 text-primary">
+                    {profile.universityLogoSrc ? (
+                      <img
+                        alt={profile.universityLogoAlt}
+                        className="h-full w-full object-cover"
+                        src={profile.universityLogoSrc ?? undefined}
+                      />
+                    ) : (
+                      <span className="text-[0.6rem] font-extrabold uppercase">
+                        {profile.universityName.charAt(0)}
+                      </span>
+                    )}
+                  </span>
+                  <span className="max-w-[8.5rem] truncate text-[0.75rem] font-semibold text-white sm:max-w-[10rem] xl:max-w-[12rem]">
+                    {profile.universityName}
+                  </span>
                 </span>
-                <span className="max-w-[8.5rem] truncate text-[0.75rem] font-semibold text-white sm:max-w-[10rem] xl:max-w-[12rem]">
-                  {profile.universityName}
+              </div>
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-[0.75rem] font-semibold text-white/88 ring-1 ring-white/16">
+                  <GraduationCap aria-hidden="true" className="h-3.5 w-3.5" />
+                  <span>Semestre {profile.semester}</span>
                 </span>
-              </span>
-              <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-[0.75rem] font-semibold text-white/88 ring-1 ring-white/16">
-                <GraduationCap aria-hidden="true" className="h-3.5 w-3.5" />
-                <span>Semestre {profile.semester}</span>
-              </span>
-              <span className="inline-flex min-w-0 items-center gap-2 rounded-full bg-white/12 px-2.5 py-1 text-white/92 ring-1 ring-white/16">
-                <div className="flex shrink-0 items-center gap-0.5">
-                  {renderStars(averageRating, 'h-3.5 w-3.5')}
-                </div>
-                <span className="max-w-[10rem] truncate text-[0.75rem] font-semibold sm:max-w-[12rem] xl:max-w-[14rem]">
-                  {reviews.length > 0
-                    ? `${averageRating.toFixed(1)} de 5 en ${reviews.length} valoraciones`
-                    : 'Aun no tienes valoraciones registradas'}
+                <span className="inline-flex min-w-0 items-center gap-2 rounded-full bg-white/12 px-2.5 py-1 text-white/92 ring-1 ring-white/16">
+                  <div className="flex shrink-0 items-center gap-0.5">
+                    {renderStars(averageRating, 'h-3.5 w-3.5')}
+                  </div>
+                  <span className="max-w-[10rem] truncate text-[0.75rem] font-semibold sm:max-w-[12rem] xl:max-w-[14rem]">
+                    {reviews.length > 0
+                      ? `${averageRating.toFixed(1)} de 5 en ${reviews.length} valoraciones`
+                      : 'Aun no tienes valoraciones registradas'}
+                  </span>
                 </span>
-              </span>
+              </div>
             </div>
           </div>
           <div className="flex shrink-0 flex-wrap items-center gap-2 lg:flex-nowrap">
