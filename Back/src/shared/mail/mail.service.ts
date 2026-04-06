@@ -38,6 +38,31 @@ export class MailService {
     }
   }
 
+  async sendUniversityAdminCredentials(to: string, adminName: string, universityName: string, temporaryPassword: string) {
+    try {
+      await this.client.transactionalEmails.sendTransacEmail({
+        sender: { email: this.from },
+        to: [{ email: to }],
+        subject: 'Tus credenciales de acceso a Docqee',
+        htmlContent: `
+          <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+            <h2>Bienvenido a Docqee</h2>
+            <p>Hola <strong>${adminName}</strong>, se ha creado tu cuenta como administrador de <strong>${universityName}</strong>.</p>
+            <p>Tus credenciales de acceso son:</p>
+            <div style="background: #f4f4f4; border-radius: 8px; padding: 16px; margin: 16px 0;">
+              <p style="margin: 4px 0;"><strong>Correo:</strong> ${to}</p>
+              <p style="margin: 4px 0;"><strong>Contraseña temporal:</strong> ${temporaryPassword}</p>
+            </div>
+            <p style="color: #666; font-size: 14px;">Por seguridad, te pediremos cambiar tu contraseña en el primer ingreso.</p>
+          </div>
+        `,
+      });
+      this.logger.log(`University admin credentials sent to ${to}`);
+    } catch (error) {
+      this.logger.error(`Failed to send credentials to ${to}`, error);
+    }
+  }
+
   async sendPasswordResetCode(to: string, code: string) {
     try {
       await this.client.transactionalEmails.sendTransacEmail({
