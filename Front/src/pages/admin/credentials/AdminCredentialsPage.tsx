@@ -323,11 +323,11 @@ export function AdminCredentialsPage() {
               <table className="min-w-[63rem] w-full lg:min-w-0 lg:table-fixed">
                 <thead className="sticky top-0 z-10 bg-surface text-left">
                   <tr className="text-xs font-bold uppercase tracking-[0.22em] text-ink-muted">
-                    <th className="px-4 py-3.5 lg:w-[24%] sm:px-5">Universidad</th>
-                    <th className="px-4 py-3.5 lg:w-[16%]">Administrador</th>
-                    <th className="px-4 py-3.5 lg:w-[24%]">Correo electronico</th>
+                    <th className="px-4 py-3.5 lg:w-[27%] sm:px-5">Universidad</th>
+                    <th className="px-4 py-3.5 lg:w-[13%]">Administrador</th>
+                    <th className="px-4 py-3.5 lg:w-[28%]">Correo electronico</th>
                     <th className="px-4 py-3.5 lg:w-[10%]">Estado</th>
-                    <th className="px-4 py-3.5 text-center lg:w-[26%] sm:px-5">Acciones</th>
+                    <th className="px-4 py-3.5 text-center lg:w-[22%] sm:px-5">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200/80">
@@ -395,9 +395,12 @@ export function AdminCredentialsPage() {
                               ) : null}
                             </div>
                           ) : (
-                            <div className="inline-flex max-w-full items-start gap-2 text-sm text-ink-muted">
+                            <div className="inline-flex max-w-full items-center gap-2 text-sm text-ink-muted">
                               <Mail aria-hidden="true" className="h-4 w-4 shrink-0" />
-                              <span className="break-all lg:break-words">
+                              <span
+                                className="block max-w-full overflow-hidden text-ellipsis whitespace-nowrap"
+                                title={credential.administratorEmail}
+                              >
                                 {credential.administratorEmail}
                               </span>
                             </div>
@@ -508,6 +511,14 @@ export function AdminCredentialsPage() {
                                   disabled={isLoading}
                                   type="button"
                                   onClick={() => {
+                                    const confirmed = window.confirm(
+                                      '¿Estas seguro de eliminar esta credencial pendiente?',
+                                    );
+
+                                    if (!confirmed) {
+                                      return;
+                                    }
+
                                     void (async () => {
                                       const deleted = await deleteCredential(credential.id);
 

@@ -83,6 +83,7 @@ async function fillRegisterUniversityForm(
 
 describe('Admin pages', () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
     window.localStorage.clear();
     mockMatchMedia(false);
     resetAdminModuleState();
@@ -344,6 +345,7 @@ describe('Admin pages', () => {
 
   it('eliminar remueve la credencial pendiente y la universidad asociada', async () => {
     const user = userEvent.setup();
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     renderAdminApp([ROUTES.adminCredentials]);
 
@@ -369,6 +371,7 @@ describe('Admin pages', () => {
 
   it('restaura el seed inicial al simular un nuevo arranque de la app', async () => {
     const user = userEvent.setup();
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     const firstRender = renderAdminApp([ROUTES.adminCredentials]);
     const credentialRow = screen
