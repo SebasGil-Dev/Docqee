@@ -412,11 +412,12 @@ export function AdminCredentialsPage() {
                             isLast ? 'pb-4' : 'pb-3.5',
                           )}
                         >
-                          <div className="flex flex-col items-end gap-2">
+                          <div className="flex flex-nowrap items-center justify-end gap-1.5 sm:gap-2">
                             {isEditing ? (
                               <>
                                 <button
-                                  className="inline-flex min-w-[8.75rem] items-center justify-center gap-2 rounded-full bg-primary/10 px-3 py-2 text-xs font-semibold text-primary transition duration-200 hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                                  aria-label={adminContent.credentialsPage.actionLabels.saveEmail}
+                                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition duration-200 hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-auto sm:w-auto sm:min-w-[8.25rem] sm:gap-2 sm:px-3 sm:py-2 sm:text-xs sm:font-semibold"
                                   disabled={isLoading}
                                   type="button"
                                   onClick={() =>
@@ -424,26 +425,34 @@ export function AdminCredentialsPage() {
                                   }
                                 >
                                   <Check aria-hidden="true" className="h-4 w-4" />
-                                  <span>{adminContent.credentialsPage.actionLabels.saveEmail}</span>
+                                  <span className="hidden sm:inline">
+                                    {adminContent.credentialsPage.actionLabels.saveEmail}
+                                  </span>
                                 </button>
                                 <button
-                                  className="inline-flex min-w-[8.75rem] items-center justify-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200"
+                                  aria-label="Cancelar"
+                                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 sm:h-auto sm:w-auto sm:min-w-[8.25rem] sm:gap-2 sm:px-3 sm:py-2 sm:text-xs sm:font-semibold"
                                   disabled={isLoading}
                                   type="button"
                                   onClick={handleCancelEmailEdit}
                                 >
                                   <X aria-hidden="true" className="h-4 w-4" />
-                                  <span>Cancelar</span>
+                                  <span className="hidden sm:inline">Cancelar</span>
                                 </button>
                               </>
                             ) : (
                               <>
                                 <button
-                                  className={classNames(
-                                    'inline-flex min-w-[8.75rem] items-center justify-center gap-2 rounded-full px-3 py-2 text-xs font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                                  aria-label={
                                     isGenerated
-                                      ? 'bg-primary/10 text-primary hover:bg-primary/15'
-                                      : 'bg-sky-50 text-sky-700 hover:bg-sky-100',
+                                      ? adminContent.credentialsPage.actionLabels.send
+                                      : adminContent.credentialsPage.actionLabels.resend
+                                  }
+                                  className={classNames(
+                                    'inline-flex h-9 shrink-0 items-center justify-center rounded-full transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-auto sm:min-w-[6.9rem] sm:gap-1.5 sm:px-2.75 sm:py-2 sm:text-[0.7rem] sm:font-semibold lg:min-w-[7.5rem] lg:gap-2 lg:px-3',
+                                    isGenerated
+                                      ? 'w-9 bg-primary/10 text-primary hover:bg-primary/15 sm:w-auto'
+                                      : 'w-9 bg-sky-50 text-sky-700 hover:bg-sky-100 sm:w-auto',
                                   )}
                                   disabled={isLoading}
                                   type="button"
@@ -470,23 +479,27 @@ export function AdminCredentialsPage() {
                                   ) : (
                                     <RotateCcw aria-hidden="true" className="h-4 w-4" />
                                   )}
-                                  <span>
+                                  <span className="hidden sm:inline whitespace-nowrap">
                                     {isGenerated
                                       ? adminContent.credentialsPage.actionLabels.send
                                       : adminContent.credentialsPage.actionLabels.resend}
                                   </span>
                                 </button>
                                 <button
-                                  className="inline-flex min-w-[8.75rem] items-center justify-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200"
+                                  aria-label={adminContent.credentialsPage.actionLabels.editEmail}
+                                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 sm:h-auto sm:w-auto sm:min-w-[8.2rem] sm:gap-1.5 sm:px-2.75 sm:py-2 sm:text-[0.7rem] sm:font-semibold lg:min-w-[8.9rem] lg:gap-2 lg:px-3"
                                   disabled={isLoading}
                                   type="button"
                                   onClick={() => handleStartEmailEdit(credential)}
                                 >
                                   <PencilLine aria-hidden="true" className="h-4 w-4" />
-                                  <span>{adminContent.credentialsPage.actionLabels.editEmail}</span>
+                                  <span className="hidden sm:inline whitespace-nowrap">
+                                    {adminContent.credentialsPage.actionLabels.editEmail}
+                                  </span>
                                 </button>
                                 <button
-                                  className="inline-flex min-w-[8.75rem] items-center justify-center gap-2 rounded-full bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 transition duration-200 hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200/70"
+                                  aria-label={adminContent.credentialsPage.actionLabels.delete}
+                                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-700 transition duration-200 hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200/70 sm:h-auto sm:w-auto sm:min-w-[6.7rem] sm:gap-1.5 sm:px-2.75 sm:py-2 sm:text-[0.7rem] sm:font-semibold lg:min-w-[7.3rem] lg:gap-2 lg:px-3"
                                   disabled={isLoading}
                                   type="button"
                                   onClick={() => {
@@ -508,7 +521,9 @@ export function AdminCredentialsPage() {
                                   }}
                                 >
                                   <Trash2 aria-hidden="true" className="h-4 w-4" />
-                                  <span>{adminContent.credentialsPage.actionLabels.delete}</span>
+                                  <span className="hidden sm:inline whitespace-nowrap">
+                                    {adminContent.credentialsPage.actionLabels.delete}
+                                  </span>
                                 </button>
                               </>
                             )}
