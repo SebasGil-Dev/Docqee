@@ -20,7 +20,7 @@ export function getDefaultRouteForRole(role: SessionUserRole) {
     case 'PLATFORM_ADMIN':
       return ROUTES.adminUniversities;
     case 'STUDENT':
-      return ROUTES.studentProfile;
+      return ROUTES.studentTreatments;
     case 'UNIVERSITY_ADMIN':
       return ROUTES.universityInstitution;
     default:

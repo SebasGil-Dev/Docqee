@@ -17,6 +17,18 @@ export const studentContent = {
     successNoticePrefix: 'Agenda actualizada:',
     title: 'Agenda',
   },
+  appointmentsPage: {
+    description: '',
+    emptyState: 'No encontramos citas con los criterios seleccionados.',
+    meta: {
+      description:
+        'Consulta el historial y estado de las citas asignadas al estudiante dentro de Docqee.',
+      title: 'Docqee | Citas del Estudiante',
+    },
+    searchLabel: 'Buscar cita',
+    searchPlaceholder: 'Buscar por paciente, sede, ciudad o tipo de cita...',
+    title: 'Citas',
+  },
   conversationsPage: {
     actionLabels: {
       openConversation: 'Abrir chat',
@@ -29,12 +41,12 @@ export const studentContent = {
     meta: {
       description:
         'Gestiona las conversaciones activas entre paciente y estudiante dentro de Docqee.',
-      title: 'Docqee | Conversaciones',
+      title: 'Docqee | Chat',
     },
-    searchLabel: 'Buscar conversacion',
+    searchLabel: 'Buscar chat',
     searchPlaceholder: 'Buscar por paciente, ciudad o motivo...',
     successNoticePrefix: 'Conversacion actualizada:',
-    title: 'Conversaciones',
+    title: 'Chat',
   },
   profilePage: {
     actionLabels: {
@@ -93,16 +105,16 @@ export const studentContent = {
     },
     navigation: [
       {
+        icon: 'house',
+        label: 'Inicio',
+        matchPrefix: ROUTES.studentTreatments,
+        to: ROUTES.studentTreatments,
+      },
+      {
         icon: 'user-round',
         label: 'Mi perfil',
         matchPrefix: ROUTES.studentProfile,
         to: ROUTES.studentProfile,
-      },
-      {
-        icon: 'stethoscope',
-        label: 'Tratamientos y sedes',
-        matchPrefix: ROUTES.studentTreatments,
-        to: ROUTES.studentTreatments,
       },
       {
         icon: 'calendar-days',
@@ -117,8 +129,14 @@ export const studentContent = {
         to: ROUTES.studentRequests,
       },
       {
+        icon: 'calendar-check-2',
+        label: 'Citas',
+        matchPrefix: ROUTES.studentAppointments,
+        to: ROUTES.studentAppointments,
+      },
+      {
         icon: 'message-square-more',
-        label: 'Conversaciones',
+        label: 'Chat',
         matchPrefix: ROUTES.studentConversations,
         to: ROUTES.studentConversations,
       },
@@ -136,9 +154,9 @@ export const studentContent = {
     emptyTreatmentsState: 'No hay tratamientos asociados a tu perfil en este momento.',
     meta: {
       description:
-        'Gestiona la oferta de tratamientos y sedes activas del estudiante dentro de Docqee.',
-      title: 'Docqee | Tratamientos y Sedes',
+        'Consulta el panel principal del estudiante con tratamientos, sedes, citas y comentarios dentro de Docqee.',
+      title: 'Docqee | Inicio del Estudiante',
     },
-    title: 'Tratamientos y sedes',
+    title: 'Inicio',
   },
 } as const;

@@ -604,9 +604,11 @@ export type RegisterUniversityFormErrors = Partial<Record<RegisterUniversityForm
 export type AdminShellNavigationIcon =
   | 'badge'
   | 'building2'
+  | 'calendar-check-2'
   | 'calendar-days'
   | 'clipboard-list'
   | 'graduation-cap'
+  | 'house'
   | 'key-round'
   | 'message-square-more'
   | 'search'

@@ -238,23 +238,23 @@ export function StudentTreatmentsPage() {
                 <h2 className="max-w-[14rem] truncate font-headline text-[1.05rem] font-extrabold tracking-tight text-white sm:max-w-[16rem] sm:text-[1.18rem] xl:max-w-[20rem]">
                   Bienvenido, {profile.firstName} {profile.lastName}
                 </h2>
-                <span className="inline-flex min-w-0 items-center rounded-full bg-white/12 px-2.5 py-1 ring-1 ring-white/16">
+                <span className="inline-flex min-w-0 items-center rounded-full bg-white/12 px-2.5 py-1">
                   <span className="max-w-[8.5rem] truncate text-[0.75rem] font-semibold text-white sm:max-w-[10rem] xl:max-w-[12rem]">
                     {profile.firstName} {profile.lastName.charAt(0).toUpperCase()}.
                   </span>
                 </span>
               </div>
               <div className="flex min-w-0 flex-wrap items-center gap-2">
-                <span className="inline-flex min-w-0 items-center rounded-full bg-white/12 px-2.5 py-1 text-[0.75rem] font-semibold text-white/88 ring-1 ring-white/16">
+                <span className="inline-flex min-w-0 items-center rounded-full bg-white/12 px-2.5 py-1 text-[0.75rem] font-semibold text-white/88">
                   <span className="max-w-[10rem] truncate sm:max-w-[12rem] xl:max-w-[14rem]">
                     {profile.universityName}
                   </span>
                 </span>
-                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-[0.75rem] font-semibold text-white/88 ring-1 ring-white/16">
+                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-[0.75rem] font-semibold text-white/88">
                   <GraduationCap aria-hidden="true" className="h-3.5 w-3.5" />
                   <span>Semestre {profile.semester}</span>
                 </span>
-                <span className="inline-flex items-center gap-2 rounded-full bg-white/12 px-2.5 py-1 text-white/92 ring-1 ring-white/16">
+                <span className="inline-flex items-center gap-2 rounded-full bg-white/12 px-2.5 py-1 text-white/92">
                   <div className="flex shrink-0 items-center gap-0.5">
                     {renderStars(averageRating, 'h-3.5 w-3.5')}
                   </div>

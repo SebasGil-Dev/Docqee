@@ -15,6 +15,7 @@ export const ROUTES = {
   patientSearchStudents: '/paciente/buscar-estudiantes',
   register: '/registro',
   studentAgenda: '/estudiante/agenda',
+  studentAppointments: '/estudiante/citas',
   studentConversations: '/estudiante/conversaciones',
   studentProfile: '/estudiante/mi-perfil',
   studentRequests: '/estudiante/solicitudes',
