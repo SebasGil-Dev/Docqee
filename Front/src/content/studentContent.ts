@@ -7,8 +7,7 @@ export const studentContent = {
       cancelEdit: 'Cancelar edicion',
       save: 'Guardar bloqueo',
     },
-    description:
-      'Revisa tus citas en calendario por dia, semana o mes y bloquea franjas para evitar asignaciones no deseadas.',
+    description: '',
     emptyState: 'Aun no tienes bloqueos registrados en la agenda.',
     meta: {
       description:

@@ -268,60 +268,38 @@ export function StudentAgendaPage() {
           <p role="alert">{errorMessage}</p>
         </SurfaceCard>
       ) : null}
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 2xl:gap-4">
-        <SurfaceCard className="min-w-0 overflow-hidden bg-brand-gradient text-white" paddingClassName="p-0">
-          <div className="flex items-center gap-3 px-4 py-2.5">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-white/12 text-white ring-1 ring-white/18">
-              <CalendarDays aria-hidden="true" className="h-4.5 w-4.5" />
+      <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="px-3 py-2.5 sm:px-4 sm:py-3">
+        <div className="flex flex-wrap items-center gap-2.5 xl:flex-nowrap xl:justify-between">
+          <div className="inline-flex min-w-0 items-center gap-2 rounded-full bg-brand-gradient px-3 py-1.5 text-white">
+            <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/14 ring-1 ring-white/18">
+              <CalendarDays aria-hidden="true" className="h-3.5 w-3.5" />
             </span>
-            <div>
-              <p className="font-headline text-[1.55rem] font-extrabold tracking-tight text-white">
-                {pendingAppointmentsCount}
-              </p>
-              <p className="text-sm font-semibold text-white/90">Por aceptar</p>
-            </div>
+            <span className="font-headline text-[1rem] font-extrabold tracking-tight">{pendingAppointmentsCount}</span>
+            <span className="truncate text-[0.72rem] font-semibold text-white/90">Por aceptar</span>
           </div>
-        </SurfaceCard>
-        <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-0">
-          <div className="flex items-center gap-3 px-4 py-2.5">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
-              <CalendarDays aria-hidden="true" className="h-4.5 w-4.5" />
+          <div className="inline-flex min-w-0 items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-emerald-800">
+            <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-emerald-100">
+              <CalendarDays aria-hidden="true" className="h-3.5 w-3.5" />
             </span>
-            <div>
-              <p className="font-headline text-[1.55rem] font-extrabold tracking-tight text-ink">
-                {acceptedAppointmentsCount}
-              </p>
-              <p className="text-sm font-semibold text-ink-muted">Confirmadas</p>
-            </div>
+            <span className="font-headline text-[1rem] font-extrabold tracking-tight">{acceptedAppointmentsCount}</span>
+            <span className="truncate text-[0.72rem] font-semibold text-emerald-800/85">Confirmadas</span>
           </div>
-        </SurfaceCard>
-        <SurfaceCard className="min-w-0 overflow-hidden bg-brand-gradient text-white" paddingClassName="p-0">
-          <div className="flex items-center gap-3 px-4 py-2.5">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-white/12 text-white ring-1 ring-white/18">
-              <Repeat aria-hidden="true" className="h-4.5 w-4.5" />
+          <div className="inline-flex min-w-0 items-center gap-2 rounded-full bg-brand-gradient px-3 py-1.5 text-white">
+            <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/14 ring-1 ring-white/18">
+              <Repeat aria-hidden="true" className="h-3.5 w-3.5" />
             </span>
-            <div>
-              <p className="font-headline text-[1.55rem] font-extrabold tracking-tight text-white">
-                {reprogrammingAppointmentsCount}
-              </p>
-              <p className="text-sm font-semibold text-white/90">En reprogramacion</p>
-            </div>
+            <span className="font-headline text-[1rem] font-extrabold tracking-tight">{reprogrammingAppointmentsCount}</span>
+            <span className="truncate text-[0.72rem] font-semibold text-white/90">En reprogramacion</span>
           </div>
-        </SurfaceCard>
-        <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-0">
-          <div className="flex items-center gap-3 px-4 py-2.5">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-primary/10 text-primary ring-1 ring-primary/10">
-              <Repeat aria-hidden="true" className="h-4.5 w-4.5" />
+          <div className="inline-flex min-w-0 items-center gap-2 rounded-full border border-primary/10 bg-primary/5 px-3 py-1.5 text-primary">
+            <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-primary/10">
+              <Repeat aria-hidden="true" className="h-3.5 w-3.5" />
             </span>
-            <div>
-              <p className="font-headline text-[1.55rem] font-extrabold tracking-tight text-ink">
-                {activeBlocksCount}
-              </p>
-              <p className="text-sm font-semibold text-ink-muted">Bloqueos activos</p>
-            </div>
+            <span className="font-headline text-[1rem] font-extrabold tracking-tight">{activeBlocksCount}</span>
+            <span className="truncate text-[0.72rem] font-semibold text-primary/80">Bloqueos activos</span>
           </div>
-        </SurfaceCard>
-      </div>
+        </div>
+      </SurfaceCard>
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
         <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-4 py-3.5 sm:px-5 sm:py-4">
           <div className="grid gap-3 xl:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.85fr)] 2xl:grid-cols-[minmax(0,1.45fr)_minmax(23rem,0.8fr)]">
