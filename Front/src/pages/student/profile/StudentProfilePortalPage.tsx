@@ -63,17 +63,8 @@ function isValidUrl(value: string) {
 }
 
 function validateProfile(values: StudentProfileFormValues): StudentProfileFormErrors {
-  const errors: StudentProfileFormErrors = {};
-
-  if (!values.biography.trim()) {
-    errors.biography = 'Agrega una descripcion breve para tu perfil.';
-  }
-
-  if (!values.availabilityGeneral.trim()) {
-    errors.availabilityGeneral = 'Describe tu disponibilidad general.';
-  }
-
-  return errors;
+  void values;
+  return {};
 }
 
 function getLinkTypeLabel(type: StudentProfessionalLinkType) {
@@ -277,22 +268,6 @@ export function StudentProfilePage() {
                     </div>
                     <div className="rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-4 py-3.5">
                       <div className="flex items-start gap-3">
-                        <GraduationCap
-                          aria-hidden="true"
-                          className="mt-0.5 h-4.5 w-4.5 shrink-0 text-primary"
-                        />
-                        <div className="min-w-0">
-                          <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-primary/70">
-                            Semestre
-                          </p>
-                          <p className="mt-1 text-sm font-semibold text-ink">
-                            Semestre {profile.semester}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-4 py-3.5">
-                      <div className="flex items-start gap-3">
                         <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[1rem] border border-slate-200 bg-white">
                           {profile.universityLogoSrc ? (
                             <img
@@ -314,6 +289,22 @@ export function StudentProfilePage() {
                         </div>
                       </div>
                     </div>
+                    <div className="rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-4 py-3.5">
+                      <div className="flex items-start gap-3">
+                        <GraduationCap
+                          aria-hidden="true"
+                          className="mt-0.5 h-4.5 w-4.5 shrink-0 text-primary"
+                        />
+                        <div className="min-w-0">
+                          <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-primary/70">
+                            Semestre
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-ink">
+                            Semestre {profile.semester}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </SurfaceCard>
@@ -328,7 +319,7 @@ export function StudentProfilePage() {
                       Descripcion y disponibilidad
                     </h2>
                     <p className="mt-1 text-sm leading-6 text-ink-muted">
-                      Ajusta tu presentacion profesional y la disponibilidad general para atencion.
+                      Puedes completar estos campos cuando lo necesites. Ambos son opcionales.
                     </p>
                   </div>
                   <div className="grid gap-5 xl:grid-cols-2">
