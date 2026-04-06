@@ -121,6 +121,32 @@ describe('Admin pages', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('filtra credenciales por universidad y por estado', async () => {
+    const user = userEvent.setup();
+
+    renderAdminApp([ROUTES.adminCredentials]);
+
+    await user.type(screen.getByLabelText(/buscar universidad/i), 'Pacifico');
+
+    expect(
+      screen.getByText(/Universidad del Pacifico Dental/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Corporacion Oral del Caribe/i),
+    ).not.toBeInTheDocument();
+
+    await user.clear(screen.getByLabelText(/buscar universidad/i));
+    await user.click(screen.getByRole('button', { name: /filtrar credenciales/i }));
+    await user.click(screen.getByRole('menuitemradio', { name: /^Enviada$/i }));
+
+    expect(
+      screen.getByText(/Corporacion Oral del Caribe/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Universidad del Pacifico Dental/i),
+    ).not.toBeInTheDocument();
+  });
+
   it('valida campos requeridos y el formato de correo al registrar una universidad', async () => {
     const user = userEvent.setup();
 
@@ -281,6 +307,39 @@ describe('Admin pages', () => {
     expect(within(pendingRow!).getAllByText(/^Pendiente$/i)).not.toHaveLength(
       0,
     );
+  });
+
+  it('permite editar el correo del administrador antes de enviar la credencial', async () => {
+    const user = userEvent.setup();
+
+    renderAdminApp([ROUTES.adminCredentials]);
+
+    const credentialRow = screen
+      .getByText(/Universidad del Pacifico Dental/i)
+      .closest('tr');
+    expect(credentialRow).not.toBeNull();
+
+    await user.click(
+      within(credentialRow!).getByRole('button', { name: /editar correo/i }),
+    );
+
+    const emailInput = within(credentialRow!).getByLabelText(
+      /correo electronico de Sofia Rojas/i,
+    );
+    await user.clear(emailInput);
+    await user.type(emailInput, 'nuevo.correo@universidadpacifico.edu.co');
+
+    await user.click(
+      within(credentialRow!).getByRole('button', { name: /guardar correo/i }),
+    );
+
+    expect(
+      await within(credentialRow!).findByText(/nuevo\.correo@universidadpacifico\.edu\.co/i),
+    ).toBeInTheDocument();
+
+    await user.click(within(credentialRow!).getByRole('button', { name: /^Enviar$/i }));
+
+    expect(within(credentialRow!).getByText(/^Enviada$/i)).toBeInTheDocument();
   });
 
   it('eliminar remueve la credencial pendiente y la universidad asociada', async () => {

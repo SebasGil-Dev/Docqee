@@ -4,21 +4,23 @@ export const adminContent = {
   credentialsPage: {
     actionLabels: {
       delete: 'Eliminar',
+      editEmail: 'Editar correo',
       resend: 'Reenviar',
+      saveEmail: 'Guardar correo',
       send: 'Enviar',
     },
     description:
       'Gestiona las credenciales iniciales de las universidades registradas y aun no consolidadas operativamente.',
+    emailInvalidMessage: 'Ingresa un correo electronico valido',
     emptyState:
       'No hay credenciales pendientes por gestionar en este momento.',
-    eyebrow: 'Acceso inicial',
+    eyebrow: '',
     meta: {
       description:
         'Docqee permite revisar y administrar las credenciales pendientes del modulo admin.',
       title: 'Docqee | Envio de Credenciales',
     },
-    subtitle:
-      'Cada registro pendiente conserva su estado hasta que exista una consolidacion real desde backend.',
+    subtitle: '',
     title: 'Envio de Credenciales',
   },
   registerPage: {

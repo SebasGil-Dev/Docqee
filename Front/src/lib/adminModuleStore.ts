@@ -27,6 +27,7 @@ type AdminModuleStoreState = AdminModuleState & {
 
 type AdminModuleActions = {
   deleteCredential: (credentialId: string) => Promise<boolean>;
+  editCredentialEmail: (credentialId: string, email: string) => Promise<boolean>;
   refresh: () => Promise<void>;
   registerUniversity: (
     values: RegisterUniversityFormValues,
@@ -188,6 +189,10 @@ function normalizeOptionalText(value: string) {
   return trimmedValue.length > 0 ? trimmedValue : null;
 }
 
+function normalizeEmail(value: string) {
+  return normalizeText(value).toLowerCase();
+}
+
 function getCityById(cityId: string) {
   const cities = patientRegisterCatalogDataSource.getCities();
 
@@ -297,6 +302,28 @@ function sendCredentialMock(credentialId: string) {
 function resendCredentialMock(credentialId: string) {
   markCredentialAsSentMock(credentialId);
   return 'TempAdmin123!';
+}
+
+function editCredentialEmailMock(credentialId: string, email: string) {
+  const credential = state.credentials.find((item) => item.id === credentialId);
+
+  if (!credential) {
+    return false;
+  }
+
+  updateState({
+    ...state,
+    universities: state.universities.map((university) =>
+      university.id === credential.universityId
+        ? {
+            ...university,
+            adminEmail: normalizeEmail(email),
+          }
+        : university,
+    ),
+  });
+
+  return true;
 }
 
 function deleteCredentialMock(credentialId: string) {
@@ -501,6 +528,37 @@ async function deleteCredential(credentialId: string) {
   }
 }
 
+async function editCredentialEmail(credentialId: string, email: string) {
+  if (IS_TEST_MODE) {
+    return editCredentialEmailMock(credentialId, email);
+  }
+
+  const credential = state.credentials.find((item) => item.id === credentialId);
+
+  if (!credential) {
+    patchState({
+      errorMessage: 'No pudimos encontrar la credencial que intentas actualizar.',
+    });
+    return false;
+  }
+
+  updateState({
+    ...state,
+    errorMessage: null,
+    isReady: true,
+    universities: state.universities.map((university) =>
+      university.id === credential.universityId
+        ? {
+            ...university,
+            adminEmail: normalizeEmail(email),
+          }
+        : university,
+    ),
+  });
+
+  return true;
+}
+
 export function resetAdminModuleState() {
   state = IS_TEST_MODE ? createMockState() : createRuntimeInitialState();
   nextUniversitySequence = initialMockState.universities.length + 1;
@@ -522,6 +580,7 @@ export function useAdminModuleStore() {
 
   const actions: AdminModuleActions = {
     deleteCredential,
+    editCredentialEmail,
     refresh: refreshRuntimeState,
     registerUniversity,
     resendCredential,
