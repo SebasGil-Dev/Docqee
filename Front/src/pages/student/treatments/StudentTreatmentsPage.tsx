@@ -1,5 +1,7 @@
 import {
+  CalendarDays,
   Check,
+  GraduationCap,
   MapPin,
   Power,
   PowerOff,
@@ -26,6 +28,8 @@ export function StudentTreatmentsPage() {
     errorMessage,
     isLoading,
     practiceSites,
+    profile,
+    requests,
     togglePracticeSiteStatus,
     toggleTreatmentStatus,
     treatments,
@@ -47,6 +51,18 @@ export function StudentTreatmentsPage() {
   const activePracticeSitesCount = useMemo(
     () => practiceSites.filter((practiceSite) => practiceSite.status === 'active').length,
     [practiceSites],
+  );
+  const totalAppointmentsCount = useMemo(
+    () =>
+      requests.reduce(
+        (total, request) => total + request.appointmentsCount,
+        0,
+      ),
+    [requests],
+  );
+  const studentInitials = useMemo(
+    () => `${profile.firstName.charAt(0)}${profile.lastName.charAt(0)}`.toUpperCase(),
+    [profile.firstName, profile.lastName],
   );
   const filteredTreatments = treatments.filter((treatment) => {
     const matchesSearch =
@@ -115,37 +131,88 @@ export function StudentTreatmentsPage() {
           <p role="alert">{errorMessage}</p>
         </SurfaceCard>
       ) : null}
-      <div className="grid gap-3 md:grid-cols-2">
-        <SurfaceCard
-          className="min-w-0 overflow-hidden bg-brand-gradient text-white"
-          paddingClassName="p-0"
-        >
-          <div className="flex items-center gap-3 px-4 py-3">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-white/12 text-white ring-1 ring-white/18">
-              <Stethoscope aria-hidden="true" className="h-4.5 w-4.5" />
-            </span>
-            <div>
-              <p className="font-headline text-[1.55rem] font-extrabold tracking-tight text-white">
+      <SurfaceCard className="overflow-hidden bg-brand-gradient text-white" paddingClassName="p-0">
+        <div className="flex flex-col gap-5 px-5 py-5 sm:px-6 sm:py-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex min-w-0 items-center gap-4">
+            {profile.avatarSrc ? (
+              <img
+                alt={profile.avatarAlt}
+                className="h-20 w-20 rounded-[1.75rem] object-cover ring-4 ring-white/20"
+                src={profile.avatarSrc}
+              />
+            ) : (
+              <span className="inline-flex h-20 w-20 items-center justify-center rounded-[1.75rem] bg-white/14 text-2xl font-extrabold uppercase text-white ring-4 ring-white/15">
+                {studentInitials}
+              </span>
+            )}
+            <div className="min-w-0 space-y-1.5">
+              <h2 className="font-headline text-[1.6rem] font-extrabold tracking-tight text-white sm:text-[1.9rem]">
+                {profile.firstName} {profile.lastName}
+              </h2>
+              <div className="flex flex-wrap items-center gap-2 text-sm text-white/85">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-3 py-1 ring-1 ring-white/16">
+                  <GraduationCap aria-hidden="true" className="h-3.5 w-3.5" />
+                  <span>Semestre {profile.semester}</span>
+                </span>
+                <span className="inline-flex items-center gap-2 rounded-full bg-white/12 px-3 py-1 ring-1 ring-white/16">
+                  <span className="inline-flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-white/90 text-primary">
+                    {profile.universityLogoSrc ? (
+                      <img
+                        alt={profile.universityLogoAlt}
+                        className="h-full w-full object-cover"
+                        src={profile.universityLogoSrc}
+                      />
+                    ) : (
+                      <span className="text-[0.65rem] font-extrabold uppercase">
+                        {profile.universityName.charAt(0)}
+                      </span>
+                    )}
+                  </span>
+                  <span className="truncate">{profile.universityName}</span>
+                </span>
+              </div>
+              <p className="max-w-2xl text-sm leading-6 text-white/85">
+                Vista general de tu oferta clinica para revisar rapidamente tratamientos, sedes y citas asociadas.
+              </p>
+            </div>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[32rem]">
+            <div className="rounded-[1.4rem] bg-white/12 px-4 py-4 ring-1 ring-white/15 backdrop-blur-sm">
+              <div className="flex items-center gap-2">
+                <Stethoscope aria-hidden="true" className="h-4.5 w-4.5 text-white" />
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/75">
+                  Tratamientos activos
+                </p>
+              </div>
+              <p className="mt-3 font-headline text-[2rem] font-extrabold tracking-tight text-white">
                 {activeTreatmentsCount}
               </p>
-              <p className="text-sm font-semibold text-white/90">Tratamientos activos</p>
             </div>
-          </div>
-        </SurfaceCard>
-        <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-0">
-          <div className="flex items-center gap-3 px-4 py-3">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-primary/10 text-primary ring-1 ring-primary/10">
-              <MapPin aria-hidden="true" className="h-4.5 w-4.5" />
-            </span>
-            <div>
-              <p className="font-headline text-[1.55rem] font-extrabold tracking-tight text-ink">
+            <div className="rounded-[1.4rem] bg-white/12 px-4 py-4 ring-1 ring-white/15 backdrop-blur-sm">
+              <div className="flex items-center gap-2">
+                <MapPin aria-hidden="true" className="h-4.5 w-4.5 text-white" />
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/75">
+                  Sedes activas
+                </p>
+              </div>
+              <p className="mt-3 font-headline text-[2rem] font-extrabold tracking-tight text-white">
                 {activePracticeSitesCount}
               </p>
-              <p className="text-sm font-semibold text-ink-muted">Sedes activas</p>
+            </div>
+            <div className="rounded-[1.4rem] bg-white/12 px-4 py-4 ring-1 ring-white/15 backdrop-blur-sm">
+              <div className="flex items-center gap-2">
+                <CalendarDays aria-hidden="true" className="h-4.5 w-4.5 text-white" />
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/75">
+                  Citas registradas
+                </p>
+              </div>
+              <p className="mt-3 font-headline text-[2rem] font-extrabold tracking-tight text-white">
+                {totalAppointmentsCount}
+              </p>
             </div>
           </div>
-        </SurfaceCard>
-      </div>
+        </div>
+      </SurfaceCard>
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
         <div className="border-b border-slate-200/80 px-4 py-4 sm:px-5 sm:py-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
