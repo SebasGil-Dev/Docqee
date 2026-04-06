@@ -161,25 +161,27 @@ export function StudentTreatmentsPage() {
         </SurfaceCard>
       ) : null}
       <SurfaceCard className="overflow-hidden bg-brand-gradient text-white" paddingClassName="p-0">
-        <div className="flex flex-col gap-4 px-4 py-4 sm:px-5 sm:py-5 xl:flex-row xl:items-center xl:justify-between 2xl:px-6">
-          <div className="flex min-w-0 items-center gap-4">
+        <div className="grid gap-3 px-4 py-4 sm:px-5 sm:py-5 2xl:grid-cols-[minmax(0,1fr)_minmax(22rem,0.82fr)] 2xl:items-center 2xl:gap-5 2xl:px-6">
+          <div className="flex min-w-0 items-center gap-3.5">
             {profile.avatarSrc ? (
               <img
                 alt={profile.avatarAlt}
-                className="h-16 w-16 rounded-[1.55rem] object-cover ring-4 ring-white/20 sm:h-[4.5rem] sm:w-[4.5rem]"
+                className="h-14 w-14 rounded-[1.35rem] object-cover ring-4 ring-white/20 sm:h-16 sm:w-16"
                 src={profile.avatarSrc ?? undefined}
               />
             ) : (
-              <span className="inline-flex h-16 w-16 items-center justify-center rounded-[1.55rem] bg-white/14 text-xl font-extrabold uppercase text-white ring-4 ring-white/15 sm:h-[4.5rem] sm:w-[4.5rem]">
+              <span className="inline-flex h-14 w-14 items-center justify-center rounded-[1.35rem] bg-white/14 text-lg font-extrabold uppercase text-white ring-4 ring-white/15 sm:h-16 sm:w-16 sm:text-xl">
                 {studentInitials}
               </span>
             )}
-            <div className="min-w-0 space-y-2.5">
-              <div className="flex flex-wrap items-center gap-3">
-                <h2 className="font-headline text-[1.4rem] font-extrabold tracking-tight text-white sm:text-[1.7rem]">
+            <div className="min-w-0 space-y-2">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h2 className="font-headline text-[1.25rem] font-extrabold tracking-tight text-white sm:text-[1.5rem]">
                   Bienvenido, {profile.firstName} {profile.lastName}
                 </h2>
-                <span className="inline-flex items-center gap-2 rounded-full bg-white/12 px-3 py-1 ring-1 ring-white/16">
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex min-w-0 items-center gap-2 rounded-full bg-white/12 px-3 py-1 ring-1 ring-white/16">
                   <span className="inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-white/90 text-primary">
                     {profile.universityLogoSrc ? (
                       <img
@@ -193,20 +195,18 @@ export function StudentTreatmentsPage() {
                       </span>
                     )}
                   </span>
-                  <span className="max-w-[16rem] truncate text-sm font-semibold text-white">
+                  <span className="max-w-[14rem] truncate text-[0.92rem] font-semibold text-white sm:max-w-[20rem] xl:max-w-[24rem]">
                     {profile.universityName}
                   </span>
                 </span>
-              </div>
-              <div className="flex flex-wrap items-center gap-2 text-sm text-white/85">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-3 py-1 ring-1 ring-white/16">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-3 py-1 text-[0.9rem] text-white/85 ring-1 ring-white/16">
                   <GraduationCap aria-hidden="true" className="h-3.5 w-3.5" />
                   <span>Semestre {profile.semester}</span>
                 </span>
               </div>
-              <div className="flex flex-wrap items-center gap-3 text-white/92">
-                <div className="flex items-center gap-1">{renderStars(averageRating)}</div>
-                <p className="text-sm font-semibold">
+              <div className="flex flex-wrap items-center gap-2.5 text-white/92">
+                <div className="flex items-center gap-1">{renderStars(averageRating, 'h-4 w-4')}</div>
+                <p className="text-[0.92rem] font-semibold">
                   {reviews.length > 0
                     ? `${averageRating.toFixed(1)} de 5 en ${reviews.length} valoraciones`
                     : 'Aun no tienes valoraciones registradas'}
@@ -214,37 +214,43 @@ export function StudentTreatmentsPage() {
               </div>
             </div>
           </div>
-          <div className="grid gap-3 sm:grid-cols-3 xl:min-w-[32rem] 2xl:min-w-[36rem]">
-            <div className="rounded-[1.4rem] bg-white/12 px-3.5 py-3 ring-1 ring-white/15 backdrop-blur-sm">
+          <div className="grid gap-2.5 sm:grid-cols-3">
+            <div className="rounded-[1.2rem] bg-white/12 px-3 py-2.5 ring-1 ring-white/15 backdrop-blur-sm">
               <div className="flex items-center gap-2">
-                <Stethoscope aria-hidden="true" className="h-4.5 w-4.5 text-white" />
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/75">
-                  Tratamientos activos
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/12 ring-1 ring-white/12">
+                  <Stethoscope aria-hidden="true" className="h-4 w-4 text-white" />
+                </span>
+                <p className="text-[0.68rem] font-bold uppercase tracking-[0.14em] text-white/75">
+                  Tratamientos
                 </p>
               </div>
-              <p className="mt-2.5 font-headline text-[1.7rem] font-extrabold tracking-tight text-white">
+              <p className="mt-2 font-headline text-[1.45rem] font-extrabold tracking-tight text-white">
                 {activeTreatmentsCount}
               </p>
             </div>
-            <div className="rounded-[1.4rem] bg-white/12 px-3.5 py-3 ring-1 ring-white/15 backdrop-blur-sm">
+            <div className="rounded-[1.2rem] bg-white/12 px-3 py-2.5 ring-1 ring-white/15 backdrop-blur-sm">
               <div className="flex items-center gap-2">
-                <MapPin aria-hidden="true" className="h-4.5 w-4.5 text-white" />
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/75">
-                  Sedes activas
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/12 ring-1 ring-white/12">
+                  <MapPin aria-hidden="true" className="h-4 w-4 text-white" />
+                </span>
+                <p className="text-[0.68rem] font-bold uppercase tracking-[0.14em] text-white/75">
+                  Sedes
                 </p>
               </div>
-              <p className="mt-2.5 font-headline text-[1.7rem] font-extrabold tracking-tight text-white">
+              <p className="mt-2 font-headline text-[1.45rem] font-extrabold tracking-tight text-white">
                 {activePracticeSitesCount}
               </p>
             </div>
-            <div className="rounded-[1.4rem] bg-white/12 px-3.5 py-3 ring-1 ring-white/15 backdrop-blur-sm">
+            <div className="rounded-[1.2rem] bg-white/12 px-3 py-2.5 ring-1 ring-white/15 backdrop-blur-sm">
               <div className="flex items-center gap-2">
-                <CalendarDays aria-hidden="true" className="h-4.5 w-4.5 text-white" />
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/75">
-                  Citas registradas
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/12 ring-1 ring-white/12">
+                  <CalendarDays aria-hidden="true" className="h-4 w-4 text-white" />
+                </span>
+                <p className="text-[0.68rem] font-bold uppercase tracking-[0.14em] text-white/75">
+                  Citas
                 </p>
               </div>
-              <p className="mt-2.5 font-headline text-[1.7rem] font-extrabold tracking-tight text-white">
+              <p className="mt-2 font-headline text-[1.45rem] font-extrabold tracking-tight text-white">
                 {totalAppointmentsCount}
               </p>
             </div>
