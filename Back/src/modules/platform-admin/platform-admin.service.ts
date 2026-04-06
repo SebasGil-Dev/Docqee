@@ -408,14 +408,17 @@ export class PlatformAdminService {
         primer_ingreso_pendiente: boolean;
         credencial_inicial: {
           anulada_at: Date | null;
+          envio_credencial: { enviado_at: Date }[];
         } | null;
       };
     } | null;
   }) {
+    const credencial = university.cuenta_admin_universidad?.cuenta_acceso.credencial_inicial;
     return Boolean(
       university.cuenta_admin_universidad?.cuenta_acceso.primer_ingreso_pendiente &&
-        university.cuenta_admin_universidad.cuenta_acceso.credencial_inicial &&
-        university.cuenta_admin_universidad.cuenta_acceso.credencial_inicial.anulada_at === null,
+        credencial &&
+        credencial.anulada_at === null &&
+        credencial.envio_credencial.length === 0,
     );
   }
 
@@ -440,6 +443,7 @@ export class PlatformAdminService {
         credencial_inicial: {
           id_credencial_inicial: number;
           anulada_at: Date | null;
+          envio_credencial: { enviado_at: Date }[];
         } | null;
         primer_ingreso_pendiente: boolean;
       };
