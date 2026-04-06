@@ -2,6 +2,7 @@ import { useEffect, useSyncExternalStore } from 'react';
 
 import type {
   PersonOperationalStatus,
+  StudentAgendaAppointment,
   StudentAppointmentReview,
   StudentConversation,
   StudentConversationMessage,
@@ -180,6 +181,64 @@ function createMockState(): StudentStoreState {
     },
   ];
 
+  const appointments: StudentAgendaAppointment[] = [
+    {
+      additionalInfo: 'Pendiente de confirmar la propuesta inicial con el paciente.',
+      appointmentType: 'Valoracion inicial',
+      city: 'Bogota',
+      endAt: '2026-04-06T15:30:00.000Z',
+      id: 'student-appointment-1',
+      patientName: 'Ana Maria Perez',
+      siteName: 'Sede Norte',
+      startAt: '2026-04-06T15:00:00.000Z',
+      status: 'PROPUESTA',
+    },
+    {
+      additionalInfo: 'Control confirmado con docente asignado en sede norte.',
+      appointmentType: 'Control restaurativo',
+      city: 'Bogota',
+      endAt: '2026-04-07T20:00:00.000Z',
+      id: 'student-appointment-2',
+      patientName: 'Julian Torres',
+      siteName: 'Sede Norte',
+      startAt: '2026-04-07T19:00:00.000Z',
+      status: 'ACEPTADA',
+    },
+    {
+      additionalInfo: 'Reprogramacion solicitada por ajuste de horario del paciente.',
+      appointmentType: 'Seguimiento preventivo',
+      city: 'Bogota',
+      endAt: '2026-04-08T17:00:00.000Z',
+      id: 'student-appointment-3',
+      patientName: 'Claudia Moreno',
+      siteName: 'Sede Escuela Clinica',
+      startAt: '2026-04-08T16:15:00.000Z',
+      status: 'REPROGRAMACION_PENDIENTE',
+    },
+    {
+      additionalInfo: 'El paciente cancelo la asistencia y quedo registrado en agenda.',
+      appointmentType: 'Revision de sensibilidad',
+      city: 'Soacha',
+      endAt: '2026-04-09T14:45:00.000Z',
+      id: 'student-appointment-4',
+      patientName: 'Ricardo Suarez',
+      siteName: 'Sede Norte',
+      startAt: '2026-04-09T14:00:00.000Z',
+      status: 'CANCELADA',
+    },
+    {
+      additionalInfo: 'Cita completada con valoracion del paciente registrada.',
+      appointmentType: 'Seguimiento final',
+      city: 'Bogota',
+      endAt: '2026-04-04T17:30:00.000Z',
+      id: 'student-appointment-5',
+      patientName: 'Ricardo Suarez',
+      siteName: 'Sede Norte',
+      startAt: '2026-04-04T16:45:00.000Z',
+      status: 'FINALIZADA',
+    },
+  ];
+
   const requests: StudentRequest[] = [
     {
       appointmentsCount: 0,
@@ -331,6 +390,7 @@ function createMockState(): StudentStoreState {
   ];
 
   return {
+    appointments,
     conversations,
     errorMessage: null,
     isLoading: false,
@@ -349,6 +409,7 @@ function createRuntimeInitialState(): StudentStoreState {
     errorMessage: null,
     isLoading: false,
     isReady: false,
+    appointments: [],
     conversations: [],
     practiceSites: [],
     profile: {
@@ -721,6 +782,7 @@ async function loadRuntimeState(forceRefresh = false) {
       updateState({
         ...createRuntimeInitialState(),
         ...payload,
+        appointments: payload.appointments ?? [],
         errorMessage: null,
         isLoading: false,
         isReady: true,

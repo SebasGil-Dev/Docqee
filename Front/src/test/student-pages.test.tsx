@@ -75,15 +75,26 @@ describe('Student pages', () => {
     expect(screen.getByText(/https:\/\/drive.google.com\/file\/d\/demo-cv/i)).toBeInTheDocument();
   });
 
-  it('muestra el resumen de valoraciones y comentarios del estudiante', () => {
+  it('muestra el resumen de valoraciones y comentarios del estudiante', async () => {
+    const user = userEvent.setup();
+
     renderStudentApp([ROUTES.studentTreatments]);
 
     expect(screen.getByText(/bienvenido, valentina rios/i)).toBeInTheDocument();
     expect(screen.getByText(/4.7 de 5 en 3 valoraciones/i)).toBeInTheDocument();
     expect(screen.getByText(/comentarios de tus citas/i)).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('student-review-comments-dashboard')).getByText(/^3$/i),
+    ).toBeInTheDocument();
     expect(screen.getByTestId('student-review-card-student-review-1')).toHaveTextContent(
       /me senti muy bien acompanado durante la cita/i,
     );
+
+    await user.click(screen.getByRole('button', { name: /filtrar comentarios por estrellas/i }));
+    await user.click(screen.getByRole('menuitemradio', { name: /4 estrellas/i }));
+
+    expect(screen.queryByTestId('student-review-card-student-review-1')).not.toBeInTheDocument();
+    expect(screen.getByTestId('student-review-card-student-review-2')).toBeInTheDocument();
   });
 
   it('permite gestionar tratamientos y sedes desde mi perfil', async () => {
@@ -126,6 +137,9 @@ describe('Student pages', () => {
     const user = userEvent.setup();
 
     renderStudentApp([ROUTES.studentAgenda]);
+
+    expect(screen.getByText(/calendario de citas/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/valoracion inicial/i).length).toBeGreaterThan(0);
 
     await user.click(screen.getByLabelText(/tipo de bloqueo/i));
     await user.click(screen.getByRole('option', { name: /recurrente/i }));
