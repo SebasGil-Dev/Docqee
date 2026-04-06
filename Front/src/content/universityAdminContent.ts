@@ -78,7 +78,7 @@ export const universityAdminContent = {
       title: 'Docqee | Informacion Institucional',
     },
     passwordPanelDescription:
-      'Este formulario es visual en esta etapa y deja el flujo listo para conectarse despues al backend.',
+      'Ingresa tu contrasena actual, define una nueva y confirmala siguiendo las reglas de seguridad del sistema.',
     passwordPanelTitle: 'Actualizar contrasena',
     passwordSuccessMessage:
       'La contrasena se actualizo correctamente en esta demo frontend.',

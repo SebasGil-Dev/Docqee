@@ -1,5 +1,7 @@
 import {
   Building2,
+  CheckCircle2,
+  Circle,
   ImagePlus,
   KeyRound,
   Mail,
@@ -11,16 +13,19 @@ import {
   RotateCcw,
   Save,
   UserRound,
+  X,
 } from 'lucide-react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { AdminPasswordField } from '@/components/admin/AdminPasswordField';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
 import { AdminSelectField } from '@/components/admin/AdminSelectField';
 import { AdminTextField } from '@/components/admin/AdminTextField';
 import { Seo } from '@/components/ui/Seo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import { authContent } from '@/content/authContent';
 import { universityAdminContent } from '@/content/universityAdminContent';
 import type {
   AsyncCatalogState,
@@ -67,6 +72,14 @@ const campusInitialValues: CampusFormValues = {
   name: '',
   status: 'active',
 };
+
+const passwordRuleOrder = [
+  'minLength',
+  'uppercase',
+  'lowercase',
+  'number',
+  'special',
+] as const;
 
 function createEmptyCatalogState<T>(
   status: AsyncCatalogState<T>['status'],
@@ -188,6 +201,21 @@ function validateCampusField(
   return undefined;
 }
 
+function getPasswordRequirementStatus(password: string) {
+  return {
+    lowercase: /[a-z]/.test(password),
+    minLength: password.length >= 8,
+    number: /\d/.test(password),
+    special: /[^A-Za-z0-9]/.test(password),
+    uppercase: /[A-Z]/.test(password),
+  };
+}
+
+function meetsAllPasswordRequirements(password: string) {
+  const requirementStatus = getPasswordRequirementStatus(password);
+  return passwordRuleOrder.every((ruleKey) => requirementStatus[ruleKey]);
+}
+
 function validatePasswordField(
   field: UniversityPasswordFormField,
   values: UniversityPasswordFormValues,
@@ -207,8 +235,8 @@ function validatePasswordField(
     }
   }
 
-  if (field === 'newPassword' && value.length < 8) {
-    return 'La nueva contrasena debe tener al menos 8 caracteres';
+  if (field === 'newPassword' && !meetsAllPasswordRequirements(value)) {
+    return authContent.register.password.requirementsMessage;
   }
 
   if (
@@ -253,6 +281,14 @@ export function UniversityInstitutionPage({
   const localityRef = useRef<HTMLSelectElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
+  const currentPasswordRef = useRef<HTMLInputElement>(null);
+  const newPasswordRef = useRef<HTMLInputElement>(null);
+  const confirmPasswordRef = useRef<HTMLInputElement>(null);
+  const [showPasswords, setShowPasswords] = useState({
+    confirmPassword: false,
+    currentPassword: false,
+    newPassword: false,
+  });
 
   const institutionFieldRefs = useMemo(
     () =>
@@ -273,6 +309,22 @@ export function UniversityInstitutionPage({
       >,
     [],
   );
+  const passwordFieldRefs = useMemo(
+    () =>
+      ({
+        confirmPassword: confirmPasswordRef,
+        currentPassword: currentPasswordRef,
+        newPassword: newPasswordRef,
+      }) satisfies Record<
+        UniversityPasswordFormField,
+        { current: HTMLInputElement | null }
+      >,
+    [],
+  );
+  const passwordRequirementStatus = useMemo(
+    () => getPasswordRequirementStatus(passwordValues.newPassword),
+    [passwordValues.newPassword],
+  );
 
   useEffect(() => {
     setValues(getInstitutionInitialValues(institutionProfile));
@@ -280,6 +332,34 @@ export function UniversityInstitutionPage({
     setCampusErrors({});
     setEditingCampusId(null);
   }, [institutionProfile]);
+
+  useEffect(() => {
+    if (!isPasswordPanelOpen) {
+      return undefined;
+    }
+
+    currentPasswordRef.current?.focus();
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsPasswordPanelOpen(false);
+        setPasswordErrors({});
+        setPasswordValues(passwordInitialValues);
+        setPasswordMessage(null);
+        setShowPasswords({
+          confirmPassword: false,
+          currentPassword: false,
+          newPassword: false,
+        });
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isPasswordPanelOpen]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -614,6 +694,30 @@ export function UniversityInstitutionPage({
     setCampusErrors({});
   };
 
+  const openPasswordPanel = () => {
+    setPasswordErrors({});
+    setPasswordValues(passwordInitialValues);
+    setPasswordMessage(null);
+    setShowPasswords({
+      confirmPassword: false,
+      currentPassword: false,
+      newPassword: false,
+    });
+    setIsPasswordPanelOpen(true);
+  };
+
+  const closePasswordPanel = () => {
+    setIsPasswordPanelOpen(false);
+    setPasswordErrors({});
+    setPasswordValues(passwordInitialValues);
+    setPasswordMessage(null);
+    setShowPasswords({
+      confirmPassword: false,
+      currentPassword: false,
+      newPassword: false,
+    });
+  };
+
   const handleCampusSubmit = () => {
     const nextErrors: CampusFormErrors = {};
     const fieldOrder: CampusFormField[] = ['name', 'cityId', 'localityId', 'address'];
@@ -699,6 +803,38 @@ export function UniversityInstitutionPage({
     setPasswordMessage(null);
   };
 
+  const handlePasswordFieldBlur = (field: UniversityPasswordFormField) => {
+    setPasswordErrors((currentErrors) => {
+      const nextErrors = { ...currentErrors };
+      const nextFieldError = validatePasswordField(field, passwordValues);
+
+      if (nextFieldError) {
+        nextErrors[field] = nextFieldError;
+      } else {
+        delete nextErrors[field];
+      }
+
+      if (field === 'newPassword' || field === 'confirmPassword') {
+        const confirmError = validatePasswordField('confirmPassword', passwordValues);
+
+        if (confirmError) {
+          nextErrors.confirmPassword = confirmError;
+        } else {
+          delete nextErrors.confirmPassword;
+        }
+      }
+
+      return nextErrors;
+    });
+  };
+
+  const togglePasswordVisibility = (field: UniversityPasswordFormField) => {
+    setShowPasswords((currentValues) => ({
+      ...currentValues,
+      [field]: !currentValues[field],
+    }));
+  };
+
   const handlePasswordSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -719,7 +855,10 @@ export function UniversityInstitutionPage({
 
     setPasswordErrors(nextErrors);
 
-    if (fieldOrder.some((field) => nextErrors[field])) {
+    const firstErrorField = fieldOrder.find((field) => nextErrors[field]);
+
+    if (firstErrorField) {
+      passwordFieldRefs[firstErrorField].current?.focus();
       return;
     }
 
@@ -731,6 +870,7 @@ export function UniversityInstitutionPage({
       }
 
       setPasswordValues(passwordInitialValues);
+      setPasswordErrors({});
       setPasswordMessage(universityAdminContent.institutionPage.passwordSuccessMessage);
     })();
   };
@@ -1138,7 +1278,7 @@ export function UniversityInstitutionPage({
                         <button
                           className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-primary transition duration-300 hover:bg-slate-100"
                           type="button"
-                          onClick={() => setIsPasswordPanelOpen((currentValue) => !currentValue)}
+                          onClick={openPasswordPanel}
                         >
                           <KeyRound aria-hidden="true" className="h-4 w-4" />
                           <span>{universityAdminContent.institutionPage.actionLabels.changePassword}</span>
@@ -1146,125 +1286,6 @@ export function UniversityInstitutionPage({
                       </div>
                     </div>
                   </div>
-
-                  {isPasswordPanelOpen ? (
-                    <SurfaceCard
-                      className="border border-slate-200/80 bg-white shadow-none"
-                      paddingClassName="p-5 sm:p-6"
-                    >
-                        <form className="space-y-5" noValidate onSubmit={handlePasswordSubmit}>
-                          <div className="space-y-1">
-                            <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
-                              {universityAdminContent.institutionPage.passwordPanelTitle}
-                            </h2>
-                            <p className="text-sm leading-6 text-ink-muted">
-                              {universityAdminContent.institutionPage.passwordPanelDescription}
-                            </p>
-                          </div>
-                          {passwordMessage ? (
-                            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
-                              {passwordMessage}
-                            </div>
-                          ) : null}
-                          <div className="grid gap-5 lg:grid-cols-3">
-                            <AdminTextField
-                              error={passwordErrors.currentPassword}
-                              icon={KeyRound}
-                              id="university-password-current"
-                              label="Contrasena actual"
-                              name="currentPassword"
-                              placeholder="Ingresa la contrasena actual"
-                              type="password"
-                              value={passwordValues.currentPassword}
-                              onBlur={() => {
-                                setPasswordErrors((currentErrors) => {
-                                  const nextErrors = { ...currentErrors };
-                                  const nextFieldError = validatePasswordField(
-                                    'currentPassword',
-                                    passwordValues,
-                                  );
-
-                                  if (nextFieldError) {
-                                    nextErrors.currentPassword = nextFieldError;
-                                  } else {
-                                    delete nextErrors.currentPassword;
-                                  }
-
-                                  return nextErrors;
-                                });
-                              }}
-                              onChange={(value) => handlePasswordFieldChange('currentPassword', value)}
-                            />
-                            <AdminTextField
-                              error={passwordErrors.newPassword}
-                              icon={KeyRound}
-                              id="university-password-new"
-                              label="Nueva contrasena"
-                              name="newPassword"
-                              placeholder="Minimo 8 caracteres"
-                              type="password"
-                              value={passwordValues.newPassword}
-                              onBlur={() => {
-                                setPasswordErrors((currentErrors) => {
-                                  const nextErrors = { ...currentErrors };
-                                  const nextFieldError = validatePasswordField(
-                                    'newPassword',
-                                    passwordValues,
-                                  );
-
-                                  if (nextFieldError) {
-                                    nextErrors.newPassword = nextFieldError;
-                                  } else {
-                                    delete nextErrors.newPassword;
-                                  }
-
-                                  return nextErrors;
-                                });
-                              }}
-                              onChange={(value) => handlePasswordFieldChange('newPassword', value)}
-                            />
-                            <AdminTextField
-                              error={passwordErrors.confirmPassword}
-                              icon={KeyRound}
-                              id="university-password-confirm"
-                              label="Confirmar contrasena"
-                              name="confirmPassword"
-                              placeholder="Repite la nueva contrasena"
-                              type="password"
-                              value={passwordValues.confirmPassword}
-                              onBlur={() => {
-                                setPasswordErrors((currentErrors) => {
-                                  const nextErrors = { ...currentErrors };
-                                  const nextFieldError = validatePasswordField(
-                                    'confirmPassword',
-                                    passwordValues,
-                                  );
-
-                                  if (nextFieldError) {
-                                    nextErrors.confirmPassword = nextFieldError;
-                                  } else {
-                                    delete nextErrors.confirmPassword;
-                                  }
-
-                                  return nextErrors;
-                                });
-                              }}
-                              onChange={(value) => handlePasswordFieldChange('confirmPassword', value)}
-                            />
-                          </div>
-                          <div className="flex justify-end">
-                            <button
-                              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-5 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
-                              disabled={isLoading}
-                              type="submit"
-                            >
-                              <Save aria-hidden="true" className="h-4 w-4" />
-                              <span>{universityAdminContent.institutionPage.actionLabels.savePassword}</span>
-                            </button>
-                          </div>
-                        </form>
-                    </SurfaceCard>
-                  ) : null}
                 </div>
               </SurfaceCard>
             </div>
@@ -1291,6 +1312,145 @@ export function UniversityInstitutionPage({
           </div>
         </div>
       </AdminPanelCard>
+      {isPasswordPanelOpen ? (
+        <div
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 p-4 backdrop-blur-[2px]"
+          role="dialog"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              closePasswordPanel();
+            }
+          }}
+        >
+          <SurfaceCard
+            className="w-full max-w-[44rem] overflow-hidden border border-slate-200/80 bg-white shadow-[0_30px_80px_-35px_rgba(15,23,42,0.38)]"
+            paddingClassName="p-0"
+          >
+            <div className="border-b border-slate-200/80 bg-slate-50/85 px-5 py-4 sm:px-6">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <p className="text-[0.68rem] font-black uppercase tracking-[0.26em] text-primary">
+                    Seguridad de acceso
+                  </p>
+                  <h2
+                    className="font-headline text-[1.45rem] font-extrabold tracking-tight text-ink"
+                    id="university-password-dialog-title"
+                  >
+                    {universityAdminContent.institutionPage.passwordPanelTitle}
+                  </h2>
+                  <p className="max-w-[34rem] text-sm leading-6 text-ink-muted">
+                    {universityAdminContent.institutionPage.passwordPanelDescription}
+                  </p>
+                </div>
+                <button
+                  aria-label="Cerrar dialogo de cambio de contrasena"
+                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-ink-muted transition duration-300 hover:border-primary/20 hover:text-primary"
+                  type="button"
+                  onClick={closePasswordPanel}
+                >
+                  <X aria-hidden="true" className="h-4.5 w-4.5" />
+                </button>
+              </div>
+            </div>
+            <form className="space-y-5 px-5 py-5 sm:px-6 sm:py-6" noValidate onSubmit={handlePasswordSubmit}>
+              {passwordMessage ? (
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+                  {passwordMessage}
+                </div>
+              ) : null}
+              <AdminPasswordField
+                error={passwordErrors.currentPassword}
+                hidePasswordLabel={authContent.register.password.hidePasswordLabel}
+                id="university-password-current"
+                inputRef={currentPasswordRef}
+                label="Contrasena actual"
+                name="currentPassword"
+                placeholder="Ingresa la contrasena actual"
+                showPassword={showPasswords.currentPassword}
+                showPasswordLabel={authContent.register.password.showPasswordLabel}
+                value={passwordValues.currentPassword}
+                onBlur={() => handlePasswordFieldBlur('currentPassword')}
+                onChange={(value) => handlePasswordFieldChange('currentPassword', value)}
+                onToggleVisibility={() => togglePasswordVisibility('currentPassword')}
+              />
+              <div className="grid gap-4 md:grid-cols-2">
+                <AdminPasswordField
+                  error={passwordErrors.newPassword}
+                  hidePasswordLabel={authContent.register.password.hidePasswordLabel}
+                  id="university-password-new"
+                  inputRef={newPasswordRef}
+                  label="Nueva contrasena"
+                  name="newPassword"
+                  placeholder="Crea una contrasena segura"
+                  showPassword={showPasswords.newPassword}
+                  showPasswordLabel={authContent.register.password.showPasswordLabel}
+                  value={passwordValues.newPassword}
+                  onBlur={() => handlePasswordFieldBlur('newPassword')}
+                  onChange={(value) => handlePasswordFieldChange('newPassword', value)}
+                  onToggleVisibility={() => togglePasswordVisibility('newPassword')}
+                />
+                <AdminPasswordField
+                  error={passwordErrors.confirmPassword}
+                  hidePasswordLabel={authContent.register.password.hidePasswordLabel}
+                  id="university-password-confirm"
+                  inputRef={confirmPasswordRef}
+                  label="Confirmar contrasena"
+                  name="confirmPassword"
+                  placeholder="Repite la nueva contrasena"
+                  showPassword={showPasswords.confirmPassword}
+                  showPasswordLabel={authContent.register.password.showPasswordLabel}
+                  value={passwordValues.confirmPassword}
+                  onBlur={() => handlePasswordFieldBlur('confirmPassword')}
+                  onChange={(value) => handlePasswordFieldChange('confirmPassword', value)}
+                  onToggleVisibility={() => togglePasswordVisibility('confirmPassword')}
+                />
+              </div>
+              <div className="rounded-[1.45rem] border border-slate-200/80 bg-slate-50/85 p-4">
+                <p className="text-[0.7rem] font-black uppercase tracking-[0.24em] text-primary/80">
+                  Requisitos de la nueva contrasena
+                </p>
+                <ul className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+                  {authContent.register.password.requirements.map((requirement) => {
+                    const isMet = passwordRequirementStatus[requirement.key];
+
+                    return (
+                      <li
+                        className={isMet ? 'flex items-start gap-2.5 text-emerald-700' : 'flex items-start gap-2.5 text-ink-muted'}
+                        key={requirement.key}
+                      >
+                        {isMet ? (
+                          <CheckCircle2 aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
+                        ) : (
+                          <Circle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
+                        )}
+                        <span>{requirement.label}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+              <div className="flex flex-wrap items-center justify-end gap-3">
+                <button
+                  className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-ink transition duration-300 hover:bg-slate-50"
+                  type="button"
+                  onClick={closePasswordPanel}
+                >
+                  Cancelar
+                </button>
+                <button
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-5 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
+                  disabled={isLoading}
+                  type="submit"
+                >
+                  <Save aria-hidden="true" className="h-4 w-4" />
+                  <span>{universityAdminContent.institutionPage.actionLabels.savePassword}</span>
+                </button>
+              </div>
+            </form>
+          </SurfaceCard>
+        </div>
+      ) : null}
     </div>
   );
 }

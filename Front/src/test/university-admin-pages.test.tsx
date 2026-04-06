@@ -89,7 +89,7 @@ describe('University admin pages', () => {
     expect(screen.getByRole('button', { name: /abrir menu lateral/i })).toBeInTheDocument();
   });
 
-  it('permite guardar, restablecer y abrir el panel de contrasena en informacion institucional', async () => {
+  it('permite guardar, restablecer y abrir el dialogo de contrasena en informacion institucional', async () => {
     const user = userEvent.setup();
 
     renderUniversityApp([ROUTES.universityInstitution]);
@@ -136,9 +136,12 @@ describe('University admin pages', () => {
     expect(screen.getByText(/Sede Centro/i)).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /cambiar contrasena/i }));
-    expect(
-      screen.getByRole('heading', { name: /actualizar contrasena/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /actualizar contrasena/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/contrasena actual/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^nueva contrasena$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/confirmar contrasena/i)).toBeInTheDocument();
+    expect(screen.getByText(/requisitos de la nueva contrasena/i)).toBeInTheDocument();
   });
 
   it('registra estudiantes activos y genera su credencial inicial', async () => {
