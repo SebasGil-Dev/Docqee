@@ -2,6 +2,8 @@ import { useEffect, useSyncExternalStore } from 'react';
 
 import type {
   PersonOperationalStatus,
+  StudentConversation,
+  StudentConversationMessage,
   StudentModuleState,
   StudentPracticeSite,
   StudentProfile,
@@ -16,6 +18,7 @@ import { IS_TEST_MODE } from '@/lib/apiClient';
 import {
   createStudentPortalScheduleBlock,
   getStudentPortalDashboard,
+  sendStudentPortalConversationMessage,
   toggleStudentPortalPracticeSiteStatus,
   toggleStudentPortalScheduleBlockStatus,
   toggleStudentPortalTreatmentStatus,
@@ -29,6 +32,10 @@ type StudentModuleActions = {
   respondToRequest: (
     requestId: string,
     nextStatus: StudentRequestStatus,
+  ) => Promise<boolean>;
+  sendConversationMessage: (
+    conversationId: string,
+    content: string,
   ) => Promise<boolean>;
   togglePracticeSiteStatus: (
     practiceSiteId: string,
@@ -173,6 +180,7 @@ function createMockState(): StudentStoreState {
   const requests: StudentRequest[] = [
     {
       appointmentsCount: 0,
+      conversationId: null,
       conversationEnabled: false,
       id: 'student-request-1',
       patientAge: 29,
@@ -185,6 +193,7 @@ function createMockState(): StudentStoreState {
     },
     {
       appointmentsCount: 1,
+      conversationId: 'student-conversation-1',
       conversationEnabled: true,
       id: 'student-request-2',
       patientAge: 36,
@@ -197,6 +206,7 @@ function createMockState(): StudentStoreState {
     },
     {
       appointmentsCount: 0,
+      conversationId: null,
       conversationEnabled: false,
       id: 'student-request-3',
       patientAge: 41,
@@ -209,6 +219,7 @@ function createMockState(): StudentStoreState {
     },
     {
       appointmentsCount: 2,
+      conversationId: 'student-conversation-2',
       conversationEnabled: false,
       id: 'student-request-4',
       patientAge: 33,
@@ -221,7 +232,70 @@ function createMockState(): StudentStoreState {
     },
   ];
 
+  const conversations: StudentConversation[] = [
+    {
+      id: 'student-conversation-1',
+      messages: [
+        {
+          author: 'PACIENTE',
+          authorName: 'Julian Torres',
+          content: 'Hola, quisiera confirmar si puedes revisar mi seguimiento esta semana.',
+          id: 'student-message-1',
+          sentAt: '2026-04-03T10:15:00.000Z',
+        },
+        {
+          author: 'ESTUDIANTE',
+          authorName: 'Valentina Rios',
+          content: 'Hola Julian, claro que si. Estoy revisando mis espacios disponibles.',
+          id: 'student-message-2',
+          sentAt: '2026-04-03T10:24:00.000Z',
+        },
+        {
+          author: 'PACIENTE',
+          authorName: 'Julian Torres',
+          content: 'Perfecto, quedo atento al horario que me sugieras.',
+          id: 'student-message-3',
+          sentAt: '2026-04-03T10:29:00.000Z',
+        },
+      ],
+      patientAge: 36,
+      patientCity: 'Bogota',
+      patientName: 'Julian Torres',
+      reason: 'Seguimiento de tratamiento restaurativo.',
+      requestId: 'student-request-2',
+      status: 'ACTIVA',
+      unreadCount: 1,
+    },
+    {
+      id: 'student-conversation-2',
+      messages: [
+        {
+          author: 'PACIENTE',
+          authorName: 'Ricardo Suarez',
+          content: 'Gracias por el acompanamiento durante el proceso.',
+          id: 'student-message-4',
+          sentAt: '2026-03-28T13:20:00.000Z',
+        },
+        {
+          author: 'ESTUDIANTE',
+          authorName: 'Valentina Rios',
+          content: 'Con gusto, Ricardo. Quedo cerrado el proceso con control satisfactorio.',
+          id: 'student-message-5',
+          sentAt: '2026-03-28T13:33:00.000Z',
+        },
+      ],
+      patientAge: 33,
+      patientCity: 'Bogota',
+      patientName: 'Ricardo Suarez',
+      reason: 'Proceso finalizado con control satisfactorio.',
+      requestId: 'student-request-4',
+      status: 'SOLO_LECTURA',
+      unreadCount: 0,
+    },
+  ];
+
   return {
+    conversations,
     errorMessage: null,
     isLoading: false,
     isReady: true,
@@ -238,6 +312,7 @@ function createRuntimeInitialState(): StudentStoreState {
     errorMessage: null,
     isLoading: false,
     isReady: false,
+    conversations: [],
     practiceSites: [],
     profile: {
       avatarAlt: 'Foto del estudiante',
@@ -264,6 +339,12 @@ const initialMockState = createMockState();
 let state = IS_TEST_MODE ? createMockState() : createRuntimeInitialState();
 let nextLinkSequence = initialMockState.profile.links.length + 1;
 let nextScheduleBlockSequence = initialMockState.scheduleBlocks.length + 1;
+let nextConversationSequence = initialMockState.conversations.length + 1;
+let nextConversationMessageSequence =
+  initialMockState.conversations.reduce(
+    (total, conversation) => total + conversation.messages.length,
+    0,
+  ) + 1;
 let runtimeLoadPromise: Promise<StudentStoreState> | null = null;
 
 function emitChange() {
@@ -303,6 +384,32 @@ function normalizeText(value: string) {
 function normalizeNullableText(value: string) {
   const normalizedValue = normalizeText(value);
   return normalizedValue.length > 0 ? normalizedValue : null;
+}
+
+function buildConversationForRequest(
+  request: StudentRequest,
+  status: StudentConversation['status'] = 'ACTIVA',
+) {
+  const firstMessage: StudentConversationMessage = {
+    author: 'PACIENTE',
+    authorName: request.patientName,
+    content:
+      request.reason ?? 'Hola, quisiera continuar la conversacion sobre mi solicitud.',
+    id: `student-message-${nextConversationMessageSequence++}`,
+    sentAt: new Date().toISOString(),
+  };
+
+  return {
+    id: `student-conversation-${nextConversationSequence++}`,
+    messages: [firstMessage],
+    patientAge: request.patientAge,
+    patientCity: request.patientCity,
+    patientName: request.patientName,
+    reason: request.reason,
+    requestId: request.id,
+    status,
+    unreadCount: 1,
+  } satisfies StudentConversation;
 }
 
 function getErrorMessage(error: unknown, fallbackMessage: string) {
@@ -464,12 +571,44 @@ function respondToRequestMock(requestId: string, nextStatus: StudentRequestStatu
     return false;
   }
 
+  const currentConversation = currentRequest.conversationId
+    ? state.conversations.find(
+        (conversation) => conversation.id === currentRequest.conversationId,
+      ) ?? null
+    : state.conversations.find((conversation) => conversation.requestId === requestId) ?? null;
+  const nextConversation =
+    nextStatus === 'ACEPTADA'
+      ? currentConversation ?? buildConversationForRequest(currentRequest)
+      : currentConversation;
+
   updateState({
     ...state,
+    conversations:
+      nextConversation && !currentConversation
+        ? [nextConversation, ...state.conversations]
+        : state.conversations.map((conversation) =>
+            conversation.requestId === requestId
+              ? {
+                  ...conversation,
+                  status:
+                    nextStatus === 'ACEPTADA'
+                      ? 'ACTIVA'
+                      : nextStatus === 'CERRADA' || nextStatus === 'CANCELADA'
+                        ? 'SOLO_LECTURA'
+                        : conversation.status,
+                  unreadCount:
+                    nextStatus === 'ACEPTADA' ? conversation.unreadCount : 0,
+                }
+              : conversation,
+          ),
     requests: state.requests.map((request) =>
       request.id === requestId
         ? {
             ...request,
+            conversationId:
+              nextStatus === 'ACEPTADA'
+                ? nextConversation?.id ?? request.conversationId
+                : request.conversationId,
             conversationEnabled:
               nextStatus === 'ACEPTADA'
                 ? true
@@ -480,6 +619,39 @@ function respondToRequestMock(requestId: string, nextStatus: StudentRequestStatu
             status: nextStatus,
           }
         : request,
+    ),
+  });
+
+  return true;
+}
+
+function sendConversationMessageMock(conversationId: string, content: string) {
+  const normalizedContent = normalizeText(content);
+  const currentConversation = state.conversations.find(
+    (conversation) => conversation.id === conversationId,
+  );
+
+  if (!currentConversation || currentConversation.status !== 'ACTIVA' || !normalizedContent) {
+    return false;
+  }
+
+  const nextMessage: StudentConversationMessage = {
+    author: 'ESTUDIANTE',
+    authorName: `${state.profile.firstName} ${state.profile.lastName}`,
+    content: normalizedContent,
+    id: `student-message-${nextConversationMessageSequence++}`,
+    sentAt: new Date().toISOString(),
+  };
+
+  updateState({
+    ...state,
+    conversations: state.conversations.map((conversation) =>
+      conversation.id === conversationId
+        ? {
+            ...conversation,
+            messages: [...conversation.messages, nextMessage],
+          }
+        : conversation,
     ),
   });
 
@@ -516,6 +688,12 @@ async function loadRuntimeState(forceRefresh = false) {
 
       nextLinkSequence = payload.profile.links.length + 1;
       nextScheduleBlockSequence = payload.scheduleBlocks.length + 1;
+      nextConversationSequence = payload.conversations.length + 1;
+      nextConversationMessageSequence =
+        payload.conversations.reduce(
+          (total, conversation) => total + conversation.messages.length,
+          0,
+        ) + 1;
 
       return state;
     })
@@ -749,10 +927,57 @@ async function respondToRequest(
   }
 }
 
+async function sendConversationMessage(
+  conversationId: string,
+  content: string,
+) {
+  if (IS_TEST_MODE) {
+    return sendConversationMessageMock(conversationId, content);
+  }
+
+  patchState({
+    errorMessage: null,
+    isLoading: true,
+  });
+
+  try {
+    const message = await sendStudentPortalConversationMessage(conversationId, content);
+
+    updateState({
+      ...state,
+      conversations: state.conversations.map((conversation) =>
+        conversation.id === conversationId
+          ? {
+              ...conversation,
+              messages: [...conversation.messages, message],
+            }
+          : conversation,
+      ),
+      errorMessage: null,
+      isLoading: false,
+      isReady: true,
+    });
+
+    return true;
+  } catch (error) {
+    patchState({
+      errorMessage: getErrorMessage(error, 'No pudimos enviar el mensaje.'),
+      isLoading: false,
+    });
+    return false;
+  }
+}
+
 export function resetStudentModuleState() {
   state = IS_TEST_MODE ? createMockState() : createRuntimeInitialState();
   nextLinkSequence = initialMockState.profile.links.length + 1;
   nextScheduleBlockSequence = initialMockState.scheduleBlocks.length + 1;
+  nextConversationSequence = initialMockState.conversations.length + 1;
+  nextConversationMessageSequence =
+    initialMockState.conversations.reduce(
+      (total, conversation) => total + conversation.messages.length,
+      0,
+    ) + 1;
   runtimeLoadPromise = null;
   emitChange();
 }
@@ -771,6 +996,7 @@ export function useStudentModuleStore() {
   const actions: StudentModuleActions = {
     refresh: refreshRuntimeState,
     respondToRequest,
+    sendConversationMessage,
     togglePracticeSiteStatus,
     toggleScheduleBlockStatus,
     toggleTreatmentStatus,

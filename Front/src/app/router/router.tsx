@@ -200,6 +200,15 @@ export const router = createBrowserRouter([
           return { Component: StudentRequestsPage };
         },
       },
+      {
+        path: 'conversaciones',
+        lazy: async () => {
+          const { StudentConversationsPage } = await import(
+            '@/pages/student/conversations/StudentConversationsPage'
+          );
+          return { Component: StudentConversationsPage };
+        },
+      },
     ],
   },
   {

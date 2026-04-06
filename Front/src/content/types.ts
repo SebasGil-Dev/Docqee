@@ -608,6 +608,7 @@ export type AdminShellNavigationIcon =
   | 'clipboard-list'
   | 'graduation-cap'
   | 'key-round'
+  | 'message-square-more'
   | 'stethoscope'
   | 'user-round'
   | 'upload';
@@ -788,6 +789,10 @@ export type StudentRequestStatus =
   | 'CERRADA'
   | 'CANCELADA';
 
+export type StudentConversationStatus = 'ACTIVA' | 'SOLO_LECTURA' | 'CERRADA';
+
+export type StudentConversationMessageAuthor = 'ESTUDIANTE' | 'PACIENTE';
+
 export type StudentScheduleBlockType = 'ESPECIFICO' | 'RECURRENTE';
 
 export type StudentProfessionalLink = {
@@ -842,6 +847,7 @@ export type StudentScheduleBlock = {
 
 export type StudentRequest = {
   appointmentsCount: number;
+  conversationId: string | null;
   conversationEnabled: boolean;
   id: string;
   patientAge: number;
@@ -853,7 +859,28 @@ export type StudentRequest = {
   status: StudentRequestStatus;
 };
 
+export type StudentConversationMessage = {
+  author: StudentConversationMessageAuthor;
+  authorName: string;
+  content: string;
+  id: string;
+  sentAt: string;
+};
+
+export type StudentConversation = {
+  id: string;
+  messages: StudentConversationMessage[];
+  patientAge: number;
+  patientCity: string;
+  patientName: string;
+  reason: string | null;
+  requestId: string;
+  status: StudentConversationStatus;
+  unreadCount: number;
+};
+
 export type StudentModuleState = {
+  conversations: StudentConversation[];
   practiceSites: StudentPracticeSite[];
   profile: StudentProfile;
   requests: StudentRequest[];

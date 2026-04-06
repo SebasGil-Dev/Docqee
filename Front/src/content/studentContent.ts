@@ -18,6 +18,25 @@ export const studentContent = {
     successNoticePrefix: 'Agenda actualizada:',
     title: 'Agenda',
   },
+  conversationsPage: {
+    actionLabels: {
+      openConversation: 'Abrir chat',
+      sendMessage: 'Enviar mensaje',
+      viewConversation: 'Ver chat',
+    },
+    description:
+      'Mantiene las conversaciones activas con los pacientes que ya aceptaste y revisa los hilos en solo lectura.',
+    emptyState: 'No encontramos conversaciones con los filtros seleccionados.',
+    meta: {
+      description:
+        'Gestiona las conversaciones activas entre paciente y estudiante dentro de Docqee.',
+      title: 'Docqee | Conversaciones',
+    },
+    searchLabel: 'Buscar conversacion',
+    searchPlaceholder: 'Buscar por paciente, ciudad o motivo...',
+    successNoticePrefix: 'Conversacion actualizada:',
+    title: 'Conversaciones',
+  },
   profilePage: {
     actionLabels: {
       addLink: 'Agregar enlace',
@@ -98,6 +117,12 @@ export const studentContent = {
         label: 'Solicitudes',
         matchPrefix: ROUTES.studentRequests,
         to: ROUTES.studentRequests,
+      },
+      {
+        icon: 'message-square-more',
+        label: 'Conversaciones',
+        matchPrefix: ROUTES.studentConversations,
+        to: ROUTES.studentConversations,
       },
     ],
     title: 'Portal del estudiante',

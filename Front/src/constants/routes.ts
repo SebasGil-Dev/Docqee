@@ -9,6 +9,7 @@ export const ROUTES = {
   login: '/login',
   register: '/registro',
   studentAgenda: '/estudiante/agenda',
+  studentConversations: '/estudiante/conversaciones',
   studentProfile: '/estudiante/mi-perfil',
   studentRequests: '/estudiante/solicitudes',
   studentRoot: '/estudiante',

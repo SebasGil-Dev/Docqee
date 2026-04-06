@@ -1,4 +1,5 @@
 import type {
+  StudentConversationMessage,
   PersonOperationalStatus,
   StudentModuleState,
   StudentProfile,
@@ -75,4 +76,17 @@ export function updateStudentPortalRequestStatus(
     body: { status },
     method: 'PATCH',
   });
+}
+
+export function sendStudentPortalConversationMessage(
+  conversationId: string,
+  content: string,
+) {
+  return apiRequest<StudentConversationMessage>(
+    `/student-portal/conversations/${conversationId}/messages`,
+    {
+      body: { content },
+      method: 'POST',
+    },
+  );
 }

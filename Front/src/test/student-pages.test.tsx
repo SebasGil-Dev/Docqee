@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { ROUTES } from '@/constants/routes';
 import { resetStudentModuleState } from '@/lib/studentModuleStore';
 import { StudentAgendaPage } from '@/pages/student/agenda/StudentAgendaPage';
+import { StudentConversationsPage } from '@/pages/student/conversations/StudentConversationsPage';
 import { StudentLayout } from '@/pages/student/StudentLayout';
 import { StudentProfilePage } from '@/pages/student/profile/StudentProfilePage';
 import { StudentRequestsPage } from '@/pages/student/requests/StudentRequestsPage';
@@ -30,6 +31,7 @@ function renderStudentApp(
           />
           <Route element={<StudentAgendaPage />} path="agenda" />
           <Route element={<StudentRequestsPage />} path="solicitudes" />
+          <Route element={<StudentConversationsPage />} path="conversaciones" />
         </Route>
       </Routes>
     </MemoryRouter>,
@@ -170,6 +172,36 @@ describe('Student pages', () => {
     expect(
       within(screen.getByTestId('student-request-row-student-request-1')).getByText(
         /^Aceptada$/i,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('permite abrir una conversacion y enviar un mensaje al paciente', async () => {
+    const user = userEvent.setup();
+
+    renderStudentApp([ROUTES.studentConversations]);
+
+    expect(
+      screen.getByTestId('student-conversation-card-student-conversation-1'),
+    ).toHaveTextContent(/julian torres/i);
+    expect(
+      within(screen.getByTestId('student-conversation-thread-student-conversation-1')).getByText(
+        /perfecto, quedo atento al horario que me sugieras/i,
+      ),
+    ).toBeInTheDocument();
+
+    await user.type(
+      screen.getByLabelText(/mensaje para el paciente/i),
+      'Hola Julian, manana en la tarde te puedo compartir una propuesta de horario.',
+    );
+    await user.click(screen.getByRole('button', { name: /enviar mensaje/i }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      /tu mensaje se envio correctamente/i,
+    );
+    expect(
+      within(screen.getByTestId('student-conversation-thread-student-conversation-1')).getByText(
+        /hola julian, manana en la tarde te puedo compartir una propuesta de horario/i,
       ),
     ).toBeInTheDocument();
   });

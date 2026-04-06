@@ -8,11 +8,13 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
 import { Seo } from '@/components/ui/Seo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import { ROUTES } from '@/constants/routes';
 import { studentContent } from '@/content/studentContent';
 import type { StudentRequestStatus } from '@/content/types';
 import { classNames } from '@/lib/classNames';
@@ -371,7 +373,18 @@ export function StudentRequestsPage() {
                           </button>
                         </div>
                       ) : request.status === 'ACEPTADA' ? (
-                        <div className="flex justify-end">
+                        <div className="flex justify-end gap-2">
+                          {request.conversationId ? (
+                            <Link
+                              className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition duration-200 hover:bg-primary/15"
+                              to={`${ROUTES.studentConversations}?conversation=${request.conversationId}`}
+                            >
+                              <MessageSquareMore aria-hidden="true" className="h-3.5 w-3.5" />
+                              <span>
+                                {studentContent.conversationsPage.actionLabels.openConversation}
+                              </span>
+                            </Link>
+                          ) : null}
                           <button
                             className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
                             type="button"
@@ -386,6 +399,18 @@ export function StudentRequestsPage() {
                             <ShieldX aria-hidden="true" className="h-3.5 w-3.5" />
                             <span>{studentContent.requestsPage.actionLabels.close}</span>
                           </button>
+                        </div>
+                      ) : request.conversationId ? (
+                        <div className="flex justify-end">
+                          <Link
+                            className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
+                            to={`${ROUTES.studentConversations}?conversation=${request.conversationId}`}
+                          >
+                            <MessageSquareMore aria-hidden="true" className="h-3.5 w-3.5" />
+                            <span>
+                              {studentContent.conversationsPage.actionLabels.viewConversation}
+                            </span>
+                          </Link>
                         </div>
                       ) : (
                         <span className="text-xs font-medium text-ink-muted">Sin acciones</span>
