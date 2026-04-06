@@ -252,9 +252,13 @@ export function UniversityRegisterStudentPage({
           <p role="alert">{errorMessage}</p>
         </SurfaceCard>
       ) : null}
-      <AdminPanelCard className="flex-1" panelClassName="bg-slate-50">
-        <form className="flex min-h-0 flex-1 flex-col overflow-hidden" noValidate onSubmit={handleSubmit}>
-          <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-7 sm:py-5">
+      <AdminPanelCard className="flex-1 lg:flex-none" panelClassName="bg-slate-50">
+        <form
+          className="flex min-h-0 flex-1 flex-col overflow-hidden lg:min-h-fit lg:overflow-visible"
+          noValidate
+          onSubmit={handleSubmit}
+        >
+          <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-7 sm:py-5 lg:min-h-fit lg:flex-none lg:overflow-visible">
             <div className="space-y-4 pb-4 sm:space-y-5 sm:pb-5">
               <div className="grid gap-4 sm:gap-5 lg:grid-cols-2">
                 <AdminTextField
