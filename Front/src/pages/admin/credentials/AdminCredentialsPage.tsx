@@ -274,7 +274,9 @@ export function AdminCredentialsPage() {
         title={adminContent.credentialsPage.meta.title}
       />
       <AdminPageHeader
+        className="items-center gap-3"
         description=""
+        titleClassName="mx-auto whitespace-nowrap text-center text-[clamp(1.25rem,6vw,1.85rem)] leading-none sm:mx-0 sm:text-left sm:text-[2.2rem]"
         title={adminContent.credentialsPage.title}
       />
       {feedbackMessage ? (

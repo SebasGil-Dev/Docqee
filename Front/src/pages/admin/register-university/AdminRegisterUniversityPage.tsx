@@ -462,10 +462,10 @@ export function AdminRegisterUniversityPage({
             <span>{adminContent.registerPage.backLabel}</span>
           </Link>
         }
-        actionClassName="sm:absolute sm:right-0 sm:top-1/2 sm:-translate-y-1/2"
-        className="relative gap-3 sm:min-h-[4rem] sm:justify-center"
+        actionClassName="mx-auto sm:absolute sm:right-0 sm:top-1/2 sm:-translate-y-1/2"
+        className="relative items-center gap-3 sm:min-h-[4rem] sm:justify-center"
         description={adminContent.registerPage.description}
-        titleClassName="text-center"
+        titleClassName="mx-auto whitespace-nowrap text-center text-[clamp(1.25rem,6vw,1.85rem)] leading-none sm:mx-0 sm:text-left sm:text-[2.2rem]"
         title={adminContent.registerPage.title}
       />
       {errorMessage ? (
