@@ -146,7 +146,7 @@ export function StudentTreatmentsPage() {
   }, [isStatusMenuOpen]);
 
   return (
-    <div className="mx-auto flex h-full max-w-[74rem] min-h-0 flex-col gap-4 overflow-hidden">
+    <div className="mx-auto flex h-full max-w-[90rem] min-h-0 flex-col gap-4 overflow-hidden 2xl:max-w-[98rem]">
       <Seo
         description={studentContent.treatmentsPage.meta.description}
         noIndex
@@ -161,7 +161,7 @@ export function StudentTreatmentsPage() {
         </SurfaceCard>
       ) : null}
       <SurfaceCard className="overflow-hidden bg-brand-gradient text-white" paddingClassName="p-0">
-        <div className="flex flex-col gap-5 px-5 py-5 sm:px-6 sm:py-6 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-5 px-5 py-5 sm:px-6 sm:py-6 xl:flex-row xl:items-center xl:justify-between 2xl:px-7">
           <div className="flex min-w-0 items-center gap-4">
             {profile.avatarSrc ? (
               <img
@@ -214,7 +214,7 @@ export function StudentTreatmentsPage() {
               </div>
             </div>
           </div>
-          <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[32rem]">
+          <div className="grid gap-3 sm:grid-cols-3 xl:min-w-[36rem] 2xl:min-w-[40rem] 2xl:gap-4">
             <div className="rounded-[1.4rem] bg-white/12 px-4 py-4 ring-1 ring-white/15 backdrop-blur-sm">
               <div className="flex items-center gap-2">
                 <Stethoscope aria-hidden="true" className="h-4.5 w-4.5 text-white" />
@@ -253,7 +253,7 @@ export function StudentTreatmentsPage() {
       </SurfaceCard>
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
         <div className="border-b border-slate-200/80 px-4 py-4 sm:px-5 sm:py-4">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div className="space-y-1">
               <p className="text-[0.72rem] font-bold uppercase tracking-[0.24em] text-primary/75">
                 Experiencia del paciente
@@ -280,7 +280,7 @@ export function StudentTreatmentsPage() {
         </div>
         <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5 sm:py-5">
           {reviews.length > 0 ? (
-            <div className="grid gap-4 xl:grid-cols-2">
+            <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3 2xl:gap-5">
               {reviews.map((review) => (
                 <SurfaceCard
                   key={review.id}
@@ -339,7 +339,7 @@ export function StudentTreatmentsPage() {
   );
 
   return (
-    <div className="mx-auto flex h-full max-w-[74rem] min-h-0 flex-col gap-4 overflow-hidden">
+    <div className="mx-auto flex h-full max-w-[90rem] min-h-0 flex-col gap-4 overflow-hidden 2xl:max-w-[98rem]">
       <Seo
         description={studentContent.treatmentsPage.meta.description}
         noIndex

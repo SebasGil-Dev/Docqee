@@ -190,7 +190,7 @@ export function PatientConversationsPage() {
   };
 
   return (
-    <div className="mx-auto flex h-full max-w-[76rem] min-h-0 flex-col gap-4 overflow-hidden">
+    <div className="mx-auto flex h-full max-w-[90rem] min-h-0 flex-col gap-4 overflow-hidden 2xl:max-w-[98rem]">
       <Seo
         description={patientContent.conversationsPage.meta.description}
         noIndex
@@ -252,7 +252,7 @@ export function PatientConversationsPage() {
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
         <div className="border-b border-slate-200/80 px-4 py-4 sm:px-5 sm:py-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <label className="relative min-w-0 flex-1 sm:max-w-[28rem]" htmlFor="patient-conversation-search">
+            <label className="relative min-w-0 flex-1 sm:max-w-[32rem] xl:max-w-[36rem]" htmlFor="patient-conversation-search">
               <span className="sr-only">{patientContent.conversationsPage.searchLabel}</span>
               <Search
                 aria-hidden="true"
@@ -343,7 +343,7 @@ export function PatientConversationsPage() {
             </div>
           </div>
         </div>
-        <div className="grid min-h-0 flex-1 gap-4 px-4 py-4 sm:px-5 sm:py-5 xl:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+        <div className="grid min-h-0 flex-1 gap-4 px-4 py-4 sm:px-5 sm:py-5 xl:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] 2xl:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]">
           <SurfaceCard className="min-h-0 border border-slate-200/80 bg-white shadow-none" paddingClassName="p-0">
             <div className="flex h-full min-h-[18rem] flex-col">
               <div className="border-b border-slate-200/80 px-4 py-4">

@@ -150,7 +150,7 @@ export function PatientAppointmentsPage() {
   };
 
   return (
-    <div className="mx-auto flex h-full max-w-[76rem] min-h-0 flex-col gap-4 overflow-hidden">
+    <div className="mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-4 overflow-hidden 2xl:max-w-[96rem]">
       <Seo
         description={patientContent.appointmentsPage.meta.description}
         noIndex
@@ -219,7 +219,7 @@ export function PatientAppointmentsPage() {
         <div className="border-b border-slate-200/80 px-4 py-4 sm:px-5 sm:py-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <label
-              className="relative min-w-0 flex-1 sm:max-w-[28rem]"
+              className="relative min-w-0 flex-1 sm:max-w-[32rem] xl:max-w-[36rem]"
               htmlFor="patient-appointment-search"
             >
               <span className="sr-only">{patientContent.appointmentsPage.searchLabel}</span>
@@ -339,7 +339,7 @@ export function PatientAppointmentsPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3.5">
-                      <div className="max-w-[24rem] space-y-1.5 text-sm text-ink-muted">
+                      <div className="max-w-[28rem] space-y-1.5 text-sm text-ink-muted 2xl:max-w-[34rem]">
                         <p className="font-semibold text-ink">{appointment.appointmentType}</p>
                         <p>{formatDateTimeRange(appointment.startAt, appointment.endAt)}</p>
                         <p className="inline-flex items-center gap-1.5">

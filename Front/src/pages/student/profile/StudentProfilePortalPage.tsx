@@ -181,7 +181,7 @@ export function StudentProfilePage() {
   };
 
   return (
-    <div className="mx-auto flex h-full max-w-[78rem] min-h-0 flex-col gap-4 overflow-hidden">
+    <div className="mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-4 overflow-hidden 2xl:max-w-[96rem]">
       <Seo
         description={studentContent.profilePage.meta.description}
         noIndex
@@ -215,7 +215,7 @@ export function StudentProfilePage() {
                 className="border border-slate-200/80 bg-white shadow-none"
                 paddingClassName="p-5 sm:p-6"
               >
-                <div className="flex flex-col gap-5 lg:flex-row lg:items-center">
+                <div className="flex flex-col gap-5 lg:flex-row lg:items-center 2xl:gap-6">
                   <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-center">
                     {values.avatarSrc ? (
                       <img
@@ -239,7 +239,7 @@ export function StudentProfilePage() {
                       />
                     </label>
                   </div>
-                  <div className="grid min-w-0 flex-1 gap-3 sm:grid-cols-2">
+                  <div className="grid min-w-0 flex-1 gap-3 sm:grid-cols-2 2xl:grid-cols-4">
                     <div className="rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-4 py-3.5">
                       <div className="flex items-start gap-3">
                         <UserRound aria-hidden="true" className="mt-0.5 h-4.5 w-4.5 shrink-0 text-primary" />
@@ -406,7 +406,7 @@ export function StudentProfilePage() {
                     </p>
                   </div>
                   {treatments.length > 0 ? (
-                    <div className="grid gap-3 lg:grid-cols-2">
+                    <div className="grid gap-3 xl:grid-cols-2 2xl:grid-cols-3">
                       {treatments.map((treatment) => (
                         <div
                           key={treatment.id}
@@ -475,7 +475,7 @@ export function StudentProfilePage() {
                     </p>
                   </div>
                   {practiceSites.length > 0 ? (
-                    <div className="grid gap-3 lg:grid-cols-2">
+                    <div className="grid gap-3 xl:grid-cols-2 2xl:grid-cols-3">
                       {practiceSites.map((practiceSite) => (
                         <div
                           key={practiceSite.id}
@@ -544,7 +544,7 @@ export function StudentProfilePage() {
                       Agrega recursos que complementen tu perfil, como redes, portafolio o hoja de vida.
                     </p>
                   </div>
-                  <div className="grid gap-4 lg:grid-cols-[minmax(0,12rem)_minmax(0,1fr)_auto]">
+                  <div className="grid gap-4 xl:grid-cols-[minmax(0,13rem)_minmax(0,1fr)_auto] 2xl:grid-cols-[minmax(0,14rem)_minmax(0,1fr)_auto]">
                     <AdminDropdownField
                       icon={Building2}
                       id="student-profile-link-type"

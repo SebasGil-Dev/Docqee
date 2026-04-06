@@ -125,7 +125,7 @@ export function PatientProfilePage() {
   };
 
   return (
-    <div className="mx-auto flex h-full max-w-[74rem] min-h-0 flex-col gap-4 overflow-hidden">
+    <div className="mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-4 overflow-hidden 2xl:max-w-[96rem]">
       <Seo
         description={patientContent.profilePage.meta.description}
         noIndex
@@ -153,7 +153,7 @@ export function PatientProfilePage() {
       ) : null}
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
         <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6 sm:py-5">
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,23rem)_minmax(0,1fr)] 2xl:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
             <SurfaceCard className="overflow-hidden bg-brand-gradient text-white shadow-none" paddingClassName="p-0">
               <div className="flex h-full flex-col px-5 py-5">
                 <div className="flex items-center gap-4">

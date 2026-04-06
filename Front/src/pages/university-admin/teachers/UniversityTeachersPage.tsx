@@ -98,7 +98,7 @@ export function UniversityTeachersPage() {
   }, [location.pathname, navigate, successNotice]);
 
   return (
-    <div className="mx-auto flex h-full max-w-[72rem] min-h-0 flex-col gap-4 overflow-hidden">
+    <div className="mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-4 overflow-hidden 2xl:max-w-[96rem]">
       <Seo
         description={universityAdminContent.teachersPage.meta.description}
         noIndex
@@ -170,7 +170,7 @@ export function UniversityTeachersPage() {
             <h2 className="font-headline text-[1.1rem] font-extrabold tracking-tight text-ink sm:text-[1.45rem]">
               {universityAdminContent.teachersPage.tableTitle}
             </h2>
-            <div className="flex min-w-0 items-center gap-2 sm:w-full sm:max-w-[24rem] sm:justify-end sm:gap-2.5">
+            <div className="flex min-w-0 items-center gap-2 sm:w-full sm:max-w-[26rem] sm:justify-end sm:gap-2.5 xl:max-w-[30rem]">
               <label className="relative min-w-0 flex-1" htmlFor="university-teacher-search">
                 <span className="sr-only">{universityAdminContent.teachersPage.searchLabel}</span>
                 <Search

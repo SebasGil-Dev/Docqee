@@ -223,7 +223,7 @@ export function StudentAgendaPage() {
   };
 
   return (
-    <div className="mx-auto flex h-full max-w-[74rem] min-h-0 flex-col gap-4 overflow-hidden">
+    <div className="mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-4 overflow-hidden 2xl:max-w-[96rem]">
       <Seo
         description={studentContent.agendaPage.meta.description}
         noIndex
@@ -254,7 +254,7 @@ export function StudentAgendaPage() {
           <p role="alert">{errorMessage}</p>
         </SurfaceCard>
       ) : null}
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid gap-3 md:grid-cols-2 2xl:gap-4">
         <SurfaceCard className="min-w-0 overflow-hidden bg-brand-gradient text-white" paddingClassName="p-0">
           <div className="flex items-center gap-3 px-4 py-3">
             <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-white/12 text-white ring-1 ring-white/18">
@@ -284,7 +284,7 @@ export function StudentAgendaPage() {
       </div>
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
         <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5 sm:py-5">
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] 2xl:grid-cols-[minmax(0,27rem)_minmax(0,1fr)]">
             <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-5">
               <div className="space-y-5">
                 <div>

@@ -125,7 +125,7 @@ export function StudentRequestsPage() {
   };
 
   return (
-    <div className="mx-auto flex h-full max-w-[76rem] min-h-0 flex-col gap-4 overflow-hidden">
+    <div className="mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-4 overflow-hidden 2xl:max-w-[96rem]">
       <Seo
         description={studentContent.requestsPage.meta.description}
         noIndex
@@ -187,7 +187,7 @@ export function StudentRequestsPage() {
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
         <div className="border-b border-slate-200/80 px-4 py-4 sm:px-5 sm:py-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <label className="relative min-w-0 flex-1 sm:max-w-[26rem]" htmlFor="student-request-search">
+            <label className="relative min-w-0 flex-1 sm:max-w-[30rem] xl:max-w-[34rem]" htmlFor="student-request-search">
               <span className="sr-only">{studentContent.requestsPage.searchLabel}</span>
               <Search
                 aria-hidden="true"
@@ -306,7 +306,7 @@ export function StudentRequestsPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3.5">
-                      <p className="max-w-[18rem] text-sm leading-6 text-ink-muted">
+                        <p className="max-w-[22rem] text-sm leading-6 text-ink-muted 2xl:max-w-[30rem]">
                         {request.reason ?? 'Sin motivo registrado.'}
                       </p>
                     </td>

@@ -107,7 +107,7 @@ export function UniversityStudentsPage() {
   }, [isStatusMenuOpen]);
 
   return (
-    <div className="mx-auto flex h-full max-w-[72rem] min-h-0 flex-col gap-4 overflow-hidden">
+    <div className="mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-4 overflow-hidden 2xl:max-w-[96rem]">
       <Seo
         description={universityAdminContent.studentsPage.meta.description}
         noIndex
@@ -172,7 +172,7 @@ export function UniversityStudentsPage() {
             <h2 className="font-headline text-[1.1rem] font-extrabold tracking-tight text-ink sm:text-[1.45rem]">
               {universityAdminContent.studentsPage.tableTitle}
             </h2>
-            <div className="flex min-w-0 items-center gap-2 sm:w-full sm:max-w-[24rem] sm:justify-end sm:gap-2.5">
+            <div className="flex min-w-0 items-center gap-2 sm:w-full sm:max-w-[26rem] sm:justify-end sm:gap-2.5 xl:max-w-[30rem]">
               <label className="relative min-w-0 flex-1" htmlFor="university-student-search">
                 <span className="sr-only">{universityAdminContent.studentsPage.searchLabel}</span>
                 <Search

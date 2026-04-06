@@ -301,7 +301,7 @@ export function AdminCredentialsPage() {
             <h2 className="whitespace-nowrap text-center font-headline text-[1rem] font-extrabold leading-none tracking-tight text-ink sm:text-left sm:text-[1.45rem]">
               Credenciales pendientes
             </h2>
-            <div className="flex min-w-0 items-center gap-2 sm:w-full sm:max-w-[23rem] sm:justify-end sm:gap-2.5">
+            <div className="flex min-w-0 items-center gap-2 sm:w-full sm:max-w-[26rem] sm:justify-end sm:gap-2.5 xl:max-w-[30rem]">
               <label className="relative min-w-0 flex-1" htmlFor="admin-credential-search">
                 <span className="sr-only">Buscar universidad</span>
                 <Search
