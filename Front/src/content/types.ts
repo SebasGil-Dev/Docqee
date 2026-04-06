@@ -835,6 +835,16 @@ export type StudentPracticeSite = {
   status: PersonOperationalStatus;
 };
 
+export type StudentAppointmentReview = {
+  appointmentLabel: string;
+  comment: string | null;
+  createdAt: string;
+  id: string;
+  patientName: string;
+  rating: number;
+  siteName: string;
+};
+
 export type StudentScheduleBlock = {
   dayOfWeek: number | null;
   endTime: string;
@@ -886,6 +896,7 @@ export type StudentModuleState = {
   conversations: StudentConversation[];
   practiceSites: StudentPracticeSite[];
   profile: StudentProfile;
+  reviews: StudentAppointmentReview[];
   requests: StudentRequest[];
   scheduleBlocks: StudentScheduleBlock[];
   treatments: StudentTreatment[];

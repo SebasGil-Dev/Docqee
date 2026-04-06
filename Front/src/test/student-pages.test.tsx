@@ -75,35 +75,15 @@ describe('Student pages', () => {
     expect(screen.getByText(/https:\/\/drive.google.com\/file\/d\/demo-cv/i)).toBeInTheDocument();
   });
 
-  it('permite activar e inactivar tratamientos y sedes', async () => {
-    const user = userEvent.setup();
-
+  it('muestra el resumen de valoraciones y comentarios del estudiante', () => {
     renderStudentApp([ROUTES.studentTreatments]);
 
-    await user.click(
-      within(screen.getByTestId('student-treatment-card-treatment-1')).getByRole('button', {
-        name: /inactivar/i,
-      }),
+    expect(screen.getByText(/bienvenido, valentina rios/i)).toBeInTheDocument();
+    expect(screen.getByText(/4.7 de 5 en 3 valoraciones/i)).toBeInTheDocument();
+    expect(screen.getByText(/comentarios de tus citas/i)).toBeInTheDocument();
+    expect(screen.getByTestId('student-review-card-student-review-1')).toHaveTextContent(
+      /me senti muy bien acompanado durante la cita/i,
     );
-    await waitFor(() => {
-      expect(
-        within(screen.getByTestId('student-treatment-card-treatment-1')).getByText(/^Inactivo$/i),
-      ).toBeInTheDocument();
-    });
-
-    await user.click(
-      within(screen.getByTestId('student-practice-site-card-practice-site-1')).getByRole(
-        'button',
-        { name: /inactivar/i },
-      ),
-    );
-    await waitFor(() => {
-      expect(
-        within(screen.getByTestId('student-practice-site-card-practice-site-1')).getByText(
-          /^Inactivo$/i,
-        ),
-      ).toBeInTheDocument();
-    });
   });
 
   it('permite gestionar tratamientos y sedes desde mi perfil', async () => {

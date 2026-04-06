@@ -2,6 +2,7 @@ import { useEffect, useSyncExternalStore } from 'react';
 
 import type {
   PersonOperationalStatus,
+  StudentAppointmentReview,
   StudentConversation,
   StudentConversationMessage,
   StudentModuleState,
@@ -296,6 +297,39 @@ function createMockState(): StudentStoreState {
     },
   ];
 
+  const reviews: StudentAppointmentReview[] = [
+    {
+      appointmentLabel: 'Control restaurativo',
+      comment:
+        'Me senti muy bien acompanado durante la cita. Todo fue claro, ordenado y con mucha paciencia.',
+      createdAt: '2026-03-28T15:10:00.000Z',
+      id: 'student-review-1',
+      patientName: 'Ricardo Suarez',
+      rating: 5,
+      siteName: 'Sede Norte',
+    },
+    {
+      appointmentLabel: 'Valoracion inicial',
+      comment:
+        'Explico muy bien el proceso y resolvio mis dudas antes de comenzar la atencion.',
+      createdAt: '2026-03-21T11:25:00.000Z',
+      id: 'student-review-2',
+      patientName: 'Julian Torres',
+      rating: 4,
+      siteName: 'Sede Escuela Clinica',
+    },
+    {
+      appointmentLabel: 'Seguimiento preventivo',
+      comment:
+        'La atencion fue amable y profesional. Me gusto que me indicara los siguientes pasos con claridad.',
+      createdAt: '2026-03-15T09:40:00.000Z',
+      id: 'student-review-3',
+      patientName: 'Claudia Moreno',
+      rating: 5,
+      siteName: 'Sede Norte',
+    },
+  ];
+
   return {
     conversations,
     errorMessage: null,
@@ -303,6 +337,7 @@ function createMockState(): StudentStoreState {
     isReady: true,
     practiceSites,
     profile,
+    reviews,
     requests,
     scheduleBlocks,
     treatments,
@@ -332,6 +367,7 @@ function createRuntimeInitialState(): StudentStoreState {
       universityLogoSrc: null,
       universityName: '',
     },
+    reviews: [],
     requests: [],
     scheduleBlocks: [],
     treatments: [],
