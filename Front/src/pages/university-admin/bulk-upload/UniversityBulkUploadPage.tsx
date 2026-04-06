@@ -3,18 +3,15 @@ import {
   Download,
   FileSpreadsheet,
   Rocket,
-  Upload,
   XCircle,
 } from 'lucide-react';
 import type { ChangeEvent } from 'react';
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
 import { Seo } from '@/components/ui/Seo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
-import { ROUTES } from '@/constants/routes';
 import { universityAdminContent } from '@/content/universityAdminContent';
 import type { UniversityBulkTemplateType, UniversityBulkUploadState } from '@/content/types';
 import { classNames } from '@/lib/classNames';
@@ -174,23 +171,7 @@ export function UniversityBulkUploadPage() {
         noIndex
         title={universityAdminContent.bulkUploadPage.meta.title}
       />
-      <AdminPageHeader
-        action={
-          <Link
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-surface-card px-4 py-3 text-sm font-semibold text-primary shadow-ambient transition duration-300 hover:bg-surface-low focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
-            to={
-              uploadState.templateType === 'students'
-                ? ROUTES.universityStudents
-                : ROUTES.universityTeachers
-            }
-          >
-            <Upload aria-hidden="true" className="h-4.5 w-4.5" />
-            <span>Volver al listado</span>
-          </Link>
-        }
-        description={universityAdminContent.bulkUploadPage.description}
-        title={universityAdminContent.bulkUploadPage.title}
-      />
+      <AdminPageHeader description="" title={universityAdminContent.bulkUploadPage.title} />
       {errorMessage ? (
         <SurfaceCard
           className="border border-rose-200 bg-rose-50/90 text-sm text-rose-800 shadow-none"

@@ -8,8 +8,7 @@ export const universityAdminContent = {
       removeFile: 'Quitar archivo',
       validate: 'Validar archivo',
     },
-    description:
-      'Gestiona la preparacion de archivos para registrar estudiantes o docentes en lote.',
+    description: '',
     filePickerLabel: 'Seleccionar archivo',
     helperText:
       'Esta primera version valida solo el flujo visual y deja la integracion lista para backend.',
@@ -27,8 +26,7 @@ export const universityAdminContent = {
     processedTeachersMessage:
       'La carga mock creo docentes activos sin generar credenciales.',
     readyToValidateMessage: 'Archivo listo para validar.',
-    subtitle:
-      'Descarga la plantilla adecuada, carga el archivo y deja el proceso listo para conectarse despues al backend.',
+    subtitle: '',
     templateDescription:
       'Elige si vas a preparar un archivo para estudiantes o para docentes.',
     templateOptions: [
