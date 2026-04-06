@@ -64,7 +64,7 @@ export function AdminUniversitiesPage() {
       />
       <AdminPageHeader
         className="gap-3"
-        description={adminContent.universitiesPage.description}
+        description=""
         descriptionClassName="max-w-3xl text-sm leading-6 sm:text-[0.95rem]"
         title={adminContent.universitiesPage.title}
         titleClassName="text-[1.85rem] sm:text-[2.2rem]"

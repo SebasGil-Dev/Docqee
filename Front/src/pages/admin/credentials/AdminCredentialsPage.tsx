@@ -58,7 +58,7 @@ export function AdminCredentialsPage() {
         title={adminContent.credentialsPage.meta.title}
       />
       <AdminPageHeader
-        description={adminContent.credentialsPage.description}
+        description=""
         eyebrow={adminContent.credentialsPage.eyebrow}
         title={adminContent.credentialsPage.title}
       />
