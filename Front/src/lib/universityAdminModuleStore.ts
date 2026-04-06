@@ -352,6 +352,12 @@ function createStudentDocumentType(documentTypeId: string): DocumentTypeOption |
 }
 
 function markStudentCredentialAsSent(credentialId: string) {
+  const credential = state.credentials.find((item) => item.id === credentialId);
+
+  if (!credential) {
+    return;
+  }
+
   updateState({
     ...state,
     credentials: state.credentials.map((credential) =>
@@ -363,6 +369,14 @@ function markStudentCredentialAsSent(credentialId: string) {
             sentCount: credential.sentCount + 1,
           }
         : credential,
+    ),
+    students: state.students.map((student) =>
+      student.id === credential.studentId
+        ? {
+            ...student,
+            status: 'active',
+          }
+        : student,
     ),
   });
 }
@@ -439,8 +453,9 @@ function registerTeacherMock(values: RegisterTeacherFormValues) {
 
 function toggleStudentStatusMock(studentId: string) {
   const currentStudent = state.students.find((student) => student.id === studentId);
+  const currentCredential = state.credentials.find((credential) => credential.studentId === studentId);
 
-  if (!currentStudent) {
+  if (!currentStudent || currentCredential?.deliveryStatus === 'generated') {
     return null;
   }
 
@@ -507,6 +522,14 @@ function sendAllStudentCredentialsMock() {
             sentCount: credential.sentCount + 1,
           }
         : credential,
+    ),
+    students: state.students.map((student) =>
+      generatedCredentials.some((credential) => credential.studentId === student.id)
+        ? {
+            ...student,
+            status: 'active',
+          }
+        : student,
     ),
   });
 
@@ -785,6 +808,12 @@ async function registerTeacher(values: RegisterTeacherFormValues) {
 async function toggleStudentStatus(studentId: string) {
   if (IS_TEST_MODE) {
     return toggleStudentStatusMock(studentId);
+  }
+
+  const currentCredential = state.credentials.find((credential) => credential.studentId === studentId);
+
+  if (currentCredential?.deliveryStatus === 'generated') {
+    return null;
   }
 
   patchState({

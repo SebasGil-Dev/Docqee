@@ -287,11 +287,7 @@ export function UniversityStudentsPage() {
                 {filteredStudents.map((student, index) => {
                   const credential = credentialByStudentId.get(student.id);
                   const displayStatus: PersonOperationalStatus | 'pending' =
-                    student.status === 'inactive'
-                      ? 'inactive'
-                      : credential?.deliveryStatus === 'generated'
-                        ? 'pending'
-                        : 'active';
+                    credential?.deliveryStatus === 'generated' ? 'pending' : student.status;
                   const isLast = index === filteredStudents.length - 1;
 
                   return (
@@ -353,29 +349,35 @@ export function UniversityStudentsPage() {
                           isLast ? 'pb-4' : 'pb-3.5',
                         )}
                       >
-                        <button
-                          className={classNames(
-                            'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[0.72rem] font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
-                            student.status === 'active'
-                              ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
-                              : 'bg-primary/10 text-primary hover:bg-primary/15',
-                          )}
-                          type="button"
-                          onClick={() => {
-                            void toggleStudentStatus(student.id);
-                          }}
-                        >
-                          {student.status === 'active' ? (
-                            <PowerOff aria-hidden="true" className="h-3.5 w-3.5" />
-                          ) : (
-                            <Power aria-hidden="true" className="h-3.5 w-3.5" />
-                          )}
-                          <span>
-                            {student.status === 'active'
-                              ? universityAdminContent.studentsPage.actionLabels.deactivate
-                              : universityAdminContent.studentsPage.actionLabels.activate}
+                        {displayStatus === 'pending' ? (
+                          <span className="inline-flex rounded-full bg-amber-50 px-2.5 py-1.5 text-[0.72rem] font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">
+                            Envia la credencial primero
                           </span>
-                        </button>
+                        ) : (
+                          <button
+                            className={classNames(
+                              'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[0.72rem] font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                              student.status === 'active'
+                                ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
+                                : 'bg-primary/10 text-primary hover:bg-primary/15',
+                            )}
+                            type="button"
+                            onClick={() => {
+                              void toggleStudentStatus(student.id);
+                            }}
+                          >
+                            {student.status === 'active' ? (
+                              <PowerOff aria-hidden="true" className="h-3.5 w-3.5" />
+                            ) : (
+                              <Power aria-hidden="true" className="h-3.5 w-3.5" />
+                            )}
+                            <span>
+                              {student.status === 'active'
+                                ? universityAdminContent.studentsPage.actionLabels.deactivate
+                                : universityAdminContent.studentsPage.actionLabels.activate}
+                            </span>
+                          </button>
+                        )}
                       </td>
                     </tr>
                   );
