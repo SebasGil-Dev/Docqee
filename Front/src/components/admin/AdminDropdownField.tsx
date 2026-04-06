@@ -135,7 +135,7 @@ export function AdminDropdownField({
         />
         {isOpen ? (
           <div
-            className="absolute bottom-[calc(100%+0.35rem)] left-1/2 z-20 w-[calc(100%-1rem)] -translate-x-1/2 overflow-hidden rounded-[1rem] border border-slate-200/80 bg-white/95 p-1 shadow-[0_-20px_46px_-28px_rgba(15,23,42,0.32),0_20px_46px_-32px_rgba(15,23,42,0.22)] backdrop-blur"
+            className="absolute bottom-[calc(100%+0.35rem)] left-1/2 z-20 w-[min(14rem,calc(100%-2rem))] -translate-x-1/2 overflow-hidden rounded-[1rem] border border-slate-200/80 bg-white/95 p-1 shadow-[0_-20px_46px_-28px_rgba(15,23,42,0.32),0_20px_46px_-32px_rgba(15,23,42,0.22)] backdrop-blur sm:w-[min(15rem,calc(100%-2.5rem))]"
             id={`${id}-menu`}
             role="listbox"
           >
