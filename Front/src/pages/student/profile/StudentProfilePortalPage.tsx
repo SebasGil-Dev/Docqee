@@ -181,15 +181,18 @@ export function StudentProfilePage() {
   };
 
   return (
-    <div className="mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-4 overflow-hidden 2xl:max-w-[96rem]">
+    <div className="mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-3 overflow-hidden 2xl:max-w-[96rem]">
       <Seo
         description={studentContent.profilePage.meta.description}
         noIndex
         title={studentContent.profilePage.meta.title}
       />
       <AdminPageHeader
+        className="gap-3"
         description={studentContent.profilePage.description}
+        descriptionClassName="text-sm leading-6 sm:text-base"
         title={studentContent.profilePage.title}
+        titleClassName="text-[2rem] sm:text-[2.35rem]"
       />
       {saveMessage ? (
         <SurfaceCard
@@ -209,26 +212,26 @@ export function StudentProfilePage() {
       ) : null}
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
         <form className="flex h-full min-h-0 flex-col" noValidate onSubmit={handleSubmit}>
-          <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6 sm:py-5">
-            <div className="space-y-4">
+          <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-4 py-3.5 sm:px-5 sm:py-4">
+            <div className="space-y-3">
               <SurfaceCard
                 className="border border-slate-200/80 bg-white shadow-none"
-                paddingClassName="p-5 sm:p-6"
+                paddingClassName="p-4 sm:p-5"
               >
-                <div className="flex flex-col gap-5 lg:flex-row lg:items-center 2xl:gap-6">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center 2xl:gap-5">
                   <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-center">
                     {values.avatarSrc ? (
                       <img
                         alt={profile.avatarAlt}
-                        className="h-24 w-24 rounded-[1.9rem] object-cover ring-4 ring-primary/10"
+                        className="h-20 w-20 rounded-[1.7rem] object-cover ring-4 ring-primary/10"
                         src={values.avatarSrc}
                       />
                     ) : (
-                      <span className="inline-flex h-24 w-24 items-center justify-center rounded-[1.9rem] bg-primary/10 text-3xl font-extrabold uppercase text-primary ring-4 ring-primary/10">
+                      <span className="inline-flex h-20 w-20 items-center justify-center rounded-[1.7rem] bg-primary/10 text-2xl font-extrabold uppercase text-primary ring-4 ring-primary/10">
                         {studentInitials}
                       </span>
                     )}
-                    <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-primary transition duration-300 hover:bg-slate-100">
+                    <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-primary transition duration-300 hover:bg-slate-100">
                       <ImagePlus aria-hidden="true" className="h-4 w-4" />
                       <span>{studentContent.profilePage.actionLabels.uploadPhoto}</span>
                       <input
@@ -240,7 +243,7 @@ export function StudentProfilePage() {
                     </label>
                   </div>
                   <div className="grid min-w-0 flex-1 gap-3 sm:grid-cols-2 2xl:grid-cols-4">
-                    <div className="rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-4 py-3.5">
+                    <div className="rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-3.5 py-3">
                       <div className="flex items-start gap-3">
                         <UserRound aria-hidden="true" className="mt-0.5 h-4.5 w-4.5 shrink-0 text-primary" />
                         <div className="min-w-0">
@@ -253,7 +256,7 @@ export function StudentProfilePage() {
                         </div>
                       </div>
                     </div>
-                    <div className="rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-4 py-3.5">
+                    <div className="rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-3.5 py-3">
                       <div className="flex items-start gap-3">
                         <Mail aria-hidden="true" className="mt-0.5 h-4.5 w-4.5 shrink-0 text-primary" />
                         <div className="min-w-0">
@@ -266,7 +269,7 @@ export function StudentProfilePage() {
                         </div>
                       </div>
                     </div>
-                    <div className="rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-4 py-3.5">
+                    <div className="rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-3.5 py-3">
                       <div className="flex items-start gap-3">
                         <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[1rem] border border-slate-200 bg-white">
                           {profile.universityLogoSrc ? (
@@ -289,7 +292,7 @@ export function StudentProfilePage() {
                         </div>
                       </div>
                     </div>
-                    <div className="rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-4 py-3.5">
+                    <div className="rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-3.5 py-3">
                       <div className="flex items-start gap-3">
                         <GraduationCap
                           aria-hidden="true"
@@ -311,9 +314,9 @@ export function StudentProfilePage() {
 
               <SurfaceCard
                 className="border border-slate-200/80 bg-white shadow-none"
-                paddingClassName="p-5 sm:p-6"
+                paddingClassName="p-4 sm:p-5"
               >
-                <div className="space-y-5">
+                <div className="space-y-4">
                   <div>
                     <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
                       Descripcion y disponibilidad
@@ -322,7 +325,7 @@ export function StudentProfilePage() {
                       Puedes completar estos campos cuando lo necesites. Ambos son opcionales.
                     </p>
                   </div>
-                  <div className="grid gap-5 xl:grid-cols-2">
+                  <div className="grid gap-4 xl:grid-cols-2">
                     <div className="space-y-1.5">
                       <label
                         className="block text-sm font-semibold text-ink"
@@ -336,7 +339,7 @@ export function StudentProfilePage() {
                         }
                         aria-invalid={Boolean(errors.biography)}
                         className={classNames(
-                          'min-h-[10rem] w-full rounded-[1.4rem] border bg-surface px-4 py-3 text-sm text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                          'min-h-[8rem] w-full rounded-[1.4rem] border bg-surface px-4 py-3 text-sm text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
                           errors.biography
                             ? 'border-rose-300 focus-visible:border-rose-400 focus-visible:ring-rose-200/70'
                             : 'border-slate-200 focus-visible:border-primary',
@@ -367,7 +370,7 @@ export function StudentProfilePage() {
                         }
                         aria-invalid={Boolean(errors.availabilityGeneral)}
                         className={classNames(
-                          'min-h-[10rem] w-full rounded-[1.4rem] border bg-surface px-4 py-3 text-sm text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                          'min-h-[8rem] w-full rounded-[1.4rem] border bg-surface px-4 py-3 text-sm text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
                           errors.availabilityGeneral
                             ? 'border-rose-300 focus-visible:border-rose-400 focus-visible:ring-rose-200/70'
                             : 'border-slate-200 focus-visible:border-primary',
@@ -394,9 +397,9 @@ export function StudentProfilePage() {
 
               <SurfaceCard
                 className="border border-slate-200/80 bg-white shadow-none"
-                paddingClassName="p-5 sm:p-6"
+                paddingClassName="p-4 sm:p-5"
               >
-                <div className="space-y-4">
+                <div className="space-y-3.5">
                   <div>
                     <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
                       Tratamientos que realizas
@@ -410,7 +413,7 @@ export function StudentProfilePage() {
                       {treatments.map((treatment) => (
                         <div
                           key={treatment.id}
-                          className="flex flex-col gap-3 rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-4 py-4"
+                          className="flex flex-col gap-3 rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-3.5 py-3"
                           data-testid={`student-profile-treatment-card-${treatment.id}`}
                         >
                           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -463,9 +466,9 @@ export function StudentProfilePage() {
 
               <SurfaceCard
                 className="border border-slate-200/80 bg-white shadow-none"
-                paddingClassName="p-5 sm:p-6"
+                paddingClassName="p-4 sm:p-5"
               >
-                <div className="space-y-4">
+                <div className="space-y-3.5">
                   <div>
                     <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
                       Sedes de practica clinica
@@ -479,7 +482,7 @@ export function StudentProfilePage() {
                       {practiceSites.map((practiceSite) => (
                         <div
                           key={practiceSite.id}
-                          className="flex flex-col gap-3 rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-4 py-4"
+                          className="flex flex-col gap-3 rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-3.5 py-3"
                           data-testid={`student-profile-practice-site-card-${practiceSite.id}`}
                         >
                           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -533,9 +536,9 @@ export function StudentProfilePage() {
 
               <SurfaceCard
                 className="border border-slate-200/80 bg-white shadow-none"
-                paddingClassName="p-5 sm:p-6"
+                paddingClassName="p-4 sm:p-5"
               >
-                <div className="space-y-5">
+                <div className="space-y-4">
                   <div>
                     <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
                       Enlaces profesionales
@@ -544,7 +547,7 @@ export function StudentProfilePage() {
                       Agrega recursos que complementen tu perfil, como redes, portafolio o hoja de vida.
                     </p>
                   </div>
-                  <div className="grid gap-4 xl:grid-cols-[minmax(0,13rem)_minmax(0,1fr)_auto] 2xl:grid-cols-[minmax(0,14rem)_minmax(0,1fr)_auto]">
+                  <div className="grid gap-3 xl:grid-cols-[minmax(0,13rem)_minmax(0,1fr)_auto] 2xl:grid-cols-[minmax(0,14rem)_minmax(0,1fr)_auto]">
                     <AdminDropdownField
                       icon={Building2}
                       id="student-profile-link-type"
@@ -583,7 +586,7 @@ export function StudentProfilePage() {
                     />
                     <div className="flex items-end">
                       <button
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-4 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 lg:w-auto"
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 lg:w-auto"
                         type="button"
                         onClick={handleAddLink}
                       >
@@ -597,7 +600,7 @@ export function StudentProfilePage() {
                       {values.links.map((link) => (
                         <div
                           key={link.id}
-                          className="flex flex-col gap-3 rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+                          className="flex flex-col gap-3 rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between"
                         >
                           <div className="min-w-0 space-y-1">
                             <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary/70">
@@ -637,9 +640,9 @@ export function StudentProfilePage() {
               </SurfaceCard>
             </div>
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-3 border-t border-slate-200/80 bg-white px-6 py-4 sm:px-7">
+          <div className="flex flex-wrap items-center justify-center gap-3 border-t border-slate-200/80 bg-white px-5 py-3.5 sm:px-6">
             <button
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-ink transition duration-300 hover:bg-slate-100"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-2.5 text-sm font-semibold text-ink transition duration-300 hover:bg-slate-100"
               disabled={isLoading}
               type="button"
               onClick={() => {
@@ -654,7 +657,7 @@ export function StudentProfilePage() {
               <span>{studentContent.profilePage.actionLabels.reset}</span>
             </button>
             <button
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-5 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-5 py-2.5 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
               disabled={isLoading}
               type="submit"
             >

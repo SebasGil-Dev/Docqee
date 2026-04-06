@@ -193,15 +193,18 @@ export function StudentConversationsPage() {
   };
 
   return (
-    <div className="mx-auto flex h-full max-w-[90rem] min-h-0 flex-col gap-4 overflow-hidden 2xl:max-w-[98rem]">
+    <div className="mx-auto flex h-full max-w-[90rem] min-h-0 flex-col gap-3 overflow-hidden 2xl:max-w-[98rem]">
       <Seo
         description={studentContent.conversationsPage.meta.description}
         noIndex
         title={studentContent.conversationsPage.meta.title}
       />
       <AdminPageHeader
+        className="gap-3"
         description={studentContent.conversationsPage.description}
+        descriptionClassName="text-sm leading-6 sm:text-base"
         title={studentContent.conversationsPage.title}
+        titleClassName="text-[2rem] sm:text-[2.35rem]"
       />
       {successMessage ? (
         <SurfaceCard
@@ -226,12 +229,12 @@ export function StudentConversationsPage() {
       ) : null}
       <div className="grid gap-3 md:grid-cols-2">
         <SurfaceCard className="min-w-0 overflow-hidden bg-brand-gradient text-white" paddingClassName="p-0">
-          <div className="flex items-center gap-3 px-4 py-3">
+          <div className="flex items-center gap-3 px-4 py-2.5">
             <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-white/12 text-white ring-1 ring-white/18">
               <MessageSquareMore aria-hidden="true" className="h-4.5 w-4.5" />
             </span>
             <div>
-              <p className="font-headline text-[1.55rem] font-extrabold tracking-tight text-white">
+              <p className="font-headline text-[1.45rem] font-extrabold tracking-tight text-white">
                 {activeConversationCount}
               </p>
               <p className="text-sm font-semibold text-white/90">Conversaciones activas</p>
@@ -239,12 +242,12 @@ export function StudentConversationsPage() {
           </div>
         </SurfaceCard>
         <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-0">
-          <div className="flex items-center gap-3 px-4 py-3">
+          <div className="flex items-center gap-3 px-4 py-2.5">
             <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-primary/10 text-primary ring-1 ring-primary/10">
               <UserRound aria-hidden="true" className="h-4.5 w-4.5" />
             </span>
             <div>
-              <p className="font-headline text-[1.55rem] font-extrabold tracking-tight text-ink">
+              <p className="font-headline text-[1.45rem] font-extrabold tracking-tight text-ink">
                 {unreadMessageCount}
               </p>
               <p className="text-sm font-semibold text-ink-muted">Mensajes pendientes</p>
@@ -253,7 +256,7 @@ export function StudentConversationsPage() {
         </SurfaceCard>
       </div>
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
-        <div className="border-b border-slate-200/80 px-4 py-4 sm:px-5 sm:py-4">
+        <div className="border-b border-slate-200/80 px-4 py-3.5 sm:px-5 sm:py-3.5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <label className="relative min-w-0 flex-1 sm:max-w-[32rem] xl:max-w-[36rem]" htmlFor="student-conversation-search">
               <span className="sr-only">{studentContent.conversationsPage.searchLabel}</span>
@@ -346,10 +349,10 @@ export function StudentConversationsPage() {
             </div>
           </div>
         </div>
-        <div className="grid min-h-0 flex-1 gap-4 px-4 py-4 sm:px-5 sm:py-5 xl:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] 2xl:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]">
+        <div className="grid min-h-0 flex-1 gap-3 px-4 py-3.5 sm:px-5 sm:py-4 xl:grid-cols-[minmax(0,21rem)_minmax(0,1fr)] 2xl:grid-cols-[minmax(0,23rem)_minmax(0,1fr)]">
           <SurfaceCard className="min-h-0 border border-slate-200/80 bg-white shadow-none" paddingClassName="p-0">
-            <div className="flex h-full min-h-[18rem] flex-col">
-              <div className="border-b border-slate-200/80 px-4 py-4">
+            <div className="flex h-full min-h-[17rem] flex-col">
+              <div className="border-b border-slate-200/80 px-4 py-3.5">
                 <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
                   Hilos disponibles
                 </h2>
@@ -357,7 +360,7 @@ export function StudentConversationsPage() {
                   Selecciona una conversacion para revisar el historial con cada paciente.
                 </p>
               </div>
-              <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto p-3">
+              <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto p-2.5">
                 {filteredConversations.length > 0 ? (
                   <div className="space-y-2.5">
                     {filteredConversations.map((conversation) => {
@@ -368,7 +371,7 @@ export function StudentConversationsPage() {
                         <button
                           key={conversation.id}
                           className={classNames(
-                            'w-full rounded-[1.35rem] border px-4 py-3 text-left transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                            'w-full rounded-[1.35rem] border px-3.5 py-2.5 text-left transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
                             isSelected
                               ? 'border-primary/35 bg-primary/[0.08] shadow-[0_18px_40px_-28px_rgba(22,78,99,0.65)]'
                               : 'border-slate-200/80 bg-slate-50 hover:border-primary/20 hover:bg-slate-100/70',
@@ -426,8 +429,8 @@ export function StudentConversationsPage() {
           </SurfaceCard>
           <SurfaceCard className="min-h-0 border border-slate-200/80 bg-white shadow-none" paddingClassName="p-0">
             {selectedConversation ? (
-              <div className="flex h-full min-h-[24rem] flex-col">
-                <div className="border-b border-slate-200/80 px-5 py-4">
+              <div className="flex h-full min-h-[22rem] flex-col">
+                <div className="border-b border-slate-200/80 px-4 py-3.5 sm:px-5">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
@@ -448,7 +451,7 @@ export function StudentConversationsPage() {
                   </div>
                 </div>
                 <div
-                  className="admin-scrollbar min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4 sm:px-5"
+                  className="admin-scrollbar min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3.5 sm:px-5"
                   data-testid={`student-conversation-thread-${selectedConversation.id}`}
                 >
                   {selectedConversation.messages.map((message) => {
@@ -464,7 +467,7 @@ export function StudentConversationsPage() {
                       >
                         <div
                           className={classNames(
-                            'max-w-[90%] rounded-[1.45rem] px-4 py-3 shadow-[0_12px_28px_-22px_rgba(15,23,42,0.35)] sm:max-w-[78%]',
+                            'max-w-[90%] rounded-[1.45rem] px-3.5 py-2.5 shadow-[0_12px_28px_-22px_rgba(15,23,42,0.35)] sm:max-w-[78%]',
                             isStudentAuthor
                               ? 'bg-brand-gradient text-white'
                               : 'bg-slate-100 text-ink',
@@ -492,7 +495,7 @@ export function StudentConversationsPage() {
                     );
                   })}
                 </div>
-                <div className="border-t border-slate-200/80 px-4 py-4 sm:px-5">
+                <div className="border-t border-slate-200/80 px-4 py-3.5 sm:px-5">
                   {selectedConversation.status === 'ACTIVA' ? (
                     <div className="space-y-3">
                       <div className="rounded-[1.25rem] border border-emerald-200/80 bg-emerald-50/75 px-4 py-3 text-sm text-emerald-800">
@@ -514,7 +517,7 @@ export function StudentConversationsPage() {
                             }
                             aria-invalid={Boolean(composerError)}
                             className={classNames(
-                              'min-h-[6.5rem] w-full rounded-[1.35rem] border bg-surface px-4 py-3 text-sm text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                              'min-h-[5.5rem] w-full rounded-[1.35rem] border bg-surface px-4 py-3 text-sm text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
                               composerError
                                 ? 'border-rose-300 focus-visible:border-rose-400 focus-visible:ring-rose-200/70'
                                 : 'border-slate-200 focus-visible:border-primary',
@@ -535,7 +538,7 @@ export function StudentConversationsPage() {
                           ) : null}
                         </div>
                         <button
-                          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-4 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 sm:min-w-[11rem]"
+                          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 sm:min-w-[10rem]"
                           disabled={isLoading}
                           type="button"
                           onClick={handleSendMessage}
@@ -560,7 +563,7 @@ export function StudentConversationsPage() {
                 </div>
               </div>
             ) : (
-              <div className="flex h-full min-h-[24rem] items-center justify-center px-5 py-8 text-center">
+              <div className="flex h-full min-h-[22rem] items-center justify-center px-5 py-8 text-center">
                 <div className="max-w-md space-y-3">
                   <span className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-[1.4rem] bg-primary/10 text-primary">
                     <MessageSquareMore aria-hidden="true" className="h-6 w-6" />

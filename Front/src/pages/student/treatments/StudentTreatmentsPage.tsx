@@ -146,7 +146,7 @@ export function StudentTreatmentsPage() {
   }, [isStatusMenuOpen]);
 
   return (
-    <div className="mx-auto flex h-full max-w-[90rem] min-h-0 flex-col gap-4 overflow-hidden 2xl:max-w-[98rem]">
+    <div className="mx-auto flex h-full max-w-[90rem] min-h-0 flex-col gap-3 overflow-hidden 2xl:max-w-[98rem]">
       <Seo
         description={studentContent.treatmentsPage.meta.description}
         noIndex
@@ -161,22 +161,22 @@ export function StudentTreatmentsPage() {
         </SurfaceCard>
       ) : null}
       <SurfaceCard className="overflow-hidden bg-brand-gradient text-white" paddingClassName="p-0">
-        <div className="flex flex-col gap-5 px-5 py-5 sm:px-6 sm:py-6 xl:flex-row xl:items-center xl:justify-between 2xl:px-7">
+        <div className="flex flex-col gap-4 px-4 py-4 sm:px-5 sm:py-5 xl:flex-row xl:items-center xl:justify-between 2xl:px-6">
           <div className="flex min-w-0 items-center gap-4">
             {profile.avatarSrc ? (
               <img
                 alt={profile.avatarAlt}
-                className="h-20 w-20 rounded-[1.75rem] object-cover ring-4 ring-white/20"
+                className="h-16 w-16 rounded-[1.55rem] object-cover ring-4 ring-white/20 sm:h-[4.5rem] sm:w-[4.5rem]"
                 src={profile.avatarSrc ?? undefined}
               />
             ) : (
-              <span className="inline-flex h-20 w-20 items-center justify-center rounded-[1.75rem] bg-white/14 text-2xl font-extrabold uppercase text-white ring-4 ring-white/15">
+              <span className="inline-flex h-16 w-16 items-center justify-center rounded-[1.55rem] bg-white/14 text-xl font-extrabold uppercase text-white ring-4 ring-white/15 sm:h-[4.5rem] sm:w-[4.5rem]">
                 {studentInitials}
               </span>
             )}
-            <div className="min-w-0 space-y-3">
+            <div className="min-w-0 space-y-2.5">
               <div className="flex flex-wrap items-center gap-3">
-                <h2 className="font-headline text-[1.6rem] font-extrabold tracking-tight text-white sm:text-[1.9rem]">
+                <h2 className="font-headline text-[1.4rem] font-extrabold tracking-tight text-white sm:text-[1.7rem]">
                   Bienvenido, {profile.firstName} {profile.lastName}
                 </h2>
                 <span className="inline-flex items-center gap-2 rounded-full bg-white/12 px-3 py-1 ring-1 ring-white/16">
@@ -193,7 +193,7 @@ export function StudentTreatmentsPage() {
                       </span>
                     )}
                   </span>
-                  <span className="max-w-[18rem] truncate text-sm font-semibold text-white">
+                  <span className="max-w-[16rem] truncate text-sm font-semibold text-white">
                     {profile.universityName}
                   </span>
                 </span>
@@ -214,37 +214,37 @@ export function StudentTreatmentsPage() {
               </div>
             </div>
           </div>
-          <div className="grid gap-3 sm:grid-cols-3 xl:min-w-[36rem] 2xl:min-w-[40rem] 2xl:gap-4">
-            <div className="rounded-[1.4rem] bg-white/12 px-4 py-4 ring-1 ring-white/15 backdrop-blur-sm">
+          <div className="grid gap-3 sm:grid-cols-3 xl:min-w-[32rem] 2xl:min-w-[36rem]">
+            <div className="rounded-[1.4rem] bg-white/12 px-3.5 py-3 ring-1 ring-white/15 backdrop-blur-sm">
               <div className="flex items-center gap-2">
                 <Stethoscope aria-hidden="true" className="h-4.5 w-4.5 text-white" />
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/75">
                   Tratamientos activos
                 </p>
               </div>
-              <p className="mt-3 font-headline text-[2rem] font-extrabold tracking-tight text-white">
+              <p className="mt-2.5 font-headline text-[1.7rem] font-extrabold tracking-tight text-white">
                 {activeTreatmentsCount}
               </p>
             </div>
-            <div className="rounded-[1.4rem] bg-white/12 px-4 py-4 ring-1 ring-white/15 backdrop-blur-sm">
+            <div className="rounded-[1.4rem] bg-white/12 px-3.5 py-3 ring-1 ring-white/15 backdrop-blur-sm">
               <div className="flex items-center gap-2">
                 <MapPin aria-hidden="true" className="h-4.5 w-4.5 text-white" />
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/75">
                   Sedes activas
                 </p>
               </div>
-              <p className="mt-3 font-headline text-[2rem] font-extrabold tracking-tight text-white">
+              <p className="mt-2.5 font-headline text-[1.7rem] font-extrabold tracking-tight text-white">
                 {activePracticeSitesCount}
               </p>
             </div>
-            <div className="rounded-[1.4rem] bg-white/12 px-4 py-4 ring-1 ring-white/15 backdrop-blur-sm">
+            <div className="rounded-[1.4rem] bg-white/12 px-3.5 py-3 ring-1 ring-white/15 backdrop-blur-sm">
               <div className="flex items-center gap-2">
                 <CalendarDays aria-hidden="true" className="h-4.5 w-4.5 text-white" />
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/75">
                   Citas registradas
                 </p>
               </div>
-              <p className="mt-3 font-headline text-[2rem] font-extrabold tracking-tight text-white">
+              <p className="mt-2.5 font-headline text-[1.7rem] font-extrabold tracking-tight text-white">
                 {totalAppointmentsCount}
               </p>
             </div>
@@ -252,8 +252,8 @@ export function StudentTreatmentsPage() {
         </div>
       </SurfaceCard>
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
-        <div className="border-b border-slate-200/80 px-4 py-4 sm:px-5 sm:py-4">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+        <div className="border-b border-slate-200/80 px-4 py-3.5 sm:px-5 sm:py-3.5">
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div className="space-y-1">
               <p className="text-[0.72rem] font-bold uppercase tracking-[0.24em] text-primary/75">
                 Experiencia del paciente
@@ -265,7 +265,7 @@ export function StudentTreatmentsPage() {
                 Consulta lo que los pacientes han compartido despues de atenderse contigo en la plataforma.
               </p>
             </div>
-            <div className="inline-flex items-center gap-3 self-start rounded-[1.25rem] border border-amber-200/80 bg-amber-50 px-4 py-3 text-amber-900 shadow-[0_16px_34px_-24px_rgba(180,83,9,0.45)]">
+            <div className="inline-flex items-center gap-3 self-start rounded-[1.25rem] border border-amber-200/80 bg-amber-50 px-3.5 py-2.5 text-amber-900 shadow-[0_16px_34px_-24px_rgba(180,83,9,0.45)]">
               <div className="flex items-center gap-1">{renderStars(averageRating, 'h-4 w-4')}</div>
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-700/80">
@@ -278,16 +278,16 @@ export function StudentTreatmentsPage() {
             </div>
           </div>
         </div>
-        <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5 sm:py-5">
+        <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-4 py-3.5 sm:px-5 sm:py-4">
           {reviews.length > 0 ? (
-            <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3 2xl:gap-5">
+            <div className="grid gap-3 lg:grid-cols-2 2xl:grid-cols-3 2xl:gap-4">
               {reviews.map((review) => (
                 <SurfaceCard
                   key={review.id}
                   className="border border-slate-200/80 bg-white shadow-none"
-                  paddingClassName="p-5"
+                  paddingClassName="p-4"
                 >
-                  <div className="space-y-4" data-testid={`student-review-card-${review.id}`}>
+                  <div className="space-y-3" data-testid={`student-review-card-${review.id}`}>
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="space-y-1">
                         <p className="text-base font-semibold text-ink">{review.patientName}</p>
@@ -301,7 +301,7 @@ export function StudentTreatmentsPage() {
                       <div className="flex items-center gap-1">{renderStars(review.rating, 'h-4 w-4')}</div>
                       <span className="text-sm font-semibold text-ink">{review.rating.toFixed(1)}</span>
                     </div>
-                    <p className="rounded-[1.2rem] bg-slate-50 px-4 py-4 text-sm leading-7 text-ink">
+                    <p className="rounded-[1.2rem] bg-slate-50 px-3.5 py-3 text-sm leading-6 text-ink">
                       {review.comment ?? 'El paciente no dejo un comentario escrito para esta cita.'}
                     </p>
                     <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-muted">

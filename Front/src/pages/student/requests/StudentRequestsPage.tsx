@@ -125,15 +125,18 @@ export function StudentRequestsPage() {
   };
 
   return (
-    <div className="mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-4 overflow-hidden 2xl:max-w-[96rem]">
+    <div className="mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-3 overflow-hidden 2xl:max-w-[96rem]">
       <Seo
         description={studentContent.requestsPage.meta.description}
         noIndex
         title={studentContent.requestsPage.meta.title}
       />
       <AdminPageHeader
+        className="gap-3"
         description={studentContent.requestsPage.description}
+        descriptionClassName="text-sm leading-6 sm:text-base"
         title={studentContent.requestsPage.title}
+        titleClassName="text-[2rem] sm:text-[2.35rem]"
       />
       {successMessage ? (
         <SurfaceCard
@@ -158,12 +161,12 @@ export function StudentRequestsPage() {
       ) : null}
       <div className="grid gap-3 md:grid-cols-2">
         <SurfaceCard className="min-w-0 overflow-hidden bg-brand-gradient text-white" paddingClassName="p-0">
-          <div className="flex items-center gap-3 px-4 py-3">
+          <div className="flex items-center gap-3 px-4 py-2.5">
             <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-white/12 text-white ring-1 ring-white/18">
               <UserRound aria-hidden="true" className="h-4.5 w-4.5" />
             </span>
             <div>
-              <p className="font-headline text-[1.55rem] font-extrabold tracking-tight text-white">
+              <p className="font-headline text-[1.45rem] font-extrabold tracking-tight text-white">
                 {pendingCount}
               </p>
               <p className="text-sm font-semibold text-white/90">Solicitudes pendientes</p>
@@ -171,12 +174,12 @@ export function StudentRequestsPage() {
           </div>
         </SurfaceCard>
         <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-0">
-          <div className="flex items-center gap-3 px-4 py-3">
+          <div className="flex items-center gap-3 px-4 py-2.5">
             <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-primary/10 text-primary ring-1 ring-primary/10">
               <MessageSquareMore aria-hidden="true" className="h-4.5 w-4.5" />
             </span>
             <div>
-              <p className="font-headline text-[1.55rem] font-extrabold tracking-tight text-ink">
+              <p className="font-headline text-[1.45rem] font-extrabold tracking-tight text-ink">
                 {activeConversationCount}
               </p>
               <p className="text-sm font-semibold text-ink-muted">Conversaciones activas</p>
@@ -185,7 +188,7 @@ export function StudentRequestsPage() {
         </SurfaceCard>
       </div>
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
-        <div className="border-b border-slate-200/80 px-4 py-4 sm:px-5 sm:py-4">
+        <div className="border-b border-slate-200/80 px-4 py-3.5 sm:px-5 sm:py-3.5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <label className="relative min-w-0 flex-1 sm:max-w-[30rem] xl:max-w-[34rem]" htmlFor="student-request-search">
               <span className="sr-only">{studentContent.requestsPage.searchLabel}</span>
@@ -283,11 +286,11 @@ export function StudentRequestsPage() {
             <table className="min-w-[64rem] lg:min-w-full">
               <thead className="sticky top-0 z-10 bg-slate-100 text-left">
                 <tr className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-ink-muted">
-                  <th className="px-4 py-3 sm:px-5">Paciente</th>
-                  <th className="px-4 py-3">Motivo</th>
-                  <th className="px-4 py-3">Estado</th>
-                  <th className="px-4 py-3">Seguimiento</th>
-                  <th className="px-4 py-3 text-right sm:px-5">Acciones</th>
+                  <th className="px-4 py-2.5 sm:px-5">Paciente</th>
+                  <th className="px-4 py-2.5">Motivo</th>
+                  <th className="px-4 py-2.5">Estado</th>
+                  <th className="px-4 py-2.5">Seguimiento</th>
+                  <th className="px-4 py-2.5 text-right sm:px-5">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200/80 bg-white">
@@ -297,7 +300,7 @@ export function StudentRequestsPage() {
                     className="align-top"
                     data-testid={`student-request-row-${request.id}`}
                   >
-                    <td className="px-4 py-3.5 sm:px-5">
+                    <td className="px-4 py-3 sm:px-5">
                       <div className="space-y-1">
                         <p className="text-sm font-semibold text-ink">{request.patientName}</p>
                         <p className="text-xs text-ink-muted">
@@ -305,12 +308,12 @@ export function StudentRequestsPage() {
                         </p>
                       </div>
                     </td>
-                    <td className="px-4 py-3.5">
-                        <p className="max-w-[22rem] text-sm leading-6 text-ink-muted 2xl:max-w-[30rem]">
+                    <td className="px-4 py-3">
+                      <p className="max-w-[22rem] text-sm leading-6 text-ink-muted 2xl:max-w-[30rem]">
                         {request.reason ?? 'Sin motivo registrado.'}
                       </p>
                     </td>
-                    <td className="px-4 py-3.5">
+                    <td className="px-4 py-3">
                       <span
                         className={classNames(
                           'inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset',
@@ -320,7 +323,7 @@ export function StudentRequestsPage() {
                         {getStatusLabel(request.status)}
                       </span>
                     </td>
-                    <td className="px-4 py-3.5">
+                    <td className="px-4 py-3">
                       <div className="space-y-1 text-sm text-ink-muted">
                         <p>
                           Envio:{' '}
@@ -340,7 +343,7 @@ export function StudentRequestsPage() {
                         </p>
                       </div>
                     </td>
-                    <td className="px-4 py-3.5 text-right sm:px-5">
+                    <td className="px-4 py-3 text-right sm:px-5">
                       {request.status === 'PENDIENTE' ? (
                         <div className="flex justify-end gap-2">
                           <button

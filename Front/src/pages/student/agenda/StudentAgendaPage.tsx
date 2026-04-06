@@ -223,15 +223,18 @@ export function StudentAgendaPage() {
   };
 
   return (
-    <div className="mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-4 overflow-hidden 2xl:max-w-[96rem]">
+    <div className="mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-3 overflow-hidden 2xl:max-w-[96rem]">
       <Seo
         description={studentContent.agendaPage.meta.description}
         noIndex
         title={studentContent.agendaPage.meta.title}
       />
       <AdminPageHeader
+        className="gap-3"
         description={studentContent.agendaPage.description}
+        descriptionClassName="text-sm leading-6 sm:text-base"
         title={studentContent.agendaPage.title}
+        titleClassName="text-[2rem] sm:text-[2.35rem]"
       />
       {saveMessage ? (
         <SurfaceCard
@@ -256,7 +259,7 @@ export function StudentAgendaPage() {
       ) : null}
       <div className="grid gap-3 md:grid-cols-2 2xl:gap-4">
         <SurfaceCard className="min-w-0 overflow-hidden bg-brand-gradient text-white" paddingClassName="p-0">
-          <div className="flex items-center gap-3 px-4 py-3">
+          <div className="flex items-center gap-3 px-4 py-2.5">
             <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-white/12 text-white ring-1 ring-white/18">
               <CalendarDays aria-hidden="true" className="h-4.5 w-4.5" />
             </span>
@@ -269,7 +272,7 @@ export function StudentAgendaPage() {
           </div>
         </SurfaceCard>
         <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-0">
-          <div className="flex items-center gap-3 px-4 py-3">
+          <div className="flex items-center gap-3 px-4 py-2.5">
             <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-primary/10 text-primary ring-1 ring-primary/10">
               <Repeat aria-hidden="true" className="h-4.5 w-4.5" />
             </span>
@@ -283,10 +286,10 @@ export function StudentAgendaPage() {
         </SurfaceCard>
       </div>
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
-        <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5 sm:py-5">
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] 2xl:grid-cols-[minmax(0,27rem)_minmax(0,1fr)]">
-            <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-5">
-              <div className="space-y-5">
+        <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-4 py-3.5 sm:px-5 sm:py-4">
+          <div className="grid gap-3 xl:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] 2xl:grid-cols-[minmax(0,25rem)_minmax(0,1fr)]">
+            <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-4">
+              <div className="space-y-4">
                 <div>
                   <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
                     {editingBlockId ? 'Editar bloqueo' : 'Nuevo bloqueo'}
@@ -361,7 +364,7 @@ export function StudentAgendaPage() {
                     />
                   </>
                 )}
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-3 sm:grid-cols-2">
                   <AdminTextField
                     error={errors.startTime}
                     icon={Clock3}
@@ -390,7 +393,7 @@ export function StudentAgendaPage() {
                     Motivo opcional
                   </label>
                   <textarea
-                    className="min-h-[6.75rem] w-full rounded-[1.4rem] border border-slate-200 bg-surface px-4 py-3 text-sm text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                    className="min-h-[5.5rem] w-full rounded-[1.4rem] border border-slate-200 bg-surface px-4 py-3 text-sm text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
                     id="student-schedule-reason"
                     placeholder="Describe brevemente la razon del bloqueo."
                     value={values.reason}
@@ -400,7 +403,7 @@ export function StudentAgendaPage() {
                 <div className="flex flex-wrap items-center justify-center gap-3">
                   {editingBlockId ? (
                     <button
-                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-ink transition duration-300 hover:bg-slate-100"
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-ink transition duration-300 hover:bg-slate-100"
                       type="button"
                       onClick={handleReset}
                     >
@@ -409,7 +412,7 @@ export function StudentAgendaPage() {
                     </button>
                   ) : null}
                   <button
-                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-4 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
                     disabled={isLoading}
                     type="button"
                     onClick={handleSubmit}
@@ -424,8 +427,8 @@ export function StudentAgendaPage() {
                 </div>
               </div>
             </SurfaceCard>
-            <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-5">
-              <div className="space-y-4">
+            <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-4">
+              <div className="space-y-3.5">
                 <div>
                   <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
                     Bloqueos registrados
@@ -440,7 +443,7 @@ export function StudentAgendaPage() {
                       <div
                         key={block.id}
                         data-testid={`student-schedule-block-${block.id}`}
-                        className="flex flex-col gap-3 rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-4 py-4"
+                        className="flex flex-col gap-3 rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-3.5 py-3"
                       >
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div className="space-y-1">
