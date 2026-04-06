@@ -243,7 +243,10 @@ export function LoginPage() {
   };
 
   return (
-    <AuthShell mainClassName="px-2.5 py-4 sm:px-6 sm:py-7 lg:px-8">
+    <AuthShell
+      footerClassName="!pb-7 sm:!pb-5"
+      mainClassName="px-2.5 py-4 sm:px-6 sm:py-7 lg:px-8"
+    >
       <Seo
         description={content.meta.description}
         noIndex
