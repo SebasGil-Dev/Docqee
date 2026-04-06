@@ -221,7 +221,7 @@ export const router = createBrowserRouter([
       {
         index: true,
         Component: function StudentIndexRedirect() {
-          return <Navigate replace to={ROUTES.studentProfile} />;
+          return <Navigate replace to={ROUTES.studentTreatments} />;
         },
       },
       {
@@ -247,6 +247,15 @@ export const router = createBrowserRouter([
         lazy: async () => {
           const { StudentAgendaPage } = await import('@/pages/student/agenda/StudentAgendaPage');
           return { Component: StudentAgendaPage };
+        },
+      },
+      {
+        path: 'citas',
+        lazy: async () => {
+          const { StudentAppointmentsPage } = await import(
+            '@/pages/student/appointments/StudentAppointmentsPage'
+          );
+          return { Component: StudentAppointmentsPage };
         },
       },
       {
