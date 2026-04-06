@@ -179,22 +179,9 @@ export function StudentTreatmentsPage() {
                 <h2 className="max-w-[14rem] truncate font-headline text-[1.05rem] font-extrabold tracking-tight text-white sm:max-w-[16rem] sm:text-[1.18rem] xl:max-w-[20rem]">
                   Bienvenido, {profile.firstName} {profile.lastName}
                 </h2>
-                <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 ring-1 ring-white/16">
-                  <span className="inline-flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-white/90 text-primary">
-                    {profile.universityLogoSrc ? (
-                      <img
-                        alt={profile.universityLogoAlt}
-                        className="h-full w-full object-cover"
-                        src={profile.universityLogoSrc ?? undefined}
-                      />
-                    ) : (
-                      <span className="text-[0.6rem] font-extrabold uppercase">
-                        {profile.universityName.charAt(0)}
-                      </span>
-                    )}
-                  </span>
+                <span className="inline-flex min-w-0 items-center rounded-full bg-white/12 px-2.5 py-1 ring-1 ring-white/16">
                   <span className="max-w-[8.5rem] truncate text-[0.75rem] font-semibold text-white sm:max-w-[10rem] xl:max-w-[12rem]">
-                    {profile.universityName}
+                    {profile.firstName} {profile.lastName.charAt(0).toUpperCase()}.
                   </span>
                 </span>
               </div>
