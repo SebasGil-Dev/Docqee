@@ -1,5 +1,5 @@
-import { Building2, ChevronDown, Plus, Power, PowerOff, Search, SlidersHorizontal } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Building2, Check, Plus, Power, PowerOff, Search, SlidersHorizontal } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
@@ -45,6 +45,8 @@ export function AdminUniversitiesPage() {
   const { errorMessage, isLoading, toggleUniversityStatus, universities } = useAdminModuleStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<UniversityStatusFilter>('all');
+  const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
+  const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const successNotice = getLocationState(location.state)?.successNotice ?? null;
@@ -74,6 +76,32 @@ export function AdminUniversitiesPage() {
     };
   }, [location.pathname, navigate, successNotice]);
 
+  useEffect(() => {
+    if (!isStatusMenuOpen) {
+      return undefined;
+    }
+
+    function handlePointerDown(event: MouseEvent) {
+      if (!statusMenuRef.current?.contains(event.target as Node)) {
+        setIsStatusMenuOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsStatusMenuOpen(false);
+      }
+    }
+
+    window.addEventListener('mousedown', handlePointerDown);
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('mousedown', handlePointerDown);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isStatusMenuOpen]);
+
   return (
     <div className="mx-auto flex h-full max-w-[72rem] min-h-0 flex-col gap-4 overflow-hidden">
       <Seo
@@ -86,7 +114,7 @@ export function AdminUniversitiesPage() {
         description=""
         descriptionClassName="max-w-3xl text-sm leading-6 sm:text-[0.95rem]"
         title={adminContent.universitiesPage.title}
-        titleClassName="whitespace-nowrap text-[clamp(1.25rem,6vw,1.85rem)] leading-none sm:text-[2.2rem]"
+        titleClassName="mx-auto whitespace-nowrap text-center text-[clamp(1.25rem,6vw,1.85rem)] leading-none sm:mx-0 sm:text-left sm:text-[2.2rem]"
       />
       {successNotice ? (
         <SurfaceCard
@@ -136,19 +164,19 @@ export function AdminUniversitiesPage() {
       </div>
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
         <div className="border-b border-slate-200/80 px-4 py-4 sm:px-5 sm:py-4">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <h2 className="min-w-[5.75rem] max-w-[6.9rem] text-balance font-headline text-[0.92rem] font-extrabold leading-[1.05] tracking-tight text-ink sm:min-w-[9rem] sm:max-w-none sm:text-[1.45rem]">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+            <h2 className="whitespace-nowrap text-center font-headline text-[1rem] font-extrabold leading-none tracking-tight text-ink sm:text-left sm:text-[1.45rem]">
               {adminContent.universitiesPage.tableTitle}
             </h2>
-            <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-2.5">
-              <label className="relative min-w-0 flex-[1.05] sm:flex-[1.2]" htmlFor="admin-university-search">
+            <div className="flex min-w-0 items-center gap-2 sm:w-full sm:max-w-[23rem] sm:justify-end sm:gap-2.5">
+              <label className="relative min-w-0 flex-1" htmlFor="admin-university-search">
                 <span className="sr-only">{adminContent.universitiesPage.searchLabel}</span>
                 <Search
                   aria-hidden="true"
-                  className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ghost sm:left-3.5 sm:h-4 sm:w-4"
+                  className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ghost sm:left-4 sm:h-4 sm:w-4"
                 />
                 <input
-                  className="h-10 w-full rounded-full border border-slate-200/90 bg-white/95 py-0 pl-8 pr-3 text-[0.76rem] text-ink shadow-sm shadow-slate-200/60 transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-11 sm:pl-10 sm:pr-4 sm:text-sm"
+                  className="h-10 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-8 pr-4 text-[0.77rem] text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-11 sm:pl-11 sm:text-sm"
                   id="admin-university-search"
                   placeholder={adminContent.universitiesPage.searchPlaceholder}
                   type="search"
@@ -156,29 +184,80 @@ export function AdminUniversitiesPage() {
                   onChange={(event) => setSearchTerm(event.target.value)}
                 />
               </label>
-              <label className="relative block w-[5.8rem] shrink-0 sm:w-[8rem]" htmlFor="admin-university-status-filter">
-                <span className="sr-only">Filtrar por estado</span>
-                <SlidersHorizontal
-                  aria-hidden="true"
-                  className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ghost sm:left-3 sm:h-4 sm:w-4"
-                />
-                <select
-                  className="h-10 w-full appearance-none rounded-full border border-slate-200/90 bg-white/95 py-0 pl-7.5 pr-7 text-[0.72rem] font-medium text-ink shadow-sm shadow-slate-200/60 transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-11 sm:pl-9 sm:pr-8 sm:text-sm"
-                  id="admin-university-status-filter"
-                  value={statusFilter}
-                  onChange={(event) => setStatusFilter(event.target.value as UniversityStatusFilter)}
+              <div className="relative shrink-0" ref={statusMenuRef}>
+                <button
+                  aria-controls="admin-university-status-menu"
+                  aria-expanded={isStatusMenuOpen}
+                  aria-haspopup="menu"
+                  aria-label={
+                    statusFilter === 'all'
+                      ? 'Filtrar por estado'
+                      : `Filtrar por estado. Actual: ${
+                          universityStatusFilterOptions.find((option) => option.value === statusFilter)?.label
+                        }`
+                  }
+                  className={classNames(
+                    'relative inline-flex h-10 w-10 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-11 sm:w-11',
+                    statusFilter === 'all'
+                      ? 'border-slate-200/90 hover:border-primary/30 hover:bg-white'
+                      : 'border-primary/25 bg-primary/[0.08] text-primary hover:bg-primary/[0.12]',
+                  )}
+                  type="button"
+                  onClick={() => setIsStatusMenuOpen((current) => !current)}
                 >
-                  {universityStatusFilterOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  aria-hidden="true"
-                  className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ghost sm:right-3 sm:h-4 sm:w-4"
-                />
-              </label>
+                  <SlidersHorizontal aria-hidden="true" className="h-4 w-4 sm:h-[1.05rem] sm:w-[1.05rem]" />
+                  {statusFilter !== 'all' ? (
+                    <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary ring-2 ring-white" />
+                  ) : null}
+                </button>
+                {isStatusMenuOpen ? (
+                  <div
+                    className="absolute right-0 top-[calc(100%+0.6rem)] z-20 w-[13.5rem] overflow-hidden rounded-[1.4rem] border border-slate-200/80 bg-white/95 p-2 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.45)] backdrop-blur sm:w-[14.5rem]"
+                    id="admin-university-status-menu"
+                    role="menu"
+                  >
+                    <div className="px-2.5 pb-2 pt-1">
+                      <p className="text-[0.7rem] font-bold uppercase tracking-[0.24em] text-primary/75">
+                        Filtrar por estado
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      {universityStatusFilterOptions.map((option) => {
+                        const isSelected = statusFilter === option.value;
+
+                        return (
+                          <button
+                            key={option.value}
+                            aria-checked={isSelected}
+                            className={classNames(
+                              'flex w-full items-center justify-between rounded-[1rem] px-3 py-2.5 text-left text-sm font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                              isSelected
+                                ? 'bg-primary text-white shadow-[0_14px_30px_-20px_rgba(22,78,99,0.9)]'
+                                : 'bg-slate-50/70 text-ink hover:bg-slate-100',
+                            )}
+                            role="menuitemradio"
+                            type="button"
+                            onClick={() => {
+                              setStatusFilter(option.value);
+                              setIsStatusMenuOpen(false);
+                            }}
+                          >
+                            <span>{option.label}</span>
+                            <span
+                              className={classNames(
+                                'inline-flex h-5 w-5 items-center justify-center rounded-full',
+                                isSelected ? 'bg-white/18 text-white' : 'bg-white text-slate-300',
+                              )}
+                            >
+                              <Check aria-hidden="true" className="h-3.5 w-3.5" />
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
             </div>
           </div>
         </div>
