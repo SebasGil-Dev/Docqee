@@ -197,8 +197,7 @@ export const universityAdminContent = {
       deactivate: 'Inactivar',
       register: 'Registrar docente',
     },
-    description:
-      'Administra el listado de docentes vinculados a la universidad y su estado operativo.',
+    description: '',
     emptyState: 'No encontramos docentes con esos criterios.',
     meta: {
       description:
@@ -208,8 +207,7 @@ export const universityAdminContent = {
     searchLabel: 'Buscar docente',
     searchPlaceholder: 'Buscar por nombre o cedula...',
     successNoticePrefix: 'Actualizacion completada:',
-    subtitle:
-      'El modulo permite registrar docentes de forma manual o dejar su carga lista por lotes.',
+    subtitle: '',
     summaryLabel: 'Docentes registrados',
     tableTitle: 'Docentes registrados',
     title: 'Gestion de docentes',

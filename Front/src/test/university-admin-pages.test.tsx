@@ -58,7 +58,8 @@ async function fillStudentForm(user: ReturnType<typeof userEvent.setup>) {
     'juliana.marin@clinicadelnorte.edu.co',
   );
   await user.type(screen.getByLabelText(/^Celular$/i), '3002223344');
-  await user.selectOptions(screen.getByLabelText(/semestre/i), '7');
+  await user.click(screen.getByRole('button', { name: /semestre/i }));
+  await user.click(screen.getByRole('option', { name: /Semestre 7/i }));
 }
 
 async function fillTeacherForm(user: ReturnType<typeof userEvent.setup>) {
@@ -173,14 +174,17 @@ describe('University admin pages', () => {
     expect(screen.getByText(/Valentina Rios/i)).toBeInTheDocument();
     expect(screen.queryByText(/Tomas Herrera/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Camila Vega/i)).not.toBeInTheDocument();
-    expect(screen.getByText(/^Pendiente$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^Pendiente$/i, { selector: '[title="Envia la credencial primero"]' })).toBeInTheDocument();
 
     await user.clear(screen.getByLabelText(/buscar estudiante/i));
     await user.type(screen.getByLabelText(/buscar estudiante/i), 'valentina');
 
     expect(screen.getByText(/Valentina Rios/i)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /inactivar/i })).not.toBeInTheDocument();
-    expect(screen.getByText(/Envia la credencial primero/i)).toBeInTheDocument();
+    expect(screen.getByText(/^Pendiente$/i, { selector: '[title="Envia la credencial primero"]' })).toHaveAttribute(
+      'title',
+      'Envia la credencial primero',
+    );
   });
 
   it('registra docentes sin crear credenciales', async () => {
@@ -196,6 +200,33 @@ describe('University admin pages', () => {
 
     await user.click(screen.getByRole('link', { name: /^Credenciales$/i }));
     expect(screen.queryByText(/Patricia Mendoza/i)).not.toBeInTheDocument();
+  });
+
+  it('filtra docentes por estado y permite cambiar su estado operativo', async () => {
+    const user = userEvent.setup();
+
+    renderUniversityApp([ROUTES.universityTeachers]);
+
+    expect(screen.queryByText(/Administra el listado de docentes vinculados/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/El modulo permite registrar docentes/i)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /filtrar docentes por estado/i }));
+    await user.click(screen.getByRole('menuitemradio', { name: /Inactivo/i }));
+
+    expect(screen.getByText(/Laura Martinez/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Andres Villamizar/i)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /filtrar docentes por estado\. actual: inactivo/i }));
+    await user.click(screen.getByRole('menuitemradio', { name: /^Activo$/i }));
+    await user.clear(screen.getByLabelText(/buscar docente/i));
+    await user.type(screen.getByLabelText(/buscar docente/i), 'andres');
+
+    const teacherRow = screen.getByText(/Andres Villamizar/i).closest('tr');
+    expect(teacherRow).not.toBeNull();
+    await user.click(within(teacherRow!).getByRole('button', { name: /inactivar/i }));
+    await waitFor(() => {
+      expect(screen.queryByText(/Andres Villamizar/i)).not.toBeInTheDocument();
+    });
   });
 
   it('la carga masiva de estudiantes y docentes crea los registros mock esperados', async () => {

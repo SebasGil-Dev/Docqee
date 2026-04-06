@@ -350,8 +350,11 @@ export function UniversityStudentsPage() {
                         )}
                       >
                         {displayStatus === 'pending' ? (
-                          <span className="inline-flex rounded-full bg-amber-50 px-2.5 py-1.5 text-[0.72rem] font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">
-                            Envia la credencial primero
+                          <span
+                            className="inline-flex rounded-full bg-amber-50 px-2.5 py-1.5 text-[0.72rem] font-semibold text-amber-700 ring-1 ring-inset ring-amber-200"
+                            title="Envia la credencial primero"
+                          >
+                            Pendiente
                           </span>
                         ) : (
                           <button
