@@ -315,18 +315,19 @@ export function AdminCredentialsPage() {
           <div
             className={classNames(
               'admin-scrollbar min-h-0 overflow-x-auto',
+              'lg:overflow-x-visible',
               shouldEnableTableScroll && 'h-[15.25rem] overflow-y-auto sm:h-[16rem]',
             )}
           >
             <div className={classNames(shouldEnableTableScroll && 'pb-5 sm:pb-6')}>
-              <table className="min-w-full">
+              <table className="min-w-[63rem] w-full lg:min-w-0 lg:table-fixed">
                 <thead className="sticky top-0 z-10 bg-surface text-left">
                   <tr className="text-xs font-bold uppercase tracking-[0.22em] text-ink-muted">
-                    <th className="px-4 py-3.5 sm:px-5">Universidad</th>
-                    <th className="px-4 py-3.5">Administrador</th>
-                    <th className="px-4 py-3.5">Correo electronico</th>
-                    <th className="px-4 py-3.5">Estado</th>
-                    <th className="px-4 py-3.5 text-center sm:px-5">Acciones</th>
+                    <th className="px-4 py-3.5 lg:w-[24%] sm:px-5">Universidad</th>
+                    <th className="px-4 py-3.5 lg:w-[16%]">Administrador</th>
+                    <th className="px-4 py-3.5 lg:w-[24%]">Correo electronico</th>
+                    <th className="px-4 py-3.5 lg:w-[10%]">Estado</th>
+                    <th className="px-4 py-3.5 text-center lg:w-[26%] sm:px-5">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200/80">
@@ -344,7 +345,7 @@ export function AdminCredentialsPage() {
                           )}
                         >
                           <div className="space-y-1">
-                            <p className="text-sm font-semibold text-ink">
+                            <p className="text-sm font-semibold text-ink lg:text-[0.92rem]">
                               {credential.universityName}
                             </p>
                             <p className="text-xs text-ink-muted sm:text-[0.82rem]">
@@ -358,7 +359,9 @@ export function AdminCredentialsPage() {
                             isLast ? 'pb-4' : 'pb-3.5',
                           )}
                         >
-                          <p className="text-sm font-medium text-ink">{credential.administratorName}</p>
+                          <p className="text-sm font-medium text-ink lg:text-[0.92rem]">
+                            {credential.administratorName}
+                          </p>
                         </td>
                         <td
                           className={classNames(
@@ -392,9 +395,11 @@ export function AdminCredentialsPage() {
                               ) : null}
                             </div>
                           ) : (
-                            <div className="inline-flex items-center gap-2 text-sm text-ink-muted">
+                            <div className="inline-flex max-w-full items-start gap-2 text-sm text-ink-muted">
                               <Mail aria-hidden="true" className="h-4 w-4 shrink-0" />
-                              <span>{credential.administratorEmail}</span>
+                              <span className="break-all lg:break-words">
+                                {credential.administratorEmail}
+                              </span>
                             </div>
                           )}
                         </td>
@@ -449,7 +454,7 @@ export function AdminCredentialsPage() {
                                       : adminContent.credentialsPage.actionLabels.resend
                                   }
                                   className={classNames(
-                                    'inline-flex h-9 shrink-0 items-center justify-center rounded-full transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-auto sm:min-w-[6.9rem] sm:gap-1.5 sm:px-2.75 sm:py-2 sm:text-[0.7rem] sm:font-semibold lg:min-w-[7.5rem] lg:gap-2 lg:px-3',
+                                    'inline-flex h-9 shrink-0 items-center justify-center rounded-full transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-auto sm:min-w-0 sm:gap-1.25 sm:px-2.25 sm:py-2 sm:text-[0.68rem] sm:font-semibold lg:gap-1.5 lg:px-2.5',
                                     isGenerated
                                       ? 'w-9 bg-primary/10 text-primary hover:bg-primary/15 sm:w-auto'
                                       : 'w-9 bg-sky-50 text-sky-700 hover:bg-sky-100 sm:w-auto',
@@ -487,7 +492,7 @@ export function AdminCredentialsPage() {
                                 </button>
                                 <button
                                   aria-label={adminContent.credentialsPage.actionLabels.editEmail}
-                                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 sm:h-auto sm:w-auto sm:min-w-[8.2rem] sm:gap-1.5 sm:px-2.75 sm:py-2 sm:text-[0.7rem] sm:font-semibold lg:min-w-[8.9rem] lg:gap-2 lg:px-3"
+                                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 sm:h-auto sm:w-auto sm:min-w-0 sm:gap-1.25 sm:px-2.25 sm:py-2 sm:text-[0.68rem] sm:font-semibold lg:gap-1.5 lg:px-2.5"
                                   disabled={isLoading}
                                   type="button"
                                   onClick={() => handleStartEmailEdit(credential)}
@@ -499,7 +504,7 @@ export function AdminCredentialsPage() {
                                 </button>
                                 <button
                                   aria-label={adminContent.credentialsPage.actionLabels.delete}
-                                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-700 transition duration-200 hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200/70 sm:h-auto sm:w-auto sm:min-w-[6.7rem] sm:gap-1.5 sm:px-2.75 sm:py-2 sm:text-[0.7rem] sm:font-semibold lg:min-w-[7.3rem] lg:gap-2 lg:px-3"
+                                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-700 transition duration-200 hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200/70 sm:h-auto sm:w-auto sm:min-w-0 sm:gap-1.25 sm:px-2.25 sm:py-2 sm:text-[0.68rem] sm:font-semibold lg:gap-1.5 lg:px-2.5"
                                   disabled={isLoading}
                                   type="button"
                                   onClick={() => {
