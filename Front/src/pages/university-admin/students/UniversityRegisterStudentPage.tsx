@@ -225,7 +225,7 @@ export function UniversityRegisterStudentPage({
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden sm:gap-5 lg:h-auto lg:min-h-fit lg:gap-4 lg:overflow-visible lg:pr-2 xl:pr-3">
+    <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden sm:gap-5 lg:h-auto lg:min-h-fit lg:gap-3 lg:overflow-visible lg:pr-2 xl:pr-3">
       <Seo
         description={universityAdminContent.registerStudentPage.meta.description}
         noIndex
@@ -253,7 +253,7 @@ export function UniversityRegisterStudentPage({
         </SurfaceCard>
       ) : null}
       <AdminPanelCard
-        className="flex-1 lg:mr-2 lg:w-auto lg:flex-none lg:overflow-visible xl:mr-3"
+        className="flex-1 lg:-mt-1 lg:mr-2 lg:w-auto lg:flex-none lg:overflow-visible xl:mr-3"
         panelClassName="bg-slate-50 lg:h-auto lg:overflow-visible"
       >
         <form
