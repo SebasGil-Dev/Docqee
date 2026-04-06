@@ -326,7 +326,7 @@ export function AdminCredentialsPage() {
                     <th className="px-4 py-3.5">Administrador</th>
                     <th className="px-4 py-3.5">Correo electronico</th>
                     <th className="px-4 py-3.5">Estado</th>
-                    <th className="px-4 py-3.5 text-right sm:px-5">Acciones</th>
+                    <th className="px-4 py-3.5 text-center sm:px-5">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200/80">
@@ -408,11 +408,11 @@ export function AdminCredentialsPage() {
                         </td>
                         <td
                           className={classNames(
-                            'px-4 pt-3.5 text-right sm:px-5',
+                            'px-4 pt-3.5 sm:px-5',
                             isLast ? 'pb-4' : 'pb-3.5',
                           )}
                         >
-                          <div className="flex flex-nowrap items-center justify-end gap-1.5 sm:gap-2">
+                          <div className="flex flex-nowrap items-center justify-center gap-1.5 sm:gap-2">
                             {isEditing ? (
                               <>
                                 <button
