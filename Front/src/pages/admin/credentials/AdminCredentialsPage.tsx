@@ -323,10 +323,10 @@ export function AdminCredentialsPage() {
               <table className="min-w-[63rem] w-full lg:min-w-0 lg:table-fixed">
                 <thead className="sticky top-0 z-10 bg-surface text-left">
                   <tr className="text-xs font-bold uppercase tracking-[0.22em] text-ink-muted">
-                    <th className="px-4 py-3.5 lg:w-[27%] sm:px-5">Universidad</th>
-                    <th className="px-4 py-3.5 lg:w-[13%]">Administrador</th>
+                    <th className="px-4 py-3.5 lg:w-[26%] sm:px-5">Universidad</th>
+                    <th className="px-4 py-3.5 lg:w-[14%]">Administrador</th>
                     <th className="px-4 py-3.5 lg:w-[28%]">Correo electronico</th>
-                    <th className="px-4 py-3.5 lg:w-[10%]">Estado</th>
+                    <th className="px-4 py-3.5 text-center lg:w-[10%]">Estado</th>
                     <th className="px-4 py-3.5 text-center lg:w-[22%] sm:px-5">Acciones</th>
                   </tr>
                 </thead>
@@ -337,7 +337,7 @@ export function AdminCredentialsPage() {
                     const isLast = index === filteredCredentialRows.length - 1;
 
                     return (
-                      <tr key={credential.id} className="align-top">
+                      <tr key={credential.id} className="align-middle">
                         <td
                           className={classNames(
                             'px-4 pt-3.5 sm:px-5',
@@ -408,11 +408,13 @@ export function AdminCredentialsPage() {
                         </td>
                         <td
                           className={classNames(
-                            'px-4 pt-3.5',
+                            'px-4 pt-3.5 text-center',
                             isLast ? 'pb-4' : 'pb-3.5',
                           )}
                         >
-                          <AdminStatusBadge entity="credential" status={credential.deliveryStatus} />
+                          <div className="flex justify-center">
+                            <AdminStatusBadge entity="credential" status={credential.deliveryStatus} />
+                          </div>
                         </td>
                         <td
                           className={classNames(
@@ -425,7 +427,7 @@ export function AdminCredentialsPage() {
                               <>
                                 <button
                                   aria-label={adminContent.credentialsPage.actionLabels.saveEmail}
-                                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition duration-200 hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-auto sm:w-auto sm:min-w-[8.25rem] sm:gap-2 sm:px-3 sm:py-2 sm:text-xs sm:font-semibold"
+                                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition duration-200 hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:w-auto sm:min-w-[7.9rem] sm:gap-2 sm:px-3 sm:py-2 sm:text-xs sm:font-semibold"
                                   disabled={isLoading}
                                   type="button"
                                   onClick={() =>
@@ -439,7 +441,7 @@ export function AdminCredentialsPage() {
                                 </button>
                                 <button
                                   aria-label="Cancelar"
-                                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 sm:h-auto sm:w-auto sm:min-w-[8.25rem] sm:gap-2 sm:px-3 sm:py-2 sm:text-xs sm:font-semibold"
+                                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 sm:w-auto sm:min-w-[7.9rem] sm:gap-2 sm:px-3 sm:py-2 sm:text-xs sm:font-semibold"
                                   disabled={isLoading}
                                   type="button"
                                   onClick={handleCancelEmailEdit}
@@ -457,7 +459,7 @@ export function AdminCredentialsPage() {
                                       : adminContent.credentialsPage.actionLabels.resend
                                   }
                                   className={classNames(
-                                    'inline-flex h-9 shrink-0 items-center justify-center rounded-full transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-auto sm:min-w-0 sm:gap-1.25 sm:px-2.25 sm:py-2 sm:text-[0.68rem] sm:font-semibold lg:gap-1.5 lg:px-2.5',
+                                    'inline-flex h-9 shrink-0 items-center justify-center rounded-full transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:min-w-[7.25rem] sm:gap-1.5 sm:px-2.5 sm:py-2 sm:text-[0.7rem] sm:font-semibold',
                                     isGenerated
                                       ? 'w-9 bg-primary/10 text-primary hover:bg-primary/15 sm:w-auto'
                                       : 'w-9 bg-sky-50 text-sky-700 hover:bg-sky-100 sm:w-auto',
@@ -495,7 +497,7 @@ export function AdminCredentialsPage() {
                                 </button>
                                 <button
                                   aria-label={adminContent.credentialsPage.actionLabels.editEmail}
-                                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 sm:h-auto sm:w-auto sm:min-w-0 sm:gap-1.25 sm:px-2.25 sm:py-2 sm:text-[0.68rem] sm:font-semibold lg:gap-1.5 lg:px-2.5"
+                                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 sm:w-auto sm:min-w-[7.25rem] sm:gap-1.5 sm:px-2.5 sm:py-2 sm:text-[0.7rem] sm:font-semibold"
                                   disabled={isLoading}
                                   type="button"
                                   onClick={() => handleStartEmailEdit(credential)}
@@ -507,7 +509,7 @@ export function AdminCredentialsPage() {
                                 </button>
                                 <button
                                   aria-label={adminContent.credentialsPage.actionLabels.delete}
-                                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-700 transition duration-200 hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200/70 sm:h-auto sm:w-auto sm:min-w-0 sm:gap-1.25 sm:px-2.25 sm:py-2 sm:text-[0.68rem] sm:font-semibold lg:gap-1.5 lg:px-2.5"
+                                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-700 transition duration-200 hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200/70"
                                   disabled={isLoading}
                                   type="button"
                                   onClick={() => {
@@ -537,9 +539,6 @@ export function AdminCredentialsPage() {
                                   }}
                                 >
                                   <Trash2 aria-hidden="true" className="h-4 w-4" />
-                                  <span className="hidden sm:inline whitespace-nowrap">
-                                    {adminContent.credentialsPage.actionLabels.delete}
-                                  </span>
                                 </button>
                               </>
                             )}
