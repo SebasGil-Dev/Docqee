@@ -333,7 +333,7 @@ describe('Admin pages', () => {
     ).toBeInTheDocument();
   });
 
-  it('muestra una bottom navigation movil solo en universidades y permite navegar a credenciales', async () => {
+  it('mantiene la bottom navigation movil en todo el modulo admin y actualiza la opcion activa', async () => {
     mockMatchMedia(true);
     const user = userEvent.setup();
 
@@ -369,12 +369,40 @@ describe('Admin pages', () => {
       await screen.findByRole('heading', { name: /Envio de Credenciales/i }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole('navigation', {
-        name: /navegacion inferior administrativa/i,
-      }),
+      screen.queryByRole('button', { name: /cerrar menu lateral/i }),
     ).not.toBeInTheDocument();
+
+    const credentialsNavigation = screen.getByRole('navigation', {
+      name: /navegacion inferior administrativa/i,
+    });
+
     expect(
-      screen.getByRole('button', { name: /cerrar menu lateral/i }),
+      within(credentialsNavigation).getByRole('link', {
+        name: /Envio de Credenciales/i,
+      }),
+    ).toHaveAttribute('aria-current', 'page');
+
+    await user.click(
+      within(credentialsNavigation).getByRole('link', {
+        name: /^Universidades$/i,
+      }),
+    );
+
+    await user.click(screen.getByRole('link', { name: /registrar universidad/i }));
+
+    expect(
+      await screen.findByLabelText(/nombre de la universidad/i),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /cerrar menu lateral/i }),
+    ).not.toBeInTheDocument();
+
+    const registerNavigation = screen.getByRole('navigation', {
+      name: /navegacion inferior administrativa/i,
+    });
+
+    expect(
+      within(registerNavigation).getByRole('link', { name: /^Universidades$/i }),
+    ).toHaveAttribute('aria-current', 'page');
   });
 });
