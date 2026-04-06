@@ -144,7 +144,7 @@ export function AdminDropdownField({
                 Selecciona una opcion
               </p>
             </div>
-            <div className="space-y-1">
+            <div className="admin-scrollbar max-h-[16rem] space-y-1 overflow-y-auto pr-1">
               {options.map((option) => {
                 const isSelected = option.id === value;
 
