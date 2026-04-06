@@ -152,7 +152,8 @@ export function AdminShell({
                       Docqee
                     </p>
                     <p className="mt-[0.2rem] truncate whitespace-nowrap text-[0.58rem] font-extrabold uppercase leading-none tracking-[0.16em] text-primary sm:text-[0.62rem] sm:tracking-[0.18em]">
-                      {content.title}
+                      <span className="sm:hidden">Admin Plataforma</span>
+                      <span className="hidden sm:inline">{content.title}</span>
                     </p>
                   </div>
                 </Link>
@@ -161,7 +162,7 @@ export function AdminShell({
                 <span className="flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-full bg-primary text-[0.68rem] font-extrabold uppercase tracking-[0.12em] text-white sm:h-8 sm:w-8 sm:text-[0.72rem]">
                   {adminInitials}
                 </span>
-                <p className="truncate text-[0.78rem] font-semibold text-ink sm:text-[0.82rem]">
+                <p className="hidden truncate text-[0.78rem] font-semibold text-ink sm:block sm:text-[0.82rem]">
                   {adminFullName}
                 </p>
               </div>
