@@ -9,6 +9,7 @@ import { estado_simple_enum, tipo_cuenta_enum, tipo_envio_credencial_enum } from
 import * as bcrypt from 'bcrypt';
 
 import { PrismaService } from '@/shared/database/prisma.service';
+import { MailService } from '@/shared/mail/mail.service';
 import type { RequestUser } from '@/shared/types/request-user.type';
 import {
   buildCityFrontId,
@@ -23,7 +24,10 @@ import { CreateUniversityDto } from './dto/create-university.dto';
 
 @Injectable()
 export class PlatformAdminService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
+  ) {}
 
   async listUniversities(user: RequestUser) {
     this.assertPlatformAdmin(user);
@@ -298,6 +302,17 @@ export class PlatformAdminService {
     });
 
     const updatedCredential = await this.findPendingCredential(credentialIdentifier);
+    const adminUniversity = updatedCredential.cuenta_acceso.cuenta_admin_universidad;
+
+    if (adminUniversity) {
+      const adminName = `${adminUniversity.nombres} ${adminUniversity.apellidos}`;
+      await this.mailService.sendUniversityAdminCredentials(
+        updatedCredential.cuenta_acceso.correo,
+        adminName,
+        adminUniversity.universidad.nombre,
+        temporaryPassword,
+      );
+    }
 
     return {
       credential: this.toPendingCredentialDto(updatedCredential),
