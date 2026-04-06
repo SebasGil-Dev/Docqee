@@ -292,6 +292,7 @@ describe('Admin pages', () => {
     await user.click(
       within(credentialRow!).getByRole('button', { name: /^Enviar$/i }),
     );
+    await user.click(screen.getByRole('button', { name: /si, enviar/i }));
 
     expect(within(credentialRow!).getByText(/^Enviada$/i)).toBeInTheDocument();
     expect(
@@ -339,13 +340,13 @@ describe('Admin pages', () => {
     ).toBeInTheDocument();
 
     await user.click(within(credentialRow!).getByRole('button', { name: /^Enviar$/i }));
+    await user.click(screen.getByRole('button', { name: /si, enviar/i }));
 
     expect(within(credentialRow!).getByText(/^Enviada$/i)).toBeInTheDocument();
   });
 
   it('eliminar remueve la credencial pendiente y la universidad asociada', async () => {
     const user = userEvent.setup();
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     renderAdminApp([ROUTES.adminCredentials]);
 
@@ -357,6 +358,7 @@ describe('Admin pages', () => {
     await user.click(
       within(credentialRow!).getByRole('button', { name: /eliminar/i }),
     );
+    await user.click(screen.getByRole('button', { name: /si, eliminar/i }));
 
     expect(
       screen.queryByText(/Corporacion Oral del Caribe/i),
@@ -371,7 +373,6 @@ describe('Admin pages', () => {
 
   it('restaura el seed inicial al simular un nuevo arranque de la app', async () => {
     const user = userEvent.setup();
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     const firstRender = renderAdminApp([ROUTES.adminCredentials]);
     const credentialRow = screen
@@ -382,6 +383,7 @@ describe('Admin pages', () => {
     await user.click(
       within(credentialRow!).getByRole('button', { name: /eliminar/i }),
     );
+    await user.click(screen.getByRole('button', { name: /si, eliminar/i }));
     expect(
       screen.queryByText(/Corporacion Oral del Caribe/i),
     ).not.toBeInTheDocument();

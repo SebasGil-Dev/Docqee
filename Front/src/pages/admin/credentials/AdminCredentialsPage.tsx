@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { AdminConfirmationDialog } from '@/components/admin/AdminConfirmationDialog';
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
@@ -29,6 +30,16 @@ type CredentialRow = PendingCredential & {
 };
 
 type CredentialFilterValue = 'all' | 'generated' | 'pending' | 'sent';
+
+type PendingCredentialConfirmation =
+  | {
+      action: 'delete';
+      credential: CredentialRow;
+    }
+  | {
+      action: 'resend' | 'send';
+      credential: CredentialRow;
+    };
 
 const credentialFilterOptions: Array<{
   label: string;
@@ -73,6 +84,8 @@ export function AdminCredentialsPage() {
   const [emailDraft, setEmailDraft] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  const [pendingConfirmation, setPendingConfirmation] = useState<PendingCredentialConfirmation | null>(null);
+  const [isConfirmationSubmitting, setIsConfirmationSubmitting] = useState(false);
   const filterMenuRef = useRef<HTMLDivElement | null>(null);
   const credentialRows = useMemo<CredentialRow[]>(
     () =>
@@ -136,6 +149,14 @@ export function AdminCredentialsPage() {
     setEmailError(null);
   };
 
+  const handleCloseConfirmation = () => {
+    if (isConfirmationSubmitting) {
+      return;
+    }
+
+    setPendingConfirmation(null);
+  };
+
   const handleSaveEmail = (credentialId: string, administratorName: string) => {
     const normalizedEmail = emailDraft.trim().toLowerCase();
 
@@ -156,6 +177,44 @@ export function AdminCredentialsPage() {
       setEmailDraft('');
       setEmailError(null);
       setFeedbackMessage(`El correo de ${administratorName} se actualizo correctamente.`);
+    })();
+  };
+
+  const handleConfirmPendingAction = () => {
+    if (!pendingConfirmation) {
+      return;
+    }
+
+    setIsConfirmationSubmitting(true);
+
+    void (async () => {
+      if (pendingConfirmation.action === 'delete') {
+        const deleted = await deleteCredential(pendingConfirmation.credential.id);
+
+        if (deleted) {
+          if (editingCredentialId === pendingConfirmation.credential.id) {
+            handleCancelEmailEdit();
+          }
+
+          setFeedbackMessage('La credencial pendiente se elimino correctamente.');
+        }
+      } else {
+        const temporaryPassword =
+          pendingConfirmation.action === 'send'
+            ? await sendCredential(pendingConfirmation.credential.id)
+            : await resendCredential(pendingConfirmation.credential.id);
+
+        if (temporaryPassword) {
+          setFeedbackMessage(
+            pendingConfirmation.action === 'send'
+              ? `Credencial enviada. Contrasena temporal: ${temporaryPassword}`
+              : `Credencial reenviada. Contrasena temporal: ${temporaryPassword}`,
+          );
+        }
+      }
+
+      setIsConfirmationSubmitting(false);
+      setPendingConfirmation(null);
     })();
   };
 
@@ -184,6 +243,28 @@ export function AdminCredentialsPage() {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isFilterMenuOpen]);
+
+  const confirmationTitle =
+    pendingConfirmation?.action === 'delete'
+      ? 'Quieres eliminar esta credencial?'
+      : pendingConfirmation?.action === 'send'
+        ? 'Quieres enviar la credencial?'
+        : 'Quieres reenviar la credencial?';
+
+  const confirmationConfirmLabel =
+    pendingConfirmation?.action === 'delete'
+      ? 'Si, eliminar'
+      : pendingConfirmation?.action === 'send'
+        ? 'Si, enviar'
+        : 'Si, reenviar';
+
+  const confirmationDescription = pendingConfirmation
+    ? pendingConfirmation.action === 'delete'
+      ? `Se eliminara la credencial pendiente de ${pendingConfirmation.credential.universityName}.`
+      : pendingConfirmation.action === 'send'
+        ? `Se enviara la credencial al correo ${pendingConfirmation.credential.administratorEmail}.`
+        : `Se reenviara la credencial al correo ${pendingConfirmation.credential.administratorEmail}.`
+    : '';
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-6 overflow-hidden">
@@ -458,30 +539,24 @@ export function AdminCredentialsPage() {
                                       ? adminContent.credentialsPage.actionLabels.send
                                       : adminContent.credentialsPage.actionLabels.resend
                                   }
-                                  className={classNames(
-                                    'inline-flex h-8 shrink-0 items-center justify-center rounded-full transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:min-w-[6.6rem] sm:gap-1.25 sm:px-2.15 sm:py-1.75 sm:text-[0.66rem] sm:font-semibold',
+                                  title={
                                     isGenerated
-                                      ? 'w-8 bg-primary/10 text-primary hover:bg-primary/15 sm:w-auto'
-                                      : 'w-8 bg-sky-50 text-sky-700 hover:bg-sky-100 sm:w-auto',
+                                      ? adminContent.credentialsPage.actionLabels.send
+                                      : adminContent.credentialsPage.actionLabels.resend
+                                  }
+                                  className={classNames(
+                                    'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                                    isGenerated
+                                      ? 'bg-primary/10 text-primary hover:bg-primary/15'
+                                      : 'bg-sky-50 text-sky-700 hover:bg-sky-100',
                                   )}
                                   disabled={isLoading}
                                   type="button"
                                   onClick={() => {
-                                    void (async () => {
-                                      const temporaryPassword = isGenerated
-                                        ? await sendCredential(credential.id)
-                                        : await resendCredential(credential.id);
-
-                                      if (!temporaryPassword) {
-                                        return;
-                                      }
-
-                                      setFeedbackMessage(
-                                        isGenerated
-                                          ? `Credencial enviada. Contrasena temporal: ${temporaryPassword}`
-                                          : `Credencial reenviada. Contrasena temporal: ${temporaryPassword}`,
-                                      );
-                                    })();
+                                    setPendingConfirmation({
+                                      action: isGenerated ? 'send' : 'resend',
+                                      credential,
+                                    });
                                   }}
                                 >
                                   {isGenerated ? (
@@ -489,53 +564,28 @@ export function AdminCredentialsPage() {
                                   ) : (
                                     <RotateCcw aria-hidden="true" className="h-3.5 w-3.5" />
                                   )}
-                                  <span className="hidden sm:inline whitespace-nowrap">
-                                    {isGenerated
-                                      ? adminContent.credentialsPage.actionLabels.send
-                                      : adminContent.credentialsPage.actionLabels.resend}
-                                  </span>
                                 </button>
                                 <button
                                   aria-label={adminContent.credentialsPage.actionLabels.editEmail}
-                                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 sm:h-auto sm:w-auto sm:min-w-[6.85rem] sm:gap-1.25 sm:px-2.15 sm:py-1.75 sm:text-[0.66rem] sm:font-semibold"
+                                  title={adminContent.credentialsPage.actionLabels.editEmail}
+                                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200"
                                   disabled={isLoading}
                                   type="button"
                                   onClick={() => handleStartEmailEdit(credential)}
                                 >
                                   <PencilLine aria-hidden="true" className="h-3.5 w-3.5" />
-                                  <span className="hidden sm:inline whitespace-nowrap">
-                                    {adminContent.credentialsPage.actionLabels.editEmail}
-                                  </span>
                                 </button>
                                 <button
                                   aria-label={adminContent.credentialsPage.actionLabels.delete}
+                                  title={adminContent.credentialsPage.actionLabels.delete}
                                   className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-700 transition duration-200 hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200/70"
                                   disabled={isLoading}
                                   type="button"
                                   onClick={() => {
-                                    const confirmed = window.confirm(
-                                      '¿Estas seguro de eliminar esta credencial pendiente?',
-                                    );
-
-                                    if (!confirmed) {
-                                      return;
-                                    }
-
-                                    void (async () => {
-                                      const deleted = await deleteCredential(credential.id);
-
-                                      if (!deleted) {
-                                        return;
-                                      }
-
-                                      if (editingCredentialId === credential.id) {
-                                        handleCancelEmailEdit();
-                                      }
-
-                                      setFeedbackMessage(
-                                        'La credencial pendiente se elimino correctamente.',
-                                      );
-                                    })();
+                                    setPendingConfirmation({
+                                      action: 'delete',
+                                      credential,
+                                    });
                                   }}
                                 >
                                   <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
@@ -558,6 +608,17 @@ export function AdminCredentialsPage() {
           </div>
         )}
       </AdminPanelCard>
+      <AdminConfirmationDialog
+        cancelLabel="No, cancelar"
+        confirmLabel={confirmationConfirmLabel}
+        description={confirmationDescription}
+        isOpen={Boolean(pendingConfirmation)}
+        isSubmitting={isConfirmationSubmitting}
+        title={confirmationTitle}
+        tone={pendingConfirmation?.action === 'delete' ? 'danger' : 'primary'}
+        onCancel={handleCloseConfirmation}
+        onConfirm={handleConfirmPendingAction}
+      />
     </div>
   );
 }
