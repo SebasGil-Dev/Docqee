@@ -343,6 +343,8 @@ export class AuthService {
   private async ensureDefaultPlatformAdmin() {
     const adminEmail = this.configService.get<string>('auth.platformAdminEmail') ?? 'admin@docqee.local';
     const adminPassword = this.configService.get<string>('auth.platformAdminPassword') ?? 'Admin123!';
+    const adminNombres = this.configService.get<string>('auth.platformAdminNombres') ?? 'Admin';
+    const adminApellidos = this.configService.get<string>('auth.platformAdminApellidos') ?? 'Docqee';
 
     const existingAdmin = await this.prisma.cuenta_acceso.findUnique({
       where: { correo: adminEmail },
@@ -370,8 +372,8 @@ export class AuthService {
       await transaction.cuenta_admin_plataforma.create({
         data: {
           id_cuenta: account.id_cuenta,
-          nombres: 'Admin',
-          apellidos: 'Docqee',
+          nombres: adminNombres,
+          apellidos: adminApellidos,
         },
       });
     });
