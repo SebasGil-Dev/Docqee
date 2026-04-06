@@ -118,8 +118,7 @@ export function AdminShell({
     ? 'Abrir menu lateral'
     : 'Cerrar menu lateral';
   const homePath = content.homePath ?? ROUTES.home;
-  const showMobileBottomNavigation =
-    isMobileViewport && location.pathname === ROUTES.adminUniversities;
+  const showMobileBottomNavigation = isMobileViewport;
 
   useEffect(() => {
     try {
