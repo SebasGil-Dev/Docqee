@@ -100,10 +100,8 @@ export const universityAdminContent = {
   },
   registerStudentPage: {
     backLabel: 'Volver a estudiantes',
-    credentialNotice:
-      'Al registrar un estudiante se genera automaticamente una credencial inicial en estado generated.',
-    description:
-      'Completa los datos basicos del estudiante para dejar su acceso inicial listo desde frontend.',
+    credentialNotice: '',
+    description: '',
     meta: {
       description:
         'Registra estudiantes dentro del modulo universitario de Docqee.',
@@ -177,8 +175,7 @@ export const universityAdminContent = {
       deactivate: 'Inactivar',
       register: 'Registrar estudiante',
     },
-    description:
-      'Consulta, busca y gestiona a los estudiantes vinculados a la universidad.',
+    description: '',
     emptyState: 'No encontramos estudiantes con esos criterios.',
     meta: {
       description:
@@ -188,8 +185,7 @@ export const universityAdminContent = {
     searchLabel: 'Buscar estudiante',
     searchPlaceholder: 'Buscar por nombre o cedula...',
     successNoticePrefix: 'Actualizacion completada:',
-    subtitle:
-      'Cada estudiante registrado puede activarse, inactivarse o dejar lista su credencial inicial.',
+    subtitle: '',
     summaryLabel: 'Estudiantes registrados',
     tableTitle: 'Estudiantes registrados',
     title: 'Gestion de estudiantes',

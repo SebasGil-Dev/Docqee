@@ -158,6 +158,29 @@ describe('University admin pages', () => {
     expect(within(credentialRow!).getByText(/^Generada$/i)).toBeInTheDocument();
   });
 
+  it('filtra estudiantes por estado derivado y por busqueda', async () => {
+    const user = userEvent.setup();
+
+    renderUniversityApp([ROUTES.universityStudents]);
+
+    expect(screen.getByText(/Valentina Rios/i)).toBeInTheDocument();
+    expect(screen.getByText(/Tomas Herrera/i)).toBeInTheDocument();
+    expect(screen.getByText(/Camila Vega/i)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /filtrar estudiantes por estado/i }));
+    await user.click(screen.getByRole('menuitemradio', { name: /Pendiente/i }));
+
+    expect(screen.getByText(/Valentina Rios/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Tomas Herrera/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Camila Vega/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/^Pendiente$/i)).toBeInTheDocument();
+
+    await user.clear(screen.getByLabelText(/buscar estudiante/i));
+    await user.type(screen.getByLabelText(/buscar estudiante/i), 'valentina');
+
+    expect(screen.getByText(/Valentina Rios/i)).toBeInTheDocument();
+  });
+
   it('registra docentes sin crear credenciales', async () => {
     const user = userEvent.setup();
 
