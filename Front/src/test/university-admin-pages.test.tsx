@@ -113,6 +113,17 @@ describe('University admin pages', () => {
     const institutionName = screen.getByLabelText(/nombre de la universidad/i);
     await user.clear(institutionName);
     await user.type(institutionName, 'Universidad Clinica del Centro');
+    await user.clear(screen.getByLabelText(/^Nombres$/i));
+    await user.type(screen.getByLabelText(/^Nombres$/i), 'Jonathan');
+    await user.clear(screen.getByLabelText(/^Apellidos$/i));
+    await user.type(screen.getByLabelText(/^Apellidos$/i), 'Acevedo');
+    await user.type(screen.getByLabelText(/nombre de la sede/i), 'Sede Centro');
+    await user.type(screen.getByLabelText(/direccion/i), 'Cra. 45 # 10-22');
+    await user.selectOptions(screen.getByLabelText(/^Ciudad$/i), 'city-cali');
+    await screen.findByRole('option', { name: /Comuna 17/i });
+    await user.selectOptions(screen.getByLabelText(/^Localidad$/i), 'locality-cali-comuna-17');
+    await user.click(screen.getByRole('button', { name: /agregar sede/i }));
+    expect(screen.getByText(/Sede Centro/i)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /guardar cambios/i }));
 
     expect(await screen.findByRole('status')).toHaveTextContent(/se guardaron correctamente/i);
@@ -121,6 +132,7 @@ describe('University admin pages', () => {
     await user.type(institutionName, 'Temporal');
     await user.click(screen.getByRole('button', { name: /restablecer/i }));
     expect(institutionName).toHaveValue('Universidad Clinica del Centro');
+    expect(screen.getByText(/Sede Centro/i)).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /cambiar contrasena/i }));
     expect(

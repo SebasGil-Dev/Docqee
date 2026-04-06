@@ -633,7 +633,10 @@ export type PersonOperationalStatus = 'active' | 'inactive';
 
 export type UniversityInstitutionProfile = {
   adminEmail: string;
+  adminFirstName: string;
+  adminLastName: string;
   adminPhone: string;
+  campuses: UniversityCampus[];
   id: string;
   logoAlt: string;
   logoFileName: string | null;
@@ -643,6 +646,17 @@ export type UniversityInstitutionProfile = {
   mainLocality: string;
   mainLocalityId: string;
   name: string;
+};
+
+export type UniversityCampus = {
+  address: string;
+  city: string;
+  cityId: string;
+  id: string;
+  locality: string;
+  localityId: string;
+  name: string;
+  status: PersonOperationalStatus;
 };
 
 export type UniversityStudent = {
@@ -704,7 +718,10 @@ export type UniversityAdminModuleState = {
 
 export type UniversityInstitutionFormValues = {
   adminEmail: string;
+  adminFirstName: string;
+  adminLastName: string;
   adminPhone: string;
+  campuses: UniversityCampus[];
   cityId: string;
   logoFileName: string | null;
   logoSrc: string | null;

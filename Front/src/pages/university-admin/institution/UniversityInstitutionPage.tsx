@@ -4,9 +4,13 @@ import {
   KeyRound,
   Mail,
   MapPin,
+  PencilLine,
   Phone,
+  Plus,
+  Power,
   RotateCcw,
   Save,
+  UserRound,
 } from 'lucide-react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -23,6 +27,7 @@ import type {
   CityOption,
   LocalityOption,
   PatientRegisterCatalogDataSource,
+  UniversityCampus,
   UniversityInstitutionFormErrors,
   UniversityInstitutionFormField,
   UniversityInstitutionFormValues,
@@ -41,6 +46,26 @@ const passwordInitialValues: UniversityPasswordFormValues = {
   confirmPassword: '',
   currentPassword: '',
   newPassword: '',
+};
+
+type CampusFormValues = {
+  address: string;
+  cityId: string;
+  localityId: string;
+  name: string;
+  status: UniversityCampus['status'];
+};
+
+type CampusFormField = keyof CampusFormValues;
+
+type CampusFormErrors = Partial<Record<CampusFormField, string>>;
+
+const campusInitialValues: CampusFormValues = {
+  address: '',
+  cityId: '',
+  localityId: '',
+  name: '',
+  status: 'active',
 };
 
 function createEmptyCatalogState<T>(
@@ -81,7 +106,10 @@ function getInstitutionInitialValues(
 ): UniversityInstitutionFormValues {
   return {
     adminEmail: institutionProfile.adminEmail,
+    adminFirstName: institutionProfile.adminFirstName,
+    adminLastName: institutionProfile.adminLastName,
     adminPhone: institutionProfile.adminPhone,
+    campuses: institutionProfile.campuses.map((campus) => ({ ...campus })),
     cityId: institutionProfile.mainCityId,
     logoFileName: institutionProfile.logoFileName,
     logoSrc: institutionProfile.logoSrc,
@@ -100,10 +128,18 @@ function validateInstitutionField(
     return undefined;
   }
 
+  if (field === 'campuses') {
+    return undefined;
+  }
+
   if (!normalizedValue) {
     switch (field) {
       case 'adminEmail':
         return 'El correo del administrador es obligatorio';
+      case 'adminFirstName':
+        return 'El nombre del administrador es obligatorio';
+      case 'adminLastName':
+        return 'El apellido del administrador es obligatorio';
       case 'adminPhone':
         return 'El celular del administrador es obligatorio';
       case 'cityId':
@@ -119,6 +155,34 @@ function validateInstitutionField(
 
   if (field === 'adminEmail' && !isValidEmail(normalizedValue)) {
     return 'Ingresa un correo electronico valido';
+  }
+
+  return undefined;
+}
+
+function validateCampusField(
+  field: CampusFormField,
+  value: string,
+): string | undefined {
+  const normalizedValue = value.trim();
+
+  if (field === 'status') {
+    return undefined;
+  }
+
+  if (!normalizedValue) {
+    switch (field) {
+      case 'address':
+        return 'La direccion de la sede es obligatoria';
+      case 'cityId':
+        return 'La ciudad de la sede es obligatoria';
+      case 'localityId':
+        return 'La localidad de la sede es obligatoria';
+      case 'name':
+        return 'El nombre de la sede es obligatorio';
+      default:
+        return undefined;
+    }
   }
 
   return undefined;
@@ -176,6 +240,14 @@ export function UniversityInstitutionPage({
   const [passwordValues, setPasswordValues] = useState(passwordInitialValues);
   const [passwordErrors, setPasswordErrors] = useState<UniversityPasswordFormErrors>({});
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
+  const [campusDraft, setCampusDraft] = useState(campusInitialValues);
+  const [campusErrors, setCampusErrors] = useState<CampusFormErrors>({});
+  const [editingCampusId, setEditingCampusId] = useState<string | null>(null);
+  const [campusLocalitiesState, setCampusLocalitiesState] = useState<AsyncCatalogState<LocalityOption>>(
+    createEmptyCatalogState('idle'),
+  );
+  const adminFirstNameRef = useRef<HTMLInputElement>(null);
+  const adminLastNameRef = useRef<HTMLInputElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
   const cityRef = useRef<HTMLSelectElement>(null);
   const localityRef = useRef<HTMLSelectElement>(null);
@@ -186,7 +258,10 @@ export function UniversityInstitutionPage({
     () =>
       ({
         adminEmail: emailRef,
+        adminFirstName: adminFirstNameRef,
+        adminLastName: adminLastNameRef,
         adminPhone: phoneRef,
+        campuses: { current: null },
         cityId: cityRef,
         logoFileName: { current: null },
         logoSrc: { current: null },
@@ -201,6 +276,9 @@ export function UniversityInstitutionPage({
 
   useEffect(() => {
     setValues(getInstitutionInitialValues(institutionProfile));
+    setCampusDraft(campusInitialValues);
+    setCampusErrors({});
+    setEditingCampusId(null);
   }, [institutionProfile]);
 
   useEffect(() => {
@@ -286,6 +364,53 @@ export function UniversityInstitutionPage({
     };
   }, [catalogDataSource, values.cityId]);
 
+  useEffect(() => {
+    if (!campusDraft.cityId) {
+      setCampusLocalitiesState(createEmptyCatalogState('idle'));
+      return;
+    }
+
+    let isCancelled = false;
+
+    async function loadCampusLocalities() {
+      setCampusLocalitiesState(createEmptyCatalogState('loading'));
+
+      try {
+        const localities = await resolveCatalogResult(
+          catalogDataSource.loadLocalitiesByCity
+            ? catalogDataSource.loadLocalitiesByCity(campusDraft.cityId)
+            : catalogDataSource.getLocalitiesByCity(campusDraft.cityId),
+        );
+
+        if (isCancelled) {
+          return;
+        }
+
+        setCampusLocalitiesState({
+          error: null,
+          options: localities,
+          status: 'ready',
+        });
+      } catch {
+        if (isCancelled) {
+          return;
+        }
+
+        setCampusLocalitiesState({
+          error: 'No pudimos cargar las localidades de la sede',
+          options: [],
+          status: 'error',
+        });
+      }
+    }
+
+    void loadCampusLocalities();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [campusDraft.cityId, catalogDataSource]);
+
   const handleInstitutionFieldChange = (
     field: UniversityInstitutionFormField,
     nextValue: string | null,
@@ -326,7 +451,11 @@ export function UniversityInstitutionPage({
   const handleInstitutionFieldBlur = (field: UniversityInstitutionFormField) => {
     setErrors((currentErrors) => {
       const nextErrors = { ...currentErrors };
-      const nextFieldError = validateInstitutionField(field, values[field]);
+      const rawValue = values[field];
+      const nextFieldError = validateInstitutionField(
+        field,
+        typeof rawValue === 'string' || rawValue === null ? rawValue : null,
+      );
 
       if (nextFieldError) {
         nextErrors[field] = nextFieldError;
@@ -367,12 +496,18 @@ export function UniversityInstitutionPage({
       'name',
       'cityId',
       'mainLocalityId',
+      'adminFirstName',
+      'adminLastName',
       'adminEmail',
       'adminPhone',
     ];
 
     fieldOrder.forEach((field) => {
-      const nextFieldError = validateInstitutionField(field, values[field]);
+      const rawValue = values[field];
+      const nextFieldError = validateInstitutionField(
+        field,
+        typeof rawValue === 'string' || rawValue === null ? rawValue : null,
+      );
 
       if (nextFieldError) {
         nextErrors[field] = nextFieldError;
@@ -401,11 +536,128 @@ export function UniversityInstitutionPage({
 
   const handleReset = () => {
     setValues(getInstitutionInitialValues(institutionProfile));
+    setCampusDraft(campusInitialValues);
+    setCampusErrors({});
+    setEditingCampusId(null);
     setErrors({});
     setPasswordErrors({});
     setPasswordValues(passwordInitialValues);
     setPasswordMessage(null);
     setSaveMessage(null);
+  };
+
+  const handleCampusFieldChange = (
+    field: CampusFormField,
+    nextValue: string,
+  ) => {
+    setCampusDraft((currentValues) =>
+      field === 'cityId'
+        ? {
+            ...currentValues,
+            cityId: nextValue,
+            localityId: '',
+          }
+        : {
+            ...currentValues,
+            [field]: nextValue,
+          },
+    );
+
+    setCampusErrors((currentErrors) => {
+      const nextErrors = { ...currentErrors };
+      const nextFieldError = validateCampusField(field, nextValue);
+
+      if (nextFieldError) {
+        nextErrors[field] = nextFieldError;
+      } else {
+        delete nextErrors[field];
+      }
+
+      if (field === 'cityId') {
+        delete nextErrors.localityId;
+      }
+
+      return nextErrors;
+    });
+  };
+
+  const handleCampusFieldBlur = (field: CampusFormField) => {
+    setCampusErrors((currentErrors) => {
+      const nextErrors = { ...currentErrors };
+      const nextFieldError = validateCampusField(field, campusDraft[field]);
+
+      if (nextFieldError) {
+        nextErrors[field] = nextFieldError;
+      } else {
+        delete nextErrors[field];
+      }
+
+      return nextErrors;
+    });
+  };
+
+  const handleCampusEdit = (campus: UniversityCampus) => {
+    setEditingCampusId(campus.id);
+    setCampusDraft({
+      address: campus.address,
+      cityId: campus.cityId,
+      localityId: campus.localityId,
+      name: campus.name,
+      status: campus.status,
+    });
+    setCampusErrors({});
+  };
+
+  const handleCampusReset = () => {
+    setEditingCampusId(null);
+    setCampusDraft(campusInitialValues);
+    setCampusErrors({});
+  };
+
+  const handleCampusSubmit = () => {
+    const nextErrors: CampusFormErrors = {};
+    const fieldOrder: CampusFormField[] = ['name', 'cityId', 'localityId', 'address'];
+
+    fieldOrder.forEach((field) => {
+      const nextFieldError = validateCampusField(field, campusDraft[field]);
+
+      if (nextFieldError) {
+        nextErrors[field] = nextFieldError;
+      }
+    });
+
+    setCampusErrors(nextErrors);
+
+    if (fieldOrder.some((field) => nextErrors[field])) {
+      return;
+    }
+
+    const selectedCity = citiesState.options.find((city) => city.id === campusDraft.cityId);
+    const selectedLocality = campusLocalitiesState.options.find(
+      (locality) => locality.id === campusDraft.localityId,
+    );
+
+    const nextCampus: UniversityCampus = {
+      address: campusDraft.address.trim(),
+      city: selectedCity?.label ?? '',
+      cityId: campusDraft.cityId,
+      id: editingCampusId ?? `campus-${Date.now()}`,
+      locality: selectedLocality?.label ?? '',
+      localityId: campusDraft.localityId,
+      name: campusDraft.name.trim(),
+      status: editingCampusId ? campusDraft.status : 'active',
+    };
+
+    setValues((currentValues) => ({
+      ...currentValues,
+      campuses: editingCampusId
+        ? currentValues.campuses.map((campus) =>
+            campus.id === editingCampusId ? nextCampus : campus,
+          )
+        : [nextCampus, ...currentValues.campuses],
+    }));
+    setSaveMessage(null);
+    handleCampusReset();
   };
 
   const handlePasswordFieldChange = (
@@ -496,6 +748,13 @@ export function UniversityInstitutionPage({
       : localitiesState.status === 'error'
         ? 'No pudimos cargar las localidades'
         : 'Selecciona una localidad';
+  const campusLocalityPlaceholder = !campusDraft.cityId
+    ? 'Selecciona una ciudad primero'
+    : campusLocalitiesState.status === 'loading'
+      ? 'Cargando localidades...'
+      : campusLocalitiesState.status === 'error'
+        ? 'No pudimos cargar las localidades'
+        : 'Selecciona una localidad';
   const logoInitials = values.name
     .split(' ')
     .filter(Boolean)
@@ -541,13 +800,10 @@ export function UniversityInstitutionPage({
               >
                 <div className="space-y-6">
                   <div className="space-y-5 rounded-[1.75rem] border border-slate-200/80 bg-white p-5 sm:p-6">
-                    <div className="space-y-1">
+                    <div>
                       <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
                         {universityAdminContent.institutionPage.sectionTitles.institution}
                       </h2>
-                      <p className="text-sm leading-6 text-ink-muted">
-                        {universityAdminContent.institutionPage.sectionDescriptions.institution}
-                      </p>
                     </div>
                     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(15rem,17rem)] xl:items-start">
                       <div className="grid gap-5 lg:grid-cols-2">
@@ -653,18 +909,203 @@ export function UniversityInstitutionPage({
                         </div>
                       </div>
                     </div>
+                    <div className="rounded-[1.5rem] border border-slate-200/80 bg-slate-50/70 p-4 sm:p-5">
+                      <div className="space-y-4">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                          <div>
+                            <h3 className="font-headline text-lg font-extrabold tracking-tight text-ink">
+                              Sedes de la universidad
+                            </h3>
+                            <p className="text-sm leading-6 text-ink-muted">
+                              Agrega sedes y actualiza su estado desde este modulo.
+                            </p>
+                          </div>
+                          <span className="inline-flex items-center justify-center rounded-full bg-white px-3 py-1 text-xs font-semibold text-ink-muted ring-1 ring-slate-200">
+                            {values.campuses.length} registradas
+                          </span>
+                        </div>
+                        <div className="grid gap-4 lg:grid-cols-2">
+                          <AdminTextField
+                            error={campusErrors.name}
+                            icon={Building2}
+                            id="university-campus-name"
+                            label="Nombre de la sede"
+                            name="campusName"
+                            placeholder="Ej. Sede Norte"
+                            value={campusDraft.name}
+                            onBlur={() => handleCampusFieldBlur('name')}
+                            onChange={(value) => handleCampusFieldChange('name', value)}
+                          />
+                          <AdminTextField
+                            error={campusErrors.address}
+                            icon={MapPin}
+                            id="university-campus-address"
+                            label="Direccion"
+                            name="campusAddress"
+                            placeholder="Ingresa la direccion"
+                            value={campusDraft.address}
+                            onBlur={() => handleCampusFieldBlur('address')}
+                            onChange={(value) => handleCampusFieldChange('address', value)}
+                          />
+                          <AdminSelectField
+                            disabled={citiesState.status !== 'ready' || citiesState.options.length === 0}
+                            error={campusErrors.cityId}
+                            helpText={
+                              !campusErrors.cityId && citiesState.status === 'error'
+                                ? citiesState.error ?? undefined
+                                : undefined
+                            }
+                            icon={MapPin}
+                            id="university-campus-city"
+                            label="Ciudad"
+                            name="campusCityId"
+                            options={citiesState.options}
+                            placeholder={cityPlaceholder}
+                            value={campusDraft.cityId}
+                            onBlur={() => handleCampusFieldBlur('cityId')}
+                            onChange={(value) => handleCampusFieldChange('cityId', value)}
+                          />
+                          <AdminSelectField
+                            disabled={
+                              !campusDraft.cityId ||
+                              campusLocalitiesState.status !== 'ready' ||
+                              campusLocalitiesState.options.length === 0
+                            }
+                            error={campusErrors.localityId}
+                            helpText={
+                              !campusErrors.localityId && campusLocalitiesState.status === 'error'
+                                ? campusLocalitiesState.error ?? undefined
+                                : undefined
+                            }
+                            icon={MapPin}
+                            id="university-campus-locality"
+                            label="Localidad"
+                            name="campusLocalityId"
+                            options={campusLocalitiesState.options}
+                            placeholder={campusLocalityPlaceholder}
+                            value={campusDraft.localityId}
+                            onBlur={() => handleCampusFieldBlur('localityId')}
+                            onChange={(value) => handleCampusFieldChange('localityId', value)}
+                          />
+                          {editingCampusId ? (
+                            <AdminSelectField
+                              error={campusErrors.status}
+                              icon={Power}
+                              id="university-campus-status"
+                              label="Estado"
+                              name="campusStatus"
+                              options={[
+                                { id: 'active', label: 'Activa' },
+                                { id: 'inactive', label: 'Inactiva' },
+                              ]}
+                              placeholder="Selecciona un estado"
+                              value={campusDraft.status}
+                              onBlur={() => handleCampusFieldBlur('status')}
+                              onChange={(value) => handleCampusFieldChange('status', value)}
+                            />
+                          ) : (
+                            <div className="space-y-1.5">
+                              <span className="block text-sm font-semibold text-ink">Estado inicial</span>
+                              <div className="inline-flex min-h-[3rem] items-center rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-emerald-700 ring-1 ring-slate-200">
+                                Activa
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap items-center justify-center gap-3">
+                          {editingCampusId ? (
+                            <button
+                              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-ink transition duration-300 hover:bg-slate-100"
+                              type="button"
+                              onClick={handleCampusReset}
+                            >
+                              <RotateCcw aria-hidden="true" className="h-4 w-4" />
+                              <span>Cancelar edicion</span>
+                            </button>
+                          ) : null}
+                          <button
+                            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-4 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
+                            type="button"
+                            onClick={handleCampusSubmit}
+                          >
+                            {editingCampusId ? (
+                              <Save aria-hidden="true" className="h-4 w-4" />
+                            ) : (
+                              <Plus aria-hidden="true" className="h-4 w-4" />
+                            )}
+                            <span>{editingCampusId ? 'Guardar sede' : 'Agregar sede'}</span>
+                          </button>
+                        </div>
+                        <div className="grid gap-3">
+                          {values.campuses.map((campus) => (
+                            <div
+                              key={campus.id}
+                              className="flex flex-col gap-3 rounded-[1.35rem] border border-slate-200/80 bg-white p-4 sm:flex-row sm:items-start sm:justify-between"
+                            >
+                              <div className="space-y-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <h4 className="text-sm font-semibold text-ink">{campus.name}</h4>
+                                  <span
+                                    className={
+                                      campus.status === 'active'
+                                        ? 'inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-[0.7rem] font-semibold text-emerald-700 ring-1 ring-emerald-200'
+                                        : 'inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[0.7rem] font-semibold text-slate-600 ring-1 ring-slate-200'
+                                    }
+                                  >
+                                    {campus.status === 'active' ? 'Activa' : 'Inactiva'}
+                                  </span>
+                                </div>
+                                <p className="text-sm text-ink-muted">{campus.address}</p>
+                                <p className="text-xs font-medium uppercase tracking-[0.18em] text-ink-muted">
+                                  {campus.city} · {campus.locality}
+                                </p>
+                              </div>
+                              <button
+                                className="inline-flex items-center justify-center gap-2 self-start rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-semibold text-primary transition duration-300 hover:bg-slate-100"
+                                type="button"
+                                onClick={() => handleCampusEdit(campus)}
+                              >
+                                <PencilLine aria-hidden="true" className="h-4 w-4" />
+                                <span>Editar</span>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="space-y-5 rounded-[1.75rem] border border-slate-200/80 bg-white p-5 sm:p-6">
-                    <div className="space-y-1">
+                    <div>
                       <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
                         {universityAdminContent.institutionPage.sectionTitles.administrator}
                       </h2>
-                      <p className="text-sm leading-6 text-ink-muted">
-                        {universityAdminContent.institutionPage.sectionDescriptions.administrator}
-                      </p>
                     </div>
                     <div className="grid gap-5 lg:grid-cols-2">
+                      <AdminTextField
+                        error={errors.adminFirstName}
+                        icon={UserRound}
+                        id="university-institution-admin-first-name"
+                        inputRef={adminFirstNameRef}
+                        label="Nombres"
+                        name="adminFirstName"
+                        placeholder="Ingresa los nombres"
+                        value={values.adminFirstName}
+                        onBlur={() => handleInstitutionFieldBlur('adminFirstName')}
+                        onChange={(value) => handleInstitutionFieldChange('adminFirstName', value)}
+                      />
+                      <AdminTextField
+                        error={errors.adminLastName}
+                        icon={UserRound}
+                        id="university-institution-admin-last-name"
+                        inputRef={adminLastNameRef}
+                        label="Apellidos"
+                        name="adminLastName"
+                        placeholder="Ingresa los apellidos"
+                        value={values.adminLastName}
+                        onBlur={() => handleInstitutionFieldBlur('adminLastName')}
+                        onChange={(value) => handleInstitutionFieldChange('adminLastName', value)}
+                      />
                       <div className="lg:col-span-2">
                         <AdminTextField
                           error={errors.adminEmail}
@@ -693,7 +1134,7 @@ export function UniversityInstitutionPage({
                         onBlur={() => handleInstitutionFieldBlur('adminPhone')}
                         onChange={(value) => handleInstitutionFieldChange('adminPhone', value)}
                       />
-                      <div className="flex items-end">
+                      <div className="flex items-end lg:col-span-2">
                         <button
                           className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-primary transition duration-300 hover:bg-slate-100"
                           type="button"
@@ -828,7 +1269,7 @@ export function UniversityInstitutionPage({
               </SurfaceCard>
             </div>
           </div>
-          <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-200/80 bg-white px-6 py-4 sm:px-7">
+          <div className="flex flex-wrap items-center justify-center gap-3 border-t border-slate-200/80 bg-white px-6 py-4 sm:px-7">
             <button
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-ink transition duration-300 hover:bg-slate-100"
               disabled={isLoading}

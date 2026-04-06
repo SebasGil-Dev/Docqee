@@ -72,11 +72,11 @@ export const universityAdminContent = {
       reset: 'Restablecer',
       save: 'Guardar cambios',
       savePassword: 'Actualizar contrasena',
-      uploadLogo: 'Actualizar logo',
+      uploadLogo: 'Subir logo',
     },
     description: '',
     logoHelper:
-      'Sube un archivo PNG o JPG para previsualizar el logo antes de guardar los cambios.',
+      'Sube un PNG o JPG para previsualizar el logo',
     meta: {
       description:
         'Edita la informacion institucional del modulo universitario de Docqee.',
@@ -88,8 +88,8 @@ export const universityAdminContent = {
     passwordSuccessMessage:
       'La contrasena se actualizo correctamente en esta demo frontend.',
     sectionDescriptions: {
-      administrator: 'Actualiza el correo y celular del administrador universitario.',
-      institution: 'Gestiona el nombre, logo y ubicacion principal de la universidad.',
+      administrator: '',
+      institution: '',
     },
     sectionTitles: {
       administrator: 'Datos del administrador',

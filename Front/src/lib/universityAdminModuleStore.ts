@@ -5,6 +5,7 @@ import type {
   PersonOperationalStatus,
   RegisterStudentFormValues,
   RegisterTeacherFormValues,
+  UniversityCampus,
   UniversityAdminModuleState,
   UniversityBulkTemplateType,
   UniversityInstitutionFormValues,
@@ -69,10 +70,38 @@ type UniversityAdminStoreState = UniversityAdminModuleState & {
   isReady: boolean;
 };
 
+function createMockCampuses(): UniversityCampus[] {
+  return [
+    {
+      address: 'Cra. 15 # 93-41',
+      city: 'Bogota',
+      cityId: 'city-bogota',
+      id: 'campus-1',
+      locality: 'Usaquen',
+      localityId: 'locality-bogota-usaquen',
+      name: 'Sede Norte',
+      status: 'active',
+    },
+    {
+      address: 'Av. 33 # 74B-11',
+      city: 'Medellin',
+      cityId: 'city-medellin',
+      id: 'campus-2',
+      locality: 'Laureles',
+      localityId: 'locality-medellin-laureles',
+      name: 'Sede Clinica Laureles',
+      status: 'inactive',
+    },
+  ];
+}
+
 function createMockState(): UniversityAdminStoreState {
   const institutionProfile: UniversityInstitutionProfile = {
     adminEmail: 'coordinacion@clinicadelnorte.edu.co',
+    adminFirstName: 'Jonathan',
+    adminLastName: 'Acevedo',
     adminPhone: '3005550134',
+    campuses: createMockCampuses(),
     id: 'institution-1',
     logoAlt: 'Logo institucional de Universidad Clinica del Norte',
     logoFileName: null,
@@ -217,7 +246,10 @@ function createRuntimeInitialState(): UniversityAdminStoreState {
     errorMessage: null,
     institutionProfile: {
       adminEmail: '',
+      adminFirstName: '',
+      adminLastName: '',
       adminPhone: '',
+      campuses: [],
       id: '',
       logoAlt: 'Logo institucional',
       logoFileName: null,
@@ -528,7 +560,10 @@ function updateInstitutionProfileMock(values: UniversityInstitutionFormValues) {
     institutionProfile: {
       ...state.institutionProfile,
       adminEmail: normalizeEmail(values.adminEmail),
+      adminFirstName: normalizeText(values.adminFirstName),
+      adminLastName: normalizeText(values.adminLastName),
       adminPhone: normalizeText(values.adminPhone),
+      campuses: values.campuses.map((campus) => ({ ...campus })),
       logoFileName: values.logoFileName,
       logoSrc: values.logoSrc,
       mainCity: city?.label ?? state.institutionProfile.mainCity,
@@ -663,7 +698,10 @@ async function loadRuntimeState(forceRefresh = false) {
       updateState({
         credentials,
         errorMessage: null,
-        institutionProfile,
+        institutionProfile: {
+          ...createRuntimeInitialState().institutionProfile,
+          ...institutionProfile,
+        },
         isLoading: false,
         isReady: true,
         students,
@@ -951,7 +989,13 @@ async function updateInstitutionProfile(values: UniversityInstitutionFormValues)
     updateState({
       ...state,
       errorMessage: null,
-      institutionProfile,
+      institutionProfile: {
+        ...state.institutionProfile,
+        ...institutionProfile,
+        adminFirstName: normalizeText(values.adminFirstName),
+        adminLastName: normalizeText(values.adminLastName),
+        campuses: values.campuses.map((campus) => ({ ...campus })),
+      },
       isLoading: false,
       isReady: true,
     });
