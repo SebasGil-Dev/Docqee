@@ -55,8 +55,6 @@ export function UniversityTeachersPage() {
       (statusFilter === 'all' || teacher.status === statusFilter)
     );
   });
-  const shouldEnableTableScroll = filteredTeachers.length > 3;
-
   useEffect(() => {
     if (!isStatusMenuOpen) {
       return undefined;
@@ -264,12 +262,7 @@ export function UniversityTeachersPage() {
           </div>
         </div>
         {filteredTeachers.length > 0 ? (
-          <div
-            className={classNames(
-              'admin-scrollbar min-h-0 overflow-x-auto',
-              shouldEnableTableScroll && 'h-[15rem] overflow-y-auto sm:h-[15.75rem]',
-            )}
-          >
+          <div className="admin-scrollbar min-h-0 flex-1 overflow-x-auto overflow-y-auto">
             <table className="min-w-full">
               <thead className="sticky top-0 z-10 bg-slate-100 text-left">
                 <tr className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-ink-muted">
@@ -355,7 +348,7 @@ export function UniversityTeachersPage() {
             </table>
           </div>
         ) : (
-          <div className="px-4 py-8 text-center sm:px-5">
+          <div className="flex flex-1 items-center justify-center px-4 py-8 text-center sm:px-5">
             <p className="text-sm font-medium text-ink-muted">
               {isLoading
                 ? 'Cargando docentes...'
