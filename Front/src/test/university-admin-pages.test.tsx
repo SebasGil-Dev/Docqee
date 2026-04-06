@@ -179,6 +179,8 @@ describe('University admin pages', () => {
     await user.type(screen.getByLabelText(/buscar estudiante/i), 'valentina');
 
     expect(screen.getByText(/Valentina Rios/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /inactivar/i })).not.toBeInTheDocument();
+    expect(screen.getByText(/Envia la credencial primero/i)).toBeInTheDocument();
   });
 
   it('registra docentes sin crear credenciales', async () => {
@@ -259,6 +261,15 @@ describe('University admin pages', () => {
     expect(generatedRow).not.toBeNull();
     await user.click(within(generatedRow!).getByRole('button', { name: /^Enviar$/i }));
     expect(within(generatedRow!).getByText(/^Enviada$/i)).toBeInTheDocument();
+    await user.click(screen.getByRole('link', { name: /^Estudiantes$/i }));
+    const activatedStudentRow = screen.getByText(/Valentina Rios/i).closest('tr');
+    expect(activatedStudentRow).not.toBeNull();
+    expect(within(activatedStudentRow!).getByText(/^Activo$/i)).toBeInTheDocument();
+    expect(
+      within(activatedStudentRow!).getByRole('button', { name: /inactivar/i }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('link', { name: /^Credenciales$/i }));
 
     const sentRow = screen.getByText(/Tomas Herrera/i).closest('tr');
     expect(sentRow).not.toBeNull();
