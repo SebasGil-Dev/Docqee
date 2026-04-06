@@ -165,7 +165,7 @@ export function UniversityBulkUploadPage() {
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-6 overflow-hidden">
+    <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden sm:gap-5 lg:h-auto lg:min-h-fit lg:overflow-visible">
       <Seo
         description={universityAdminContent.bulkUploadPage.meta.description}
         noIndex
@@ -180,11 +180,14 @@ export function UniversityBulkUploadPage() {
           <p role="alert">{errorMessage}</p>
         </SurfaceCard>
       ) : null}
-      <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
-        <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-7">
-          <div className="grid gap-6 xl:grid-cols-[minmax(18rem,22rem)_minmax(0,1fr)]">
-            <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-5 sm:p-6">
-              <div className="space-y-5">
+      <AdminPanelCard
+        className="flex-1 lg:w-full lg:flex-none lg:overflow-visible"
+        panelClassName="bg-[#f4f8ff] lg:h-auto lg:overflow-visible"
+      >
+        <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6 sm:py-5 lg:min-h-fit lg:flex-none lg:overflow-visible lg:px-6 lg:py-4">
+          <div className="grid gap-5 xl:grid-cols-[minmax(18rem,21rem)_minmax(0,1fr)]">
+            <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-5 lg:p-4.5 xl:p-5">
+              <div className="space-y-4 lg:space-y-3.5">
                 <div className="space-y-1">
                   <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
                     Plantilla base
@@ -193,7 +196,7 @@ export function UniversityBulkUploadPage() {
                     {universityAdminContent.bulkUploadPage.templateDescription}
                   </p>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {universityAdminContent.bulkUploadPage.templateOptions.map((option) => {
                     const isSelected = uploadState.templateType === option.value;
 
@@ -201,7 +204,7 @@ export function UniversityBulkUploadPage() {
                       <button
                         key={option.value}
                         className={classNames(
-                          'flex w-full items-start justify-between rounded-[1.5rem] border px-4 py-4 text-left transition duration-300',
+                          'flex w-full items-start justify-between rounded-[1.5rem] border px-4 py-3.5 text-left transition duration-300',
                           isSelected
                             ? 'border-primary bg-primary/5 text-primary'
                             : 'border-slate-200 bg-slate-50 text-ink hover:border-primary/40 hover:bg-white',
@@ -232,8 +235,8 @@ export function UniversityBulkUploadPage() {
                 </button>
               </div>
             </SurfaceCard>
-            <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-5 sm:p-6">
-              <div className="space-y-6">
+            <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-5 lg:p-4.5 xl:p-5">
+              <div className="space-y-5 lg:space-y-4">
                 <div className="space-y-1">
                   <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
                     {universityAdminContent.bulkUploadPage.uploadCardTitle}
@@ -243,7 +246,7 @@ export function UniversityBulkUploadPage() {
                   </p>
                 </div>
                 <label
-                  className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-[1.75rem] border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center transition duration-300 hover:border-primary/50 hover:bg-white"
+                  className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-[1.75rem] border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center transition duration-300 hover:border-primary/50 hover:bg-white lg:py-7"
                   htmlFor="bulk-upload-input"
                 >
                   <span className="inline-flex h-14 w-14 items-center justify-center rounded-[1.5rem] bg-white text-primary ring-1 ring-slate-200">
