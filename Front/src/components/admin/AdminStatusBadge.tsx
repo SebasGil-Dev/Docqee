@@ -11,7 +11,11 @@ type AdminStatusBadgeProps =
       status: CredentialDeliveryStatus;
     }
   | {
-      entity: 'student' | 'teacher';
+      entity: 'student';
+      status: PersonOperationalStatus | 'pending';
+    }
+  | {
+      entity: 'teacher';
       status: PersonOperationalStatus;
     }
   | {
@@ -27,6 +31,7 @@ const badgeStyles = {
   person: {
     active: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
     inactive: 'bg-slate-100 text-slate-700 ring-slate-200',
+    pending: 'bg-amber-50 text-amber-700 ring-amber-200',
   },
   university: {
     active: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
@@ -43,6 +48,7 @@ const badgeLabels = {
   person: {
     active: 'Activo',
     inactive: 'Inactivo',
+    pending: 'Pendiente',
   },
   university: {
     active: 'Activa',

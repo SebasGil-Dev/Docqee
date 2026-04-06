@@ -240,7 +240,10 @@ export function UniversityRegisterStudentPage({
             <span>{universityAdminContent.registerStudentPage.backLabel}</span>
           </Link>
         }
-        description={universityAdminContent.registerStudentPage.description}
+        actionClassName="sm:absolute sm:right-0 sm:top-1/2 sm:-translate-y-1/2"
+        className="relative gap-3 sm:min-h-[4rem] sm:justify-center"
+        description=""
+        titleClassName="text-center"
         title={universityAdminContent.registerStudentPage.title}
       />
       {errorMessage ? (
@@ -249,24 +252,9 @@ export function UniversityRegisterStudentPage({
         </SurfaceCard>
       ) : null}
       <AdminPanelCard className="flex-1" panelClassName="bg-slate-50">
-        <div className="border-b border-slate-200/80 bg-white px-6 py-5 sm:px-7">
-          <div className="flex items-start gap-4">
-            <span className="inline-flex h-12 w-12 items-center justify-center rounded-[1.5rem] bg-primary/12 text-primary">
-              <GraduationCap aria-hidden="true" className="h-5 w-5" />
-            </span>
-            <div>
-              <h2 className="font-headline text-2xl font-extrabold tracking-tight text-ink">
-                {universityAdminContent.registerStudentPage.title}
-              </h2>
-            </div>
-          </div>
-        </div>
         <form className="flex min-h-0 flex-1 flex-col overflow-hidden" noValidate onSubmit={handleSubmit}>
           <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-7">
             <div className="space-y-6 pb-6">
-              <SurfaceCard className="border border-sky-200 bg-sky-50/90 text-sm text-sky-900 shadow-none" paddingClassName="p-4">
-                <p>{universityAdminContent.registerStudentPage.credentialNotice}</p>
-              </SurfaceCard>
               <div className="grid gap-5 lg:grid-cols-2">
                 <AdminTextField
                   error={errors.firstName}
