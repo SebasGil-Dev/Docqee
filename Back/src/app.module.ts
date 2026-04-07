@@ -13,6 +13,7 @@ import { UniversityAdminModule } from './modules/university-admin/university-adm
 import { StudentsModule } from './modules/students/students.module';
 import { TeachersModule } from './modules/teachers/teachers.module';
 import { CredentialsModule } from './modules/credentials/credentials.module';
+import { PatientPortalModule } from './modules/patient-portal/patient-portal.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { CredentialsModule } from './modules/credentials/credentials.module';
     StudentsModule,
     TeachersModule,
     CredentialsModule,
+    PatientPortalModule,
   ],
 })
 export class AppModule {}
