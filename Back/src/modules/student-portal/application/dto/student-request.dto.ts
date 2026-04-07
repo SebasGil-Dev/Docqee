@@ -7,6 +7,7 @@ export class StudentRequestDto {
   status!: 'PENDIENTE' | 'ACEPTADA' | 'RECHAZADA' | 'CERRADA' | 'CANCELADA';
   sentAt!: string;
   responseAt!: string | null;
+  conversationId!: string | null;
   conversationEnabled!: boolean;
   appointmentsCount!: number;
 }
