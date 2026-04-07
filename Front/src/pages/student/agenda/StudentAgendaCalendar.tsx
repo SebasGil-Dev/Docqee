@@ -255,7 +255,7 @@ export function StudentAgendaCalendar({
                 <button
                   key={option}
                   className={classNames(
-                    'rounded-full px-3 py-1.25 text-[0.7rem] font-semibold transition duration-200',
+                    'rounded-full px-3 py-1 text-[0.7rem] font-semibold transition duration-200',
                     viewMode === option
                       ? 'bg-brand-gradient text-white shadow-[0_12px_24px_-18px_rgba(0,100,124,0.55)]'
                       : 'text-ink-muted hover:text-ink',
@@ -307,7 +307,7 @@ export function StudentAgendaCalendar({
               ].map(([label, tone]) => (
                 <span
                   key={label}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/70 bg-white/78 px-2.25 py-1"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/70 bg-white/78 px-2 py-1"
                 >
                   <span className={classNames('h-2.5 w-2.5 rounded-full', getToneClasses(tone as AgendaTone).dot)} />
                   <span>{label}</span>
@@ -319,7 +319,7 @@ export function StudentAgendaCalendar({
         <div
           className={classNames(
             viewMode === 'month'
-              ? 'grid grid-cols-7 gap-1.5'
+              ? 'grid grid-cols-7 gap-1 sm:gap-1.5'
               : viewMode === 'week'
                 ? 'grid gap-1.5 xl:grid-cols-7'
                 : 'space-y-2',
@@ -375,7 +375,7 @@ export function StudentAgendaCalendar({
                 <div
                   key={dayKey}
                   className={classNames(
-                    'rounded-[1rem] border px-2.5 py-2.25 shadow-[0_10px_24px_-28px_rgba(15,23,42,0.25)]',
+                    'rounded-[1rem] border px-2.5 py-2 shadow-[0_10px_24px_-28px_rgba(15,23,42,0.25)]',
                     dayKey === selectedDateKey
                       ? 'border-primary/45 bg-[linear-gradient(180deg,rgba(22,78,99,0.08)_0%,rgba(255,255,255,0.96)_100%)]'
                       : 'border-slate-200/85 bg-white/72',
@@ -426,7 +426,7 @@ export function StudentAgendaCalendar({
               <button
                 key={dayKey}
                 className={classNames(
-                  'flex min-h-[5.9rem] flex-col rounded-[0.95rem] border px-2 py-1.5 text-left transition duration-200 xl:min-h-[6.2rem]',
+                  'flex min-h-[4.9rem] flex-col rounded-[0.9rem] border px-1.5 py-1 text-left transition duration-200 sm:min-h-[5.2rem] sm:px-2 sm:py-1.5 xl:min-h-[5.5rem] xl:px-2 xl:py-1.5 2xl:min-h-[6rem]',
                   dayKey === selectedDateKey
                     ? 'border-primary/45 bg-[linear-gradient(180deg,rgba(22,78,99,0.08)_0%,rgba(255,255,255,0.96)_100%)]'
                     : 'border-slate-200/85 bg-white/72 hover:border-primary/25 hover:bg-white',
@@ -435,34 +435,36 @@ export function StudentAgendaCalendar({
                 type="button"
                 onClick={() => setSelectedDateKey(dayKey)}
               >
-                <div className="mb-1.5 flex items-center justify-between">
+                <div className="mb-1 flex items-center justify-between">
                   <span
                     className={classNames(
-                      'inline-flex h-6 w-6 items-center justify-center rounded-full text-[0.82rem] font-bold',
+                      'inline-flex h-5 w-5 items-center justify-center rounded-full text-[0.74rem] font-bold sm:h-5.5 sm:w-5.5 sm:text-[0.78rem] xl:h-6 xl:w-6 xl:text-[0.82rem]',
                       dayKey === DEFAULT_SELECTED_DATE_KEY ? 'bg-brand-gradient text-white' : 'text-ink',
                     )}
                   >
                     {day.getDate()}
                   </span>
-                  <span className="text-[0.58rem] font-semibold uppercase tracking-[0.12em] text-ink-muted">
-                    {dayEvents.length}
-                  </span>
+                  {dayEvents.length > 0 ? (
+                    <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[0.52rem] font-semibold uppercase tracking-[0.08em] text-ink-muted sm:text-[0.56rem]">
+                      {dayEvents.length}
+                    </span>
+                  ) : null}
                 </div>
-                <div className="space-y-1">
-                  {dayEvents.slice(0, 2).map((event) => (
+                <div className="space-y-0.5 sm:space-y-1">
+                  {dayEvents.slice(0, 1).map((event) => (
                     <div
                       key={event.id}
                       className={classNames(
-                        'truncate rounded-[0.72rem] px-2 py-1 text-[0.61rem] font-semibold',
+                        'truncate rounded-[0.68rem] px-1.5 py-1 text-[0.56rem] font-semibold sm:text-[0.58rem] xl:px-2 xl:py-1 xl:text-[0.61rem]',
                         getToneClasses(event.tone).pill,
                       )}
                     >
                       {event.timeLabel} | {event.title}
                     </div>
                   ))}
-                  {dayEvents.length > 2 ? (
-                    <p className="text-[0.58rem] font-semibold text-ink-muted">
-                      +{dayEvents.length - 2} mas
+                  {dayEvents.length > 1 ? (
+                    <p className="text-[0.54rem] font-semibold text-ink-muted sm:text-[0.56rem]">
+                      +{dayEvents.length - 1} mas
                     </p>
                   ) : null}
                 </div>
