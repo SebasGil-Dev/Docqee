@@ -156,8 +156,7 @@ export const studentContent = {
       activate: 'Activar',
       deactivate: 'Inactivar',
     },
-    description:
-      'Controla los tratamientos y sedes que hacen parte de tu oferta activa dentro de la plataforma.',
+    description: '',
     emptySitesState: 'No hay sedes asociadas a tu practica en este momento.',
     emptyTreatmentsState: 'No hay tratamientos asociados a tu perfil en este momento.',
     meta: {

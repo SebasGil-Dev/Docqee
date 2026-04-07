@@ -1,4 +1,5 @@
 import {
+  Building2,
   CalendarDays,
   Check,
   GraduationCap,
@@ -238,14 +239,10 @@ export function StudentTreatmentsPage() {
                 <h2 className="max-w-[14rem] truncate font-headline text-[1.05rem] font-extrabold tracking-tight text-white sm:max-w-[16rem] sm:text-[1.18rem] xl:max-w-[20rem]">
                   Bienvenido, {profile.firstName} {profile.lastName}
                 </h2>
-                <span className="inline-flex min-w-0 items-center rounded-full bg-white/12 px-2.5 py-1">
-                  <span className="max-w-[8.5rem] truncate text-[0.75rem] font-semibold text-white sm:max-w-[10rem] xl:max-w-[12rem]">
-                    {profile.firstName} {profile.lastName.charAt(0).toUpperCase()}.
-                  </span>
-                </span>
               </div>
               <div className="flex min-w-0 flex-wrap items-center gap-2">
-                <span className="inline-flex min-w-0 items-center rounded-full bg-white/12 px-2.5 py-1 text-[0.75rem] font-semibold text-white/88">
+                <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-[0.75rem] font-semibold text-white/88">
+                  <Building2 aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
                   <span className="max-w-[10rem] truncate sm:max-w-[12rem] xl:max-w-[14rem]">
                     {profile.universityName}
                   </span>
@@ -311,20 +308,18 @@ export function StudentTreatmentsPage() {
             </div>
             <div className="flex flex-wrap items-center gap-2.5 self-start">
               <div
-                className="inline-flex items-center gap-2.5 rounded-[1.2rem] border border-sky-200/80 bg-sky-50 px-3.5 py-2.5 text-sky-950 shadow-[0_16px_34px_-24px_rgba(14,116,144,0.38)]"
+                className="inline-flex items-center gap-2 rounded-[1.2rem] border border-sky-200/80 bg-sky-50 px-3.5 py-2.5 text-sky-950 shadow-[0_16px_34px_-24px_rgba(14,116,144,0.38)]"
                 data-testid="student-review-comments-dashboard"
               >
                 <span className="inline-flex h-9 w-9 items-center justify-center rounded-[0.95rem] bg-white text-primary shadow-[0_14px_24px_-20px_rgba(14,116,144,0.55)]">
                   <MessageSquareMore aria-hidden="true" className="h-4.5 w-4.5" />
                 </span>
-                <div className="space-y-0.5">
-                  <p className="text-[0.64rem] font-bold uppercase tracking-[0.18em] text-sky-700/80">
-                    Comentarios
-                  </p>
-                  <p className="font-headline text-[1.28rem] font-extrabold tracking-tight text-sky-950">
-                    {commentsCount}
-                  </p>
-                </div>
+                <p className="text-[0.64rem] font-bold uppercase tracking-[0.18em] text-sky-700/80">
+                  Comentarios
+                </p>
+                <p className="font-headline text-[1.28rem] font-extrabold tracking-tight text-sky-950">
+                  {commentsCount}
+                </p>
               </div>
               <div className="relative" ref={reviewRatingMenuRef}>
                 <button
