@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { tipo_cuenta_enum } from '@prisma/client';
+import { estado_simple_enum, tipo_cuenta_enum } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 import { PrismaService } from '@/shared/database/prisma.service';
@@ -46,6 +46,9 @@ type SessionAccount = {
     nombres: string;
     apellidos: string;
     id_universidad: number;
+    universidad: {
+      estado: estado_simple_enum;
+    };
   } | null;
 };
 
@@ -79,6 +82,13 @@ export class AuthService {
       account.correo_verificado !== true
     ) {
       throw new UnauthorizedException('Debes verificar tu correo antes de iniciar sesion.');
+    }
+
+    if (
+      account.tipo_cuenta === tipo_cuenta_enum.ADMIN_UNIVERSIDAD &&
+      account.cuenta_admin_universidad?.universidad.estado === estado_simple_enum.INACTIVO
+    ) {
+      throw new UnauthorizedException('Tu institución se encuentra inactiva. Contacta al administrador de la plataforma.');
     }
 
     const user = this.buildRequestUser(account);
@@ -434,6 +444,9 @@ export class AuthService {
             nombres: true,
             apellidos: true,
             id_universidad: true,
+            universidad: {
+              select: { estado: true },
+            },
           },
         },
       },
