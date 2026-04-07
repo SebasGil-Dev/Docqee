@@ -198,16 +198,16 @@ export function AdminCredentialsPage() {
           setFeedbackMessage('La credencial pendiente se elimino correctamente.');
         }
       } else {
-        const temporaryPassword =
+        const wasProcessed =
           pendingConfirmation.action === 'send'
             ? await sendCredential(pendingConfirmation.credential.id)
             : await resendCredential(pendingConfirmation.credential.id);
 
-        if (temporaryPassword) {
+        if (wasProcessed) {
           setFeedbackMessage(
             pendingConfirmation.action === 'send'
-              ? `Credencial enviada. Contrasena temporal: ${temporaryPassword}`
-              : `Credencial reenviada. Contrasena temporal: ${temporaryPassword}`,
+              ? 'Credencial enviada correctamente.'
+              : 'Credencial reenviada correctamente.',
           );
         }
       }
