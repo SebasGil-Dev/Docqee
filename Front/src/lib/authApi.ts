@@ -40,18 +40,22 @@ export function changeFirstLoginPassword(password: string) {
 }
 
 export function registerPatient(payload: NormalizedPatientRegisterPayload) {
+  const { documentTypeId: _pd, ...patientRest } = payload.patient;
   return apiRequest<AuthCodeResponse>('/auth/register-patient', {
     body: {
       consents: payload.consents,
       patient: {
-        ...payload.patient,
+        ...patientRest,
         documentTypeCode: toDocumentTypeCode(payload.patient.documentTypeId),
       },
       tutor: payload.tutor
-        ? {
-            ...payload.tutor,
-            documentTypeCode: toDocumentTypeCode(payload.tutor.documentTypeId),
-          }
+        ? (() => {
+            const { documentTypeId: _td, ...tutorRest } = payload.tutor!;
+            return {
+              ...tutorRest,
+              documentTypeCode: toDocumentTypeCode(payload.tutor!.documentTypeId),
+            };
+          })()
         : null,
     },
     method: 'POST',
