@@ -1,5 +1,5 @@
-import { CalendarDays, ChevronLeft, ChevronRight, Repeat } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useMemo, useState, type MouseEvent } from 'react';
 
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import type {
@@ -18,15 +18,29 @@ const timeFormatter = new Intl.DateTimeFormat('es-CO', { hour: 'numeric', minute
 
 type CalendarViewMode = 'day' | 'week' | 'month';
 type AgendaTone = 'accepted' | 'block' | 'cancelled' | 'completed' | 'proposal' | 'reschedule';
-type AgendaEvent = {
-  dateKey: string;
-  id: string;
-  statusLabel: string;
-  subtitle: string;
-  timeLabel: string;
-  title: string;
-  tone: AgendaTone;
-};
+type AgendaEvent =
+  | {
+      dateKey: string;
+      id: string;
+      source: 'appointment';
+      statusLabel: string;
+      subtitle: string;
+      timeLabel: string;
+      title: string;
+      tone: AgendaTone;
+    }
+  | {
+      blockId: string;
+      blockStatus: StudentScheduleBlock['status'];
+      dateKey: string;
+      id: string;
+      source: 'schedule-block';
+      statusLabel: string;
+      subtitle: string;
+      timeLabel: string;
+      title: string;
+      tone: 'block';
+    };
 
 function fromDateKey(value: string) {
   const [year = 2026, month = 1, day = 1] = value.split('-').map(Number);
@@ -115,6 +129,7 @@ function buildEvents(
       return {
         dateKey: toDateKey(startAt),
         id: appointment.id,
+        source: 'appointment',
         statusLabel: getStatusLabel(appointment.status),
         subtitle: `${appointment.patientName} | ${appointment.siteName}`,
         timeLabel: `${timeFormatter.format(startAt)} - ${timeFormatter.format(endAt)}`,
@@ -125,19 +140,19 @@ function buildEvents(
     .filter((event) => event.dateKey >= startKey && event.dateKey <= endKey);
 
   const blockEvents: AgendaEvent[] = scheduleBlocks.flatMap((block) => {
-    if (block.status !== 'active') {
-      return [];
-    }
-
-    const makeBlockEvent = (dateKey: string) => ({
-      dateKey,
-      id: `${block.id}-${dateKey}`,
-      statusLabel: 'Bloqueo',
-      subtitle: block.reason ?? 'Horario reservado',
-      timeLabel: `${block.startTime} - ${block.endTime}`,
-      title: 'Bloqueo de horario',
-      tone: 'block' as const,
-    });
+    const makeBlockEvent = (dateKey: string) =>
+      ({
+        blockId: block.id,
+        blockStatus: block.status,
+        dateKey,
+        id: `${block.id}-${dateKey}`,
+        source: 'schedule-block',
+        statusLabel: block.status === 'active' ? 'Bloqueo' : 'Bloqueo inactivo',
+        subtitle: block.reason ?? 'Horario reservado',
+        timeLabel: `${block.startTime} - ${block.endTime}`,
+        title: 'Bloqueo de horario',
+        tone: 'block',
+      }) satisfies AgendaEvent;
 
     if (block.type === 'ESPECIFICO' && block.specificDate) {
       return block.specificDate >= startKey && block.specificDate <= endKey
@@ -171,12 +186,18 @@ function buildEvents(
   );
 }
 
+function isInactiveBlockEvent(event: AgendaEvent) {
+  return event.source === 'schedule-block' && event.blockStatus === 'inactive';
+}
+
 export function StudentAgendaCalendar({
   appointments,
   scheduleBlocks,
+  onSelectScheduleBlock,
 }: {
   appointments: StudentAgendaAppointment[];
   scheduleBlocks: StudentScheduleBlock[];
+  onSelectScheduleBlock?: (blockId: string) => void;
 }) {
   const [viewMode, setViewMode] = useState<CalendarViewMode>('week');
   const [selectedDateKey, setSelectedDateKey] = useState(DEFAULT_SELECTED_DATE_KEY);
@@ -237,6 +258,18 @@ export function StudentAgendaCalendar({
     setSelectedDateKey(
       toDateKey(viewMode === 'month' ? addMonths(selectedDate, factor) : addDays(selectedDate, viewMode === 'week' ? factor * 7 : factor)),
     );
+  };
+
+  const handleBlockClick = (
+    event: MouseEvent<HTMLElement>,
+    agendaEvent: AgendaEvent,
+  ) => {
+    if (agendaEvent.source !== 'schedule-block' || !onSelectScheduleBlock) {
+      return;
+    }
+
+    event.stopPropagation();
+    onSelectScheduleBlock(agendaEvent.blockId);
   };
 
   return (
@@ -333,12 +366,8 @@ export function StudentAgendaCalendar({
               return dayEvents.length > 0 ? (
                 dayEvents.map((event) => {
                   const tone = getToneClasses(event.tone);
-
-                  return (
-                    <div
-                      key={event.id}
-                      className={classNames('rounded-[0.95rem] border px-2.5 py-2.5', tone.card)}
-                    >
+                  const content = (
+                    <>
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <p className="text-[0.84rem] font-semibold">{event.title}</p>
@@ -357,6 +386,30 @@ export function StudentAgendaCalendar({
                         <span className={classNames('h-2 w-2 rounded-full', tone.dot)} />
                         {event.timeLabel}
                       </div>
+                    </>
+                  );
+
+                  return event.source === 'schedule-block' ? (
+                    <button
+                      key={event.id}
+                      aria-label={`Gestionar bloqueo ${event.timeLabel}`}
+                      className={classNames(
+                        'w-full rounded-[0.95rem] border px-2.5 py-2.5 text-left transition duration-200 hover:border-primary/30 hover:shadow-[0_14px_30px_-28px_rgba(15,23,42,0.42)]',
+                        tone.card,
+                        isInactiveBlockEvent(event) && 'opacity-70',
+                      )}
+                      data-testid={`student-agenda-block-event-${event.blockId}`}
+                      type="button"
+                      onClick={(nativeEvent) => handleBlockClick(nativeEvent, event)}
+                    >
+                      {content}
+                    </button>
+                  ) : (
+                    <div
+                      key={event.id}
+                      className={classNames('rounded-[0.95rem] border px-2.5 py-2.5', tone.card)}
+                    >
+                      {content}
                     </div>
                   );
                 })
@@ -397,18 +450,38 @@ export function StudentAgendaCalendar({
                     {dayEvents.length > 0 ? (
                       dayEvents.map((event) => {
                         const tone = getToneClasses(event.tone);
-
-                        return (
-                          <div
-                            key={event.id}
-                            className={classNames('rounded-[0.9rem] border px-2.5 py-2', tone.card)}
-                          >
+                        const content = (
+                          <>
                             <p className="truncate text-[0.72rem] font-semibold">{event.title}</p>
                             <p className="truncate text-[0.64rem] opacity-80">{event.subtitle}</p>
                             <div className="mt-1 flex items-center gap-2 text-[0.66rem] font-semibold">
                               <span className={classNames('h-2 w-2 rounded-full', tone.dot)} />
                               {event.timeLabel}
                             </div>
+                          </>
+                        );
+
+                        return event.source === 'schedule-block' ? (
+                          <button
+                            key={event.id}
+                            aria-label={`Gestionar bloqueo ${event.timeLabel}`}
+                            className={classNames(
+                              'w-full rounded-[0.9rem] border px-2.5 py-2 text-left transition duration-200 hover:border-primary/30 hover:shadow-[0_14px_30px_-28px_rgba(15,23,42,0.42)]',
+                              tone.card,
+                              isInactiveBlockEvent(event) && 'opacity-70',
+                            )}
+                            data-testid={`student-agenda-block-event-${event.blockId}`}
+                            type="button"
+                            onClick={(nativeEvent) => handleBlockClick(nativeEvent, event)}
+                          >
+                            {content}
+                          </button>
+                        ) : (
+                          <div
+                            key={event.id}
+                            className={classNames('rounded-[0.9rem] border px-2.5 py-2', tone.card)}
+                          >
+                            {content}
                           </div>
                         );
                       })
@@ -423,7 +496,7 @@ export function StudentAgendaCalendar({
             }
 
             return (
-              <button
+              <div
                 key={dayKey}
                 className={classNames(
                   'flex min-h-[4.9rem] flex-col rounded-[0.9rem] border px-1.5 py-1 text-left transition duration-200 sm:min-h-[5.2rem] sm:px-2 sm:py-1.5 xl:min-h-[5.5rem] xl:px-2 xl:py-1.5 2xl:min-h-[6rem]',
@@ -432,8 +505,15 @@ export function StudentAgendaCalendar({
                     : 'border-slate-200/85 bg-white/72 hover:border-primary/25 hover:bg-white',
                   day.getMonth() !== selectedDate.getMonth() && 'opacity-55',
                 )}
-                type="button"
+                role="button"
+                tabIndex={0}
                 onClick={() => setSelectedDateKey(dayKey)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    setSelectedDateKey(dayKey);
+                  }
+                }}
               >
                 <div className="mb-1 flex items-center justify-between">
                   <span
@@ -451,24 +531,41 @@ export function StudentAgendaCalendar({
                   ) : null}
                 </div>
                 <div className="space-y-0.5 sm:space-y-1">
-                  {dayEvents.slice(0, 1).map((event) => (
-                    <div
-                      key={event.id}
-                      className={classNames(
-                        'truncate rounded-[0.68rem] px-1.5 py-1 text-[0.56rem] font-semibold sm:text-[0.58rem] xl:px-2 xl:py-1 xl:text-[0.61rem]',
-                        getToneClasses(event.tone).pill,
-                      )}
-                    >
-                      {event.timeLabel} | {event.title}
-                    </div>
-                  ))}
+                  {dayEvents.slice(0, 1).map((event) =>
+                    event.source === 'schedule-block' ? (
+                      <button
+                        key={event.id}
+                        aria-label={`Gestionar bloqueo ${event.timeLabel}`}
+                        className={classNames(
+                          'w-full truncate rounded-[0.68rem] px-1.5 py-1 text-left text-[0.56rem] font-semibold transition duration-200 sm:text-[0.58rem] xl:px-2 xl:py-1 xl:text-[0.61rem]',
+                          getToneClasses(event.tone).pill,
+                          isInactiveBlockEvent(event) && 'opacity-70',
+                        )}
+                        data-testid={`student-agenda-block-event-${event.blockId}`}
+                        type="button"
+                        onClick={(nativeEvent) => handleBlockClick(nativeEvent, event)}
+                      >
+                        {event.timeLabel} | Bloqueo
+                      </button>
+                    ) : (
+                      <div
+                        key={event.id}
+                        className={classNames(
+                          'truncate rounded-[0.68rem] px-1.5 py-1 text-[0.56rem] font-semibold sm:text-[0.58rem] xl:px-2 xl:py-1 xl:text-[0.61rem]',
+                          getToneClasses(event.tone).pill,
+                        )}
+                      >
+                        {event.timeLabel} | {event.title}
+                      </div>
+                    ),
+                  )}
                   {dayEvents.length > 1 ? (
                     <p className="text-[0.54rem] font-semibold text-ink-muted sm:text-[0.56rem]">
                       +{dayEvents.length - 1} mas
                     </p>
                   ) : null}
                 </div>
-              </button>
+              </div>
             );
           })}
         </div>

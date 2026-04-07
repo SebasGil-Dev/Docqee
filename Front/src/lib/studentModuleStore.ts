@@ -19,6 +19,7 @@ import type {
 import { IS_TEST_MODE } from '@/lib/apiClient';
 import {
   createStudentPortalScheduleBlock,
+  deleteStudentPortalScheduleBlock,
   getStudentPortalDashboard,
   sendStudentPortalConversationMessage,
   toggleStudentPortalPracticeSiteStatus,
@@ -30,6 +31,7 @@ import {
 } from '@/lib/studentApi';
 
 type StudentModuleActions = {
+  deleteScheduleBlock: (blockId: string) => Promise<boolean>;
   refresh: () => Promise<void>;
   respondToRequest: (
     requestId: string,
@@ -665,6 +667,21 @@ function toggleScheduleBlockStatusMock(blockId: string) {
   return nextStatus;
 }
 
+function deleteScheduleBlockMock(blockId: string) {
+  const currentBlock = state.scheduleBlocks.find((block) => block.id === blockId);
+
+  if (!currentBlock) {
+    return false;
+  }
+
+  updateState({
+    ...state,
+    scheduleBlocks: state.scheduleBlocks.filter((block) => block.id !== blockId),
+  });
+
+  return true;
+}
+
 function respondToRequestMock(requestId: string, nextStatus: StudentRequestStatus) {
   const currentRequest = state.requests.find((request) => request.id === requestId);
 
@@ -993,6 +1010,37 @@ async function toggleScheduleBlockStatus(blockId: string) {
   }
 }
 
+async function deleteScheduleBlock(blockId: string) {
+  if (IS_TEST_MODE) {
+    return deleteScheduleBlockMock(blockId);
+  }
+
+  patchState({
+    errorMessage: null,
+    isLoading: true,
+  });
+
+  try {
+    await deleteStudentPortalScheduleBlock(blockId);
+
+    updateState({
+      ...state,
+      errorMessage: null,
+      isLoading: false,
+      isReady: true,
+      scheduleBlocks: state.scheduleBlocks.filter((block) => block.id !== blockId),
+    });
+
+    return true;
+  } catch (error) {
+    patchState({
+      errorMessage: getErrorMessage(error, 'No pudimos eliminar el bloqueo de agenda.'),
+      isLoading: false,
+    });
+    return false;
+  }
+}
+
 async function respondToRequest(
   requestId: string,
   nextStatus: StudentRequestStatus,
@@ -1096,6 +1144,7 @@ export function useStudentModuleStore() {
   }, [snapshot.isLoading, snapshot.isReady]);
 
   const actions: StudentModuleActions = {
+    deleteScheduleBlock,
     refresh: refreshRuntimeState,
     respondToRequest,
     sendConversationMessage,

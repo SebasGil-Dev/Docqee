@@ -68,6 +68,12 @@ export function toggleStudentPortalScheduleBlockStatus(blockId: string) {
   );
 }
 
+export function deleteStudentPortalScheduleBlock(blockId: string) {
+  return apiRequest<{ blockId: string }>(`/student-portal/schedule-blocks/${blockId}`, {
+    method: 'DELETE',
+  });
+}
+
 export function updateStudentPortalRequestStatus(
   requestId: string,
   status: StudentRequestStatus,

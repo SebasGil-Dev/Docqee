@@ -141,33 +141,52 @@ describe('Student pages', () => {
     expect(screen.getByText(/calendario de citas/i)).toBeInTheDocument();
     expect(screen.getAllByText(/valoracion inicial/i).length).toBeGreaterThan(0);
 
-    await user.click(screen.getByLabelText(/tipo de bloqueo/i));
-    await user.click(screen.getByRole('option', { name: /recurrente/i }));
-    await user.click(screen.getByLabelText(/dia de la semana/i));
-    await user.click(screen.getByRole('option', { name: /viernes/i }));
-    await user.type(screen.getByLabelText(/fecha de inicio/i), '2026-04-11');
-    await user.type(screen.getByLabelText(/hora de inicio/i), '07:00');
-    await user.type(screen.getByLabelText(/hora de finalizacion/i), '09:00');
-    await user.type(screen.getByLabelText(/motivo opcional/i), 'Espacio reservado para practica externa.');
     await user.click(screen.getByRole('button', { name: /agregar bloqueo/i }));
+
+    const createDialog = screen.getByRole('dialog', { name: /agregar bloqueo/i });
+    await user.type(within(createDialog).getByLabelText(/fecha especifica/i), '2026-04-10');
+    await user.type(within(createDialog).getByLabelText(/hora de inicio/i), '07:00');
+    await user.type(within(createDialog).getByLabelText(/hora de finalizacion/i), '09:00');
+    await user.type(
+      within(createDialog).getByLabelText(/motivo opcional/i),
+      'Espacio reservado para practica externa.',
+    );
+    await user.click(within(createDialog).getByRole('button', { name: /agregar bloqueo/i }));
 
     expect(await screen.findByRole('status')).toHaveTextContent(
       /el bloqueo de agenda se agrego correctamente/i,
     );
 
-    const scheduleCard = screen
-      .getByText(/espacio reservado para practica externa/i)
-      .closest('[data-testid^="student-schedule-block-"]') as HTMLElement | null;
-    expect(scheduleCard).not.toBeNull();
-    await user.click(within(scheduleCard!).getByRole('button', { name: /inactivar/i }));
+    const scheduleEvent = await screen.findByTestId(
+      'student-agenda-block-event-schedule-block-4',
+    );
+    await user.click(scheduleEvent);
+
+    const manageDialog = screen.getByRole('dialog', { name: /gestionar bloqueo/i });
+    expect(within(manageDialog).getByText(/espacio reservado para practica externa/i)).toBeInTheDocument();
+    await user.click(within(manageDialog).getByRole('button', { name: /inactivar/i }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      /el bloqueo de agenda se inactivo correctamente/i,
+    );
+
+    await user.click(await screen.findByTestId('student-agenda-block-event-schedule-block-4'));
+    const secondManageDialog = screen.getByRole('dialog', { name: /gestionar bloqueo/i });
+    expect(within(secondManageDialog).getByText(/^Inactivo$/i)).toBeInTheDocument();
+    await user.click(within(secondManageDialog).getByRole('button', { name: /eliminar/i }));
+
+    const confirmDialog = screen.getByRole('dialog', { name: /eliminar bloqueo/i });
+    await user.click(
+      within(confirmDialog).getByRole('button', { name: /si, eliminar bloqueo/i }),
+    );
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      /el bloqueo de agenda se elimino correctamente/i,
+    );
     await waitFor(() => {
       expect(
-        within(
-          screen.getByText(/espacio reservado para practica externa/i).closest(
-            '[data-testid^="student-schedule-block-"]',
-          )!,
-        ).getByText(/^Inactivo$/i),
-      ).toBeInTheDocument();
+        screen.queryByTestId('student-agenda-block-event-schedule-block-4'),
+      ).not.toBeInTheDocument();
     });
   });
 
