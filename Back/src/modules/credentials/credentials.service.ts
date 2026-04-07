@@ -9,6 +9,7 @@ import { tipo_cuenta_enum, tipo_envio_credencial_enum } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 import { PrismaService } from '@/shared/database/prisma.service';
+import { MailService } from '@/shared/mail/mail.service';
 import type { RequestUser } from '@/shared/types/request-user.type';
 import {
   extractNumericId,
@@ -19,7 +20,10 @@ import { EditStudentCredentialEmailDto } from './application/dto/edit-student-cr
 
 @Injectable()
 export class CredentialsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
+  ) {}
 
   async listStudentCredentials(user: RequestUser) {
     const universityId = this.getUniversityId(user);
@@ -105,6 +109,16 @@ export class CredentialsService {
       });
     });
 
+    const student = credential.cuenta_acceso.cuenta_estudiante;
+    const studentName = student
+      ? `${student.persona.nombres} ${student.persona.apellidos}`
+      : 'Estudiante';
+    void this.mailService.sendStudentCredentials(
+      credential.cuenta_acceso.correo,
+      studentName,
+      temporaryPassword,
+    );
+
     return {
       temporaryPassword,
     };
@@ -128,6 +142,14 @@ export class CredentialsService {
       select: {
         id_credencial_inicial: true,
         id_cuenta_acceso: true,
+        cuenta_acceso: {
+          select: {
+            correo: true,
+            cuenta_estudiante: {
+              select: { persona: { select: { nombres: true, apellidos: true } } },
+            },
+          },
+        },
       },
     });
 
@@ -151,6 +173,16 @@ export class CredentialsService {
           },
         });
       });
+
+      const student = credential.cuenta_acceso.cuenta_estudiante;
+      const studentName = student
+        ? `${student.persona.nombres} ${student.persona.apellidos}`
+        : 'Estudiante';
+      void this.mailService.sendStudentCredentials(
+        credential.cuenta_acceso.correo,
+        studentName,
+        temporaryPassword,
+      );
     }
 
     return {
