@@ -78,6 +78,15 @@ function renderFirstLoginApp({
   );
 }
 
+function setViewportWidth(width: number) {
+  Object.defineProperty(window, 'innerWidth', {
+    configurable: true,
+    value: width,
+    writable: true,
+  });
+  window.dispatchEvent(new Event('resize'));
+}
+
 async function waitForRegisterCatalogs() {
   await screen.findByRole('option', { name: /c.dula de ciudadan.a/i });
   await screen.findByRole('option', { name: /bogot./i });
@@ -126,6 +135,7 @@ describe('Auth pages', () => {
   beforeEach(() => {
     window.localStorage.clear();
     window.sessionStorage.clear();
+    setViewportWidth(1280);
   });
 
   it('renderiza los campos principales del login', () => {
@@ -454,6 +464,55 @@ describe('Auth pages', () => {
       }),
     ).toBeInTheDocument();
     expect(screen.getByText(/paciente@correo.com/i)).toBeInTheDocument();
+  });
+
+  it('en movil divide el registro por pasos antes de crear la cuenta', async () => {
+    const user = userEvent.setup();
+
+    setViewportWidth(390);
+    renderAuthApp({
+      initialEntries: [ROUTES.register],
+      registerPageProps: { today: new Date('2026-04-03T12:00:00.000Z') },
+    });
+
+    await screen.findByRole('option', { name: /c.dula de ciudadan.a/i });
+
+    expect(screen.getByText(/paso 1\/3/i)).toBeInTheDocument();
+    expect(screen.getByText(/informaci.n personal/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/^correo electr.nico$/i)).not.toBeInTheDocument();
+
+    await user.type(screen.getByLabelText(/^nombres$/i), 'Ana');
+    await user.type(screen.getByLabelText(/^apellidos$/i), 'Perez');
+    await user.selectOptions(screen.getByLabelText(/^tipo de documento$/i), 'document-cc');
+    await user.type(screen.getByLabelText(/n.mero de documento$/i), '123456789');
+    await user.click(screen.getByRole('button', { name: /siguiente paso/i }));
+
+    expect(screen.getByText(/paso 2\/3/i)).toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText(/^sexo$/i), 'FEMENINO');
+    fireEvent.change(screen.getByLabelText(/fecha de nacimiento/i), { target: { value: '2000-04-03' } });
+    await screen.findByRole('option', { name: /bogot./i });
+    await user.selectOptions(screen.getByLabelText(/^ciudad$/i), 'city-bogota');
+    await screen.findByRole('option', { name: /suba/i });
+    await user.selectOptions(screen.getByLabelText(/^localidad$/i), 'locality-bogota-suba');
+    await user.click(screen.getByRole('button', { name: /siguiente paso/i }));
+
+    expect(screen.getByText(/paso 3\/3/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^correo electr.nico$/i)).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText(/^correo electr.nico$/i), 'paciente@correo.com');
+    await user.type(screen.getByLabelText(/^celular$/i), '3001234567');
+    await user.type(screen.getByLabelText(/^contrase.a$/i), 'ClaveSegura1!');
+    await user.type(screen.getByLabelText(/confirmar contrase.a/i), 'ClaveSegura1!');
+    await user.click(screen.getByLabelText(/acepto los t.rminos y condiciones/i));
+    await user.click(screen.getByLabelText(/autorizo el tratamiento de mis datos/i));
+    await user.click(screen.getByRole('button', { name: /^crear cuenta$/i }));
+
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: /verificaci.n de correo/i,
+      }),
+    ).toBeInTheDocument();
   });
 
   it('renderiza la pantalla de verificacion con seis casillas para el codigo', () => {

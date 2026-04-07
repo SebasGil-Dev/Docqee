@@ -1,4 +1,4 @@
-import { CheckCircle2, Circle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2, Circle } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -108,6 +108,49 @@ const passwordRuleOrder: RegisterPasswordRuleKey[] = [
   'number',
   'special',
 ];
+
+const MOBILE_REGISTER_BREAKPOINT = 768;
+
+type MobileRegisterStepId = 'personal' | 'profile-location' | 'tutor' | 'account';
+
+type MobileRegisterStepConfig = {
+  description?: string | undefined;
+  fields: RegisterFormField[];
+  id: MobileRegisterStepId;
+  shortLabel: string;
+  title: string;
+};
+
+function getIsMobileRegisterView(breakpoint: number) {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  return window.innerWidth < breakpoint;
+}
+
+function useIsMobileRegisterView(breakpoint = MOBILE_REGISTER_BREAKPOINT) {
+  const [isMobileView, setIsMobileView] = useState(() => getIsMobileRegisterView(breakpoint));
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
+    const handleViewportChange = () => {
+      setIsMobileView(getIsMobileRegisterView(breakpoint));
+    };
+
+    handleViewportChange();
+    window.addEventListener('resize', handleViewportChange);
+
+    return () => {
+      window.removeEventListener('resize', handleViewportChange);
+    };
+  }, [breakpoint]);
+
+  return isMobileView;
+}
 
 function TextField({
   autoComplete,
@@ -756,10 +799,12 @@ export function RegisterPage({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentMobileStepIndex, setCurrentMobileStepIndex] = useState(0);
   const passwordInputRef = useRef<HTMLInputElement>(null);
   const confirmPasswordInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const content = authContent.register;
+  const isMobileView = useIsMobileRegisterView();
   const showTutor = shouldShowTutorSection(formState.values.birthDate, currentDate);
 
   useEffect(() => {
@@ -1093,6 +1138,413 @@ export function RegisterPage({
       ? localitiesState.error
       : undefined;
 
+  const identityFields = (
+    <div className="grid gap-4 md:grid-cols-2">
+      <TextField
+        autoComplete="given-name"
+        error={formState.errors.firstName}
+        id={fieldIds.firstName}
+        label={content.patientFields.firstName.label}
+        name="firstName"
+        placeholder={content.patientFields.firstName.placeholder}
+        value={formState.values.firstName}
+        onBlur={() => handleFieldBlur('firstName')}
+        onChange={(value) => updateFieldValue('firstName', value)}
+      />
+      <TextField
+        autoComplete="family-name"
+        error={formState.errors.lastName}
+        id={fieldIds.lastName}
+        label={content.patientFields.lastName.label}
+        name="lastName"
+        placeholder={content.patientFields.lastName.placeholder}
+        value={formState.values.lastName}
+        onBlur={() => handleFieldBlur('lastName')}
+        onChange={(value) => updateFieldValue('lastName', value)}
+      />
+      <SelectField
+        disabled={
+          documentTypesState.status !== 'ready' || documentTypesState.options.length === 0
+        }
+        error={formState.errors.documentTypeId}
+        helpText={documentTypeHelpText}
+        id={fieldIds.documentTypeId}
+        label={content.patientFields.documentType.label}
+        name="documentTypeId"
+        options={documentTypesState.options}
+        placeholder={documentTypePlaceholder}
+        value={formState.values.documentTypeId}
+        onBlur={() => handleFieldBlur('documentTypeId')}
+        onChange={(value) => updateFieldValue('documentTypeId', value)}
+      />
+      <TextField
+        autoComplete="off"
+        error={formState.errors.documentNumber}
+        id={fieldIds.documentNumber}
+        inputMode="numeric"
+        label={content.patientFields.documentNumber.label}
+        name="documentNumber"
+        placeholder={content.patientFields.documentNumber.placeholder}
+        value={formState.values.documentNumber}
+        onBlur={() => handleFieldBlur('documentNumber')}
+        onChange={(value) => updateFieldValue('documentNumber', value)}
+      />
+    </div>
+  );
+
+  const profileFields = (
+    <div className="grid gap-4 md:grid-cols-2">
+      <SelectField
+        error={formState.errors.sex}
+        id={fieldIds.sex}
+        label={content.patientFields.sex.label}
+        name="sex"
+        options={content.patientFields.sex.options.map((option) => ({
+          id: option,
+          label: option,
+        }))}
+        placeholder="Selecciona una opción"
+        value={formState.values.sex}
+        onBlur={() => handleFieldBlur('sex')}
+        onChange={(value) => updateFieldValue('sex', value as PatientSex)}
+      />
+      <TextField
+        error={formState.errors.birthDate}
+        id={fieldIds.birthDate}
+        label={content.patientFields.birthDate.label}
+        name="birthDate"
+        placeholder={content.patientFields.birthDate.placeholder}
+        type="date"
+        value={formState.values.birthDate}
+        onBlur={() => handleFieldBlur('birthDate')}
+        onChange={(value) => updateFieldValue('birthDate', value)}
+      />
+    </div>
+  );
+
+  const locationFields = (
+    <div className="grid gap-4 md:grid-cols-2">
+      <SelectField
+        disabled={citiesState.status !== 'ready' || citiesState.options.length === 0}
+        error={formState.errors.cityId}
+        helpText={cityHelpText}
+        id={fieldIds.cityId}
+        label={content.patientFields.city.label}
+        name="cityId"
+        options={citiesState.options}
+        placeholder={cityPlaceholder}
+        value={formState.values.cityId}
+        onBlur={() => handleFieldBlur('cityId')}
+        onChange={(value) => updateFieldValue('cityId', value)}
+      />
+      <SelectField
+        disabled={
+          !formState.values.cityId ||
+          localitiesState.status !== 'ready' ||
+          localitiesState.options.length === 0
+        }
+        error={formState.errors.localityId}
+        helpText={localityHelpText}
+        id={fieldIds.localityId}
+        label={content.patientFields.locality.label}
+        name="localityId"
+        options={localitiesState.options}
+        placeholder={localityPlaceholder}
+        value={formState.values.localityId}
+        onBlur={() => handleFieldBlur('localityId')}
+        onChange={(value) => updateFieldValue('localityId', value)}
+      />
+    </div>
+  );
+
+  const accountFields = (
+    <div className="grid gap-4 md:grid-cols-2">
+      <TextField
+        autoComplete="email"
+        error={formState.errors.email}
+        id={fieldIds.email}
+        label={content.patientFields.email.label}
+        name="email"
+        placeholder={content.patientFields.email.placeholder}
+        type="email"
+        value={formState.values.email}
+        onBlur={() => handleFieldBlur('email')}
+        onChange={(value) => updateFieldValue('email', value)}
+      />
+      <TextField
+        autoComplete="tel"
+        error={formState.errors.phone}
+        id={fieldIds.phone}
+        inputMode="tel"
+        label={content.patientFields.phone.label}
+        name="phone"
+        placeholder={content.patientFields.phone.placeholder}
+        type="tel"
+        value={formState.values.phone}
+        onBlur={() => handleFieldBlur('phone')}
+        onChange={(value) => updateFieldValue('phone', value)}
+      />
+      <div className="space-y-4 md:col-span-2">
+        <PasswordField
+          autoComplete="new-password"
+          error={formState.errors.password}
+          hidePasswordLabel={content.password.hidePasswordLabel}
+          id={fieldIds.password}
+          inputRef={passwordInputRef}
+          label={content.password.label}
+          name="password"
+          placeholder={content.password.placeholder}
+          showPassword={showPassword}
+          showPasswordLabel={content.password.showPasswordLabel}
+          value={formState.values.password}
+          onBlur={() => handleFieldBlur('password')}
+          onChange={(value) => updateFieldValue('password', value)}
+          onToggleVisibility={() => setShowPassword((currentState) => !currentState)}
+        />
+        <PasswordRequirementsList password={formState.values.password} />
+      </div>
+      <div className="md:col-span-2">
+        <PasswordField
+          autoComplete="new-password"
+          error={formState.errors.confirmPassword}
+          hidePasswordLabel={content.password.hidePasswordLabel}
+          id={fieldIds.confirmPassword}
+          inputRef={confirmPasswordInputRef}
+          label={content.password.confirmLabel}
+          name="confirmPassword"
+          placeholder={content.password.confirmPlaceholder}
+          showPassword={showConfirmPassword}
+          showPasswordLabel={content.password.showPasswordLabel}
+          value={formState.values.confirmPassword}
+          onBlur={() => handleFieldBlur('confirmPassword')}
+          onChange={(value) => updateFieldValue('confirmPassword', value)}
+          onToggleVisibility={() => setShowConfirmPassword((currentState) => !currentState)}
+        />
+      </div>
+    </div>
+  );
+
+  const tutorFields = (
+    <div className="grid gap-4 md:grid-cols-2">
+      <TextField
+        autoComplete="given-name"
+        error={formState.errors.tutorFirstName}
+        id={fieldIds.tutorFirstName}
+        label={content.tutorFields.firstName.label}
+        name="tutorFirstName"
+        placeholder={content.tutorFields.firstName.placeholder}
+        value={formState.values.tutorFirstName}
+        onBlur={() => handleFieldBlur('tutorFirstName')}
+        onChange={(value) => updateFieldValue('tutorFirstName', value)}
+      />
+      <TextField
+        autoComplete="family-name"
+        error={formState.errors.tutorLastName}
+        id={fieldIds.tutorLastName}
+        label={content.tutorFields.lastName.label}
+        name="tutorLastName"
+        placeholder={content.tutorFields.lastName.placeholder}
+        value={formState.values.tutorLastName}
+        onBlur={() => handleFieldBlur('tutorLastName')}
+        onChange={(value) => updateFieldValue('tutorLastName', value)}
+      />
+      <SelectField
+        disabled={
+          documentTypesState.status !== 'ready' || tutorDocumentTypeOptions.length === 0
+        }
+        error={formState.errors.tutorDocumentTypeId}
+        helpText={tutorDocumentTypeHelpText}
+        id={fieldIds.tutorDocumentTypeId}
+        label={content.tutorFields.documentType.label}
+        name="tutorDocumentTypeId"
+        options={tutorDocumentTypeOptions}
+        placeholder={tutorDocumentTypePlaceholder}
+        value={formState.values.tutorDocumentTypeId}
+        onBlur={() => handleFieldBlur('tutorDocumentTypeId')}
+        onChange={(value) => updateFieldValue('tutorDocumentTypeId', value)}
+      />
+      <TextField
+        autoComplete="off"
+        error={formState.errors.tutorDocumentNumber}
+        id={fieldIds.tutorDocumentNumber}
+        inputMode="numeric"
+        label={content.tutorFields.documentNumber.label}
+        name="tutorDocumentNumber"
+        placeholder={content.tutorFields.documentNumber.placeholder}
+        value={formState.values.tutorDocumentNumber}
+        onBlur={() => handleFieldBlur('tutorDocumentNumber')}
+        onChange={(value) => updateFieldValue('tutorDocumentNumber', value)}
+      />
+      <TextField
+        autoComplete="email"
+        error={formState.errors.tutorEmail}
+        id={fieldIds.tutorEmail}
+        label={content.tutorFields.email.label}
+        name="tutorEmail"
+        placeholder={content.tutorFields.email.placeholder}
+        type="email"
+        value={formState.values.tutorEmail}
+        onBlur={() => handleFieldBlur('tutorEmail')}
+        onChange={(value) => updateFieldValue('tutorEmail', value)}
+      />
+      <TextField
+        autoComplete="tel"
+        error={formState.errors.tutorPhone}
+        id={fieldIds.tutorPhone}
+        inputMode="tel"
+        label={content.tutorFields.phone.label}
+        name="tutorPhone"
+        placeholder={content.tutorFields.phone.placeholder}
+        type="tel"
+        value={formState.values.tutorPhone}
+        onBlur={() => handleFieldBlur('tutorPhone')}
+        onChange={(value) => updateFieldValue('tutorPhone', value)}
+      />
+    </div>
+  );
+
+  const consentFields = (
+    <div className="space-y-3">
+      <CheckboxField
+        checked={formState.values.acceptTerms}
+        error={formState.errors.acceptTerms}
+        id={fieldIds.acceptTerms}
+        label={content.termsConsent.label}
+        onBlur={() => handleFieldBlur('acceptTerms')}
+        onChange={(value) => updateFieldValue('acceptTerms', value)}
+      />
+      <CheckboxField
+        checked={formState.values.acceptPrivacyPolicy}
+        error={formState.errors.acceptPrivacyPolicy}
+        id={fieldIds.acceptPrivacyPolicy}
+        label={content.privacyConsent.label}
+        onBlur={() => handleFieldBlur('acceptPrivacyPolicy')}
+        onChange={(value) => updateFieldValue('acceptPrivacyPolicy', value)}
+      />
+    </div>
+  );
+
+  const mobileSteps: MobileRegisterStepConfig[] = showTutor
+    ? [
+        {
+          description: content.personalSection.description,
+          fields: ['firstName', 'lastName', 'documentTypeId', 'documentNumber'],
+          id: 'personal',
+          shortLabel: 'Personal',
+          title: content.personalSection.title,
+        },
+        {
+          description: 'Completa tu sexo, fecha de nacimiento y ubicación principal.',
+          fields: ['sex', 'birthDate', 'cityId', 'localityId'],
+          id: 'profile-location',
+          shortLabel: 'Perfil',
+          title: 'Perfil y ubicación',
+        },
+        {
+          description: content.tutorSection.description,
+          fields: tutorFieldNames,
+          id: 'tutor',
+          shortLabel: 'Tutor',
+          title: content.tutorSection.title,
+        },
+        {
+          description: content.accountSection.description,
+          fields: ['email', 'phone', 'password', 'confirmPassword', 'acceptTerms', 'acceptPrivacyPolicy'],
+          id: 'account',
+          shortLabel: 'Acceso',
+          title: content.accountSection.title,
+        },
+      ]
+    : [
+        {
+          description: content.personalSection.description,
+          fields: ['firstName', 'lastName', 'documentTypeId', 'documentNumber'],
+          id: 'personal',
+          shortLabel: 'Personal',
+          title: content.personalSection.title,
+        },
+        {
+          description: 'Completa tu sexo, fecha de nacimiento y ubicación principal.',
+          fields: ['sex', 'birthDate', 'cityId', 'localityId'],
+          id: 'profile-location',
+          shortLabel: 'Perfil',
+          title: 'Perfil y ubicación',
+        },
+        {
+          description: content.accountSection.description,
+          fields: ['email', 'phone', 'password', 'confirmPassword', 'acceptTerms', 'acceptPrivacyPolicy'],
+          id: 'account',
+          shortLabel: 'Acceso',
+          title: content.accountSection.title,
+        },
+      ];
+  const currentMobileStep =
+    mobileSteps[Math.min(currentMobileStepIndex, mobileSteps.length - 1)]!;
+
+  useEffect(() => {
+    setCurrentMobileStepIndex((currentIndex) =>
+      Math.min(currentIndex, Math.max(mobileSteps.length - 1, 0)),
+    );
+  }, [mobileSteps.length]);
+
+  const handleNextMobileStep = () => {
+    const validationErrors = validateRegisterForm(formState.values, currentDate);
+    const firstInvalidField = currentMobileStep.fields.find((fieldName) => Boolean(validationErrors[fieldName]));
+
+    setFormState((currentState) => ({
+      ...currentState,
+      errors: validationErrors,
+    }));
+    setSubmissionError(null);
+
+    if (firstInvalidField) {
+      focusField(firstInvalidField);
+      return;
+    }
+
+    setCurrentMobileStepIndex((currentIndex) => Math.min(currentIndex + 1, mobileSteps.length - 1));
+  };
+
+  const handlePreviousMobileStep = () => {
+    setCurrentMobileStepIndex((currentIndex) => Math.max(currentIndex - 1, 0));
+    setSubmissionError(null);
+  };
+
+  const mobileStepBody = (() => {
+    switch (currentMobileStep.id) {
+      case 'personal':
+        return identityFields;
+      case 'profile-location':
+        return (
+          <div className="space-y-5">
+            {profileFields}
+            <div className="space-y-3">
+              <p className="px-1 text-[11px] font-black uppercase tracking-[0.28em] text-primary">
+                {content.locationSection.title}
+              </p>
+              {locationFields}
+            </div>
+          </div>
+        );
+      case 'tutor':
+        return tutorFields;
+      case 'account':
+        return (
+          <div className="space-y-5">
+            {accountFields}
+            <div className="space-y-3">
+              <p className="px-1 text-[11px] font-black uppercase tracking-[0.28em] text-primary">
+                Consentimientos
+              </p>
+              {consentFields}
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  })();
+
   return (
     <AuthShell mainClassName="items-start px-2.5 py-4 sm:px-6 sm:py-7 lg:px-8">
       <Seo
@@ -1119,6 +1571,125 @@ export function RegisterPage({
             noValidate
             onSubmit={handleSubmit}
           >
+            {isMobileView ? (
+              <div className="space-y-5">
+                <div className="rounded-[1.7rem] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(233,238,245,0.78)_0%,rgba(255,255,255,0.96)_100%)] p-4 shadow-float">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-[11px] font-black uppercase tracking-[0.28em] text-primary">
+                          Paso {currentMobileStepIndex + 1}/{mobileSteps.length}
+                        </p>
+                        <p className="mt-1 text-sm font-semibold text-ink-muted">
+                          {currentMobileStep.shortLabel}
+                        </p>
+                      </div>
+                      <span className="inline-flex rounded-full bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.22em] text-primary shadow-[0_10px_24px_-18px_rgba(15,23,42,0.38)]">
+                        Registro móvil
+                      </span>
+                    </div>
+                    <div className="h-2 rounded-full bg-slate-200/80">
+                      <div
+                        className="h-full rounded-full bg-brand-gradient transition-all duration-300"
+                        style={{
+                          width: `${((currentMobileStepIndex + 1) / mobileSteps.length) * 100}%`,
+                        }}
+                      />
+                    </div>
+                    <div
+                      className="grid gap-2"
+                      style={{
+                        gridTemplateColumns: `repeat(${mobileSteps.length}, minmax(0, 1fr))`,
+                      }}
+                    >
+                      {mobileSteps.map((step, index) => {
+                        const isCurrent = index === currentMobileStepIndex;
+                        const isComplete = index < currentMobileStepIndex;
+
+                        return (
+                          <div
+                            className={classNames(
+                              'rounded-[1.1rem] border px-2.5 py-2 text-center text-[11px] font-bold uppercase tracking-[0.18em] transition-all duration-300',
+                              isCurrent
+                                ? 'border-primary/25 bg-primary/[0.1] text-primary'
+                                : isComplete
+                                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                                  : 'border-slate-200/80 bg-white/70 text-ink-muted',
+                            )}
+                            key={step.id}
+                          >
+                            {step.shortLabel}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <section className="rounded-[1.7rem] border border-slate-200/80 bg-white/80 p-4 shadow-float">
+                  <div className="space-y-4">
+                    <SectionHeader
+                      description={currentMobileStep.description}
+                      title={currentMobileStep.title}
+                    />
+                    {mobileStepBody}
+                  </div>
+                </section>
+
+                <div className="space-y-4 border-t border-slate-200/70 pt-1">
+                  {submissionError ? (
+                    <div
+                      aria-live="polite"
+                      className="w-full rounded-xl bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700"
+                      role="alert"
+                    >
+                      {submissionError}
+                    </div>
+                  ) : null}
+                  <div className="flex items-center gap-3">
+                    {currentMobileStepIndex > 0 ? (
+                      <button
+                        className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-slate-200/80 bg-white text-ink shadow-[0_12px_30px_-22px_rgba(15,23,42,0.4)] transition-all duration-300 hover:border-primary/25 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/12"
+                        type="button"
+                        onClick={handlePreviousMobileStep}
+                      >
+                        <ArrowLeft aria-hidden="true" className="h-4.5 w-4.5" />
+                      </button>
+                    ) : null}
+                    {currentMobileStepIndex < mobileSteps.length - 1 ? (
+                      <button
+                        className="inline-flex min-h-[3rem] flex-1 items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-5 py-3 font-headline text-[15px] font-extrabold text-white shadow-ambient transition-all duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+                        type="button"
+                        onClick={handleNextMobileStep}
+                      >
+                        <span>Siguiente paso</span>
+                        <ArrowRight aria-hidden="true" className="h-4.5 w-4.5" />
+                      </button>
+                    ) : (
+                      <button
+                        className="inline-flex min-h-[3rem] flex-1 items-center justify-center rounded-2xl bg-brand-gradient px-5 py-3 font-headline text-[15px] font-extrabold text-white shadow-ambient transition-all duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+                        disabled={isSubmitting}
+                        type="submit"
+                      >
+                        {content.submitLabel}
+                      </button>
+                    )}
+                  </div>
+                  {currentMobileStepIndex === mobileSteps.length - 1 ? (
+                    <p className="text-center text-sm text-ink-muted">
+                      {content.loginPrompt}{' '}
+                      <Link
+                        className="font-semibold text-primary transition-colors duration-300 hover:text-primary-strong hover:underline"
+                        to={content.loginCta.kind === 'internal' ? content.loginCta.to : ROUTES.login}
+                      >
+                        {content.loginCta.label}
+                      </Link>
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            ) : (
+              <>
             <section className="rounded-[1.6rem] border border-slate-200/80 bg-white/70 p-5 shadow-float sm:p-6">
               <SectionHeader
                 description={content.personalSection.description}
@@ -1448,6 +2019,8 @@ export function RegisterPage({
                 </Link>
               </p>
             </div>
+              </>
+            )}
           </form>
         </div>
       </AuthCard>
