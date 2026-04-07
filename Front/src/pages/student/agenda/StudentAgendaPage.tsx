@@ -8,7 +8,7 @@ import {
   RotateCcw,
   Save,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { AdminDropdownField } from '@/components/admin/AdminDropdownField';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
@@ -139,7 +139,6 @@ function formatScheduleLabel(block: StudentScheduleBlock) {
 export function StudentAgendaPage() {
   const {
     appointments,
-    errorMessage,
     isLoading,
     scheduleBlocks,
     toggleScheduleBlockStatus,
@@ -149,24 +148,6 @@ export function StudentAgendaPage() {
   const [errors, setErrors] = useState<StudentScheduleBlockFormErrors>({});
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
-  const activeBlocksCount = useMemo(
-    () => scheduleBlocks.filter((block) => block.status === 'active').length,
-    [scheduleBlocks],
-  );
-  const acceptedAppointmentsCount = useMemo(
-    () => appointments.filter((appointment) => appointment.status === 'ACEPTADA').length,
-    [appointments],
-  );
-  const pendingAppointmentsCount = useMemo(
-    () => appointments.filter((appointment) => appointment.status === 'PROPUESTA').length,
-    [appointments],
-  );
-  const reprogrammingAppointmentsCount = useMemo(
-    () =>
-      appointments.filter((appointment) => appointment.status === 'REPROGRAMACION_PENDIENTE').length,
-    [appointments],
-  );
-
   const handleFieldChange = (
     field: keyof StudentScheduleBlockFormValues,
     nextValue: string,
@@ -234,7 +215,7 @@ export function StudentAgendaPage() {
   };
 
   return (
-    <div className="mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-2.5 overflow-hidden 2xl:max-w-[96rem]">
+    <div className="mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-2 overflow-hidden 2xl:max-w-[96rem]">
       <Seo
         description={studentContent.agendaPage.meta.description}
         noIndex
@@ -260,58 +241,18 @@ export function StudentAgendaPage() {
           </p>
         </SurfaceCard>
       ) : null}
-      {errorMessage ? (
-        <SurfaceCard
-          className="border border-rose-200 bg-rose-50/90 text-sm font-medium text-rose-800"
-          paddingClassName="p-3.5"
-        >
-          <p role="alert">{errorMessage}</p>
-        </SurfaceCard>
-      ) : null}
-      <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="px-3 py-2 sm:px-3.5 sm:py-2.5">
-        <div className="flex flex-wrap items-center gap-2 xl:flex-nowrap xl:justify-between">
-          <div className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-brand-gradient px-2.5 py-1.25 text-white">
-            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/14 ring-1 ring-white/18">
-              <CalendarDays aria-hidden="true" className="h-3.25 w-3.25" />
-            </span>
-            <span className="font-headline text-[0.94rem] font-extrabold tracking-tight">{pendingAppointmentsCount}</span>
-            <span className="truncate text-[0.68rem] font-semibold text-white/90">Por aceptar</span>
-          </div>
-          <div className="inline-flex min-w-0 items-center gap-1.5 rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1.25 text-emerald-800">
-            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-emerald-100">
-              <CalendarDays aria-hidden="true" className="h-3.25 w-3.25" />
-            </span>
-            <span className="font-headline text-[0.94rem] font-extrabold tracking-tight">{acceptedAppointmentsCount}</span>
-            <span className="truncate text-[0.68rem] font-semibold text-emerald-800/85">Confirmadas</span>
-          </div>
-          <div className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-brand-gradient px-2.5 py-1.25 text-white">
-            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/14 ring-1 ring-white/18">
-              <Repeat aria-hidden="true" className="h-3.25 w-3.25" />
-            </span>
-            <span className="font-headline text-[0.94rem] font-extrabold tracking-tight">{reprogrammingAppointmentsCount}</span>
-            <span className="truncate text-[0.68rem] font-semibold text-white/90">En reprogramacion</span>
-          </div>
-          <div className="inline-flex min-w-0 items-center gap-1.5 rounded-full border border-primary/10 bg-primary/5 px-2.5 py-1.25 text-primary">
-            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-primary/10">
-              <Repeat aria-hidden="true" className="h-3.25 w-3.25" />
-            </span>
-            <span className="font-headline text-[0.94rem] font-extrabold tracking-tight">{activeBlocksCount}</span>
-            <span className="truncate text-[0.68rem] font-semibold text-primary/80">Bloqueos activos</span>
-          </div>
-        </div>
-      </SurfaceCard>
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
-        <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-3.5 py-3 sm:px-4 sm:py-3.5">
-          <div className="grid gap-2.5 xl:grid-cols-[minmax(0,1.42fr)_minmax(18.5rem,0.78fr)] 2xl:grid-cols-[minmax(0,1.48fr)_minmax(21rem,0.75fr)]">
+        <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-2.5 sm:px-3.5 sm:py-3">
+          <div className="grid gap-2.5 xl:grid-cols-[minmax(0,1.62fr)_minmax(17rem,0.62fr)] 2xl:grid-cols-[minmax(0,1.7fr)_minmax(18.5rem,0.58fr)]">
             <StudentAgendaCalendar appointments={appointments} scheduleBlocks={scheduleBlocks} />
-            <div className="space-y-3">
-              <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-3.5">
-                <div className="space-y-3">
+            <div className="space-y-2.5">
+              <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-3">
+                <div className="space-y-2.5">
                   <div>
-                    <h2 className="font-headline text-lg font-extrabold tracking-tight text-ink">
+                    <h2 className="font-headline text-[1rem] font-extrabold tracking-tight text-ink">
                       {editingBlockId ? 'Editar bloqueo' : 'Nuevo bloqueo'}
                     </h2>
-                    <p className="mt-1 text-[0.84rem] leading-5 text-ink-muted">
+                    <p className="mt-1 text-[0.8rem] leading-5 text-ink-muted">
                       Define franjas no disponibles para evitar propuestas de cita en esos horarios.
                     </p>
                   </div>
@@ -383,7 +324,7 @@ export function StudentAgendaPage() {
                       />
                     </>
                   )}
-                  <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="grid gap-2.5 sm:grid-cols-2">
                     <AdminTextField
                       error={errors.startTime}
                       icon={Clock3}
@@ -408,11 +349,11 @@ export function StudentAgendaPage() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="block text-sm font-semibold text-ink" htmlFor="student-schedule-reason">
+                    <label className="block text-[0.84rem] font-semibold text-ink" htmlFor="student-schedule-reason">
                       Motivo opcional
                     </label>
                     <textarea
-                      className="min-h-[4.4rem] w-full rounded-[1.2rem] border border-slate-200 bg-surface px-3.5 py-2.5 text-sm text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                      className="min-h-[4rem] w-full rounded-[1.1rem] border border-slate-200 bg-surface px-3 py-2.25 text-[0.84rem] text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
                       id="student-schedule-reason"
                       placeholder="Describe brevemente la razon del bloqueo."
                       value={values.reason}
@@ -422,7 +363,7 @@ export function StudentAgendaPage() {
                   <div className="flex flex-wrap items-center justify-center gap-3">
                     {editingBlockId ? (
                       <button
-                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-ink transition duration-300 hover:bg-slate-100"
+                        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-[0.84rem] font-semibold text-ink transition duration-300 hover:bg-slate-100"
                         type="button"
                         onClick={handleReset}
                       >
@@ -431,7 +372,7 @@ export function StudentAgendaPage() {
                       </button>
                     ) : null}
                     <button
-                      className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-3.5 py-2 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-3 py-2 text-[0.84rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
                       disabled={isLoading}
                       type="button"
                       onClick={handleSubmit}
@@ -446,28 +387,28 @@ export function StudentAgendaPage() {
                   </div>
                 </div>
               </SurfaceCard>
-              <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-3.5">
-                <div className="space-y-3.5">
+              <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-3">
+                <div className="space-y-3">
                   <div>
-                    <h2 className="font-headline text-lg font-extrabold tracking-tight text-ink">
+                    <h2 className="font-headline text-[1rem] font-extrabold tracking-tight text-ink">
                       Bloqueos registrados
                     </h2>
-                    <p className="mt-1 text-[0.84rem] leading-5 text-ink-muted">
+                    <p className="mt-1 text-[0.8rem] leading-5 text-ink-muted">
                       Activa, inactiva o ajusta cada bloqueo segun la operacion de tu agenda.
                     </p>
                   </div>
                   {scheduleBlocks.length > 0 ? (
-                    <div className="space-y-3">
+                    <div className="space-y-2.5">
                       {scheduleBlocks.map((block) => (
                         <div
                           key={block.id}
                           data-testid={`student-schedule-block-${block.id}`}
-                          className="flex flex-col gap-2.5 rounded-[1.2rem] border border-slate-200/80 bg-slate-50 px-3 py-2.5"
+                          className="flex flex-col gap-2 rounded-[1.1rem] border border-slate-200/80 bg-slate-50 px-3 py-2.5"
                         >
                           <div className="flex flex-wrap items-start justify-between gap-3">
                             <div className="space-y-1">
-                              <p className="text-sm font-semibold text-ink">{formatScheduleLabel(block)}</p>
-                              <p className="text-sm text-ink-muted">
+                              <p className="text-[0.82rem] font-semibold text-ink">{formatScheduleLabel(block)}</p>
+                              <p className="text-[0.8rem] text-ink-muted">
                                 {block.reason ?? 'Sin motivo especificado.'}
                               </p>
                             </div>
@@ -475,7 +416,7 @@ export function StudentAgendaPage() {
                           </div>
                           <div className="flex flex-wrap justify-end gap-2">
                             <button
-                              className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-primary ring-1 ring-slate-200 transition duration-200 hover:bg-slate-100"
+                              className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1.5 text-[0.72rem] font-semibold text-primary ring-1 ring-slate-200 transition duration-200 hover:bg-slate-100"
                               type="button"
                               onClick={() => handleEdit(block)}
                             >
@@ -484,7 +425,7 @@ export function StudentAgendaPage() {
                             </button>
                             <button
                               className={classNames(
-                                'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                                'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[0.72rem] font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
                                 block.status === 'active'
                                   ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
                                   : 'bg-primary/10 text-primary hover:bg-primary/15',
@@ -506,7 +447,7 @@ export function StudentAgendaPage() {
                       ))}
                     </div>
                   ) : (
-                    <div className="rounded-[1.35rem] border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-ink-muted">
+                    <div className="rounded-[1.2rem] border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-[0.84rem] text-ink-muted">
                       {studentContent.agendaPage.emptyState}
                     </div>
                   )}
