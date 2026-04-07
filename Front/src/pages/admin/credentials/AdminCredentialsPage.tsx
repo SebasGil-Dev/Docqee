@@ -218,6 +218,20 @@ export function AdminCredentialsPage() {
   };
 
   useEffect(() => {
+    if (!feedbackMessage) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setFeedbackMessage(null);
+    }, 2000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [feedbackMessage]);
+
+  useEffect(() => {
     if (!isFilterMenuOpen) {
       return undefined;
     }
