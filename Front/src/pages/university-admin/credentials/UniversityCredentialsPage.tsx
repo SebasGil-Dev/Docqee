@@ -320,8 +320,8 @@ export function UniversityCredentialsPage() {
 
                                     setFeedbackMessage(
                                       isGenerated
-                                        ? `La credencial de ${credential.studentName} quedo enviada. Contrasena temporal: ${updated}`
-                                        : `La credencial de ${credential.studentName} se reenvio correctamente. Contrasena temporal: ${updated}`,
+                                        ? `La credencial de ${credential.studentName} quedo enviada correctamente.`
+                                        : `La credencial de ${credential.studentName} se reenvio correctamente.`,
                                     );
                                   })();
                                 }}
