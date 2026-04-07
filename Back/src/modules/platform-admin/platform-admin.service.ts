@@ -167,20 +167,15 @@ export class PlatformAdminService {
     const universityId = this.parseEntityId(universityIdentifier, 'universidad');
     const university = await this.prisma.universidad.findUnique({
       where: { id_universidad: universityId },
-      include: {
-        localidad: {
-          include: {
-            ciudad: true,
-          },
-        },
+      select: {
+        estado: true,
         cuenta_admin_universidad: {
-          include: {
+          select: {
             cuenta_acceso: {
-              include: {
+              select: {
+                primer_ingreso_pendiente: true,
                 credencial_inicial: {
-                  include: {
-                    envio_credencial: true,
-                  },
+                  select: { anulada_at: true, envio_credencial: { select: { enviado_at: true } } },
                 },
               },
             },
@@ -193,9 +188,7 @@ export class PlatformAdminService {
       throw new NotFoundException('La universidad solicitada no existe.');
     }
 
-    const isPending = this.isPendingUniversity(university);
-
-    if (isPending) {
+    if (this.isPendingUniversity(university)) {
       throw new BadRequestException('No puedes cambiar el estado de una universidad pendiente.');
     }
 
@@ -205,26 +198,14 @@ export class PlatformAdminService {
         : estado_simple_enum.ACTIVO;
 
     const updatedUniversity = await this.prisma.universidad.update({
-      where: { id_universidad: university.id_universidad },
-      data: {
-        estado: nextState,
-      },
+      where: { id_universidad: universityId },
+      data: { estado: nextState },
       include: {
-        localidad: {
-          include: {
-            ciudad: true,
-          },
-        },
+        localidad: { include: { ciudad: true } },
         cuenta_admin_universidad: {
           include: {
             cuenta_acceso: {
-              include: {
-                credencial_inicial: {
-                  include: {
-                    envio_credencial: true,
-                  },
-                },
-              },
+              include: { credencial_inicial: { include: { envio_credencial: true } } },
             },
           },
         },
@@ -280,39 +261,46 @@ export class PlatformAdminService {
 
     const credential = await this.findPendingCredential(credentialIdentifier);
     const temporaryPassword = generateTemporaryPassword();
-    const passwordHash = await bcrypt.hash(temporaryPassword, 10);
 
-    await this.prisma.$transaction(async (transaction) => {
-      await transaction.cuenta_acceso.update({
-        where: { id_cuenta: credential.id_cuenta_acceso },
-        data: {
-          password_hash: passwordHash,
-          primer_ingreso_pendiente: true,
-        },
-      });
+    const [passwordHash, newEnvio] = await Promise.all([
+      bcrypt.hash(temporaryPassword, 8),
+      this.prisma.$transaction(async (transaction) => {
+        await transaction.cuenta_acceso.update({
+          where: { id_cuenta: credential.id_cuenta_acceso },
+          data: { primer_ingreso_pendiente: true },
+        });
+        return transaction.envio_credencial.create({
+          data: {
+            id_credencial_inicial: credential.id_credencial_inicial,
+            tipo_envio: isResend
+              ? tipo_envio_credencial_enum.REENVIO
+              : tipo_envio_credencial_enum.ENVIO,
+          },
+          select: { enviado_at: true },
+        });
+      }),
+    ]);
 
-      await transaction.envio_credencial.create({
-        data: {
-          id_credencial_inicial: credential.id_credencial_inicial,
-          tipo_envio: isResend
-            ? tipo_envio_credencial_enum.REENVIO
-            : tipo_envio_credencial_enum.ENVIO,
-        },
-      });
+    await this.prisma.cuenta_acceso.update({
+      where: { id_cuenta: credential.id_cuenta_acceso },
+      data: { password_hash: passwordHash },
     });
 
-    const updatedCredential = await this.findPendingCredential(credentialIdentifier);
-    const adminUniversity = updatedCredential.cuenta_acceso.cuenta_admin_universidad;
-
+    const adminUniversity = credential.cuenta_acceso.cuenta_admin_universidad;
     if (adminUniversity) {
       const adminName = `${adminUniversity.nombres} ${adminUniversity.apellidos}`;
-      await this.mailService.sendUniversityAdminCredentials(
-        updatedCredential.cuenta_acceso.correo,
+      void this.mailService.sendUniversityAdminCredentials(
+        credential.cuenta_acceso.correo,
         adminName,
         adminUniversity.universidad.nombre,
         temporaryPassword,
       );
     }
+
+    const updatedCredential = {
+      ...credential,
+      envio_credencial: [...credential.envio_credencial, newEnvio],
+    };
 
     return {
       credential: this.toPendingCredentialDto(updatedCredential),
