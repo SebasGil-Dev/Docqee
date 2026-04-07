@@ -1,4 +1,7 @@
 import type {
+  StudentAgendaAppointment,
+  StudentAgendaAppointmentStatus,
+  StudentAppointmentFormValues,
   StudentConversationMessage,
   PersonOperationalStatus,
   StudentModuleState,
@@ -72,6 +75,39 @@ export function deleteStudentPortalScheduleBlock(blockId: string) {
   return apiRequest<{ blockId: string }>(`/student-portal/schedule-blocks/${blockId}`, {
     method: 'DELETE',
   });
+}
+
+export function createStudentPortalAppointment(values: StudentAppointmentFormValues) {
+  return apiRequest<StudentAgendaAppointment>('/student-portal/appointments', {
+    body: values,
+    method: 'POST',
+  });
+}
+
+export function updateStudentPortalAppointment(
+  appointmentId: string,
+  values: StudentAppointmentFormValues,
+) {
+  return apiRequest<StudentAgendaAppointment>(
+    `/student-portal/appointments/${appointmentId}`,
+    {
+      body: values,
+      method: 'PATCH',
+    },
+  );
+}
+
+export function updateStudentPortalAppointmentStatus(
+  appointmentId: string,
+  status: StudentAgendaAppointmentStatus,
+) {
+  return apiRequest<StudentAgendaAppointment>(
+    `/student-portal/appointments/${appointmentId}/status`,
+    {
+      body: { status },
+      method: 'PATCH',
+    },
+  );
 }
 
 export function updateStudentPortalRequestStatus(

@@ -844,6 +844,12 @@ export type StudentPracticeSite = {
   status: PersonOperationalStatus;
 };
 
+export type StudentSupervisor = {
+  id: string;
+  name: string;
+  status: PersonOperationalStatus;
+};
+
 export type StudentAppointmentReview = {
   appointmentLabel: string;
   comment: string | null;
@@ -861,9 +867,15 @@ export type StudentAgendaAppointment = {
   endAt: string;
   id: string;
   patientName: string;
+  requestId: string;
+  siteId: string;
   siteName: string;
   startAt: string;
   status: StudentAgendaAppointmentStatus;
+  supervisorId: string;
+  supervisorName: string;
+  treatmentIds: string[];
+  treatmentNames: string[];
 };
 
 export type StudentScheduleBlock = {
@@ -921,6 +933,7 @@ export type StudentModuleState = {
   reviews: StudentAppointmentReview[];
   requests: StudentRequest[];
   scheduleBlocks: StudentScheduleBlock[];
+  supervisors: StudentSupervisor[];
   treatments: StudentTreatment[];
 };
 
@@ -951,6 +964,23 @@ export type StudentScheduleBlockFormField = keyof StudentScheduleBlockFormValues
 
 export type StudentScheduleBlockFormErrors = Partial<
   Record<StudentScheduleBlockFormField, string>
+>;
+
+export type StudentAppointmentFormValues = {
+  additionalInfo: string;
+  endTime: string;
+  requestId: string;
+  siteId: string;
+  startDate: string;
+  startTime: string;
+  supervisorId: string;
+  treatmentIds: string[];
+};
+
+export type StudentAppointmentFormField = keyof StudentAppointmentFormValues;
+
+export type StudentAppointmentFormErrors = Partial<
+  Record<StudentAppointmentFormField, string>
 >;
 
 export type PatientDiscoveryAvailability = 'available' | 'limited';

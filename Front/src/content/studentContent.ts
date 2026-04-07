@@ -18,6 +18,14 @@ export const studentContent = {
     title: 'Agenda',
   },
   appointmentsPage: {
+    actionLabels: {
+      cancel: 'Cancelar cita',
+      create: 'Agendar cita',
+      edit: 'Editar cita',
+      finalize: 'Finalizar cita',
+      save: 'Guardar cita',
+      update: 'Actualizar cita',
+    },
     description: '',
     emptyState: 'No encontramos citas con los criterios seleccionados.',
     meta: {
@@ -27,6 +35,7 @@ export const studentContent = {
     },
     searchLabel: 'Buscar cita',
     searchPlaceholder: 'Buscar por paciente, sede, ciudad o tipo de cita...',
+    successNoticePrefix: 'Citas actualizadas:',
     title: 'Citas',
   },
   conversationsPage: {

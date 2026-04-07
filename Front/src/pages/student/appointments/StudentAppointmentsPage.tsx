@@ -1,20 +1,35 @@
 import {
+  Ban,
   CalendarCheck2,
   Check,
+  CheckCircle2,
   Clock3,
+  GraduationCap,
   MapPin,
+  PencilLine,
+  Plus,
   Search,
   SlidersHorizontal,
+  Stethoscope,
   UserRound,
+  X,
 } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
+import { AdminConfirmationDialog } from '@/components/admin/AdminConfirmationDialog';
+import { AdminDropdownField } from '@/components/admin/AdminDropdownField';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
+import { AdminTextField } from '@/components/admin/AdminTextField';
 import { Seo } from '@/components/ui/Seo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { studentContent } from '@/content/studentContent';
-import type { StudentAgendaAppointmentStatus } from '@/content/types';
+import type {
+  StudentAgendaAppointment,
+  StudentAgendaAppointmentStatus,
+  StudentAppointmentFormErrors,
+  StudentAppointmentFormValues,
+} from '@/content/types';
 import { classNames } from '@/lib/classNames';
 import { useStudentModuleStore } from '@/lib/studentModuleStore';
 
@@ -22,12 +37,83 @@ type AppointmentStatusFilter = StudentAgendaAppointmentStatus | 'all';
 
 const appointmentStatusOptions: Array<{ label: string; value: AppointmentStatusFilter }> = [
   { label: 'Todas', value: 'all' },
-  { label: 'Pendiente', value: 'PROPUESTA' },
+  { label: 'Propuesta', value: 'PROPUESTA' },
   { label: 'Aceptada', value: 'ACEPTADA' },
   { label: 'Reprogramacion', value: 'REPROGRAMACION_PENDIENTE' },
   { label: 'Cancelada', value: 'CANCELADA' },
   { label: 'Finalizada', value: 'FINALIZADA' },
 ];
+
+const initialAppointmentFormValues: StudentAppointmentFormValues = {
+  additionalInfo: '',
+  endTime: '',
+  requestId: '',
+  siteId: '',
+  startDate: '',
+  startTime: '',
+  supervisorId: '',
+  treatmentIds: [],
+};
+
+function StudentAppointmentsDialogFrame({
+  children,
+  description,
+  onClose,
+  title,
+}: {
+  children: ReactNode;
+  description?: string;
+  onClose: () => void;
+  title: string;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
+      <button
+        aria-label="Cerrar ventana"
+        className="absolute inset-0 bg-slate-950/40 backdrop-blur-[2px]"
+        type="button"
+        onClick={onClose}
+      />
+      <div
+        aria-describedby={description ? 'student-appointments-dialog-description' : undefined}
+        aria-labelledby="student-appointments-dialog-title"
+        aria-modal="true"
+        className="relative w-full max-w-3xl overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white shadow-[0_34px_90px_-36px_rgba(15,23,42,0.55)]"
+        role="dialog"
+      >
+        <div className="absolute right-4 top-4">
+          <button
+            aria-label="Cerrar ventana"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200"
+            type="button"
+            onClick={onClose}
+          >
+            <X aria-hidden="true" className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="px-5 pb-5 pt-6 sm:px-6 sm:pb-6">
+          <div className="space-y-1.5">
+            <h2
+              className="font-headline text-[1.4rem] font-extrabold tracking-tight text-ink"
+              id="student-appointments-dialog-title"
+            >
+              {title}
+            </h2>
+            {description ? (
+              <p
+                className="pr-10 text-[0.86rem] leading-6 text-ink-muted"
+                id="student-appointments-dialog-description"
+              >
+                {description}
+              </p>
+            ) : null}
+          </div>
+          <div className="mt-5">{children}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function getStatusLabel(status: StudentAgendaAppointmentStatus) {
   switch (status) {
@@ -40,7 +126,7 @@ function getStatusLabel(status: StudentAgendaAppointmentStatus) {
     case 'REPROGRAMACION_PENDIENTE':
       return 'Reprogramacion';
     default:
-      return 'Pendiente';
+      return 'Propuesta';
   }
 }
 
@@ -76,11 +162,89 @@ function formatDateTimeRange(startAt: string, endAt: string) {
   return `${formatter.format(startDate)} - ${timeFormatter.format(endDate)}`;
 }
 
+function getInitialAppointmentFormValues(
+  appointment?: StudentAgendaAppointment | null,
+): StudentAppointmentFormValues {
+  if (!appointment) {
+    return initialAppointmentFormValues;
+  }
+
+  return {
+    additionalInfo: appointment.additionalInfo ?? '',
+    endTime: appointment.endAt.slice(11, 16),
+    requestId: appointment.requestId,
+    siteId: appointment.siteId,
+    startDate: appointment.startAt.slice(0, 10),
+    startTime: appointment.startAt.slice(11, 16),
+    supervisorId: appointment.supervisorId,
+    treatmentIds: appointment.treatmentIds,
+  };
+}
+
+function validateAppointmentForm(values: StudentAppointmentFormValues): StudentAppointmentFormErrors {
+  const errors: StudentAppointmentFormErrors = {};
+
+  if (!values.requestId) {
+    errors.requestId = 'Selecciona una solicitud aceptada.';
+  }
+
+  if (!values.startDate) {
+    errors.startDate = 'Selecciona la fecha de la cita.';
+  }
+
+  if (!values.startTime) {
+    errors.startTime = 'Selecciona la hora de inicio.';
+  }
+
+  if (!values.endTime) {
+    errors.endTime = 'Selecciona la hora de finalizacion.';
+  }
+
+  if (values.startTime && values.endTime && values.endTime <= values.startTime) {
+    errors.endTime = 'La hora final debe ser posterior a la inicial.';
+  }
+
+  if (!values.siteId) {
+    errors.siteId = 'Selecciona la sede.';
+  }
+
+  if (!values.supervisorId) {
+    errors.supervisorId = 'Selecciona el docente supervisor.';
+  }
+
+  if (values.treatmentIds.length === 0) {
+    errors.treatmentIds = 'Selecciona al menos un tratamiento.';
+  }
+
+  return errors;
+}
+
 export function StudentAppointmentsPage() {
-  const { appointments, errorMessage, isLoading } = useStudentModuleStore();
+  const {
+    appointments,
+    errorMessage,
+    isLoading,
+    practiceSites,
+    requests,
+    supervisors,
+    treatments,
+    updateAppointmentStatus,
+    upsertAppointment,
+  } = useStudentModuleStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<AppointmentStatusFilter>('all');
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
+  const [isAppointmentDialogOpen, setIsAppointmentDialogOpen] = useState(false);
+  const [appointmentErrors, setAppointmentErrors] = useState<StudentAppointmentFormErrors>(
+    {},
+  );
+  const [appointmentValues, setAppointmentValues] = useState<StudentAppointmentFormValues>(
+    initialAppointmentFormValues,
+  );
+  const [editingAppointmentId, setEditingAppointmentId] = useState<string | null>(null);
+  const [appointmentToCancel, setAppointmentToCancel] =
+    useState<StudentAgendaAppointment | null>(null);
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const pendingCount = useMemo(
@@ -91,11 +255,25 @@ export function StudentAppointmentsPage() {
     () => appointments.filter((appointment) => appointment.status === 'ACEPTADA').length,
     [appointments],
   );
-  const reprogrammingCount = useMemo(
-    () =>
-      appointments.filter((appointment) => appointment.status === 'REPROGRAMACION_PENDIENTE')
-        .length,
+  const completedCount = useMemo(
+    () => appointments.filter((appointment) => appointment.status === 'FINALIZADA').length,
     [appointments],
+  );
+  const acceptedRequests = useMemo(
+    () => requests.filter((request) => request.status === 'ACEPTADA'),
+    [requests],
+  );
+  const activePracticeSites = useMemo(
+    () => practiceSites.filter((practiceSite) => practiceSite.status === 'active'),
+    [practiceSites],
+  );
+  const activeSupervisors = useMemo(
+    () => supervisors.filter((supervisor) => supervisor.status === 'active'),
+    [supervisors],
+  );
+  const activeTreatments = useMemo(
+    () => treatments.filter((treatment) => treatment.status === 'active'),
+    [treatments],
   );
   const filteredAppointments = useMemo(
     () =>
@@ -105,12 +283,16 @@ export function StudentAppointmentsPage() {
           appointment.siteName.toLowerCase().includes(normalizedSearch) ||
           appointment.city.toLowerCase().includes(normalizedSearch) ||
           appointment.appointmentType.toLowerCase().includes(normalizedSearch) ||
+          appointment.supervisorName.toLowerCase().includes(normalizedSearch) ||
+          appointment.treatmentNames.join(' ').toLowerCase().includes(normalizedSearch) ||
           (appointment.additionalInfo ?? '').toLowerCase().includes(normalizedSearch);
 
         return matchesSearch && (statusFilter === 'all' || appointment.status === statusFilter);
       }),
     [appointments, normalizedSearch, statusFilter],
   );
+  const selectedRequest =
+    acceptedRequests.find((request) => request.id === appointmentValues.requestId) ?? null;
 
   useEffect(() => {
     if (!isStatusMenuOpen) {
@@ -138,6 +320,105 @@ export function StudentAppointmentsPage() {
     };
   }, [isStatusMenuOpen]);
 
+  const resetAppointmentForm = () => {
+    setEditingAppointmentId(null);
+    setAppointmentErrors({});
+    setAppointmentValues(initialAppointmentFormValues);
+  };
+
+  const openCreateDialog = () => {
+    resetAppointmentForm();
+    setIsAppointmentDialogOpen(true);
+  };
+
+  const closeAppointmentDialog = () => {
+    resetAppointmentForm();
+    setIsAppointmentDialogOpen(false);
+  };
+
+  const handleAppointmentFieldChange = (
+    field: keyof StudentAppointmentFormValues,
+    nextValue: string | string[],
+  ) => {
+    setAppointmentValues((currentValues) => ({
+      ...currentValues,
+      [field]: nextValue,
+    }));
+    setAppointmentErrors((currentErrors) => {
+      const nextErrors = { ...currentErrors };
+      delete nextErrors[field];
+      return nextErrors;
+    });
+  };
+
+  const handleTreatmentToggle = (treatmentId: string) => {
+    setAppointmentValues((currentValues) => {
+      const isSelected = currentValues.treatmentIds.includes(treatmentId);
+
+      return {
+        ...currentValues,
+        treatmentIds: isSelected
+          ? currentValues.treatmentIds.filter((currentId) => currentId !== treatmentId)
+          : [...currentValues.treatmentIds, treatmentId],
+      };
+    });
+    setAppointmentErrors((currentErrors) => {
+      const nextErrors = { ...currentErrors };
+      delete nextErrors.treatmentIds;
+      return nextErrors;
+    });
+  };
+
+  const handleEditAppointment = (appointment: StudentAgendaAppointment) => {
+    setEditingAppointmentId(appointment.id);
+    setAppointmentValues(getInitialAppointmentFormValues(appointment));
+    setAppointmentErrors({});
+    setIsAppointmentDialogOpen(true);
+  };
+
+  const handleAppointmentSubmit = () => {
+    const nextErrors = validateAppointmentForm(appointmentValues);
+    setAppointmentErrors(nextErrors);
+
+    if (Object.keys(nextErrors).length > 0) {
+      return;
+    }
+
+    void (async () => {
+      const appointment = await upsertAppointment(
+        appointmentValues,
+        editingAppointmentId ?? undefined,
+      );
+
+      if (!appointment) {
+        return;
+      }
+
+      setSuccessMessage(
+        editingAppointmentId
+          ? 'La cita se actualizo correctamente.'
+          : 'La cita se agendo correctamente como propuesta.',
+      );
+      closeAppointmentDialog();
+    })();
+  };
+
+  const handleStatusChange = (
+    appointmentId: string,
+    status: StudentAgendaAppointmentStatus,
+  ) => {
+    void (async () => {
+      const wasUpdated = await updateAppointmentStatus(appointmentId, status);
+
+      if (!wasUpdated) {
+        return;
+      }
+
+      setSuccessMessage(`La cita ahora esta ${getStatusLabel(status).toLowerCase()}.`);
+      setAppointmentToCancel(null);
+    })();
+  };
+
   return (
     <div className="mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-3 overflow-hidden 2xl:max-w-[96rem]">
       <Seo
@@ -146,12 +427,35 @@ export function StudentAppointmentsPage() {
         title={studentContent.appointmentsPage.meta.title}
       />
       <AdminPageHeader
+        action={
+          <button
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-3.5 py-2.5 text-[0.84rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
+            type="button"
+            onClick={openCreateDialog}
+          >
+            <Plus aria-hidden="true" className="h-4 w-4" />
+            <span>{studentContent.appointmentsPage.actionLabels.create}</span>
+          </button>
+        }
         className="gap-2.5"
         description={studentContent.appointmentsPage.description}
         descriptionClassName="text-sm leading-5 sm:text-[0.95rem]"
         title={studentContent.appointmentsPage.title}
         titleClassName="text-[1.85rem] sm:text-[2.15rem]"
       />
+      {successMessage ? (
+        <SurfaceCard
+          className="border border-emerald-200 bg-emerald-50/90 text-sm font-medium text-emerald-800"
+          paddingClassName="p-3.5"
+        >
+          <p role="status">
+            <span className="font-semibold">
+              {studentContent.appointmentsPage.successNoticePrefix}
+            </span>{' '}
+            {successMessage}
+          </p>
+        </SurfaceCard>
+      ) : null}
       {errorMessage ? (
         <SurfaceCard
           className="border border-rose-200 bg-rose-50/90 text-sm font-medium text-rose-800"
@@ -170,7 +474,7 @@ export function StudentAppointmentsPage() {
               <p className="font-headline text-[1.45rem] font-extrabold tracking-tight text-white">
                 {pendingCount}
               </p>
-              <p className="text-sm font-semibold text-white/90">Por confirmar</p>
+              <p className="text-sm font-semibold text-white/90">Propuestas activas</p>
             </div>
           </div>
         </SurfaceCard>
@@ -189,14 +493,14 @@ export function StudentAppointmentsPage() {
         </SurfaceCard>
         <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-0">
           <div className="flex items-center gap-3 px-4 py-2.5">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-violet-50 text-violet-700">
-              <CalendarCheck2 aria-hidden="true" className="h-4.5 w-4.5" />
+            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-sky-50 text-sky-700">
+              <CheckCircle2 aria-hidden="true" className="h-4.5 w-4.5" />
             </span>
             <div>
               <p className="font-headline text-[1.45rem] font-extrabold tracking-tight text-ink">
-                {reprogrammingCount}
+                {completedCount}
               </p>
-              <p className="text-sm font-semibold text-ink-muted">En reprogramacion</p>
+              <p className="text-sm font-semibold text-ink-muted">Finalizadas</p>
             </div>
           </div>
         </SurfaceCard>
@@ -301,12 +605,14 @@ export function StudentAppointmentsPage() {
         </div>
         {filteredAppointments.length > 0 ? (
           <div className="admin-scrollbar min-h-0 flex-1 overflow-x-auto overflow-y-auto">
-            <table className="min-w-[64rem] lg:min-w-full">
+            <table className="min-w-[86rem] xl:min-w-full">
               <thead className="sticky top-0 z-10 bg-slate-100 text-left">
                 <tr className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-ink-muted">
                   <th className="px-4 py-3 sm:px-5">Paciente</th>
-                  <th className="px-4 py-3">Detalle de la cita</th>
+                  <th className="px-4 py-3">Programacion</th>
+                  <th className="px-4 py-3">Atencion clinica</th>
                   <th className="px-4 py-3">Estado</th>
+                  <th className="px-4 py-3 text-right sm:px-5">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200/80 bg-white">
@@ -317,16 +623,17 @@ export function StudentAppointmentsPage() {
                     data-testid={`student-appointment-row-${appointment.id}`}
                   >
                     <td className="px-4 py-3.5 sm:px-5">
-                      <div className="space-y-1">
+                      <div className="space-y-1.5">
                         <p className="text-sm font-semibold text-ink">{appointment.patientName}</p>
                         <p className="inline-flex items-center gap-1.5 text-xs text-ink-muted">
                           <UserRound aria-hidden="true" className="h-3.5 w-3.5 text-primary" />
-                          Paciente asignado
+                          Solicitud vinculada
                         </p>
+                        <p className="text-xs text-ink-muted">ID relacion: {appointment.requestId}</p>
                       </div>
                     </td>
                     <td className="px-4 py-3.5">
-                      <div className="max-w-[30rem] space-y-1.5 text-sm text-ink-muted 2xl:max-w-[36rem]">
+                      <div className="max-w-[19rem] space-y-1.5 text-sm text-ink-muted">
                         <p className="font-semibold text-ink">{appointment.appointmentType}</p>
                         <p>{formatDateTimeRange(appointment.startAt, appointment.endAt)}</p>
                         <p className="inline-flex items-center gap-1.5">
@@ -335,9 +642,28 @@ export function StudentAppointmentsPage() {
                             {appointment.siteName} - {appointment.city}
                           </span>
                         </p>
-                        {appointment.additionalInfo ? (
-                          <p className="leading-6">{appointment.additionalInfo}</p>
-                        ) : null}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <div className="max-w-[24rem] space-y-2 text-sm text-ink-muted">
+                        <p className="inline-flex items-center gap-1.5">
+                          <GraduationCap aria-hidden="true" className="h-3.5 w-3.5 text-primary" />
+                          <span>Docente: {appointment.supervisorName}</span>
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {appointment.treatmentNames.map((treatmentName) => (
+                            <span
+                              key={`${appointment.id}-${treatmentName}`}
+                              className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[0.72rem] font-semibold text-primary"
+                            >
+                              <Stethoscope aria-hidden="true" className="h-3.5 w-3.5" />
+                              <span>{treatmentName}</span>
+                            </span>
+                          ))}
+                        </div>
+                        <p className="leading-6">
+                          {appointment.additionalInfo ?? 'Sin notas adicionales.'}
+                        </p>
                       </div>
                     </td>
                     <td className="px-4 py-3.5">
@@ -349,6 +675,50 @@ export function StudentAppointmentsPage() {
                       >
                         {getStatusLabel(appointment.status)}
                       </span>
+                    </td>
+                    <td className="px-4 py-3.5 text-right sm:px-5">
+                      {appointment.status === 'PROPUESTA' ||
+                      appointment.status === 'REPROGRAMACION_PENDIENTE' ? (
+                        <div className="flex justify-end gap-2">
+                          <button
+                            className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-primary ring-1 ring-slate-200 transition duration-200 hover:bg-slate-100"
+                            type="button"
+                            onClick={() => handleEditAppointment(appointment)}
+                          >
+                            <PencilLine aria-hidden="true" className="h-3.5 w-3.5" />
+                            <span>{studentContent.appointmentsPage.actionLabels.edit}</span>
+                          </button>
+                          <button
+                            className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition duration-200 hover:bg-rose-100"
+                            type="button"
+                            onClick={() => setAppointmentToCancel(appointment)}
+                          >
+                            <Ban aria-hidden="true" className="h-3.5 w-3.5" />
+                            <span>{studentContent.appointmentsPage.actionLabels.cancel}</span>
+                          </button>
+                        </div>
+                      ) : appointment.status === 'ACEPTADA' ? (
+                        <div className="flex justify-end gap-2">
+                          <button
+                            className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700 transition duration-200 hover:bg-sky-100"
+                            type="button"
+                            onClick={() => handleStatusChange(appointment.id, 'FINALIZADA')}
+                          >
+                            <CheckCircle2 aria-hidden="true" className="h-3.5 w-3.5" />
+                            <span>{studentContent.appointmentsPage.actionLabels.finalize}</span>
+                          </button>
+                          <button
+                            className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition duration-200 hover:bg-rose-100"
+                            type="button"
+                            onClick={() => setAppointmentToCancel(appointment)}
+                          >
+                            <Ban aria-hidden="true" className="h-3.5 w-3.5" />
+                            <span>{studentContent.appointmentsPage.actionLabels.cancel}</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-xs font-medium text-ink-muted">Sin acciones</span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -363,6 +733,221 @@ export function StudentAppointmentsPage() {
           </div>
         )}
       </AdminPanelCard>
+      {isAppointmentDialogOpen ? (
+        <StudentAppointmentsDialogFrame
+          description="Agenda una cita a partir de una solicitud aceptada, con sede, docente supervisor y tratamientos validos."
+          onClose={closeAppointmentDialog}
+          title={editingAppointmentId ? 'Editar cita' : 'Agendar cita'}
+        >
+          <div className="space-y-4">
+            <div className="grid gap-3 lg:grid-cols-2">
+              <AdminDropdownField
+                error={appointmentErrors.requestId}
+                icon={UserRound}
+                id="student-appointment-request"
+                label="Solicitud aceptada"
+                name="studentAppointmentRequest"
+                options={acceptedRequests.map((request) => ({
+                  id: request.id,
+                  label: `${request.patientName} · ${request.patientCity}`,
+                }))}
+                placeholder="Selecciona una solicitud"
+                value={appointmentValues.requestId}
+                onChange={(value) => handleAppointmentFieldChange('requestId', value)}
+              />
+              <AdminDropdownField
+                error={appointmentErrors.siteId}
+                icon={MapPin}
+                id="student-appointment-site"
+                label="Sede"
+                name="studentAppointmentSite"
+                options={activePracticeSites.map((practiceSite) => ({
+                  id: practiceSite.id,
+                  label: `${practiceSite.name} · ${practiceSite.city}`,
+                }))}
+                placeholder="Selecciona una sede"
+                value={appointmentValues.siteId}
+                onChange={(value) => handleAppointmentFieldChange('siteId', value)}
+              />
+            </div>
+            {selectedRequest ? (
+              <SurfaceCard
+                className="border border-slate-200/80 bg-slate-50 shadow-none"
+                paddingClassName="p-3.5"
+              >
+                <div className="space-y-1.5">
+                  <p className="text-sm font-semibold text-ink">{selectedRequest.patientName}</p>
+                  <p className="text-[0.82rem] text-ink-muted">
+                    Motivo: {selectedRequest.reason ?? 'Sin motivo especificado.'}
+                  </p>
+                  <p className="text-[0.82rem] text-ink-muted">
+                    Citas acumuladas en la relacion: {selectedRequest.appointmentsCount}
+                  </p>
+                </div>
+              </SurfaceCard>
+            ) : null}
+            <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(10rem,0.8fr)_minmax(10rem,0.8fr)]">
+              <AdminTextField
+                error={appointmentErrors.startDate}
+                icon={CalendarCheck2}
+                id="student-appointment-date"
+                label="Fecha de la cita"
+                name="studentAppointmentDate"
+                placeholder=""
+                type="date"
+                value={appointmentValues.startDate}
+                onChange={(value) => handleAppointmentFieldChange('startDate', value)}
+              />
+              <AdminTextField
+                error={appointmentErrors.startTime}
+                icon={Clock3}
+                id="student-appointment-start-time"
+                label="Hora de inicio"
+                name="studentAppointmentStartTime"
+                placeholder=""
+                type="time"
+                value={appointmentValues.startTime}
+                onChange={(value) => handleAppointmentFieldChange('startTime', value)}
+              />
+              <AdminTextField
+                error={appointmentErrors.endTime}
+                icon={Clock3}
+                id="student-appointment-end-time"
+                label="Hora de finalizacion"
+                name="studentAppointmentEndTime"
+                placeholder=""
+                type="time"
+                value={appointmentValues.endTime}
+                onChange={(value) => handleAppointmentFieldChange('endTime', value)}
+              />
+            </div>
+            <AdminDropdownField
+              error={appointmentErrors.supervisorId}
+              icon={GraduationCap}
+              id="student-appointment-supervisor"
+              label="Docente supervisor"
+              name="studentAppointmentSupervisor"
+              options={activeSupervisors.map((supervisor) => ({
+                id: supervisor.id,
+                label: supervisor.name,
+              }))}
+              placeholder="Selecciona un docente supervisor"
+              value={appointmentValues.supervisorId}
+              onChange={(value) => handleAppointmentFieldChange('supervisorId', value)}
+            />
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-[0.88rem] font-semibold text-ink">Tratamientos asociados</h3>
+                  <p className="text-[0.8rem] text-ink-muted">
+                    Selecciona uno o varios tratamientos activos para la cita.
+                  </p>
+                </div>
+                {appointmentErrors.treatmentIds ? (
+                  <p className="text-[0.75rem] font-medium text-rose-700">
+                    {appointmentErrors.treatmentIds}
+                  </p>
+                ) : null}
+              </div>
+              <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+                {activeTreatments.map((treatment) => {
+                  const isSelected = appointmentValues.treatmentIds.includes(treatment.id);
+
+                  return (
+                    <button
+                      key={treatment.id}
+                      className={classNames(
+                        'rounded-[1.15rem] border px-3 py-3 text-left transition duration-200',
+                        isSelected
+                          ? 'border-primary/35 bg-primary/[0.08] shadow-[0_18px_36px_-30px_rgba(22,78,99,0.8)]'
+                          : 'border-slate-200/80 bg-white hover:border-primary/20 hover:bg-slate-50',
+                      )}
+                      type="button"
+                      onClick={() => handleTreatmentToggle(treatment.id)}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="space-y-1">
+                          <p className="text-[0.86rem] font-semibold text-ink">{treatment.name}</p>
+                          <p className="text-[0.78rem] leading-5 text-ink-muted">
+                            {treatment.description}
+                          </p>
+                        </div>
+                        <span
+                          className={classNames(
+                            'inline-flex h-5 w-5 items-center justify-center rounded-full text-[0.72rem] font-bold',
+                            isSelected
+                              ? 'bg-primary text-white'
+                              : 'bg-slate-100 text-slate-400',
+                          )}
+                        >
+                          <Check aria-hidden="true" className="h-3.5 w-3.5" />
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <label className="block text-[0.84rem] font-semibold text-ink" htmlFor="student-appointment-additional-info">
+                Informacion adicional
+              </label>
+              <textarea
+                className="min-h-[5rem] w-full rounded-[1.1rem] border border-slate-200 bg-surface px-3 py-2.25 text-[0.84rem] text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                id="student-appointment-additional-info"
+                placeholder="Registra observaciones operativas o notas de preparacion para la cita."
+                value={appointmentValues.additionalInfo}
+                onChange={(event) =>
+                  handleAppointmentFieldChange('additionalInfo', event.target.value)
+                }
+              />
+            </div>
+            <div className="flex flex-wrap items-center justify-end gap-2.5">
+              <button
+                className="inline-flex items-center justify-center rounded-full bg-slate-100 px-4 py-2.5 text-sm font-semibold text-ink-muted transition duration-200 hover:bg-slate-200"
+                type="button"
+                onClick={closeAppointmentDialog}
+              >
+                Cancelar
+              </button>
+              <button
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
+                disabled={isLoading || acceptedRequests.length === 0}
+                type="button"
+                onClick={handleAppointmentSubmit}
+              >
+                <CalendarCheck2 aria-hidden="true" className="h-4 w-4" />
+                <span>
+                  {editingAppointmentId
+                    ? studentContent.appointmentsPage.actionLabels.update
+                    : studentContent.appointmentsPage.actionLabels.save}
+                </span>
+              </button>
+            </div>
+            {acceptedRequests.length === 0 ? (
+              <p className="text-sm font-medium text-amber-700">
+                Necesitas una solicitud aceptada para poder programar nuevas citas.
+              </p>
+            ) : null}
+          </div>
+        </StudentAppointmentsDialogFrame>
+      ) : null}
+      <AdminConfirmationDialog
+        confirmLabel="Si, cancelar cita"
+        description="La cita dejara de estar disponible para seguimiento operativo y quedara marcada como cancelada."
+        isOpen={!!appointmentToCancel}
+        isSubmitting={isLoading}
+        title="Cancelar cita"
+        tone="danger"
+        onCancel={() => setAppointmentToCancel(null)}
+        onConfirm={() => {
+          if (!appointmentToCancel) {
+            return;
+          }
+
+          handleStatusChange(appointmentToCancel.id, 'CANCELADA');
+        }}
+      />
     </div>
   );
 }
