@@ -3,6 +3,8 @@ import { useEffect, useSyncExternalStore } from 'react';
 import type {
   PersonOperationalStatus,
   StudentAgendaAppointment,
+  StudentAgendaAppointmentStatus,
+  StudentAppointmentFormValues,
   StudentAppointmentReview,
   StudentConversation,
   StudentConversationMessage,
@@ -14,10 +16,12 @@ import type {
   StudentRequestStatus,
   StudentScheduleBlock,
   StudentScheduleBlockFormValues,
+  StudentSupervisor,
   StudentTreatment,
 } from '@/content/types';
 import { IS_TEST_MODE } from '@/lib/apiClient';
 import {
+  createStudentPortalAppointment,
   createStudentPortalScheduleBlock,
   deleteStudentPortalScheduleBlock,
   getStudentPortalDashboard,
@@ -25,6 +29,8 @@ import {
   toggleStudentPortalPracticeSiteStatus,
   toggleStudentPortalScheduleBlockStatus,
   toggleStudentPortalTreatmentStatus,
+  updateStudentPortalAppointment,
+  updateStudentPortalAppointmentStatus,
   updateStudentPortalProfile,
   updateStudentPortalRequestStatus,
   updateStudentPortalScheduleBlock,
@@ -33,6 +39,10 @@ import {
 type StudentModuleActions = {
   deleteScheduleBlock: (blockId: string) => Promise<boolean>;
   refresh: () => Promise<void>;
+  updateAppointmentStatus: (
+    appointmentId: string,
+    status: StudentAgendaAppointmentStatus,
+  ) => Promise<boolean>;
   respondToRequest: (
     requestId: string,
     nextStatus: StudentRequestStatus,
@@ -51,6 +61,10 @@ type StudentModuleActions = {
     treatmentId: string,
   ) => Promise<PersonOperationalStatus | null>;
   updateProfile: (values: StudentProfileFormValues) => Promise<boolean>;
+  upsertAppointment: (
+    values: StudentAppointmentFormValues,
+    appointmentId?: string,
+  ) => Promise<StudentAgendaAppointment | null>;
   upsertScheduleBlock: (
     values: StudentScheduleBlockFormValues,
     blockId?: string,
@@ -144,6 +158,24 @@ function createMockState(): StudentStoreState {
     },
   ];
 
+  const supervisors: StudentSupervisor[] = [
+    {
+      id: 'student-supervisor-1',
+      name: 'Dra. Catalina Mora',
+      status: 'active',
+    },
+    {
+      id: 'student-supervisor-2',
+      name: 'Dr. Sergio Pineda',
+      status: 'active',
+    },
+    {
+      id: 'student-supervisor-3',
+      name: 'Dra. Marcela Rojas',
+      status: 'inactive',
+    },
+  ];
+
   const scheduleBlocks: StudentScheduleBlock[] = [
     {
       dayOfWeek: null,
@@ -191,9 +223,15 @@ function createMockState(): StudentStoreState {
       endAt: '2026-04-06T15:30:00.000Z',
       id: 'student-appointment-1',
       patientName: 'Ana Maria Perez',
+      requestId: 'student-request-1',
+      siteId: 'practice-site-1',
       siteName: 'Sede Norte',
       startAt: '2026-04-06T15:00:00.000Z',
       status: 'PROPUESTA',
+      supervisorId: 'student-supervisor-1',
+      supervisorName: 'Dra. Catalina Mora',
+      treatmentIds: ['treatment-1'],
+      treatmentNames: ['Operatoria basica'],
     },
     {
       additionalInfo: 'Control confirmado con docente asignado en sede norte.',
@@ -202,9 +240,15 @@ function createMockState(): StudentStoreState {
       endAt: '2026-04-07T20:00:00.000Z',
       id: 'student-appointment-2',
       patientName: 'Julian Torres',
+      requestId: 'student-request-2',
+      siteId: 'practice-site-1',
       siteName: 'Sede Norte',
       startAt: '2026-04-07T19:00:00.000Z',
       status: 'ACEPTADA',
+      supervisorId: 'student-supervisor-1',
+      supervisorName: 'Dra. Catalina Mora',
+      treatmentIds: ['treatment-1', 'treatment-2'],
+      treatmentNames: ['Operatoria basica', 'Promocion y prevencion'],
     },
     {
       additionalInfo: 'Reprogramacion solicitada por ajuste de horario del paciente.',
@@ -213,9 +257,15 @@ function createMockState(): StudentStoreState {
       endAt: '2026-04-08T17:00:00.000Z',
       id: 'student-appointment-3',
       patientName: 'Claudia Moreno',
+      requestId: 'student-request-3',
+      siteId: 'practice-site-2',
       siteName: 'Sede Escuela Clinica',
       startAt: '2026-04-08T16:15:00.000Z',
       status: 'REPROGRAMACION_PENDIENTE',
+      supervisorId: 'student-supervisor-2',
+      supervisorName: 'Dr. Sergio Pineda',
+      treatmentIds: ['treatment-2'],
+      treatmentNames: ['Promocion y prevencion'],
     },
     {
       additionalInfo: 'El paciente cancelo la asistencia y quedo registrado en agenda.',
@@ -224,9 +274,15 @@ function createMockState(): StudentStoreState {
       endAt: '2026-04-09T14:45:00.000Z',
       id: 'student-appointment-4',
       patientName: 'Ricardo Suarez',
+      requestId: 'student-request-4',
+      siteId: 'practice-site-1',
       siteName: 'Sede Norte',
       startAt: '2026-04-09T14:00:00.000Z',
       status: 'CANCELADA',
+      supervisorId: 'student-supervisor-1',
+      supervisorName: 'Dra. Catalina Mora',
+      treatmentIds: ['treatment-1'],
+      treatmentNames: ['Operatoria basica'],
     },
     {
       additionalInfo: 'Cita completada con valoracion del paciente registrada.',
@@ -235,9 +291,15 @@ function createMockState(): StudentStoreState {
       endAt: '2026-04-04T17:30:00.000Z',
       id: 'student-appointment-5',
       patientName: 'Ricardo Suarez',
+      requestId: 'student-request-4',
+      siteId: 'practice-site-1',
       siteName: 'Sede Norte',
       startAt: '2026-04-04T16:45:00.000Z',
       status: 'FINALIZADA',
+      supervisorId: 'student-supervisor-2',
+      supervisorName: 'Dr. Sergio Pineda',
+      treatmentIds: ['treatment-1', 'treatment-2'],
+      treatmentNames: ['Operatoria basica', 'Promocion y prevencion'],
     },
   ];
 
@@ -402,6 +464,7 @@ function createMockState(): StudentStoreState {
     reviews,
     requests,
     scheduleBlocks,
+    supervisors,
     treatments,
   };
 }
@@ -433,6 +496,7 @@ function createRuntimeInitialState(): StudentStoreState {
     reviews: [],
     requests: [],
     scheduleBlocks: [],
+    supervisors: [],
     treatments: [],
   };
 }
@@ -441,6 +505,7 @@ const initialMockState = createMockState();
 
 let state = IS_TEST_MODE ? createMockState() : createRuntimeInitialState();
 let nextLinkSequence = initialMockState.profile.links.length + 1;
+let nextAppointmentSequence = initialMockState.appointments.length + 1;
 let nextScheduleBlockSequence = initialMockState.scheduleBlocks.length + 1;
 let nextConversationSequence = initialMockState.conversations.length + 1;
 let nextConversationMessageSequence =
@@ -552,6 +617,163 @@ function normalizeScheduleBlockInput(values: StudentScheduleBlockFormValues) {
   } satisfies Omit<StudentScheduleBlock, 'id' | 'status'>;
 }
 
+function normalizeAppointmentInput(values: StudentAppointmentFormValues) {
+  return {
+    additionalInfo: normalizeNullableText(values.additionalInfo),
+    endTime: values.endTime,
+    requestId: values.requestId,
+    siteId: values.siteId,
+    startDate: values.startDate,
+    startTime: values.startTime,
+    supervisorId: values.supervisorId,
+    treatmentIds: values.treatmentIds,
+  };
+}
+
+function buildDateTime(dateValue: string, timeValue: string) {
+  const [year = 2026, month = 1, day = 1] = dateValue.split('-').map(Number);
+  const [hours = 0, minutes = 0] = timeValue.split(':').map(Number);
+  return new Date(year, month - 1, day, hours, minutes, 0, 0);
+}
+
+function doesScheduleBlockMatchDate(block: StudentScheduleBlock, dateValue: string) {
+  if (block.type === 'ESPECIFICO') {
+    return block.specificDate === dateValue;
+  }
+
+  if (!block.dayOfWeek || !block.recurrenceStartDate) {
+    return false;
+  }
+
+  if (dateValue < block.recurrenceStartDate) {
+    return false;
+  }
+
+  if (block.recurrenceEndDate && dateValue > block.recurrenceEndDate) {
+    return false;
+  }
+
+  const date = buildDateTime(dateValue, '00:00');
+  const weekday = date.getDay() === 0 ? 7 : date.getDay();
+  return weekday === block.dayOfWeek;
+}
+
+function rangesOverlap(
+  firstStart: string,
+  firstEnd: string,
+  secondStart: string,
+  secondEnd: string,
+) {
+  return firstStart < secondEnd && secondStart < firstEnd;
+}
+
+function getAppointmentTypeLabel(treatmentNames: string[]) {
+  if (treatmentNames.length === 1) {
+    return treatmentNames[0] ?? 'Cita clinica';
+  }
+
+  if (treatmentNames.length > 1) {
+    return 'Atencion clinica programada';
+  }
+
+  return 'Cita clinica';
+}
+
+function findAppointmentValidationError(
+  values: StudentAppointmentFormValues,
+  appointmentId?: string,
+) {
+  const normalized = normalizeAppointmentInput(values);
+  const request = state.requests.find(
+    (currentRequest) => currentRequest.id === normalized.requestId,
+  );
+
+  if (!request || request.status !== 'ACEPTADA') {
+    return 'Debes seleccionar una solicitud aceptada para programar la cita.';
+  }
+
+  const site = state.practiceSites.find(
+    (practiceSite) => practiceSite.id === normalized.siteId,
+  );
+  if (!site || site.status !== 'active') {
+    return 'Selecciona una sede activa para programar la cita.';
+  }
+
+  const supervisor = state.supervisors.find(
+    (currentSupervisor) => currentSupervisor.id === normalized.supervisorId,
+  );
+  if (!supervisor || supervisor.status !== 'active') {
+    return 'Selecciona un docente supervisor activo.';
+  }
+
+  if (normalized.treatmentIds.length === 0) {
+    return 'Selecciona al menos un tratamiento asociado a la cita.';
+  }
+
+  const selectedTreatments = normalized.treatmentIds.map((treatmentId) =>
+    state.treatments.find((treatment) => treatment.id === treatmentId),
+  );
+  if (selectedTreatments.some((treatment) => !treatment || treatment.status !== 'active')) {
+    return 'Todos los tratamientos de la cita deben estar activos.';
+  }
+
+  const startAt = buildDateTime(normalized.startDate, normalized.startTime);
+  const endAt = buildDateTime(normalized.startDate, normalized.endTime);
+  if (endAt <= startAt) {
+    return 'La hora final debe ser posterior a la hora inicial.';
+  }
+
+  const hasConflictingAppointment = state.appointments.some((appointment) => {
+    if (appointment.id === appointmentId) {
+      return false;
+    }
+
+    if (appointment.status === 'CANCELADA' || appointment.status === 'FINALIZADA') {
+      return false;
+    }
+
+    const appointmentDate = appointment.startAt.slice(0, 10);
+
+    if (appointmentDate !== normalized.startDate) {
+      return false;
+    }
+
+    return rangesOverlap(
+      normalized.startTime,
+      normalized.endTime,
+      appointment.startAt.slice(11, 16),
+      appointment.endAt.slice(11, 16),
+    );
+  });
+
+  if (hasConflictingAppointment) {
+    return 'Ya existe otra cita en esa franja horaria.';
+  }
+
+  const hasConflictingBlock = state.scheduleBlocks.some((block) => {
+    if (block.status !== 'active') {
+      return false;
+    }
+
+    if (!doesScheduleBlockMatchDate(block, normalized.startDate)) {
+      return false;
+    }
+
+    return rangesOverlap(
+      normalized.startTime,
+      normalized.endTime,
+      block.startTime,
+      block.endTime,
+    );
+  });
+
+  if (hasConflictingBlock) {
+    return 'La franja seleccionada se encuentra bloqueada en tu agenda.';
+  }
+
+  return null;
+}
+
 function updateProfileMock(values: StudentProfileFormValues) {
   updateState({
     ...state,
@@ -647,6 +869,89 @@ function upsertScheduleBlockMock(
   return nextBlock;
 }
 
+function upsertAppointmentMock(
+  values: StudentAppointmentFormValues,
+  appointmentId?: string,
+) {
+  const validationError = findAppointmentValidationError(values, appointmentId);
+
+  if (validationError) {
+    patchState({
+      errorMessage: validationError,
+      isLoading: false,
+    });
+    return null;
+  }
+
+  const normalized = normalizeAppointmentInput(values);
+  const request = state.requests.find((currentRequest) => currentRequest.id === normalized.requestId);
+  const site = state.practiceSites.find((practiceSite) => practiceSite.id === normalized.siteId);
+  const supervisor = state.supervisors.find(
+    (currentSupervisor) => currentSupervisor.id === normalized.supervisorId,
+  );
+  const treatmentNames: string[] = normalized.treatmentIds
+    .map(
+      (treatmentId) =>
+        state.treatments.find((treatment) => treatment.id === treatmentId)?.name ?? '',
+    )
+    .filter((treatmentName): treatmentName is string => treatmentName.length > 0);
+  const nextAppointment: StudentAgendaAppointment = {
+    additionalInfo: normalized.additionalInfo,
+    appointmentType: getAppointmentTypeLabel(treatmentNames),
+    city: site?.city ?? '',
+    endAt: buildDateTime(normalized.startDate, normalized.endTime).toISOString(),
+    id: appointmentId ?? `student-appointment-${nextAppointmentSequence}`,
+    patientName: request?.patientName ?? '',
+    requestId: normalized.requestId,
+    siteId: normalized.siteId,
+    siteName: site?.name ?? '',
+    startAt: buildDateTime(normalized.startDate, normalized.startTime).toISOString(),
+    status: appointmentId
+      ? state.appointments.find((appointment) => appointment.id === appointmentId)?.status ??
+        'PROPUESTA'
+      : 'PROPUESTA',
+    supervisorId: normalized.supervisorId,
+    supervisorName: supervisor?.name ?? '',
+    treatmentIds: normalized.treatmentIds,
+    treatmentNames,
+  };
+
+  if (!appointmentId) {
+    nextAppointmentSequence += 1;
+  }
+
+  const previousRequestId =
+    appointmentId
+      ? state.appointments.find((appointment) => appointment.id === appointmentId)?.requestId ?? null
+      : null;
+
+  updateState({
+    ...state,
+    errorMessage: null,
+    appointments: appointmentId
+      ? state.appointments.map((appointment) =>
+          appointment.id === appointmentId ? nextAppointment : appointment,
+        )
+      : [nextAppointment, ...state.appointments],
+    requests: state.requests.map((currentRequest) => {
+      const currentCount = currentRequest.appointmentsCount;
+      const shouldIncrease = currentRequest.id === normalized.requestId && previousRequestId !== normalized.requestId;
+      const shouldDecrease = !!previousRequestId && currentRequest.id === previousRequestId && previousRequestId !== normalized.requestId;
+
+      return {
+        ...currentRequest,
+        appointmentsCount: shouldIncrease
+          ? currentCount + 1
+          : shouldDecrease
+            ? Math.max(0, currentCount - 1)
+            : currentCount,
+      };
+    }),
+  });
+
+  return nextAppointment;
+}
+
 function toggleScheduleBlockStatusMock(blockId: string) {
   const currentBlock = state.scheduleBlocks.find((block) => block.id === blockId);
 
@@ -665,6 +970,29 @@ function toggleScheduleBlockStatusMock(blockId: string) {
   });
 
   return nextStatus;
+}
+
+function updateAppointmentStatusMock(
+  appointmentId: string,
+  status: StudentAgendaAppointmentStatus,
+) {
+  const currentAppointment = state.appointments.find(
+    (appointment) => appointment.id === appointmentId,
+  );
+
+  if (!currentAppointment) {
+    return false;
+  }
+
+  updateState({
+    ...state,
+    errorMessage: null,
+    appointments: state.appointments.map((appointment) =>
+      appointment.id === appointmentId ? { ...appointment, status } : appointment,
+    ),
+  });
+
+  return true;
 }
 
 function deleteScheduleBlockMock(blockId: string) {
@@ -803,9 +1131,11 @@ async function loadRuntimeState(forceRefresh = false) {
         errorMessage: null,
         isLoading: false,
         isReady: true,
+        supervisors: payload.supervisors ?? [],
       });
 
       nextLinkSequence = payload.profile.links.length + 1;
+      nextAppointmentSequence = (payload.appointments ?? []).length + 1;
       nextScheduleBlockSequence = payload.scheduleBlocks.length + 1;
       nextConversationSequence = payload.conversations.length + 1;
       nextConversationMessageSequence =
@@ -937,6 +1267,46 @@ async function togglePracticeSiteStatus(practiceSiteId: string) {
   }
 }
 
+async function upsertAppointment(
+  values: StudentAppointmentFormValues,
+  appointmentId?: string,
+) {
+  if (IS_TEST_MODE) {
+    return upsertAppointmentMock(values, appointmentId);
+  }
+
+  patchState({
+    errorMessage: null,
+    isLoading: true,
+  });
+
+  try {
+    const appointment = appointmentId
+      ? await updateStudentPortalAppointment(appointmentId, values)
+      : await createStudentPortalAppointment(values);
+
+    updateState({
+      ...state,
+      appointments: appointmentId
+        ? state.appointments.map((currentAppointment) =>
+            currentAppointment.id === appointmentId ? appointment : currentAppointment,
+          )
+        : [appointment, ...state.appointments],
+      errorMessage: null,
+      isLoading: false,
+      isReady: true,
+    });
+
+    return appointment;
+  } catch (error) {
+    patchState({
+      errorMessage: getErrorMessage(error, 'No pudimos guardar la cita.'),
+      isLoading: false,
+    });
+    return null;
+  }
+}
+
 async function upsertScheduleBlock(
   values: StudentScheduleBlockFormValues,
   blockId?: string,
@@ -974,6 +1344,42 @@ async function upsertScheduleBlock(
       isLoading: false,
     });
     return null;
+  }
+}
+
+async function updateAppointmentStatus(
+  appointmentId: string,
+  status: StudentAgendaAppointmentStatus,
+) {
+  if (IS_TEST_MODE) {
+    return updateAppointmentStatusMock(appointmentId, status);
+  }
+
+  patchState({
+    errorMessage: null,
+    isLoading: true,
+  });
+
+  try {
+    const appointment = await updateStudentPortalAppointmentStatus(appointmentId, status);
+
+    updateState({
+      ...state,
+      appointments: state.appointments.map((currentAppointment) =>
+        currentAppointment.id === appointmentId ? appointment : currentAppointment,
+      ),
+      errorMessage: null,
+      isLoading: false,
+      isReady: true,
+    });
+
+    return true;
+  } catch (error) {
+    patchState({
+      errorMessage: getErrorMessage(error, 'No pudimos actualizar el estado de la cita.'),
+      isLoading: false,
+    });
+    return false;
   }
 }
 
@@ -1121,6 +1527,7 @@ async function sendConversationMessage(
 export function resetStudentModuleState() {
   state = IS_TEST_MODE ? createMockState() : createRuntimeInitialState();
   nextLinkSequence = initialMockState.profile.links.length + 1;
+  nextAppointmentSequence = initialMockState.appointments.length + 1;
   nextScheduleBlockSequence = initialMockState.scheduleBlocks.length + 1;
   nextConversationSequence = initialMockState.conversations.length + 1;
   nextConversationMessageSequence =
@@ -1146,12 +1553,14 @@ export function useStudentModuleStore() {
   const actions: StudentModuleActions = {
     deleteScheduleBlock,
     refresh: refreshRuntimeState,
+    updateAppointmentStatus,
     respondToRequest,
     sendConversationMessage,
     togglePracticeSiteStatus,
     toggleScheduleBlockStatus,
     toggleTreatmentStatus,
     updateProfile,
+    upsertAppointment,
     upsertScheduleBlock,
   };
 

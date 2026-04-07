@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { ROUTES } from '@/constants/routes';
 import { resetStudentModuleState } from '@/lib/studentModuleStore';
 import { StudentAgendaPage } from '@/pages/student/agenda/StudentAgendaPage';
+import { StudentAppointmentsPage } from '@/pages/student/appointments/StudentAppointmentsPage';
 import { StudentConversationsPage } from '@/pages/student/conversations/StudentConversationsPage';
 import { StudentLayout } from '@/pages/student/StudentLayout';
 import { StudentProfilePage } from '@/pages/student/profile/StudentProfilePortalPage';
@@ -30,6 +31,7 @@ function renderStudentApp(
             path="tratamientos-y-sedes"
           />
           <Route element={<StudentAgendaPage />} path="agenda" />
+          <Route element={<StudentAppointmentsPage />} path="citas" />
           <Route element={<StudentRequestsPage />} path="solicitudes" />
           <Route element={<StudentConversationsPage />} path="conversaciones" />
         </Route>
@@ -188,6 +190,64 @@ describe('Student pages', () => {
         screen.queryByTestId('student-agenda-block-event-schedule-block-4'),
       ).not.toBeInTheDocument();
     });
+  });
+
+  it('permite agendar una cita y gestionarla desde el modulo de citas', async () => {
+    const user = userEvent.setup();
+
+    renderStudentApp([ROUTES.studentAppointments]);
+
+    expect(screen.getByText(/propuestas activas/i)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /agendar cita/i }));
+
+    const dialog = screen.getByRole('dialog', { name: /agendar cita/i });
+    await user.click(within(dialog).getByLabelText(/solicitud aceptada/i));
+    await user.click(within(dialog).getByRole('option', { name: /julian torres/i }));
+    await user.click(within(dialog).getByLabelText(/^sede$/i));
+    await user.click(within(dialog).getByRole('option', { name: /sede norte/i }));
+    await user.type(within(dialog).getByLabelText(/fecha de la cita/i), '2026-04-11');
+    await user.type(within(dialog).getByLabelText(/hora de inicio/i), '08:00');
+    await user.type(within(dialog).getByLabelText(/hora de finalizacion/i), '09:00');
+    await user.click(within(dialog).getByLabelText(/docente supervisor/i));
+    await user.click(within(dialog).getByRole('option', { name: /catalina mora/i }));
+    await user.click(within(dialog).getByRole('button', { name: /operatoria basica/i }));
+    await user.click(within(dialog).getByRole('button', { name: /promocion y prevencion/i }));
+    await user.type(
+      within(dialog).getByLabelText(/informacion adicional/i),
+      'Paciente listo para propuesta de control preventivo.',
+    );
+    await user.click(within(dialog).getByRole('button', { name: /guardar cita/i }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      /la cita se agendo correctamente como propuesta/i,
+    );
+    expect(screen.getByTestId('student-appointment-row-student-appointment-6')).toHaveTextContent(
+      /julian torres/i,
+    );
+
+    await user.click(
+      within(screen.getByTestId('student-appointment-row-student-appointment-6')).getByRole(
+        'button',
+        {
+          name: /cancelar cita/i,
+        },
+      ),
+    );
+
+    const confirmDialog = screen.getByRole('dialog', { name: /cancelar cita/i });
+    await user.click(
+      within(confirmDialog).getByRole('button', { name: /si, cancelar cita/i }),
+    );
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      /la cita ahora esta cancelada/i,
+    );
+    expect(
+      within(screen.getByTestId('student-appointment-row-student-appointment-6')).getByText(
+        /^Cancelada$/i,
+      ),
+    ).toBeInTheDocument();
   });
 
   it('permite filtrar solicitudes pendientes y aceptarlas', async () => {
