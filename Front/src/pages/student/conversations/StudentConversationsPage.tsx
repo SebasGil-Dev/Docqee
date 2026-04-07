@@ -6,7 +6,6 @@ import {
   SendHorizontal,
   ShieldCheck,
   SlidersHorizontal,
-  UserRound,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -86,14 +85,6 @@ export function StudentConversationsPage() {
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const selectedConversationId = searchParams.get('conversation');
-  const activeConversationCount = useMemo(
-    () => conversations.filter((conversation) => conversation.status === 'ACTIVA').length,
-    [conversations],
-  );
-  const unreadMessageCount = useMemo(
-    () => conversations.reduce((total, conversation) => total + conversation.unreadCount, 0),
-    [conversations],
-  );
   const filteredConversations = useMemo(
     () =>
       conversations.filter((conversation) => {
@@ -115,6 +106,12 @@ export function StudentConversationsPage() {
       null,
     [filteredConversations, selectedConversationId],
   );
+  const selectedStatusFilterLabel =
+    conversationStatusOptions.find((option) => option.value === statusFilter)?.label ?? 'Todas';
+  const visibleErrorMessage =
+    errorMessage && errorMessage.trim() !== 'No pudimos completar la solicitud.'
+      ? errorMessage
+      : null;
 
   useEffect(() => {
     if (!isStatusMenuOpen) {
@@ -219,60 +216,70 @@ export function StudentConversationsPage() {
           </p>
         </SurfaceCard>
       ) : null}
-      {errorMessage ? (
+      {visibleErrorMessage ? (
         <SurfaceCard
           className="border border-rose-200 bg-rose-50/90 text-sm font-medium text-rose-800"
           paddingClassName="p-3.5"
         >
-          <p role="alert">{errorMessage}</p>
+          <p role="alert">{visibleErrorMessage}</p>
         </SurfaceCard>
       ) : null}
-      <div className="grid gap-3 md:grid-cols-2">
-        <SurfaceCard className="min-w-0 overflow-hidden bg-brand-gradient text-white" paddingClassName="p-0">
-          <div className="flex items-center gap-3 px-4 py-2.5">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-white/12 text-white ring-1 ring-white/18">
-              <MessageSquareMore aria-hidden="true" className="h-4.5 w-4.5" />
-            </span>
-            <div>
-              <p className="font-headline text-[1.45rem] font-extrabold tracking-tight text-white">
-                {activeConversationCount}
-              </p>
-              <p className="text-sm font-semibold text-white/90">Conversaciones activas</p>
-            </div>
-          </div>
-        </SurfaceCard>
-        <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-0">
-          <div className="flex items-center gap-3 px-4 py-2.5">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-primary/10 text-primary ring-1 ring-primary/10">
-              <UserRound aria-hidden="true" className="h-4.5 w-4.5" />
-            </span>
-            <div>
-              <p className="font-headline text-[1.45rem] font-extrabold tracking-tight text-ink">
-                {unreadMessageCount}
-              </p>
-              <p className="text-sm font-semibold text-ink-muted">Mensajes pendientes</p>
-            </div>
-          </div>
-        </SurfaceCard>
-      </div>
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
         <div className="border-b border-slate-200/80 px-4 py-3.5 sm:px-5 sm:py-3.5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <label className="relative min-w-0 flex-1 sm:max-w-[32rem] xl:max-w-[36rem]" htmlFor="student-conversation-search">
-              <span className="sr-only">{studentContent.conversationsPage.searchLabel}</span>
-              <Search
-                aria-hidden="true"
-                className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ghost"
-              />
-              <input
-                className="h-11 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-11 pr-4 text-sm text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
-                id="student-conversation-search"
-                placeholder={studentContent.conversationsPage.searchPlaceholder}
-                type="search"
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-              />
-            </label>
+          <div className="flex flex-col gap-3.5">
+            <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[1.1rem] bg-primary/10 text-primary ring-1 ring-primary/10">
+                  <MessageSquareMore aria-hidden="true" className="h-5 w-5" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-primary/75">
+                    Bandeja de conversaciones
+                  </p>
+                  <h2 className="font-headline text-[1.2rem] font-extrabold tracking-tight text-ink sm:text-[1.35rem]">
+                    Chat con pacientes
+                  </h2>
+                </div>
+              </div>
+              {selectedConversation ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex max-w-full items-center rounded-full bg-slate-100 px-3 py-1 text-[0.72rem] font-semibold text-ink">
+                    {selectedConversation.patientName}
+                  </span>
+                  <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-[0.72rem] font-semibold text-ink-muted">
+                    Solicitud {selectedConversation.requestId}
+                  </span>
+                  <span
+                    className={classNames(
+                      'inline-flex rounded-full px-3 py-1 text-[0.72rem] font-semibold ring-1 ring-inset',
+                      getStatusBadgeClasses(selectedConversation.status),
+                    )}
+                  >
+                    {getStatusLabel(selectedConversation.status)}
+                  </span>
+                </div>
+              ) : null}
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <label className="relative min-w-0 flex-1 sm:max-w-[32rem] xl:max-w-[36rem]" htmlFor="student-conversation-search">
+                <span className="sr-only">{studentContent.conversationsPage.searchLabel}</span>
+                <Search
+                  aria-hidden="true"
+                  className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ghost"
+                />
+                <input
+                  className="h-11 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-11 pr-4 text-sm text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                  id="student-conversation-search"
+                  placeholder={studentContent.conversationsPage.searchPlaceholder}
+                  type="search"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                />
+              </label>
+              <div className="flex items-center gap-2.5">
+                <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-[0.72rem] font-semibold text-ink-muted">
+                  {selectedStatusFilterLabel}
+                </span>
             <div className="relative shrink-0" ref={statusMenuRef}>
               <button
                 aria-controls="student-conversation-status-menu"
@@ -347,18 +354,22 @@ export function StudentConversationsPage() {
                 </div>
               ) : null}
             </div>
+              </div>
+            </div>
           </div>
         </div>
         <div className="grid min-h-0 flex-1 gap-3 px-4 py-3.5 sm:px-5 sm:py-4 xl:grid-cols-[minmax(0,21rem)_minmax(0,1fr)] 2xl:grid-cols-[minmax(0,23rem)_minmax(0,1fr)]">
           <SurfaceCard className="min-h-0 border border-slate-200/80 bg-white shadow-none" paddingClassName="p-0">
             <div className="flex h-full min-h-[17rem] flex-col">
-              <div className="border-b border-slate-200/80 px-4 py-3.5">
+              <div className="flex items-center justify-between gap-3 border-b border-slate-200/80 px-4 py-3.5">
                 <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
                   Hilos disponibles
                 </h2>
-                <p className="mt-1 text-sm leading-6 text-ink-muted">
-                  Selecciona una conversacion para revisar el historial con cada paciente.
-                </p>
+                {statusFilter !== 'all' ? (
+                  <span className="inline-flex rounded-full bg-primary/[0.08] px-3 py-1 text-[0.72rem] font-semibold text-primary">
+                    {selectedStatusFilterLabel}
+                  </span>
+                ) : null}
               </div>
               <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto p-2.5">
                 {filteredConversations.length > 0 ? (
@@ -432,11 +443,19 @@ export function StudentConversationsPage() {
               <div className="flex h-full min-h-[22rem] flex-col">
                 <div className="border-b border-slate-200/80 px-4 py-3.5 sm:px-5">
                   <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
-                        {selectedConversation.patientName}
-                      </h2>
-                      <p className="mt-1 text-sm leading-6 text-ink-muted">
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
+                          {selectedConversation.patientName}
+                        </h2>
+                        <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-[0.72rem] font-semibold text-ink-muted">
+                          Solicitud {selectedConversation.requestId}
+                        </span>
+                        <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-[0.72rem] font-semibold text-ink-muted">
+                          {selectedConversation.patientCity}
+                        </span>
+                      </div>
+                      <p className="text-sm leading-6 text-ink-muted">
                         {selectedConversation.reason ?? 'Conversacion iniciada desde una solicitud sin motivo especificado.'}
                       </p>
                     </div>

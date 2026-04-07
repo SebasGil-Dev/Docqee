@@ -291,6 +291,11 @@ describe('Student pages', () => {
     renderStudentApp([ROUTES.studentConversations]);
 
     expect(
+      screen.queryByText(/mantiene las conversaciones activas con los pacientes/i),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Conversaciones activas$/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Mensajes pendientes$/i)).not.toBeInTheDocument();
+    expect(
       screen.getByTestId('student-conversation-card-student-conversation-1'),
     ).toHaveTextContent(/julian torres/i);
     expect(

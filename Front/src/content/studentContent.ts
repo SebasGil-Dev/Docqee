@@ -44,8 +44,7 @@ export const studentContent = {
       sendMessage: 'Enviar mensaje',
       viewConversation: 'Ver chat',
     },
-    description:
-      'Mantiene las conversaciones activas con los pacientes que ya aceptaste y revisa los hilos en solo lectura.',
+    description: '',
     emptyState: 'No encontramos conversaciones con los filtros seleccionados.',
     meta: {
       description:

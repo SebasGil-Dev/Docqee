@@ -2,7 +2,9 @@ import type {
   StudentAgendaAppointment,
   StudentAgendaAppointmentStatus,
   StudentAppointmentFormValues,
+  StudentConversation,
   StudentConversationMessage,
+  StudentConversationStatus,
   PersonOperationalStatus,
   StudentModuleState,
   StudentProfile,
@@ -118,6 +120,29 @@ export function updateStudentPortalRequestStatus(
     body: { status },
     method: 'PATCH',
   });
+}
+
+export function getStudentPortalConversations(params?: {
+  search?: string;
+  status?: StudentConversationStatus;
+}) {
+  const query = new URLSearchParams();
+
+  if (params?.search) {
+    query.set('search', params.search);
+  }
+
+  if (params?.status) {
+    query.set('status', params.status);
+  }
+
+  const suffix = query.size > 0 ? `?${query.toString()}` : '';
+
+  return apiRequest<StudentConversation[]>(`/student-portal/conversations${suffix}`);
+}
+
+export function getStudentPortalConversation(conversationId: string) {
+  return apiRequest<StudentConversation>(`/student-portal/conversations/${conversationId}`);
 }
 
 export function sendStudentPortalConversationMessage(
