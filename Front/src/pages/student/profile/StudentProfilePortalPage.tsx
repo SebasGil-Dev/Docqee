@@ -219,10 +219,10 @@ export function StudentProfilePage() {
                 paddingClassName="p-4 sm:p-5"
               >
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center 2xl:gap-5">
-                  <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-center">
-                    {values.avatarSrc ? (
-                      <img
-                        alt={profile.avatarAlt}
+                    <div className="flex flex-col items-center gap-3">
+                      {values.avatarSrc ? (
+                        <img
+                          alt={profile.avatarAlt}
                         className="h-20 w-20 rounded-[1.7rem] object-cover ring-4 ring-primary/10"
                         src={values.avatarSrc}
                       />
