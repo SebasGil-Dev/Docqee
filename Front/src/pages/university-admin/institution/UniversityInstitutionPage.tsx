@@ -1004,17 +1004,17 @@ export function UniversityInstitutionPage({
                           onChange={(value) => handleInstitutionFieldChange('mainLocalityId', value)}
                         />
                       </div>
-                      <div className="space-y-3 self-start rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50 p-5 text-center xl:-mt-16">
-                        <div className="space-y-1">
-                          <p className="text-sm font-bold uppercase tracking-[0.2em] text-primary">
+                      <div className="space-y-2.5 self-start rounded-[1.35rem] border border-dashed border-slate-300 bg-slate-50 p-4 text-center xl:-mt-14">
+                        <div className="space-y-0.5">
+                          <p className="text-[0.72rem] font-bold uppercase tracking-[0.2em] text-primary">
                             Logo institucional
                           </p>
-                          <p className="text-sm leading-6 text-ink-muted">
+                          <p className="text-xs leading-5 text-ink-muted">
                             {universityAdminContent.institutionPage.logoHelper}
                           </p>
                         </div>
-                        <div className="flex flex-col items-center gap-4">
-                          <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-[1.5rem] bg-white ring-1 ring-slate-200">
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-[1.3rem] bg-white ring-1 ring-slate-200">
                             {values.logoSrc ? (
                               <img
                                 alt={institutionProfile.logoAlt}
@@ -1022,17 +1022,17 @@ export function UniversityInstitutionPage({
                                 src={values.logoSrc}
                               />
                             ) : (
-                              <span className="font-headline text-3xl font-extrabold tracking-tight text-primary">
+                              <span className="font-headline text-[1.65rem] font-extrabold tracking-tight text-primary">
                                 {logoInitials || 'UC'}
                               </span>
                             )}
                           </div>
-                          <div className="space-y-2">
+                          <div className="space-y-1.5">
                             <label
-                              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
+                              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-brand-gradient px-3.5 py-2 text-xs font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
                               htmlFor="institution-logo-input"
                             >
-                              <ImagePlus aria-hidden="true" className="h-4 w-4" />
+                              <ImagePlus aria-hidden="true" className="h-3.5 w-3.5" />
                               <span>{universityAdminContent.institutionPage.actionLabels.uploadLogo}</span>
                             </label>
                             <input
@@ -1042,7 +1042,7 @@ export function UniversityInstitutionPage({
                               type="file"
                               onChange={handleLogoSelection}
                             />
-                            <p className="text-xs text-ink-muted">
+                            <p className="text-[0.7rem] text-ink-muted">
                               {values.logoFileName ?? 'Aun no has seleccionado un archivo'}
                             </p>
                           </div>
