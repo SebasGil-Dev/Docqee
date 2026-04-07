@@ -14,12 +14,6 @@ const DEFAULT_SELECTED_DATE_KEY = '2026-04-06';
 const dayFormatter = new Intl.DateTimeFormat('es-CO', { weekday: 'short' });
 const monthFormatter = new Intl.DateTimeFormat('es-CO', { month: 'long', year: 'numeric' });
 const mediumDateFormatter = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short' });
-const longDateFormatter = new Intl.DateTimeFormat('es-CO', {
-  day: 'numeric',
-  month: 'long',
-  weekday: 'long',
-  year: 'numeric',
-});
 const timeFormatter = new Intl.DateTimeFormat('es-CO', { hour: 'numeric', minute: '2-digit' });
 
 type CalendarViewMode = 'day' | 'week' | 'month';
@@ -221,10 +215,14 @@ export function StudentAgendaCalendar({
       }, {}),
     [events],
   );
-  const selectedDateEvents = eventsByDate[selectedDateKey] ?? [];
   const rangeLabel = useMemo(() => {
     if (viewMode === 'day') {
-      return longDateFormatter.format(selectedDate);
+      return new Intl.DateTimeFormat('es-CO', {
+        day: 'numeric',
+        month: 'long',
+        weekday: 'long',
+        year: 'numeric',
+      }).format(selectedDate);
     }
     if (viewMode === 'week') {
       const startDate = visibleDays[0];
@@ -249,14 +247,9 @@ export function StudentAgendaCalendar({
       <div className="space-y-3">
         <div className="flex flex-col gap-2.5 border-b border-slate-200/70 pb-3">
           <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <h2 className="font-headline text-[1rem] font-extrabold tracking-tight text-ink sm:text-[1.08rem]">
-                Calendario de citas
-              </h2>
-              <p className="mt-0.5 text-[0.76rem] leading-5 text-ink-muted sm:text-[0.8rem]">
-                Organiza tu agenda por dia, semana o mes.
-              </p>
-            </div>
+            <h2 className="font-headline text-[1rem] font-extrabold tracking-tight text-ink sm:text-[1.08rem]">
+              Calendario de citas
+            </h2>
             <div className="inline-flex rounded-full border border-slate-200/80 bg-white/90 p-1 shadow-[0_12px_28px_-24px_rgba(15,23,42,0.28)]">
               {(['day', 'week', 'month'] as const).map((option) => (
                 <button
@@ -275,7 +268,7 @@ export function StudentAgendaCalendar({
               ))}
             </div>
           </div>
-          <div className="flex flex-col gap-2.5 xl:flex-row xl:items-center xl:justify-between">
+          <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
               <button
                 aria-label="Periodo anterior"
@@ -477,53 +470,6 @@ export function StudentAgendaCalendar({
             );
           })}
         </div>
-        {viewMode !== 'day' ? (
-          <div className="rounded-[1.05rem] border border-slate-200/80 bg-white/78 p-3 shadow-[0_12px_24px_-28px_rgba(15,23,42,0.28)]">
-            <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-ink-muted">
-              Detalle del dia
-            </p>
-            <h3 className="font-headline text-base font-extrabold tracking-tight text-ink sm:text-[1.05rem]">
-              {longDateFormatter.format(selectedDate)}
-            </h3>
-            <div className="mt-2.5 space-y-2">
-              {selectedDateEvents.length > 0 ? (
-                selectedDateEvents.map((event) => {
-                  const tone = getToneClasses(event.tone);
-
-                  return (
-                    <div
-                      key={event.id}
-                      className={classNames('rounded-[0.95rem] border px-2.5 py-2.5', tone.card)}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-[0.84rem] font-semibold">{event.title}</p>
-                          <p className="text-[0.72rem] opacity-80">{event.subtitle}</p>
-                        </div>
-                        <span
-                          className={classNames(
-                            'rounded-full px-2 py-1 text-[0.64rem] font-semibold',
-                            tone.pill,
-                          )}
-                        >
-                          {event.statusLabel}
-                        </span>
-                      </div>
-                      <div className="mt-1.5 flex items-center gap-2 text-[0.7rem] font-semibold">
-                        <span className={classNames('h-2 w-2 rounded-full', tone.dot)} />
-                        {event.timeLabel}
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="rounded-[1rem] border border-dashed border-slate-200 bg-white px-4 py-5 text-center text-[0.84rem] text-ink-muted">
-                  No hay movimientos registrados para el dia seleccionado.
-                </div>
-              )}
-            </div>
-          </div>
-        ) : null}
       </div>
     </SurfaceCard>
   );
