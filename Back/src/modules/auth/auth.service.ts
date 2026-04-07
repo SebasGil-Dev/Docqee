@@ -50,6 +50,12 @@ type SessionAccount = {
       estado: estado_simple_enum;
     };
   } | null;
+  cuenta_paciente: {
+    persona: { nombres: string; apellidos: string };
+  } | null;
+  cuenta_estudiante: {
+    persona: { nombres: string; apellidos: string };
+  } | null;
 };
 
 @Injectable()
@@ -449,6 +455,16 @@ export class AuthService {
             },
           },
         },
+        cuenta_paciente: {
+          select: {
+            persona: { select: { nombres: true, apellidos: true } },
+          },
+        },
+        cuenta_estudiante: {
+          select: {
+            persona: { select: { nombres: true, apellidos: true } },
+          },
+        },
       },
     });
   }
@@ -478,18 +494,18 @@ export class AuthService {
     if (account.tipo_cuenta === tipo_cuenta_enum.ESTUDIANTE) {
       return {
         email: account.correo,
-        firstName: 'Estudiante',
+        firstName: account.cuenta_estudiante?.persona.nombres ?? 'Estudiante',
         id: account.id_cuenta,
-        lastName: 'Docqee',
+        lastName: account.cuenta_estudiante?.persona.apellidos ?? 'Docqee',
         role: 'STUDENT',
       };
     }
 
     return {
       email: account.correo,
-      firstName: 'Paciente',
+      firstName: account.cuenta_paciente?.persona.nombres ?? 'Paciente',
       id: account.id_cuenta,
-      lastName: 'Docqee',
+      lastName: account.cuenta_paciente?.persona.apellidos ?? 'Docqee',
       role: 'PATIENT',
     };
   }
