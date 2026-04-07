@@ -37,6 +37,7 @@ type SessionAccount = {
   password_hash: string;
   tipo_cuenta: tipo_cuenta_enum;
   correo_verificado: boolean;
+  primer_ingreso_pendiente: boolean;
   cuenta_admin_plataforma: {
     nombres: string;
     apellidos: string;
@@ -93,8 +94,14 @@ export class AuthService {
       },
     });
 
+    const requiresPasswordChange =
+      account.primer_ingreso_pendiente &&
+      (account.tipo_cuenta === tipo_cuenta_enum.ADMIN_UNIVERSIDAD ||
+        account.tipo_cuenta === tipo_cuenta_enum.ESTUDIANTE);
+
     return {
       accessToken,
+      requiresPasswordChange,
       user,
     };
   }
@@ -340,6 +347,33 @@ export class AuthService {
     return { ok: true };
   }
 
+  async changeFirstLoginPassword(user: RequestUser, password: string) {
+    const account = await this.prisma.cuenta_acceso.findUnique({
+      where: { id_cuenta: user.id },
+      select: { primer_ingreso_pendiente: true, tipo_cuenta: true },
+    });
+
+    if (
+      !account?.primer_ingreso_pendiente ||
+      (account.tipo_cuenta !== tipo_cuenta_enum.ADMIN_UNIVERSIDAD &&
+        account.tipo_cuenta !== tipo_cuenta_enum.ESTUDIANTE)
+    ) {
+      throw new UnauthorizedException('Esta operación no está permitida para tu cuenta.');
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    await this.prisma.cuenta_acceso.update({
+      where: { id_cuenta: user.id },
+      data: {
+        password_hash: passwordHash,
+        primer_ingreso_pendiente: false,
+      },
+    });
+
+    return { ok: true };
+  }
+
   private async ensureDefaultPlatformAdmin() {
     const adminEmail = this.configService.get<string>('auth.platformAdminEmail') ?? 'admin@docqee.local';
     const adminPassword = this.configService.get<string>('auth.platformAdminPassword') ?? 'Admin123!';
@@ -388,6 +422,7 @@ export class AuthService {
         password_hash: true,
         tipo_cuenta: true,
         correo_verificado: true,
+        primer_ingreso_pendiente: true,
         cuenta_admin_plataforma: {
           select: {
             nombres: true,

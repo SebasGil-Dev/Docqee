@@ -4,6 +4,7 @@ import { CurrentUser } from '@/shared/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@/shared/guards/jwt-auth.guard';
 import type { RequestUser } from '@/shared/types/request-user.type';
 import { AuthService } from '../auth.service';
+import { ChangeFirstLoginPasswordDto } from '../dto/change-first-login-password.dto';
 import { LoginDto } from '../dto/login.dto';
 import { RegisterPatientDto } from '../dto/register-patient.dto';
 import { RequestPasswordResetDto } from '../dto/request-password-reset.dto';
@@ -52,5 +53,14 @@ export class AuthController {
   @Post('forgot-password/reset')
   resetPassword(@Body() body: ResetPasswordDto) {
     return this.authService.resetPassword(body);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('first-login/change-password')
+  changeFirstLoginPassword(
+    @CurrentUser() user: RequestUser,
+    @Body() body: ChangeFirstLoginPasswordDto,
+  ) {
+    return this.authService.changeFirstLoginPassword(user, body.password);
   }
 }
