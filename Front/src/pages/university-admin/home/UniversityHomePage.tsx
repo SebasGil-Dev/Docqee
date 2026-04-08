@@ -5,12 +5,12 @@ import {
   GraduationCap,
   KeyRound,
   MapPin,
-  UserRound,
   Users,
 } from 'lucide-react';
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 
+import { useAuth } from '@/app/providers/AuthProvider';
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
 import { Seo } from '@/components/ui/Seo';
@@ -27,28 +27,12 @@ const createdAtFormatter = new Intl.DateTimeFormat('es-CO', {
   year: 'numeric',
 });
 
-function getInitials(value: string) {
-  const words = value
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
-
-  if (words.length === 0) {
-    return 'DU';
-  }
-
-  return words
-    .slice(0, 2)
-    .map((word) => word.charAt(0))
-    .join('')
-    .toUpperCase();
-}
-
 function formatCreatedAt(value: string) {
   return createdAtFormatter.format(new Date(value));
 }
 
 export function UniversityHomePage() {
+  const { session } = useAuth();
   const { credentials, errorMessage, institutionProfile, isLoading, students, teachers } =
     useUniversityAdminModuleStore();
   const credentialByStudentId = useMemo(
@@ -137,11 +121,28 @@ export function UniversityHomePage() {
         .slice(0, 3),
     [teachers],
   );
-  const universityInitials = useMemo(
-    () => getInitials(institutionProfile.name),
-    [institutionProfile.name],
-  );
-  const adminFullName = `${institutionProfile.adminFirstName} ${institutionProfile.adminLastName}`.trim();
+  const adminFullName = useMemo(() => {
+    const profileFullName =
+      `${institutionProfile.adminFirstName} ${institutionProfile.adminLastName}`.trim();
+
+    if (profileFullName) {
+      return profileFullName;
+    }
+
+    const sessionFullName =
+      `${session?.user.firstName ?? ''} ${session?.user.lastName ?? ''}`.trim();
+
+    if (sessionFullName) {
+      return sessionFullName;
+    }
+
+    return `${universityAdminContent.shell.adminUser.firstName} ${universityAdminContent.shell.adminUser.lastName}`.trim();
+  }, [
+    institutionProfile.adminFirstName,
+    institutionProfile.adminLastName,
+    session?.user.firstName,
+    session?.user.lastName,
+  ]);
   const dashboardErrorMessage = useMemo(() => {
     if (!errorMessage) {
       return null;
@@ -177,17 +178,17 @@ export function UniversityHomePage() {
                 src={institutionProfile.logoSrc ?? undefined}
               />
             ) : (
-              <span className="inline-flex h-12 w-12 items-center justify-center rounded-[1.2rem] bg-white/14 text-base font-extrabold uppercase text-white ring-4 ring-white/15 sm:h-14 sm:w-14 sm:text-lg">
-                {universityInitials}
+              <span className="inline-flex h-12 w-12 items-center justify-center rounded-[1.2rem] bg-white/14 text-white ring-4 ring-white/15 sm:h-14 sm:w-14">
+                <Building2 aria-hidden="true" className="h-5 w-5 sm:h-6 sm:w-6" />
               </span>
             )}
             <div className="flex min-w-0 flex-col gap-1.5">
               <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white/70">
                 Inicio universidad
-              </p>
-              <h2 className="max-w-[18rem] truncate font-headline text-[1.08rem] font-extrabold tracking-tight text-white sm:max-w-[24rem] sm:text-[1.2rem] xl:max-w-[28rem]">
-                Bienvenido, {adminFullName || 'Administrador universidad'}
-              </h2>
+                </p>
+                <h2 className="max-w-[18rem] truncate font-headline text-[1.08rem] font-extrabold tracking-tight text-white sm:max-w-[24rem] sm:text-[1.2rem] xl:max-w-[28rem]">
+                  Bienvenido, {adminFullName}
+                </h2>
               <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-[0.75rem] font-semibold text-white/88">
                   <Building2 aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
@@ -221,18 +222,6 @@ export function UniversityHomePage() {
               </p>
               <p className="font-headline text-[1.05rem] font-extrabold tracking-tight text-white">
                 {teachers.length}
-              </p>
-            </div>
-            <div
-              className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1.5 ring-1 ring-white/15 backdrop-blur-sm"
-              data-testid="university-home-pending-credentials"
-            >
-              <KeyRound aria-hidden="true" className="h-3.5 w-3.5 text-white" />
-              <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-white/75">
-                Pendientes
-              </p>
-              <p className="font-headline text-[1.05rem] font-extrabold tracking-tight text-white">
-                {pendingCredentials.length}
               </p>
             </div>
             <div className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1.5 ring-1 ring-white/15 backdrop-blur-sm">
@@ -463,75 +452,6 @@ export function UniversityHomePage() {
               </div>
             </SurfaceCard>
 
-            <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-4 sm:p-4.5">
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-[1rem] bg-primary/10 text-primary">
-                    <UserRound aria-hidden="true" className="h-4.5 w-4.5" />
-                  </span>
-                  <div>
-                    <h2 className="font-headline text-[1.15rem] font-extrabold tracking-tight text-ink">
-                      Accesos rapidos
-                    </h2>
-                    <p className="text-sm text-ink-muted">
-                      Entra a las areas clave del modulo desde este inicio.
-                    </p>
-                  </div>
-                </div>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {[
-                    {
-                      description: 'Edita logo, sedes y datos administrativos.',
-                      icon: Building2,
-                      label: 'Informacion institucional',
-                      to: ROUTES.universityInstitution,
-                    },
-                    {
-                      description: 'Consulta el estado operativo de los estudiantes.',
-                      icon: GraduationCap,
-                      label: 'Estudiantes',
-                      to: ROUTES.universityStudents,
-                    },
-                    {
-                      description: 'Gestiona docentes vinculados a la universidad.',
-                      icon: Badge,
-                      label: 'Docentes',
-                      to: ROUTES.universityTeachers,
-                    },
-                    {
-                      description: 'Revisa envios y reenvios de credenciales.',
-                      icon: KeyRound,
-                      label: 'Credenciales',
-                      to: ROUTES.universityCredentials,
-                    },
-                  ].map((item) => {
-                    const Icon = item.icon;
-
-                    return (
-                      <Link
-                        key={item.to}
-                        className="group rounded-[1.2rem] border border-slate-200/80 bg-slate-50 px-3.5 py-3 transition duration-200 hover:border-primary/25 hover:bg-white"
-                        to={item.to}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <span className="inline-flex h-9 w-9 items-center justify-center rounded-[0.95rem] bg-white text-primary shadow-[0_12px_24px_-20px_rgba(15,23,42,0.35)] transition duration-200 group-hover:bg-primary group-hover:text-white">
-                            <Icon aria-hidden="true" className="h-4.5 w-4.5" />
-                          </span>
-                          <ArrowRight
-                            aria-hidden="true"
-                            className="h-4 w-4 text-ink-muted transition duration-200 group-hover:translate-x-0.5 group-hover:text-primary"
-                          />
-                        </div>
-                        <div className="mt-3 space-y-1">
-                          <p className="text-sm font-semibold text-ink">{item.label}</p>
-                          <p className="text-xs leading-5 text-ink-muted">{item.description}</p>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            </SurfaceCard>
           </div>
         </div>
       </AdminPanelCard>
