@@ -369,7 +369,7 @@ export function UniversityCredentialsPage() {
                           isLast ? 'pb-3.5' : 'pb-3',
                         )}
                       >
-                        <div className="flex flex-nowrap items-center justify-center gap-1.5 sm:gap-2">
+                        <div className="mt-0.5 flex flex-nowrap items-center justify-center gap-1.5 sm:gap-2">
                           {isEditing ? (
                             <>
                               <button
