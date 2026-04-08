@@ -3,7 +3,6 @@ import {
   Badge,
   Building2,
   GraduationCap,
-  KeyRound,
   MapPin,
   Users,
 } from 'lucide-react';
@@ -33,31 +32,11 @@ function formatCreatedAt(value: string) {
 
 export function UniversityHomePage() {
   const { session } = useAuth();
-  const { credentials, errorMessage, institutionProfile, isLoading, students, teachers } =
+  const { credentials, errorMessage, institutionProfile, students, teachers } =
     useUniversityAdminModuleStore();
   const credentialByStudentId = useMemo(
     () => new Map(credentials.map((credential) => [credential.studentId, credential])),
     [credentials],
-  );
-  const pendingCredentials = useMemo(
-    () =>
-      credentials
-        .filter((credential) => credential.deliveryStatus === 'generated')
-        .map((credential) => {
-          const student = students.find((item) => item.id === credential.studentId);
-
-          if (!student) {
-            return null;
-          }
-
-          return {
-            ...credential,
-            studentName: `${student.firstName} ${student.lastName}`,
-            studentSemester: student.semester,
-          };
-        })
-        .filter((credential): credential is NonNullable<typeof credential> => credential !== null),
-    [credentials, students],
   );
   const activeStudentsCount = useMemo(
     () =>
@@ -92,10 +71,6 @@ export function UniversityHomePage() {
   const activeCampusesCount = useMemo(
     () => institutionProfile.campuses.filter((campus) => campus.status === 'active').length,
     [institutionProfile.campuses],
-  );
-  const sentCredentialsCount = useMemo(
-    () => credentials.filter((credential) => credential.deliveryStatus === 'sent').length,
-    [credentials],
   );
   const recentStudents = useMemo(
     () =>
@@ -306,6 +281,7 @@ export function UniversityHomePage() {
               </div>
             </SurfaceCard>
 
+            {/*
             <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-4 sm:p-4.5">
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
@@ -377,6 +353,7 @@ export function UniversityHomePage() {
                 </div>
               </div>
             </SurfaceCard>
+            */}
 
             <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-4 sm:p-4.5">
               <div className="space-y-4">
