@@ -223,17 +223,6 @@ export function UniversityCredentialsPage() {
         title={universityAdminContent.credentialsPage.meta.title}
       />
       <AdminPageHeader
-        action={
-          <button
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-gradient px-3.5 py-2.5 text-[0.82rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
-            disabled={isLoading}
-            type="button"
-            onClick={handleSendAll}
-          >
-            <Send aria-hidden="true" className="h-4 w-4" />
-            <span>{universityAdminContent.credentialsPage.actionLabels.sendAll}</span>
-          </button>
-        }
         description=""
         headingAlign="center"
         title={universityAdminContent.credentialsPage.title}
@@ -261,16 +250,27 @@ export function UniversityCredentialsPage() {
         </SurfaceCard>
       ) : null}
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
-        <div className="flex flex-col gap-2.5 border-b border-slate-200/80 px-4 py-3 sm:px-5 sm:py-3.5 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] lg:items-start lg:gap-4">
-          <div className={classNames('space-y-1', !universityAdminContent.credentialsPage.subtitle && 'lg:self-center')}>
-            <h2 className="font-headline text-[1.12rem] font-extrabold tracking-tight text-ink sm:text-[1.25rem]">
-              {universityAdminContent.credentialsPage.tableTitle}
-            </h2>
-            {universityAdminContent.credentialsPage.subtitle ? (
-              <p className="max-w-3xl text-sm leading-6 text-ink-muted">
-                {universityAdminContent.credentialsPage.subtitle}
-              </p>
-            ) : null}
+        <div className="flex flex-col gap-3 border-b border-slate-200/80 px-4 py-3 sm:px-5 sm:py-3.5">
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <h2 className="font-headline text-[1.12rem] font-extrabold tracking-tight text-ink sm:text-[1.25rem]">
+                {universityAdminContent.credentialsPage.tableTitle}
+              </h2>
+              {universityAdminContent.credentialsPage.subtitle ? (
+                <p className="max-w-3xl text-sm leading-6 text-ink-muted">
+                  {universityAdminContent.credentialsPage.subtitle}
+                </p>
+              ) : null}
+            </div>
+            <button
+              className="inline-flex items-center justify-center gap-2 self-start rounded-xl bg-brand-gradient px-3.5 py-2.5 text-[0.82rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 sm:self-center"
+              disabled={isLoading}
+              type="button"
+              onClick={handleSendAll}
+            >
+              <Send aria-hidden="true" className="h-4 w-4" />
+              <span>{universityAdminContent.credentialsPage.actionLabels.sendAll}</span>
+            </button>
           </div>
           {universityAdminContent.credentialsPage.editEmailHelp ? (
             <SurfaceCard
