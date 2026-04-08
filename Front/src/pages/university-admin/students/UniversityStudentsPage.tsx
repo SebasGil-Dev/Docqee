@@ -272,7 +272,7 @@ export function UniversityStudentsPage() {
                   <th className="px-4 py-2.5">Documento</th>
                   <th className="px-4 py-2.5">Correo</th>
                   <th className="px-4 py-2.5">Semestre</th>
-                  <th className="px-4 py-2.5">Estado</th>
+                    <th className="px-4 py-2.5 text-center">Estado</th>
                     <th className="px-4 py-2.5 text-center sm:px-5">Acciones</th>
                 </tr>
               </thead>
@@ -330,11 +330,13 @@ export function UniversityStudentsPage() {
                       </td>
                       <td
                         className={classNames(
-                          'px-4 pt-3',
+                          'px-4 pt-3 text-center',
                           isLast ? 'pb-3.5' : 'pb-3',
                         )}
                       >
-                        <AdminStatusBadge entity="student" status={displayStatus} />
+                        <div className="flex items-center justify-center">
+                          <AdminStatusBadge entity="student" status={displayStatus} />
+                        </div>
                       </td>
                       <td
                         className={classNames(
