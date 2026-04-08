@@ -185,7 +185,7 @@ export function UniversityBulkUploadPage() {
         panelClassName="bg-[#f4f8ff]"
       >
         <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5 sm:py-4 xl:px-6 xl:py-5 2xl:px-7">
-          <div className="grid min-h-0 gap-4">
+          <div className="grid min-h-0 gap-4 xl:grid-cols-[minmax(18rem,20rem)_minmax(0,1fr)] 2xl:grid-cols-1 2xl:gap-5">
             <SurfaceCard className="h-full border border-slate-200/80 bg-white shadow-none" paddingClassName="p-4 lg:p-4.5 xl:p-5">
               <div className="bulk-upload-template-layout space-y-3.5 lg:space-y-3">
                 <div className="bulk-upload-template-intro space-y-1">

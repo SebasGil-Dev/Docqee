@@ -193,7 +193,7 @@
   }
 }
 
-@media (min-width: 1288px) and (min-height: 564px) {
+@media (min-width: 1536px) and (min-height: 700px) {
   .bulk-upload-template-layout {
     display: grid;
     grid-template-columns: minmax(16rem, 18rem) minmax(0, 1fr) auto;
