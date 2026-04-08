@@ -1,4 +1,4 @@
-import { Check, Plus, Power, PowerOff, Presentation, Search, SlidersHorizontal, Upload } from 'lucide-react';
+import { Check, Plus, Power, PowerOff, Presentation, Search, SlidersHorizontal } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
@@ -148,13 +148,6 @@ export function UniversityTeachersPage() {
             </p>
           </div>
         </SurfaceCard>
-        <Link
-          className="inline-flex items-center justify-center gap-2 rounded-[1.4rem] border border-slate-200 bg-white px-3.5 py-2.25 text-[0.82rem] font-semibold text-primary shadow-ambient transition duration-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 md:min-w-[10.5rem] md:flex-none"
-          to={ROUTES.universityBulkUpload}
-        >
-          <Upload aria-hidden="true" className="h-4 w-4" />
-          <span>{universityAdminContent.teachersPage.actionLabels.bulkUpload}</span>
-        </Link>
         <Link
           className="inline-flex items-center justify-center gap-2 rounded-[1.4rem] bg-brand-gradient px-3.5 py-2.25 text-[0.82rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 md:min-w-[11.5rem] md:flex-none"
           to={ROUTES.universityRegisterTeacher}

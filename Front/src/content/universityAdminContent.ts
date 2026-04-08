@@ -203,7 +203,6 @@ export const universityAdminContent = {
   teachersPage: {
     actionLabels: {
       activate: 'Activar',
-      bulkUpload: 'Carga masiva',
       deactivate: 'Inactivar',
       register: 'Registrar docente',
     },
