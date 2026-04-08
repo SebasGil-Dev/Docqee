@@ -165,7 +165,7 @@ export function UniversityBulkUploadPage() {
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden sm:gap-5 lg:h-auto lg:min-h-fit lg:overflow-visible">
+    <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden sm:gap-4 lg:h-auto lg:min-h-fit lg:overflow-visible">
       <Seo
         description={universityAdminContent.bulkUploadPage.meta.description}
         noIndex
@@ -184,19 +184,19 @@ export function UniversityBulkUploadPage() {
         className="flex-1 lg:w-full lg:flex-none lg:overflow-visible"
         panelClassName="bg-[#f4f8ff] lg:h-auto lg:overflow-visible"
       >
-        <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6 sm:py-5 lg:min-h-fit lg:flex-none lg:overflow-visible lg:px-6 lg:py-4">
-          <div className="grid gap-5 xl:grid-cols-[minmax(18rem,21rem)_minmax(0,1fr)]">
-            <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-5 lg:p-4.5 xl:p-5">
-              <div className="space-y-4 lg:space-y-3.5">
+        <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5 sm:py-4 lg:min-h-fit lg:flex-none lg:overflow-visible lg:px-5 lg:py-4">
+          <div className="grid gap-4 xl:grid-cols-[minmax(17rem,19rem)_minmax(0,1fr)]">
+            <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-4 lg:p-4 xl:p-4.5">
+              <div className="space-y-3.5 lg:space-y-3">
                 <div className="space-y-1">
-                  <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
+                  <h2 className="font-headline text-[1.1rem] font-extrabold tracking-tight text-ink">
                     Plantilla base
                   </h2>
-                  <p className="text-sm leading-6 text-ink-muted">
+                  <p className="text-[0.82rem] leading-5 text-ink-muted">
                     {universityAdminContent.bulkUploadPage.templateDescription}
                   </p>
                 </div>
-                <div className="space-y-2.5">
+                <div className="space-y-2">
                   {universityAdminContent.bulkUploadPage.templateOptions.map((option) => {
                     const isSelected = uploadState.templateType === option.value;
 
@@ -204,7 +204,7 @@ export function UniversityBulkUploadPage() {
                       <button
                         key={option.value}
                         className={classNames(
-                          'flex w-full items-start justify-between rounded-[1.5rem] border px-4 py-3.5 text-left transition duration-300',
+                          'flex w-full items-start justify-between rounded-[1.2rem] border px-3.5 py-3 text-left transition duration-300',
                           isSelected
                             ? 'border-primary bg-primary/5 text-primary'
                             : 'border-slate-200 bg-slate-50 text-ink hover:border-primary/40 hover:bg-white',
@@ -213,10 +213,10 @@ export function UniversityBulkUploadPage() {
                         onClick={() => handleTemplateChange(option.value)}
                       >
                         <div className="space-y-1">
-                          <p className="text-sm font-semibold">
+                          <p className="text-[0.83rem] font-semibold">
                             {option.value === 'students' ? 'Estudiantes' : 'Docentes'}
                           </p>
-                          <p className="text-xs leading-5 text-ink-muted">{option.description}</p>
+                          <p className="text-[0.72rem] leading-5 text-ink-muted">{option.description}</p>
                         </div>
                         {isSelected ? (
                           <CheckCircle2 aria-hidden="true" className="h-4.5 w-4.5 shrink-0" />
@@ -226,7 +226,7 @@ export function UniversityBulkUploadPage() {
                   })}
                 </div>
                 <button
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-5 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-gradient px-4 py-2.5 text-[0.82rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
                   type="button"
                   onClick={downloadTemplate}
                 >
@@ -235,32 +235,32 @@ export function UniversityBulkUploadPage() {
                 </button>
               </div>
             </SurfaceCard>
-            <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-5 lg:p-4.5 xl:p-5">
-              <div className="space-y-5 lg:space-y-4">
+            <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-4 lg:p-4 xl:p-4.5">
+              <div className="space-y-4">
                 <div className="space-y-1">
-                  <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
+                  <h2 className="font-headline text-[1.1rem] font-extrabold tracking-tight text-ink">
                     {universityAdminContent.bulkUploadPage.uploadCardTitle}
                   </h2>
-                  <p className="text-sm leading-6 text-ink-muted">
+                  <p className="text-[0.82rem] leading-5 text-ink-muted">
                     {universityAdminContent.bulkUploadPage.subtitle}
                   </p>
                 </div>
                 <label
-                  className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-[1.75rem] border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center transition duration-300 hover:border-primary/50 hover:bg-white lg:py-7"
+                  className="flex cursor-pointer flex-col items-center justify-center gap-2.5 rounded-[1.4rem] border-2 border-dashed border-slate-300 bg-slate-50 px-5 py-6 text-center transition duration-300 hover:border-primary/50 hover:bg-white lg:py-5"
                   htmlFor="bulk-upload-input"
                 >
-                  <span className="inline-flex h-14 w-14 items-center justify-center rounded-[1.5rem] bg-white text-primary ring-1 ring-slate-200">
-                    <FileSpreadsheet aria-hidden="true" className="h-6 w-6" />
+                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-[1.2rem] bg-white text-primary ring-1 ring-slate-200">
+                    <FileSpreadsheet aria-hidden="true" className="h-5 w-5" />
                   </span>
                   <div className="space-y-1">
-                    <p className="text-sm font-semibold text-ink">
+                    <p className="text-[0.83rem] font-semibold text-ink">
                       Arrastra un archivo o selecciona uno desde tu equipo
                     </p>
-                    <p className="text-sm text-ink-muted">
+                    <p className="text-[0.78rem] text-ink-muted">
                       Formatos soportados: .csv, .xlsx, .xls
                     </p>
                   </div>
-                  <span className="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white">
+                  <span className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-3.5 py-1.75 text-[0.8rem] font-semibold text-white">
                     {universityAdminContent.bulkUploadPage.filePickerLabel}
                   </span>
                   <input
@@ -272,11 +272,11 @@ export function UniversityBulkUploadPage() {
                   />
                 </label>
                 {uploadState.fileName ? (
-                  <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 px-4 py-4">
+                    <div className="rounded-[1.2rem] border border-slate-200 bg-slate-50 px-3.5 py-3">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="space-y-1">
-                        <p className="text-sm font-semibold text-ink">{uploadState.fileName}</p>
-                        <p className="text-xs text-ink-muted">
+                          <p className="text-[0.83rem] font-semibold text-ink">{uploadState.fileName}</p>
+                          <p className="text-[0.72rem] text-ink-muted">
                           {uploadState.status === 'file_selected'
                             ? universityAdminContent.bulkUploadPage.readyToValidateMessage
                             : uploadState.status === 'validated'
@@ -298,8 +298,8 @@ export function UniversityBulkUploadPage() {
                 ) : null}
                 {uploadState.errors.length > 0 ? (
                   <SurfaceCard
-                    className="border border-rose-200 bg-rose-50/90 text-sm text-rose-800 shadow-none"
-                    paddingClassName="p-4"
+                     className="border border-rose-200 bg-rose-50/90 text-[0.82rem] text-rose-800 shadow-none"
+                     paddingClassName="p-3.5"
                   >
                     <div className="flex items-start gap-3">
                       <XCircle aria-hidden="true" className="mt-0.5 h-4.5 w-4.5 shrink-0" />
@@ -313,8 +313,8 @@ export function UniversityBulkUploadPage() {
                 ) : null}
                 {uploadState.status === 'validated' && !uploadState.errors.length ? (
                   <SurfaceCard
-                    className="border border-emerald-200 bg-emerald-50/90 text-sm text-emerald-800 shadow-none"
-                    paddingClassName="p-4"
+                     className="border border-emerald-200 bg-emerald-50/90 text-[0.82rem] text-emerald-800 shadow-none"
+                     paddingClassName="p-3.5"
                   >
                     <div className="flex items-start gap-3">
                       <CheckCircle2 aria-hidden="true" className="mt-0.5 h-4.5 w-4.5 shrink-0" />
@@ -324,8 +324,8 @@ export function UniversityBulkUploadPage() {
                 ) : null}
                 {uploadState.status === 'processed' && processedSummary ? (
                   <SurfaceCard
-                    className="border border-sky-200 bg-sky-50/90 text-sm text-sky-900 shadow-none"
-                    paddingClassName="p-4"
+                     className="border border-sky-200 bg-sky-50/90 text-[0.82rem] text-sky-900 shadow-none"
+                     paddingClassName="p-3.5"
                   >
                     <div className="flex items-start gap-3">
                       <Rocket aria-hidden="true" className="mt-0.5 h-4.5 w-4.5 shrink-0" />
@@ -333,9 +333,9 @@ export function UniversityBulkUploadPage() {
                     </div>
                   </SurfaceCard>
                 ) : null}
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-2.5">
                   <button
-                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-primary/20 bg-primary/10 px-5 py-3 text-sm font-semibold text-primary transition duration-300 hover:bg-primary/15"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/10 px-4 py-2.5 text-[0.82rem] font-semibold text-primary transition duration-300 hover:bg-primary/15"
                     type="button"
                     onClick={handleValidate}
                   >
@@ -343,7 +343,7 @@ export function UniversityBulkUploadPage() {
                     <span>{universityAdminContent.bulkUploadPage.actionLabels.validate}</span>
                   </button>
                   <button
-                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-5 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-gradient px-4 py-2.5 text-[0.82rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
                     disabled={uploadState.status !== 'validated' || isLoading || isProcessing}
                     type="button"
                     onClick={handleProcess}
@@ -356,7 +356,7 @@ export function UniversityBulkUploadPage() {
                     </span>
                   </button>
                 </div>
-                <p className="text-xs leading-5 text-ink-muted">
+                <p className="text-[0.72rem] leading-5 text-ink-muted">
                   Tipo seleccionado:{' '}
                   <span className="font-semibold text-ink">
                     {selectedTemplate?.value === 'students' ? 'Estudiantes' : 'Docentes'}

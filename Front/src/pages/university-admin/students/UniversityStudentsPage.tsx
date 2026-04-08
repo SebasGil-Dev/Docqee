@@ -105,7 +105,7 @@ export function UniversityStudentsPage() {
   }, [isStatusMenuOpen]);
 
   return (
-    <div className="mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-4 overflow-hidden 2xl:max-w-[96rem]">
+    <div className="mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-3 overflow-hidden 2xl:max-w-[96rem]">
       <Seo
         description={universityAdminContent.studentsPage.meta.description}
         noIndex
@@ -139,25 +139,25 @@ export function UniversityStudentsPage() {
           <p role="alert">{errorMessage}</p>
         </SurfaceCard>
       ) : null}
-      <div className="flex flex-col gap-3 md:flex-row md:items-stretch">
+      <div className="flex flex-col gap-2.5 md:flex-row md:items-stretch">
         <SurfaceCard
-          className="min-w-0 flex-1 overflow-hidden bg-brand-gradient text-white md:flex-[1.75]"
+          className="min-w-0 flex-1 overflow-hidden bg-brand-gradient text-white md:flex-[1.6]"
           paddingClassName="p-0"
         >
-          <div className="flex items-center gap-2.5 px-3.5 py-2 sm:gap-3 sm:px-4 sm:py-2.25">
-            <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[0.85rem] bg-white/12 text-white ring-1 ring-white/20 sm:h-8 sm:w-8">
-              <GraduationCap aria-hidden="true" className="h-3.5 w-3.5" />
+          <div className="flex items-center gap-2 px-3 py-1.75 sm:gap-2.5 sm:px-3.5 sm:py-2">
+            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-[0.8rem] bg-white/12 text-white ring-1 ring-white/20 sm:h-7 sm:w-7">
+              <GraduationCap aria-hidden="true" className="h-3.25 w-3.25" />
             </span>
-            <span className="font-headline text-[1.45rem] font-extrabold tracking-tight text-white sm:text-[1.65rem]">
+            <span className="font-headline text-[1.28rem] font-extrabold tracking-tight text-white sm:text-[1.45rem]">
               {students.length}
             </span>
-            <p className="min-w-0 text-[0.78rem] font-semibold text-white/90 sm:text-[0.86rem]">
+            <p className="min-w-0 text-[0.74rem] font-semibold text-white/90 sm:text-[0.8rem]">
               {universityAdminContent.studentsPage.summaryLabel}
             </p>
           </div>
         </SurfaceCard>
         <Link
-          className="inline-flex items-center justify-center gap-2 rounded-[1.75rem] bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 md:min-w-[13.25rem] md:flex-none"
+          className="inline-flex items-center justify-center gap-2 rounded-[1.4rem] bg-brand-gradient px-3.5 py-2.25 text-[0.82rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 md:min-w-[12.5rem] md:flex-none"
           to={ROUTES.universityRegisterStudent}
         >
           <Plus aria-hidden="true" className="h-4 w-4" />
@@ -165,9 +165,9 @@ export function UniversityStudentsPage() {
         </Link>
       </div>
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
-        <div className="border-b border-slate-200/80 px-4 py-4 sm:px-5 sm:py-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-            <h2 className="font-headline text-[1.1rem] font-extrabold tracking-tight text-ink sm:text-[1.45rem]">
+        <div className="border-b border-slate-200/80 px-4 py-3 sm:px-5 sm:py-3.5">
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+            <h2 className="font-headline text-[1rem] font-extrabold tracking-tight text-ink sm:text-[1.25rem]">
               {universityAdminContent.studentsPage.tableTitle}
             </h2>
             <div className="flex min-w-0 items-center gap-2 sm:w-full sm:max-w-[26rem] sm:justify-end sm:gap-2.5 xl:max-w-[30rem]">
@@ -178,7 +178,7 @@ export function UniversityStudentsPage() {
                   className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ghost sm:left-4 sm:h-4 sm:w-4"
                 />
                 <input
-                  className="h-10 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-8 pr-4 text-[0.77rem] text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-11 sm:pl-11 sm:text-sm"
+                  className="h-9 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-8 pr-4 text-[0.74rem] text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-10 sm:pl-10 sm:text-[0.82rem]"
                   id="university-student-search"
                   placeholder={universityAdminContent.studentsPage.searchPlaceholder}
                   type="search"
@@ -199,7 +199,7 @@ export function UniversityStudentsPage() {
                         }`
                   }
                   className={classNames(
-                    'relative inline-flex h-10 w-10 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-11 sm:w-11',
+                    'relative inline-flex h-9 w-9 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-10 sm:w-10',
                     statusFilter === 'all'
                       ? 'border-slate-200/90 hover:border-primary/30 hover:bg-white'
                       : 'border-primary/25 bg-primary/[0.08] text-primary hover:bg-primary/[0.12]',
@@ -214,7 +214,7 @@ export function UniversityStudentsPage() {
                 </button>
                 {isStatusMenuOpen ? (
                   <div
-                    className="absolute right-0 top-[calc(100%+0.6rem)] z-20 w-[13.5rem] overflow-hidden rounded-[1.4rem] border border-slate-200/80 bg-white/95 p-2 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.45)] backdrop-blur sm:w-[14.5rem]"
+                    className="absolute right-0 top-[calc(100%+0.55rem)] z-20 w-[13rem] overflow-hidden rounded-[1.25rem] border border-slate-200/80 bg-white/95 p-2 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.45)] backdrop-blur sm:w-[14rem]"
                     id="university-student-status-menu"
                     role="menu"
                   >
@@ -232,7 +232,7 @@ export function UniversityStudentsPage() {
                             key={option.value}
                             aria-checked={isSelected}
                             className={classNames(
-                              'flex w-full items-center justify-between rounded-[1rem] px-3 py-2.5 text-left text-sm font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                              'flex w-full items-center justify-between rounded-[0.95rem] px-3 py-2 text-left text-[0.82rem] font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
                               isSelected
                                 ? 'bg-primary text-white shadow-[0_14px_30px_-20px_rgba(22,78,99,0.9)]'
                                 : 'bg-slate-50/70 text-ink hover:bg-slate-100',
@@ -267,13 +267,13 @@ export function UniversityStudentsPage() {
           <div className="admin-scrollbar min-h-0 flex-1 overflow-x-auto overflow-y-auto">
             <table className="min-w-full">
               <thead className="sticky top-0 z-10 bg-slate-100 text-left">
-                <tr className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-ink-muted">
-                  <th className="px-4 py-3 sm:px-5">Estudiante</th>
-                  <th className="px-4 py-3">Documento</th>
-                  <th className="px-4 py-3">Correo</th>
-                  <th className="px-4 py-3">Semestre</th>
-                  <th className="px-4 py-3">Estado</th>
-                  <th className="px-4 py-3 text-right sm:px-5">Acciones</th>
+                <tr className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-ink-muted">
+                  <th className="px-4 py-2.5 sm:px-5">Estudiante</th>
+                  <th className="px-4 py-2.5">Documento</th>
+                  <th className="px-4 py-2.5">Correo</th>
+                  <th className="px-4 py-2.5">Semestre</th>
+                  <th className="px-4 py-2.5">Estado</th>
+                  <th className="px-4 py-2.5 text-right sm:px-5">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200/80">
@@ -287,33 +287,33 @@ export function UniversityStudentsPage() {
                     <tr key={student.id} className="align-top">
                       <td
                         className={classNames(
-                          'px-4 pt-3.5 sm:px-5',
-                          isLast ? 'pb-4' : 'pb-3.5',
+                          'px-4 pt-3 sm:px-5',
+                          isLast ? 'pb-3.5' : 'pb-3',
                         )}
                       >
                         <div className="space-y-1">
-                          <p className="text-sm font-semibold text-ink">
+                          <p className="text-[0.83rem] font-semibold text-ink">
                             {student.firstName} {student.lastName}
                           </p>
-                          <p className="text-xs text-ink-muted sm:text-[0.82rem]">
+                          <p className="text-[0.72rem] text-ink-muted sm:text-[0.76rem]">
                             Registrado {new Date(student.createdAt).toLocaleDateString('es-CO')}
                           </p>
                         </div>
                       </td>
                       <td
                         className={classNames(
-                          'px-4 pt-3.5',
-                          isLast ? 'pb-4' : 'pb-3.5',
+                          'px-4 pt-3',
+                          isLast ? 'pb-3.5' : 'pb-3',
                         )}
                       >
-                        <p className="text-sm font-medium text-ink">
+                        <p className="text-[0.83rem] font-medium text-ink">
                           {formatDocumentLabel(student.documentTypeCode, student.documentNumber)}
                         </p>
                       </td>
                       <td
                         className={classNames(
-                          'px-4 pt-3.5',
-                          isLast ? 'pb-4' : 'pb-3.5',
+                          'px-4 pt-3',
+                          isLast ? 'pb-3.5' : 'pb-3',
                         )}
                       >
                         <p className="text-sm text-ink-muted">{student.email}</p>
@@ -324,27 +324,27 @@ export function UniversityStudentsPage() {
                           isLast ? 'pb-4' : 'pb-3.5',
                         )}
                       >
-                        <span className="inline-flex rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700 ring-1 ring-inset ring-sky-200">
+                        <span className="inline-flex rounded-full bg-sky-50 px-2.5 py-1 text-[0.7rem] font-semibold text-sky-700 ring-1 ring-inset ring-sky-200">
                           {student.semester}
                         </span>
                       </td>
                       <td
                         className={classNames(
-                          'px-4 pt-3.5',
-                          isLast ? 'pb-4' : 'pb-3.5',
+                          'px-4 pt-3',
+                          isLast ? 'pb-3.5' : 'pb-3',
                         )}
                       >
                         <AdminStatusBadge entity="student" status={displayStatus} />
                       </td>
                       <td
                         className={classNames(
-                          'px-4 pt-3.5 text-right sm:px-5',
-                          isLast ? 'pb-4' : 'pb-3.5',
+                          'px-4 pt-3 text-right sm:px-5',
+                          isLast ? 'pb-3.5' : 'pb-3',
                         )}
                       >
                         {displayStatus === 'pending' ? (
                           <span
-                            className="inline-flex rounded-full bg-amber-50 px-2.5 py-1.5 text-[0.72rem] font-semibold text-amber-700 ring-1 ring-inset ring-amber-200"
+                            className="inline-flex rounded-full bg-amber-50 px-2.25 py-1.25 text-[0.68rem] font-semibold text-amber-700 ring-1 ring-inset ring-amber-200"
                             title="Envia la credencial primero"
                           >
                             Pendiente
@@ -352,7 +352,7 @@ export function UniversityStudentsPage() {
                         ) : (
                           <button
                             className={classNames(
-                              'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[0.72rem] font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                               'inline-flex items-center gap-1.25 rounded-full px-2.25 py-1.25 text-[0.68rem] font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
                               student.status === 'active'
                                 ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
                                 : 'bg-primary/10 text-primary hover:bg-primary/15',
