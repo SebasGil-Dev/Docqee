@@ -325,7 +325,7 @@ export function UniversityStudentsPage() {
                         )}
                       >
                         <div className="flex items-center justify-center">
-                          <span className="text-[0.83rem] font-semibold text-ink">
+                          <span className="text-[0.83rem] font-normal text-ink">
                             {student.semester}
                           </span>
                         </div>
