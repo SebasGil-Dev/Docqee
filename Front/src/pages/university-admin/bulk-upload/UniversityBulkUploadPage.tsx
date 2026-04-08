@@ -336,7 +336,7 @@ export function UniversityBulkUploadPage() {
                       </div>
                     </SurfaceCard>
                   ) : null}
-                  <div className="flex flex-wrap gap-2.5">
+                  <div className="flex flex-wrap justify-center gap-2.5">
                     <button
                       className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/10 px-4 py-2.5 text-[0.82rem] font-semibold text-primary transition duration-300 hover:bg-primary/15"
                       type="button"
