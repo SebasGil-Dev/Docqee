@@ -904,7 +904,7 @@ export function UniversityInstitutionPage({
     .toUpperCase();
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-6 overflow-hidden">
+    <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden">
       <Seo
         description={universityAdminContent.institutionPage.meta.description}
         noIndex
@@ -932,21 +932,21 @@ export function UniversityInstitutionPage({
       ) : null}
       <AdminPanelCard className="flex-1" panelClassName="bg-slate-50">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-7">
-            <div className="space-y-6 pb-6">
+          <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6 sm:py-5">
+            <div className="space-y-4 pb-5">
               <SurfaceCard
                 className="overflow-hidden bg-white shadow-none"
                 paddingClassName="p-0"
               >
-                <div className="space-y-6">
-                  <div className="space-y-5 rounded-[1.75rem] border border-slate-200/80 bg-white p-5 sm:p-6">
+                <div className="space-y-4">
+                  <div className="space-y-4 rounded-[1.6rem] border border-slate-200/80 bg-white p-4 sm:p-5">
                     <div>
-                      <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
+                      <h2 className="font-headline text-[1.15rem] font-extrabold tracking-tight text-ink">
                         {universityAdminContent.institutionPage.sectionTitles.institution}
                       </h2>
                     </div>
-                    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(15rem,17rem)] xl:items-start">
-                      <div className="grid gap-5 lg:grid-cols-2">
+                    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(13.5rem,15rem)] xl:items-start">
+                      <div className="grid gap-4 lg:grid-cols-2">
                         <div className="lg:col-span-2">
                           <AdminTextField
                             error={errors.name}
@@ -1004,7 +1004,7 @@ export function UniversityInstitutionPage({
                           onChange={(value) => handleInstitutionFieldChange('mainLocalityId', value)}
                         />
                       </div>
-                      <div className="space-y-2.5 self-start rounded-[1.35rem] border border-dashed border-slate-300 bg-slate-50 p-4 text-center xl:-mt-14">
+                      <div className="space-y-2 self-start rounded-[1.2rem] border border-dashed border-slate-300 bg-slate-50 p-3 text-center xl:-mt-10">
                         <div className="space-y-0.5">
                           <p className="text-[0.72rem] font-bold uppercase tracking-[0.2em] text-primary">
                             Logo institucional
@@ -1013,8 +1013,8 @@ export function UniversityInstitutionPage({
                             {universityAdminContent.institutionPage.logoHelper}
                           </p>
                         </div>
-                        <div className="flex flex-col items-center gap-3">
-                          <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-[1.3rem] bg-white ring-1 ring-slate-200">
+                        <div className="flex flex-col items-center gap-2.5">
+                          <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-[1.15rem] bg-white ring-1 ring-slate-200">
                             {values.logoSrc ? (
                               <img
                                 alt={institutionProfile.logoAlt}
@@ -1022,14 +1022,14 @@ export function UniversityInstitutionPage({
                                 src={values.logoSrc}
                               />
                             ) : (
-                              <span className="font-headline text-[1.65rem] font-extrabold tracking-tight text-primary">
+                              <span className="font-headline text-[1.35rem] font-extrabold tracking-tight text-primary">
                                 {logoInitials || 'UC'}
                               </span>
                             )}
                           </div>
-                          <div className="space-y-1.5">
+                          <div className="space-y-1">
                             <label
-                              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-brand-gradient px-3.5 py-2 text-xs font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
+                              className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-brand-gradient px-3 py-1.5 text-[0.72rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
                               htmlFor="institution-logo-input"
                             >
                               <ImagePlus aria-hidden="true" className="h-3.5 w-3.5" />
@@ -1042,29 +1042,29 @@ export function UniversityInstitutionPage({
                               type="file"
                               onChange={handleLogoSelection}
                             />
-                            <p className="text-[0.7rem] text-ink-muted">
+                            <p className="text-[0.68rem] text-ink-muted">
                               {values.logoFileName ?? 'Aun no has seleccionado un archivo'}
                             </p>
                           </div>
                         </div>
                       </div>
                     </div>
-                    <div className="rounded-[1.5rem] border border-slate-200/80 bg-slate-50/70 p-4 sm:p-5">
-                      <div className="space-y-4">
+                    <div className="rounded-[1.35rem] border border-slate-200/80 bg-slate-50/70 p-3.5 sm:p-4">
+                      <div className="space-y-3">
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                           <div>
-                            <h3 className="font-headline text-lg font-extrabold tracking-tight text-ink">
+                            <h3 className="font-headline text-[1rem] font-extrabold tracking-tight text-ink">
                               Sedes de la universidad
                             </h3>
-                            <p className="text-sm leading-6 text-ink-muted">
+                            <p className="text-[0.82rem] leading-5 text-ink-muted">
                               Agrega sedes y actualiza su estado desde este modulo.
                             </p>
                           </div>
-                          <span className="inline-flex items-center justify-center rounded-full bg-white px-3 py-1 text-xs font-semibold text-ink-muted ring-1 ring-slate-200">
+                          <span className="inline-flex items-center justify-center rounded-full bg-white px-2.5 py-1 text-[0.72rem] font-semibold text-ink-muted ring-1 ring-slate-200">
                             {values.campuses.length} registradas
                           </span>
                         </div>
-                        <div className="grid gap-4 lg:grid-cols-2">
+                        <div className="grid gap-3 lg:grid-cols-2">
                           <AdminTextField
                             error={campusErrors.name}
                             icon={Building2}
@@ -1144,9 +1144,9 @@ export function UniversityInstitutionPage({
                               onChange={(value) => handleCampusFieldChange('status', value)}
                             />
                           ) : (
-                            <div className="space-y-1.5">
-                              <span className="block text-sm font-semibold text-ink">Estado inicial</span>
-                              <div className="inline-flex min-h-[3rem] items-center rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-emerald-700 ring-1 ring-slate-200">
+                            <div className="space-y-1">
+                              <span className="block text-[0.83rem] font-semibold text-ink">Estado inicial</span>
+                              <div className="inline-flex min-h-[2.75rem] items-center rounded-xl bg-white px-3.5 py-2.5 text-[0.83rem] font-semibold text-emerald-700 ring-1 ring-slate-200">
                                 Activa
                               </div>
                             </div>
@@ -1155,7 +1155,7 @@ export function UniversityInstitutionPage({
                         <div className="flex flex-wrap items-center justify-center gap-3">
                           {editingCampusId ? (
                             <button
-                              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-ink transition duration-300 hover:bg-slate-100"
+                              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-[0.82rem] font-semibold text-ink transition duration-300 hover:bg-slate-100"
                               type="button"
                               onClick={handleCampusReset}
                             >
@@ -1164,7 +1164,7 @@ export function UniversityInstitutionPage({
                             </button>
                           ) : null}
                           <button
-                            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-4 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
+                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-gradient px-3.5 py-2.5 text-[0.82rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
                             type="button"
                             onClick={handleCampusSubmit}
                           >
@@ -1176,32 +1176,32 @@ export function UniversityInstitutionPage({
                             <span>{editingCampusId ? 'Guardar sede' : 'Agregar sede'}</span>
                           </button>
                         </div>
-                        <div className="grid gap-3">
+                        <div className="grid gap-2.5">
                           {values.campuses.map((campus) => (
                             <div
                               key={campus.id}
-                              className="flex flex-col gap-3 rounded-[1.35rem] border border-slate-200/80 bg-white p-4 sm:flex-row sm:items-start sm:justify-between"
+                              className="flex flex-col gap-2.5 rounded-[1.15rem] border border-slate-200/80 bg-white p-3 sm:flex-row sm:items-start sm:justify-between"
                             >
                               <div className="space-y-1">
                                 <div className="flex flex-wrap items-center gap-2">
-                                  <h4 className="text-sm font-semibold text-ink">{campus.name}</h4>
+                                  <h4 className="text-[0.83rem] font-semibold text-ink">{campus.name}</h4>
                                   <span
                                     className={
                                       campus.status === 'active'
-                                        ? 'inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-[0.7rem] font-semibold text-emerald-700 ring-1 ring-emerald-200'
-                                        : 'inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[0.7rem] font-semibold text-slate-600 ring-1 ring-slate-200'
+                                        ? 'inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-[0.66rem] font-semibold text-emerald-700 ring-1 ring-emerald-200'
+                                        : 'inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[0.66rem] font-semibold text-slate-600 ring-1 ring-slate-200'
                                     }
                                   >
                                     {campus.status === 'active' ? 'Activa' : 'Inactiva'}
                                   </span>
                                 </div>
-                                <p className="text-sm text-ink-muted">{campus.address}</p>
-                                <p className="text-xs font-medium uppercase tracking-[0.18em] text-ink-muted">
+                                <p className="text-[0.82rem] text-ink-muted">{campus.address}</p>
+                                <p className="text-[0.68rem] font-medium uppercase tracking-[0.15em] text-ink-muted">
                                   {campus.city} · {campus.locality}
                                 </p>
                               </div>
                               <button
-                                className="inline-flex items-center justify-center gap-2 self-start rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-semibold text-primary transition duration-300 hover:bg-slate-100"
+                                className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[0.8rem] font-semibold text-primary transition duration-300 hover:bg-slate-100"
                                 type="button"
                                 onClick={() => handleCampusEdit(campus)}
                               >
@@ -1215,13 +1215,13 @@ export function UniversityInstitutionPage({
                     </div>
                   </div>
 
-                  <div className="space-y-5 rounded-[1.75rem] border border-slate-200/80 bg-white p-5 sm:p-6">
+                  <div className="space-y-4 rounded-[1.6rem] border border-slate-200/80 bg-white p-4 sm:p-5">
                     <div>
-                      <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
+                      <h2 className="font-headline text-[1.15rem] font-extrabold tracking-tight text-ink">
                         {universityAdminContent.institutionPage.sectionTitles.administrator}
                       </h2>
                     </div>
-                    <div className="grid gap-5 lg:grid-cols-2">
+                    <div className="grid gap-4 lg:grid-cols-2">
                       <AdminTextField
                         error={errors.adminFirstName}
                         icon={UserRound}
@@ -1246,7 +1246,7 @@ export function UniversityInstitutionPage({
                         onBlur={() => handleInstitutionFieldBlur('adminLastName')}
                         onChange={(value) => handleInstitutionFieldChange('adminLastName', value)}
                       />
-                      <div className="grid gap-5 md:grid-cols-[minmax(0,1.45fr)_minmax(13rem,0.75fr)] lg:col-span-2 lg:gap-4">
+                      <div className="grid gap-4 md:grid-cols-[minmax(0,1.45fr)_minmax(12rem,0.75fr)] lg:col-span-2">
                         <AdminTextField
                           error={errors.adminEmail}
                           icon={Mail}
@@ -1276,7 +1276,7 @@ export function UniversityInstitutionPage({
                       </div>
                       <div className="flex justify-center lg:col-span-2">
                         <button
-                          className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-primary transition duration-300 hover:bg-slate-100"
+                          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-[0.82rem] font-semibold text-primary transition duration-300 hover:bg-slate-100"
                           type="button"
                           onClick={openPasswordPanel}
                         >
