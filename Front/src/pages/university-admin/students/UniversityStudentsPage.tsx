@@ -350,7 +350,7 @@ export function UniversityStudentsPage() {
                         <div className="mt-0.5 flex items-center justify-center">
                           {displayStatus === 'pending' ? (
                             <span
-                              className="inline-flex rounded-full bg-amber-50 px-2.25 py-1.25 text-[0.68rem] font-semibold text-amber-700 ring-1 ring-inset ring-amber-200"
+                              className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset bg-amber-50 text-amber-700 ring-amber-200"
                               title="Envia la credencial primero"
                             >
                               Pendiente
