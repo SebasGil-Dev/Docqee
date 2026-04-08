@@ -611,6 +611,7 @@ export type AdminShellNavigationIcon =
   | 'house'
   | 'key-round'
   | 'message-square-more'
+  | 'presentation'
   | 'search'
   | 'stethoscope'
   | 'user-round'
