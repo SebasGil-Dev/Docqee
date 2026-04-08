@@ -237,6 +237,7 @@ export function UniversityCredentialsPage() {
         description=""
         headingAlign="center"
         title={universityAdminContent.credentialsPage.title}
+        titleClassName="text-center text-[1.7rem] sm:text-[2rem]"
       />
       {feedbackMessage ? (
         <SurfaceCard
