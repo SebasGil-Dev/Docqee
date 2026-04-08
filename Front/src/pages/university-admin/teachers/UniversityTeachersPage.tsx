@@ -268,7 +268,7 @@ export function UniversityTeachersPage() {
                 <tr className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-ink-muted">
                   <th className="px-4 py-2.5 sm:px-5">Docente</th>
                   <th className="px-4 py-2.5">Documento</th>
-                  <th className="px-4 py-2.5">Estado</th>
+                    <th className="px-4 py-2.5 text-center">Estado</th>
                     <th className="px-4 py-2.5 text-center sm:px-5">Acciones</th>
                 </tr>
               </thead>
@@ -305,11 +305,13 @@ export function UniversityTeachersPage() {
                       </td>
                       <td
                         className={classNames(
-                          'px-4 pt-3',
+                          'px-4 pt-3 text-center',
                           isLast ? 'pb-3.5' : 'pb-3',
                         )}
                       >
-                        <AdminStatusBadge entity="teacher" status={teacher.status} />
+                        <div className="flex items-center justify-center">
+                          <AdminStatusBadge entity="teacher" status={teacher.status} />
+                        </div>
                       </td>
                       <td
                         className={classNames(
