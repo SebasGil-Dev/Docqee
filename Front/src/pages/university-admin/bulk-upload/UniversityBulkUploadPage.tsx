@@ -175,6 +175,7 @@ export function UniversityBulkUploadPage() {
         description=""
         headingAlign="center"
         title={universityAdminContent.bulkUploadPage.title}
+        titleClassName="text-center text-[1.7rem] sm:text-[2rem]"
       />
       {errorMessage ? (
         <SurfaceCard

@@ -914,6 +914,7 @@ export function UniversityInstitutionPage({
         description={universityAdminContent.institutionPage.description}
         headingAlign="center"
         title={universityAdminContent.institutionPage.title}
+        titleClassName="text-center text-[1.7rem] sm:text-[2rem]"
       />
       {saveMessage ? (
         <SurfaceCard
