@@ -912,6 +912,7 @@ export function UniversityInstitutionPage({
       />
       <AdminPageHeader
         description={universityAdminContent.institutionPage.description}
+        headingAlign="center"
         title={universityAdminContent.institutionPage.title}
       />
       {saveMessage ? (

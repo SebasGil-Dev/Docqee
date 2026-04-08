@@ -171,7 +171,11 @@ export function UniversityBulkUploadPage() {
         noIndex
         title={universityAdminContent.bulkUploadPage.meta.title}
       />
-      <AdminPageHeader description="" title={universityAdminContent.bulkUploadPage.title} />
+      <AdminPageHeader
+        description=""
+        headingAlign="center"
+        title={universityAdminContent.bulkUploadPage.title}
+      />
       {errorMessage ? (
         <SurfaceCard
           className="border border-rose-200 bg-rose-50/90 text-sm text-rose-800 shadow-none"

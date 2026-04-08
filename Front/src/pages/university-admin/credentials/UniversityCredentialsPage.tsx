@@ -235,6 +235,7 @@ export function UniversityCredentialsPage() {
           </button>
         }
         description=""
+        headingAlign="center"
         title={universityAdminContent.credentialsPage.title}
       />
       {feedbackMessage ? (

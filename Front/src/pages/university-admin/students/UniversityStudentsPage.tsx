@@ -115,8 +115,9 @@ export function UniversityStudentsPage() {
         className="gap-3"
         description=""
         descriptionClassName="max-w-3xl text-sm leading-6 sm:text-[0.95rem]"
+        headingAlign="center"
         title={universityAdminContent.studentsPage.title}
-        titleClassName="text-[1.85rem] sm:text-[2.2rem]"
+        titleClassName="text-center text-[1.85rem] sm:text-[2.2rem]"
       />
       {successNotice ? (
         <SurfaceCard

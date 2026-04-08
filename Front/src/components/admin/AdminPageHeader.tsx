@@ -10,6 +10,7 @@ type AdminPageHeaderProps = {
   description: string;
   descriptionClassName?: string;
   eyebrow?: string;
+  headingAlign?: 'center' | 'left';
   titleClassName?: string;
   title: string;
 };
@@ -21,6 +22,7 @@ export function AdminPageHeader({
   description,
   descriptionClassName,
   eyebrow,
+  headingAlign = 'left',
   titleClassName,
   title,
 }: AdminPageHeaderProps) {
@@ -32,6 +34,7 @@ export function AdminPageHeader({
       )}
     >
       <SectionHeading
+        align={headingAlign}
         {...(eyebrow ? { eyebrow } : {})}
         description={description}
         {...(descriptionClassName ? { descriptionClassName } : {})}
