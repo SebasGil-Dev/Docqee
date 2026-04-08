@@ -325,7 +325,7 @@ export function UniversityStudentsPage() {
                         )}
                       >
                         <div className="flex items-center justify-center">
-                          <span className="inline-flex rounded-full bg-sky-50 px-2.5 py-1 text-[0.7rem] font-semibold text-sky-700 ring-1 ring-inset ring-sky-200">
+                          <span className="text-[0.83rem] font-semibold text-ink">
                             {student.semester}
                           </span>
                         </div>
