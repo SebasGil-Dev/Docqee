@@ -185,10 +185,10 @@ export function UniversityBulkUploadPage() {
         panelClassName="bg-[#f4f8ff]"
       >
         <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5 sm:py-4 xl:px-6 xl:py-5 2xl:px-7">
-          <div className="grid min-h-0 gap-4 xl:grid-cols-[minmax(18rem,20rem)_minmax(0,1fr)] 2xl:grid-cols-[minmax(19rem,21rem)_minmax(0,1.08fr)] 2xl:gap-5">
-            <SurfaceCard className="h-full xl:order-1 border border-slate-200/80 bg-white shadow-none" paddingClassName="p-4 lg:p-4.5 xl:p-5">
-              <div className="space-y-3.5 lg:space-y-3">
-                <div className="space-y-1">
+          <div className="grid min-h-0 gap-4">
+            <SurfaceCard className="h-full border border-slate-200/80 bg-white shadow-none" paddingClassName="p-4 lg:p-4.5 xl:p-5">
+              <div className="bulk-upload-template-layout space-y-3.5 lg:space-y-3">
+                <div className="bulk-upload-template-intro space-y-1">
                   <h2 className="font-headline text-[1.1rem] font-extrabold tracking-tight text-ink">
                     Plantilla base
                   </h2>
@@ -196,7 +196,7 @@ export function UniversityBulkUploadPage() {
                     {universityAdminContent.bulkUploadPage.templateDescription}
                   </p>
                 </div>
-                <div className="space-y-2">
+                <div className="bulk-upload-template-options grid gap-2">
                   {universityAdminContent.bulkUploadPage.templateOptions.map((option) => {
                     const isSelected = uploadState.templateType === option.value;
 
@@ -225,19 +225,21 @@ export function UniversityBulkUploadPage() {
                     );
                   })}
                 </div>
-                <button
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-gradient px-4 py-2.5 text-[0.82rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
-                  type="button"
-                  onClick={downloadTemplate}
-                >
-                  <Download aria-hidden="true" className="h-4 w-4" />
-                  <span>{universityAdminContent.bulkUploadPage.actionLabels.downloadTemplate}</span>
-                </button>
+                <div className="bulk-upload-template-action">
+                  <button
+                    className="bulk-upload-template-download inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-gradient px-4 py-2.5 text-[0.82rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
+                    type="button"
+                    onClick={downloadTemplate}
+                  >
+                    <Download aria-hidden="true" className="h-4 w-4" />
+                    <span>{universityAdminContent.bulkUploadPage.actionLabels.downloadTemplate}</span>
+                  </button>
+                </div>
               </div>
             </SurfaceCard>
-            <SurfaceCard className="h-full xl:order-2 border border-slate-200/80 bg-white shadow-none" paddingClassName="p-4 lg:p-4.5 xl:p-5">
-              <div className="space-y-4">
-                <div className="space-y-1">
+            <SurfaceCard className="h-full border border-slate-200/80 bg-white shadow-none" paddingClassName="p-4 lg:p-4.5 xl:p-5">
+              <div className="bulk-upload-upload-layout space-y-4">
+                <div className="bulk-upload-upload-intro space-y-1">
                   <h2 className="font-headline text-[1.1rem] font-extrabold tracking-tight text-ink">
                     {universityAdminContent.bulkUploadPage.uploadCardTitle}
                   </h2>
@@ -246,7 +248,7 @@ export function UniversityBulkUploadPage() {
                   </p>
                 </div>
                 <label
-                  className="flex cursor-pointer flex-col items-center justify-center gap-2.5 rounded-[1.4rem] border-2 border-dashed border-slate-300 bg-slate-50 px-5 py-6 text-center transition duration-300 hover:border-primary/50 hover:bg-white lg:py-5"
+                  className="bulk-upload-upload-dropzone flex cursor-pointer flex-col items-center justify-center gap-2.5 rounded-[1.4rem] border-2 border-dashed border-slate-300 bg-slate-50 px-5 py-6 text-center transition duration-300 hover:border-primary/50 hover:bg-white lg:py-5"
                   htmlFor="bulk-upload-input"
                 >
                   <span className="inline-flex h-11 w-11 items-center justify-center rounded-[1.2rem] bg-white text-primary ring-1 ring-slate-200">
@@ -271,97 +273,99 @@ export function UniversityBulkUploadPage() {
                     onChange={handleFileSelection}
                   />
                 </label>
-                {uploadState.fileName ? (
+                <div className="bulk-upload-upload-actions space-y-3">
+                  {uploadState.fileName ? (
                     <div className="rounded-[1.2rem] border border-slate-200 bg-slate-50 px-3.5 py-3">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div className="space-y-1">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="space-y-1">
                           <p className="text-[0.83rem] font-semibold text-ink">{uploadState.fileName}</p>
                           <p className="text-[0.72rem] text-ink-muted">
-                          {uploadState.status === 'file_selected'
-                            ? universityAdminContent.bulkUploadPage.readyToValidateMessage
-                            : uploadState.status === 'validated'
-                              ? universityAdminContent.bulkUploadPage.validatedMessage
-                              : uploadState.status === 'processed'
-                                ? processedSummary
-                                : uploadState.errors[0]}
-                        </p>
+                            {uploadState.status === 'file_selected'
+                              ? universityAdminContent.bulkUploadPage.readyToValidateMessage
+                              : uploadState.status === 'validated'
+                                ? universityAdminContent.bulkUploadPage.validatedMessage
+                                : uploadState.status === 'processed'
+                                  ? processedSummary
+                                  : uploadState.errors[0]}
+                          </p>
+                        </div>
+                        <button
+                          className="inline-flex items-center justify-center rounded-full bg-white p-2 text-rose-600 ring-1 ring-slate-200 transition duration-300 hover:bg-rose-50"
+                          type="button"
+                          onClick={() => resetUploadFeedback(uploadState.templateType)}
+                        >
+                          <XCircle aria-hidden="true" className="h-4.5 w-4.5" />
+                        </button>
                       </div>
-                      <button
-                        className="inline-flex items-center justify-center rounded-full bg-white p-2 text-rose-600 ring-1 ring-slate-200 transition duration-300 hover:bg-rose-50"
-                        type="button"
-                        onClick={() => resetUploadFeedback(uploadState.templateType)}
-                      >
-                        <XCircle aria-hidden="true" className="h-4.5 w-4.5" />
-                      </button>
                     </div>
+                  ) : null}
+                  {uploadState.errors.length > 0 ? (
+                    <SurfaceCard
+                       className="border border-rose-200 bg-rose-50/90 text-[0.82rem] text-rose-800 shadow-none"
+                       paddingClassName="p-3.5"
+                    >
+                      <div className="flex items-start gap-3">
+                        <XCircle aria-hidden="true" className="mt-0.5 h-4.5 w-4.5 shrink-0" />
+                        <div className="space-y-1">
+                          {uploadState.errors.map((error) => (
+                            <p key={error}>{error}</p>
+                          ))}
+                        </div>
+                      </div>
+                    </SurfaceCard>
+                  ) : null}
+                  {uploadState.status === 'validated' && !uploadState.errors.length ? (
+                    <SurfaceCard
+                       className="border border-emerald-200 bg-emerald-50/90 text-[0.82rem] text-emerald-800 shadow-none"
+                       paddingClassName="p-3.5"
+                    >
+                      <div className="flex items-start gap-3">
+                        <CheckCircle2 aria-hidden="true" className="mt-0.5 h-4.5 w-4.5 shrink-0" />
+                        <p>{universityAdminContent.bulkUploadPage.validatedMessage}</p>
+                      </div>
+                    </SurfaceCard>
+                  ) : null}
+                  {uploadState.status === 'processed' && processedSummary ? (
+                    <SurfaceCard
+                       className="border border-sky-200 bg-sky-50/90 text-[0.82rem] text-sky-900 shadow-none"
+                       paddingClassName="p-3.5"
+                    >
+                      <div className="flex items-start gap-3">
+                        <Rocket aria-hidden="true" className="mt-0.5 h-4.5 w-4.5 shrink-0" />
+                        <p>{processedSummary}</p>
+                      </div>
+                    </SurfaceCard>
+                  ) : null}
+                  <div className="flex flex-wrap gap-2.5">
+                    <button
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/10 px-4 py-2.5 text-[0.82rem] font-semibold text-primary transition duration-300 hover:bg-primary/15"
+                      type="button"
+                      onClick={handleValidate}
+                    >
+                      <CheckCircle2 aria-hidden="true" className="h-4 w-4" />
+                      <span>{universityAdminContent.bulkUploadPage.actionLabels.validate}</span>
+                    </button>
+                    <button
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-gradient px-4 py-2.5 text-[0.82rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={uploadState.status !== 'validated' || isLoading || isProcessing}
+                      type="button"
+                      onClick={handleProcess}
+                    >
+                      <Rocket aria-hidden="true" className="h-4 w-4" />
+                      <span>
+                        {isProcessing
+                          ? 'Procesando...'
+                          : universityAdminContent.bulkUploadPage.actionLabels.process}
+                      </span>
+                    </button>
                   </div>
-                ) : null}
-                {uploadState.errors.length > 0 ? (
-                  <SurfaceCard
-                     className="border border-rose-200 bg-rose-50/90 text-[0.82rem] text-rose-800 shadow-none"
-                     paddingClassName="p-3.5"
-                  >
-                    <div className="flex items-start gap-3">
-                      <XCircle aria-hidden="true" className="mt-0.5 h-4.5 w-4.5 shrink-0" />
-                      <div className="space-y-1">
-                        {uploadState.errors.map((error) => (
-                          <p key={error}>{error}</p>
-                        ))}
-                      </div>
-                    </div>
-                  </SurfaceCard>
-                ) : null}
-                {uploadState.status === 'validated' && !uploadState.errors.length ? (
-                  <SurfaceCard
-                     className="border border-emerald-200 bg-emerald-50/90 text-[0.82rem] text-emerald-800 shadow-none"
-                     paddingClassName="p-3.5"
-                  >
-                    <div className="flex items-start gap-3">
-                      <CheckCircle2 aria-hidden="true" className="mt-0.5 h-4.5 w-4.5 shrink-0" />
-                      <p>{universityAdminContent.bulkUploadPage.validatedMessage}</p>
-                    </div>
-                  </SurfaceCard>
-                ) : null}
-                {uploadState.status === 'processed' && processedSummary ? (
-                  <SurfaceCard
-                     className="border border-sky-200 bg-sky-50/90 text-[0.82rem] text-sky-900 shadow-none"
-                     paddingClassName="p-3.5"
-                  >
-                    <div className="flex items-start gap-3">
-                      <Rocket aria-hidden="true" className="mt-0.5 h-4.5 w-4.5 shrink-0" />
-                      <p>{processedSummary}</p>
-                    </div>
-                  </SurfaceCard>
-                ) : null}
-                <div className="flex flex-wrap gap-2.5">
-                  <button
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/10 px-4 py-2.5 text-[0.82rem] font-semibold text-primary transition duration-300 hover:bg-primary/15"
-                    type="button"
-                    onClick={handleValidate}
-                  >
-                    <CheckCircle2 aria-hidden="true" className="h-4 w-4" />
-                    <span>{universityAdminContent.bulkUploadPage.actionLabels.validate}</span>
-                  </button>
-                  <button
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-gradient px-4 py-2.5 text-[0.82rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
-                    disabled={uploadState.status !== 'validated' || isLoading || isProcessing}
-                    type="button"
-                    onClick={handleProcess}
-                  >
-                    <Rocket aria-hidden="true" className="h-4 w-4" />
-                    <span>
-                      {isProcessing
-                        ? 'Procesando...'
-                        : universityAdminContent.bulkUploadPage.actionLabels.process}
+                  <p className="text-[0.72rem] leading-5 text-ink-muted">
+                    Tipo seleccionado:{' '}
+                    <span className="font-semibold text-ink">
+                      {selectedTemplate?.value === 'students' ? 'Estudiantes' : 'Docentes'}
                     </span>
-                  </button>
+                  </p>
                 </div>
-                <p className="text-[0.72rem] leading-5 text-ink-muted">
-                  Tipo seleccionado:{' '}
-                  <span className="font-semibold text-ink">
-                    {selectedTemplate?.value === 'students' ? 'Estudiantes' : 'Docentes'}
-                  </span>
-                </p>
               </div>
             </SurfaceCard>
           </div>

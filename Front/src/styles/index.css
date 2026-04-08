@@ -193,6 +193,45 @@
   }
 }
 
+@media (min-width: 1288px) and (min-height: 564px) {
+  .bulk-upload-template-layout {
+    display: grid;
+    grid-template-columns: minmax(16rem, 18rem) minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 1rem;
+  }
+
+  .bulk-upload-template-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-self: center;
+  }
+
+  .bulk-upload-template-action {
+    align-self: center;
+  }
+
+  .bulk-upload-template-download {
+    width: auto;
+    min-width: 12.5rem;
+    white-space: nowrap;
+  }
+
+  .bulk-upload-upload-layout {
+    display: grid;
+    grid-template-columns: minmax(15rem, 17rem) minmax(0, 1fr) minmax(15rem, 18rem);
+    align-items: start;
+    gap: 1rem;
+  }
+
+  .bulk-upload-upload-dropzone {
+    min-height: 100%;
+  }
+
+  .bulk-upload-upload-actions {
+    align-self: stretch;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
