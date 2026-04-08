@@ -343,11 +343,17 @@ export function UniversityStudentsPage() {
                       </td>
                       <td
                         className={classNames(
-                          'px-4 pt-3.5 text-center sm:px-5',
+                          'px-4 text-center sm:px-5',
+                          displayStatus === 'pending' ? 'pt-3' : 'pt-3.5',
                           isLast ? 'pb-3.5' : 'pb-3',
                         )}
                       >
-                        <div className="mt-0.5 flex items-center justify-center">
+                        <div
+                          className={classNames(
+                            'flex items-center justify-center',
+                            displayStatus === 'pending' ? '' : 'mt-0.5',
+                          )}
+                        >
                           {displayStatus === 'pending' ? (
                             <span
                               className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset bg-amber-50 text-amber-700 ring-amber-200"
