@@ -23,6 +23,7 @@ export const ROUTES = {
   studentTreatments: '/estudiante/tratamientos-y-sedes',
   universityBulkUpload: '/universidad/carga-masiva',
   universityCredentials: '/universidad/credenciales',
+  universityHome: '/universidad/inicio',
   universityInstitution: '/universidad/informacion-institucional',
   universityRegisterStudent: '/universidad/estudiantes/registrar',
   universityRegisterTeacher: '/universidad/docentes/registrar',

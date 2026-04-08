@@ -87,7 +87,16 @@ export const router = createBrowserRouter([
       {
         index: true,
         Component: function UniversityIndexRedirect() {
-          return <Navigate replace to={ROUTES.universityInstitution} />;
+          return <Navigate replace to={ROUTES.universityHome} />;
+        },
+      },
+      {
+        path: 'inicio',
+        lazy: async () => {
+          const { UniversityHomePage } = await import(
+            '@/pages/university-admin/home/UniversityHomePage'
+          );
+          return { Component: UniversityHomePage };
         },
       },
       {

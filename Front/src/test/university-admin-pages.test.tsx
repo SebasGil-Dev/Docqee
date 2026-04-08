@@ -9,6 +9,7 @@ import { resetUniversityAdminModuleState } from '@/lib/universityAdminModuleStor
 import { UniversityAdminLayout } from '@/pages/university-admin/UniversityAdminLayout';
 import { UniversityBulkUploadPage } from '@/pages/university-admin/bulk-upload/UniversityBulkUploadPage';
 import { UniversityCredentialsPage } from '@/pages/university-admin/credentials/UniversityCredentialsPage';
+import { UniversityHomePage } from '@/pages/university-admin/home/UniversityHomePage';
 import { UniversityInstitutionPage } from '@/pages/university-admin/institution/UniversityInstitutionPage';
 import { UniversityRegisterStudentPage } from '@/pages/university-admin/students/UniversityRegisterStudentPage';
 import { UniversityStudentsPage } from '@/pages/university-admin/students/UniversityStudentsPage';
@@ -16,16 +17,17 @@ import { UniversityRegisterTeacherPage } from '@/pages/university-admin/teachers
 import { UniversityTeachersPage } from '@/pages/university-admin/teachers/UniversityTeachersPage';
 
 function renderUniversityApp(
-  initialEntries: MemoryRouterProps['initialEntries'] = [ROUTES.universityInstitution],
+  initialEntries: MemoryRouterProps['initialEntries'] = [ROUTES.universityHome],
 ) {
   return render(
     <MemoryRouter initialEntries={initialEntries}>
       <Routes>
         <Route element={<UniversityAdminLayout />} path={ROUTES.universityRoot}>
           <Route
-            element={<Navigate replace to={ROUTES.universityInstitution} />}
+            element={<Navigate replace to={ROUTES.universityHome} />}
             index
           />
+          <Route element={<UniversityHomePage />} path="inicio" />
           <Route
             element={<UniversityInstitutionPage />}
             path="informacion-institucional"
@@ -87,6 +89,16 @@ describe('University admin pages', () => {
     renderUniversityApp([ROUTES.universityStudents]);
 
     expect(screen.getByRole('button', { name: /abrir menu lateral/i })).toBeInTheDocument();
+  });
+
+  it('muestra el inicio con el resumen operativo de la universidad', async () => {
+    renderUniversityApp([ROUTES.universityHome]);
+
+    expect(screen.getByText(/bienvenido, jonathan acevedo/i)).toBeInTheDocument();
+    expect(screen.getByText(/universidad clinica del norte/i)).toBeInTheDocument();
+    expect(screen.getByTestId('university-home-pending-credentials')).toHaveTextContent(/^Pendientes2$/i);
+    expect(screen.getByText(/estado de estudiantes/i)).toBeInTheDocument();
+    expect(screen.getByText(/accesos rapidos/i)).toBeInTheDocument();
   });
 
   it('permite guardar, restablecer y abrir el dialogo de contrasena en informacion institucional', async () => {
