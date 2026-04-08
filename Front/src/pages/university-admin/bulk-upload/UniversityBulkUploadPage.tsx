@@ -165,7 +165,7 @@ export function UniversityBulkUploadPage() {
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden sm:gap-4 lg:h-auto lg:min-h-fit lg:overflow-visible">
+    <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden sm:gap-4">
       <Seo
         description={universityAdminContent.bulkUploadPage.meta.description}
         noIndex
@@ -181,12 +181,12 @@ export function UniversityBulkUploadPage() {
         </SurfaceCard>
       ) : null}
       <AdminPanelCard
-        className="flex-1 lg:w-full lg:flex-none lg:overflow-visible"
-        panelClassName="bg-[#f4f8ff] lg:h-auto lg:overflow-visible"
+        className="flex-1 w-full"
+        panelClassName="bg-[#f4f8ff]"
       >
-        <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5 sm:py-4 lg:min-h-fit lg:flex-none lg:overflow-visible lg:px-5 lg:py-4">
-          <div className="grid gap-4 xl:grid-cols-[minmax(17rem,19rem)_minmax(0,1fr)]">
-            <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-4 lg:p-4 xl:p-4.5">
+        <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5 sm:py-4 xl:px-6 xl:py-5">
+          <div className="grid min-h-0 gap-4 lg:grid-cols-[minmax(16.5rem,18.5rem)_minmax(0,1fr)] xl:grid-cols-[minmax(18rem,20rem)_minmax(0,1fr)]">
+            <SurfaceCard className="h-full border border-slate-200/80 bg-white shadow-none" paddingClassName="p-4 lg:p-4.5 xl:p-5">
               <div className="space-y-3.5 lg:space-y-3">
                 <div className="space-y-1">
                   <h2 className="font-headline text-[1.1rem] font-extrabold tracking-tight text-ink">
@@ -235,7 +235,7 @@ export function UniversityBulkUploadPage() {
                 </button>
               </div>
             </SurfaceCard>
-            <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-4 lg:p-4 xl:p-4.5">
+            <SurfaceCard className="h-full border border-slate-200/80 bg-white shadow-none" paddingClassName="p-4 lg:p-4.5 xl:p-5">
               <div className="space-y-4">
                 <div className="space-y-1">
                   <h2 className="font-headline text-[1.1rem] font-extrabold tracking-tight text-ink">
