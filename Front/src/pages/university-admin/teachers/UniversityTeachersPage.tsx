@@ -319,7 +319,7 @@ export function UniversityTeachersPage() {
                       >
                         <button
                           className={classNames(
-                            'inline-flex items-center gap-1.25 rounded-full px-2.25 py-1.25 text-[0.68rem] font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                            'inline-flex items-center gap-1.5 rounded-full px-2.75 py-1.5 text-[0.7rem] font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
                             teacher.status === 'active'
                               ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
                               : 'bg-primary/10 text-primary hover:bg-primary/15',
