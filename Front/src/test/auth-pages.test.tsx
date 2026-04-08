@@ -69,7 +69,7 @@ function renderFirstLoginApp({
             element={<FirstLoginPasswordPage {...firstLoginPageProps} />}
             path={ROUTES.firstLoginPassword}
           />
-          <Route element={<div>Panel universidad</div>} path={ROUTES.universityInstitution} />
+          <Route element={<div>Panel universidad</div>} path={ROUTES.universityHome} />
           <Route element={<div>Inicio admin</div>} path={ROUTES.adminUniversities} />
           <Route element={<NotFoundPage />} path="*" />
         </Routes>

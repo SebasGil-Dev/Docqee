@@ -22,7 +22,7 @@ export function getDefaultRouteForRole(role: SessionUserRole) {
     case 'STUDENT':
       return ROUTES.studentTreatments;
     case 'UNIVERSITY_ADMIN':
-      return ROUTES.universityInstitution;
+      return ROUTES.universityHome;
     default:
       return ROUTES.home;
   }

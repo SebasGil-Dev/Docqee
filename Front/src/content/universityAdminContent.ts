@@ -61,6 +61,15 @@ export const universityAdminContent = {
     tableTitle: 'Credenciales pendientes',
     title: 'Credenciales',
   },
+  homePage: {
+    description: '',
+    meta: {
+      description:
+        'Consulta el panel principal del administrador universitario dentro de Docqee.',
+      title: 'Docqee | Inicio Universidad',
+    },
+    title: 'Inicio',
+  },
   institutionPage: {
     actionLabels: {
       changePassword: 'Cambiar contrasena',
@@ -131,6 +140,12 @@ export const universityAdminContent = {
       to: ROUTES.login,
     },
     navigation: [
+      {
+        icon: 'house',
+        label: 'Inicio',
+        matchPrefix: ROUTES.universityHome,
+        to: ROUTES.universityHome,
+      },
       {
         icon: 'building2',
         label: 'Informacion institucional',
