@@ -269,7 +269,7 @@ export function UniversityTeachersPage() {
                   <th className="px-4 py-2.5 sm:px-5">Docente</th>
                   <th className="px-4 py-2.5">Documento</th>
                   <th className="px-4 py-2.5">Estado</th>
-                  <th className="px-4 py-2.5 text-right sm:px-5">Acciones</th>
+                    <th className="px-4 py-2.5 text-center sm:px-5">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200/80">
@@ -313,33 +313,35 @@ export function UniversityTeachersPage() {
                       </td>
                       <td
                         className={classNames(
-                          'px-4 pt-3 text-right sm:px-5',
+                          'px-4 pt-3.5 text-center sm:px-5',
                           isLast ? 'pb-3.5' : 'pb-3',
                         )}
                       >
-                        <button
-                          className={classNames(
-                            'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
-                            teacher.status === 'active'
-                              ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
-                              : 'bg-primary/10 text-primary hover:bg-primary/15',
-                        )}
-                          type="button"
-                          onClick={() => {
-                            void toggleTeacherStatus(teacher.id);
-                          }}
-                        >
-                          {teacher.status === 'active' ? (
-                            <PowerOff aria-hidden="true" className="h-3.5 w-3.5" />
-                          ) : (
-                            <Power aria-hidden="true" className="h-3.5 w-3.5" />
+                        <div className="mt-0.5 flex items-center justify-center">
+                          <button
+                            className={classNames(
+                              'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                              teacher.status === 'active'
+                                ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
+                                : 'bg-primary/10 text-primary hover:bg-primary/15',
                           )}
-                          <span>
-                            {teacher.status === 'active'
-                              ? universityAdminContent.teachersPage.actionLabels.deactivate
-                              : universityAdminContent.teachersPage.actionLabels.activate}
-                          </span>
-                        </button>
+                            type="button"
+                            onClick={() => {
+                              void toggleTeacherStatus(teacher.id);
+                            }}
+                          >
+                            {teacher.status === 'active' ? (
+                              <PowerOff aria-hidden="true" className="h-3.5 w-3.5" />
+                            ) : (
+                              <Power aria-hidden="true" className="h-3.5 w-3.5" />
+                            )}
+                            <span>
+                              {teacher.status === 'active'
+                                ? universityAdminContent.teachersPage.actionLabels.deactivate
+                                : universityAdminContent.teachersPage.actionLabels.activate}
+                            </span>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );

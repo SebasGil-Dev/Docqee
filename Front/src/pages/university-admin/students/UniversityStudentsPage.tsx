@@ -273,7 +273,7 @@ export function UniversityStudentsPage() {
                   <th className="px-4 py-2.5">Correo</th>
                   <th className="px-4 py-2.5">Semestre</th>
                   <th className="px-4 py-2.5">Estado</th>
-                  <th className="px-4 py-2.5 text-right sm:px-5">Acciones</th>
+                    <th className="px-4 py-2.5 text-center sm:px-5">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200/80">
@@ -338,42 +338,44 @@ export function UniversityStudentsPage() {
                       </td>
                       <td
                         className={classNames(
-                          'px-4 pt-3 text-right sm:px-5',
+                          'px-4 pt-3.5 text-center sm:px-5',
                           isLast ? 'pb-3.5' : 'pb-3',
                         )}
                       >
-                        {displayStatus === 'pending' ? (
-                          <span
-                            className="inline-flex rounded-full bg-amber-50 px-2.25 py-1.25 text-[0.68rem] font-semibold text-amber-700 ring-1 ring-inset ring-amber-200"
-                            title="Envia la credencial primero"
-                          >
-                            Pendiente
-                          </span>
-                        ) : (
-                          <button
-                            className={classNames(
-                               'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
-                              student.status === 'active'
-                                ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
-                                : 'bg-primary/10 text-primary hover:bg-primary/15',
-                            )}
-                            type="button"
-                            onClick={() => {
-                              void toggleStudentStatus(student.id);
-                            }}
-                          >
-                            {student.status === 'active' ? (
-                              <PowerOff aria-hidden="true" className="h-3.5 w-3.5" />
-                            ) : (
-                              <Power aria-hidden="true" className="h-3.5 w-3.5" />
-                            )}
-                            <span>
-                              {student.status === 'active'
-                                ? universityAdminContent.studentsPage.actionLabels.deactivate
-                                : universityAdminContent.studentsPage.actionLabels.activate}
+                        <div className="mt-0.5 flex items-center justify-center">
+                          {displayStatus === 'pending' ? (
+                            <span
+                              className="inline-flex rounded-full bg-amber-50 px-2.25 py-1.25 text-[0.68rem] font-semibold text-amber-700 ring-1 ring-inset ring-amber-200"
+                              title="Envia la credencial primero"
+                            >
+                              Pendiente
                             </span>
-                          </button>
-                        )}
+                          ) : (
+                            <button
+                              className={classNames(
+                                 'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                                student.status === 'active'
+                                  ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
+                                  : 'bg-primary/10 text-primary hover:bg-primary/15',
+                              )}
+                              type="button"
+                              onClick={() => {
+                                void toggleStudentStatus(student.id);
+                              }}
+                            >
+                              {student.status === 'active' ? (
+                                <PowerOff aria-hidden="true" className="h-3.5 w-3.5" />
+                              ) : (
+                                <Power aria-hidden="true" className="h-3.5 w-3.5" />
+                              )}
+                              <span>
+                                {student.status === 'active'
+                                  ? universityAdminContent.studentsPage.actionLabels.deactivate
+                                  : universityAdminContent.studentsPage.actionLabels.activate}
+                              </span>
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
