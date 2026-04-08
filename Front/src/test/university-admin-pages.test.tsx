@@ -306,6 +306,7 @@ describe('University admin pages', () => {
     const generatedRow = screen.getByText(/Valentina Rios/i).closest('tr');
     expect(generatedRow).not.toBeNull();
     await user.click(within(generatedRow!).getByRole('button', { name: /^Enviar$/i }));
+    await user.click(screen.getByRole('button', { name: /si, enviar/i }));
     expect(within(generatedRow!).getByText(/^Enviada$/i)).toBeInTheDocument();
     await user.click(screen.getByRole('link', { name: /^Estudiantes$/i }));
     const activatedStudentRow = screen.getByText(/Valentina Rios/i).closest('tr');
@@ -320,6 +321,7 @@ describe('University admin pages', () => {
     const sentRow = screen.getByText(/Tomas Herrera/i).closest('tr');
     expect(sentRow).not.toBeNull();
     await user.click(within(sentRow!).getByRole('button', { name: /reenviar/i }));
+    await user.click(screen.getByRole('button', { name: /si, reenviar/i }));
     expect(await screen.findByRole('status')).toHaveTextContent(/se reenvio correctamente/i);
 
     await user.click(screen.getByRole('button', { name: /enviar todas/i }));
@@ -328,6 +330,7 @@ describe('University admin pages', () => {
     const removableRow = screen.getByText(/Camila Vega/i).closest('tr');
     expect(removableRow).not.toBeNull();
     await user.click(within(removableRow!).getByRole('button', { name: /eliminar/i }));
+    await user.click(screen.getByRole('button', { name: /si, eliminar/i }));
     expect(within(screen.getByRole('table')).queryByText(/Camila Vega/i)).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('link', { name: /^Estudiantes$/i }));

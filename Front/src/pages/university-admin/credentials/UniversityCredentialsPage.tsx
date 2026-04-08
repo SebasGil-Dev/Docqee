@@ -1,6 +1,7 @@
 import { Check, Mail, PencilLine, RotateCcw, Send, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
+import { AdminConfirmationDialog } from '@/components/admin/AdminConfirmationDialog';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
@@ -11,6 +12,16 @@ import { classNames } from '@/lib/classNames';
 import { useUniversityAdminModuleStore } from '@/lib/universityAdminModuleStore';
 
 type CredentialRow = ReturnType<typeof buildCredentialRows>[number];
+
+type UniversityCredentialConfirmation =
+  | {
+      action: 'delete';
+      credential: CredentialRow;
+    }
+  | {
+      action: 'resend' | 'send';
+      credential: CredentialRow;
+    };
 
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -69,6 +80,9 @@ export function UniversityCredentialsPage() {
   const [emailDraft, setEmailDraft] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  const [pendingConfirmation, setPendingConfirmation] =
+    useState<UniversityCredentialConfirmation | null>(null);
+  const [isConfirmationSubmitting, setIsConfirmationSubmitting] = useState(false);
   const handleStartEmailEdit = (row: CredentialRow) => {
     setEditingCredentialId(row.id);
     setEmailDraft(row.studentEmail);
@@ -80,6 +94,14 @@ export function UniversityCredentialsPage() {
     setEditingCredentialId(null);
     setEmailDraft('');
     setEmailError(null);
+  };
+
+  const handleCloseConfirmation = () => {
+    if (isConfirmationSubmitting) {
+      return;
+    }
+
+    setPendingConfirmation(null);
   };
 
   const handleSaveEmail = (credentialId: string, studentName: string) => {
@@ -117,6 +139,46 @@ export function UniversityCredentialsPage() {
     })();
   };
 
+  const handleConfirmPendingAction = () => {
+    if (!pendingConfirmation) {
+      return;
+    }
+
+    setIsConfirmationSubmitting(true);
+
+    void (async () => {
+      if (pendingConfirmation.action === 'delete') {
+        const deleted = await deleteStudentCredential(pendingConfirmation.credential.id);
+
+        if (deleted) {
+          if (editingCredentialId === pendingConfirmation.credential.id) {
+            handleCancelEmailEdit();
+          }
+
+          setFeedbackMessage(
+            `La credencial de ${pendingConfirmation.credential.studentName} se elimino correctamente.`,
+          );
+        }
+      } else {
+        const updated =
+          pendingConfirmation.action === 'send'
+            ? await sendStudentCredential(pendingConfirmation.credential.id)
+            : await resendStudentCredential(pendingConfirmation.credential.id);
+
+        if (updated) {
+          setFeedbackMessage(
+            pendingConfirmation.action === 'send'
+              ? `La credencial de ${pendingConfirmation.credential.studentName} quedo enviada correctamente.`
+              : `La credencial de ${pendingConfirmation.credential.studentName} se reenvio correctamente.`,
+          );
+        }
+      }
+
+      setIsConfirmationSubmitting(false);
+      setPendingConfirmation(null);
+    })();
+  };
+
   useEffect(() => {
     if (!feedbackMessage) {
       return undefined;
@@ -130,6 +192,28 @@ export function UniversityCredentialsPage() {
       window.clearTimeout(timeoutId);
     };
   }, [feedbackMessage]);
+
+  const confirmationTitle =
+    pendingConfirmation?.action === 'delete'
+      ? 'Quieres eliminar esta credencial?'
+      : pendingConfirmation?.action === 'send'
+        ? 'Quieres enviar la credencial?'
+        : 'Quieres reenviar la credencial?';
+
+  const confirmationConfirmLabel =
+    pendingConfirmation?.action === 'delete'
+      ? 'Si, eliminar'
+      : pendingConfirmation?.action === 'send'
+        ? 'Si, enviar'
+        : 'Si, reenviar';
+
+  const confirmationDescription = pendingConfirmation
+    ? pendingConfirmation.action === 'delete'
+      ? `Se eliminara la credencial de ${pendingConfirmation.credential.studentName}.`
+      : pendingConfirmation.action === 'send'
+        ? `Se enviara la credencial al correo ${pendingConfirmation.credential.studentEmail}.`
+        : `Se reenviara la credencial al correo ${pendingConfirmation.credential.studentEmail}.`
+    : '';
 
   return (
     <div className="mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-3 overflow-hidden 2xl:max-w-[96rem]">
@@ -203,7 +287,7 @@ export function UniversityCredentialsPage() {
                   <th className="px-4 py-2.5 sm:px-5">Estudiante</th>
                   <th className="px-4 py-2.5">Correo electronico</th>
                   <th className="px-4 py-2.5">Estado</th>
-                  <th className="px-4 py-2.5 text-right sm:px-5">Acciones</th>
+                  <th className="px-4 py-2.5 text-center sm:px-5">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200/80">
@@ -281,15 +365,16 @@ export function UniversityCredentialsPage() {
                       </td>
                       <td
                         className={classNames(
-                          'px-4 pt-3 text-right sm:px-5',
+                          'px-4 pt-3 text-center sm:px-5',
                           isLast ? 'pb-3.5' : 'pb-3',
                         )}
                       >
-                        <div className="flex flex-wrap justify-end gap-1.5">
+                        <div className="flex flex-nowrap items-center justify-center gap-1.5 sm:gap-2">
                           {isEditing ? (
                             <>
                               <button
-                                className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1.5 text-[0.68rem] font-semibold text-primary transition duration-200 hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                                aria-label={universityAdminContent.credentialsPage.actionLabels.saveEmail}
+                                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition duration-200 hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-auto sm:w-auto sm:min-w-[7rem] sm:gap-1.5 sm:px-2.5 sm:py-1.75 sm:text-[0.68rem] sm:font-semibold"
                                 disabled={isLoading}
                                 type="button"
                                 onClick={() =>
@@ -297,25 +382,36 @@ export function UniversityCredentialsPage() {
                                 }
                               >
                                 <Check aria-hidden="true" className="h-4 w-4" />
-                                <span>
+                                <span className="hidden sm:inline">
                                   {universityAdminContent.credentialsPage.actionLabels.saveEmail}
                                 </span>
                               </button>
                               <button
-                                className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1.5 text-[0.68rem] font-semibold text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200"
+                                aria-label="Cancelar"
+                                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 sm:h-auto sm:w-auto sm:min-w-[7rem] sm:gap-1.5 sm:px-2.5 sm:py-1.75 sm:text-[0.68rem] sm:font-semibold"
                                 disabled={isLoading}
                                 type="button"
                                 onClick={handleCancelEmailEdit}
                               >
                                 <X aria-hidden="true" className="h-4 w-4" />
-                                <span>Cancelar</span>
+                                <span className="hidden sm:inline">Cancelar</span>
                               </button>
                             </>
                           ) : (
                             <>
                               <button
+                                aria-label={
+                                  isGenerated
+                                    ? universityAdminContent.credentialsPage.actionLabels.send
+                                    : universityAdminContent.credentialsPage.actionLabels.resend
+                                }
+                                title={
+                                  isGenerated
+                                    ? universityAdminContent.credentialsPage.actionLabels.send
+                                    : universityAdminContent.credentialsPage.actionLabels.resend
+                                }
                                 className={classNames(
-                                   'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[0.68rem] font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                                  'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-auto sm:w-auto sm:min-w-[7rem] sm:gap-1.5 sm:px-2.5 sm:py-1.75 sm:text-[0.68rem] sm:font-semibold',
                                   isGenerated
                                     ? 'bg-primary/10 text-primary hover:bg-primary/15'
                                     : 'bg-sky-50 text-sky-700 hover:bg-sky-100',
@@ -323,21 +419,10 @@ export function UniversityCredentialsPage() {
                                 disabled={isLoading}
                                 type="button"
                                 onClick={() => {
-                                  void (async () => {
-                                    const updated = isGenerated
-                                      ? await sendStudentCredential(credential.id)
-                                      : await resendStudentCredential(credential.id);
-
-                                    if (!updated) {
-                                      return;
-                                    }
-
-                                    setFeedbackMessage(
-                                      isGenerated
-                                        ? `La credencial de ${credential.studentName} quedo enviada correctamente.`
-                                        : `La credencial de ${credential.studentName} se reenvio correctamente.`,
-                                    );
-                                  })();
+                                  setPendingConfirmation({
+                                    action: isGenerated ? 'send' : 'resend',
+                                    credential,
+                                  });
                                 }}
                               >
                                 {isGenerated ? (
@@ -345,47 +430,40 @@ export function UniversityCredentialsPage() {
                                 ) : (
                                   <RotateCcw aria-hidden="true" className="h-4 w-4" />
                                 )}
-                                <span>
+                                <span className="hidden sm:inline">
                                   {isGenerated
                                     ? universityAdminContent.credentialsPage.actionLabels.send
                                     : universityAdminContent.credentialsPage.actionLabels.resend}
                                 </span>
                               </button>
                               <button
-                                className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1.5 text-[0.68rem] font-semibold text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200"
+                                aria-label={universityAdminContent.credentialsPage.actionLabels.editEmail}
+                                title={universityAdminContent.credentialsPage.actionLabels.editEmail}
+                                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 sm:h-auto sm:w-auto sm:min-w-[8rem] sm:gap-1.5 sm:px-2.5 sm:py-1.75 sm:text-[0.68rem] sm:font-semibold"
                                 disabled={isLoading}
                                 type="button"
                                 onClick={() => handleStartEmailEdit(credential)}
                               >
                                 <PencilLine aria-hidden="true" className="h-4 w-4" />
-                                <span>
+                                <span className="hidden sm:inline">
                                   {universityAdminContent.credentialsPage.actionLabels.editEmail}
                                 </span>
                               </button>
                               <button
-                                className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-1.5 text-[0.68rem] font-semibold text-rose-700 transition duration-200 hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200/70"
+                                aria-label={universityAdminContent.credentialsPage.actionLabels.delete}
+                                title={universityAdminContent.credentialsPage.actionLabels.delete}
+                                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-700 transition duration-200 hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200/70 sm:h-auto sm:w-auto sm:min-w-[6.75rem] sm:gap-1.5 sm:px-2.5 sm:py-1.75 sm:text-[0.68rem] sm:font-semibold"
                                 disabled={isLoading}
                                 type="button"
                                 onClick={() => {
-                                  void (async () => {
-                                    const deleted = await deleteStudentCredential(credential.id);
-
-                                    if (!deleted) {
-                                      return;
-                                    }
-
-                                    if (editingCredentialId === credential.id) {
-                                      handleCancelEmailEdit();
-                                    }
-
-                                    setFeedbackMessage(
-                                      `La credencial de ${credential.studentName} se elimino correctamente.`,
-                                    );
-                                  })();
+                                  setPendingConfirmation({
+                                    action: 'delete',
+                                    credential,
+                                  });
                                 }}
                               >
                                 <Trash2 aria-hidden="true" className="h-4 w-4" />
-                                <span>
+                                <span className="hidden sm:inline">
                                   {universityAdminContent.credentialsPage.actionLabels.delete}
                                 </span>
                               </button>
@@ -407,6 +485,17 @@ export function UniversityCredentialsPage() {
           </div>
         )}
       </AdminPanelCard>
+      <AdminConfirmationDialog
+        cancelLabel="No, cancelar"
+        confirmLabel={confirmationConfirmLabel}
+        description={confirmationDescription}
+        isOpen={pendingConfirmation !== null}
+        isSubmitting={isConfirmationSubmitting}
+        title={confirmationTitle}
+        tone={pendingConfirmation?.action === 'delete' ? 'danger' : 'primary'}
+        onCancel={handleCloseConfirmation}
+        onConfirm={handleConfirmPendingAction}
+      />
     </div>
   );
 }
