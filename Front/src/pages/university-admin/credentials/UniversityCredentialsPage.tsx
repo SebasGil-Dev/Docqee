@@ -1,5 +1,15 @@
-import { Check, Mail, PencilLine, RotateCcw, Send, Trash2, X } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import {
+  Check,
+  Mail,
+  PencilLine,
+  RotateCcw,
+  Search,
+  Send,
+  SlidersHorizontal,
+  Trash2,
+  X,
+} from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { AdminConfirmationDialog } from '@/components/admin/AdminConfirmationDialog';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
@@ -12,6 +22,7 @@ import { classNames } from '@/lib/classNames';
 import { useUniversityAdminModuleStore } from '@/lib/universityAdminModuleStore';
 
 type CredentialRow = ReturnType<typeof buildCredentialRows>[number];
+type UniversityCredentialFilterValue = 'all' | 'generated' | 'sent';
 
 type UniversityCredentialConfirmation =
   | {
@@ -60,6 +71,15 @@ function buildCredentialRows(
     .filter((row): row is NonNullable<typeof row> => row !== null);
 }
 
+const credentialFilterOptions: Array<{
+  label: string;
+  value: UniversityCredentialFilterValue;
+}> = [
+  { label: 'Todas', value: 'all' },
+  { label: 'Generada', value: 'generated' },
+  { label: 'Enviada', value: 'sent' },
+];
+
 export function UniversityCredentialsPage() {
   const {
     credentials,
@@ -76,6 +96,9 @@ export function UniversityCredentialsPage() {
     () => buildCredentialRows(credentials, students),
     [credentials, students],
   );
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<UniversityCredentialFilterValue>('all');
+  const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const [editingCredentialId, setEditingCredentialId] = useState<string | null>(null);
   const [emailDraft, setEmailDraft] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
@@ -83,6 +106,28 @@ export function UniversityCredentialsPage() {
   const [pendingConfirmation, setPendingConfirmation] =
     useState<UniversityCredentialConfirmation | null>(null);
   const [isConfirmationSubmitting, setIsConfirmationSubmitting] = useState(false);
+  const filterMenuRef = useRef<HTMLDivElement | null>(null);
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filteredCredentialRows = credentialRows.filter((credential) => {
+    const matchesSearch =
+      credential.studentName.toLowerCase().includes(normalizedSearch) ||
+      credential.studentEmail.toLowerCase().includes(normalizedSearch) ||
+      credential.studentDocument.toLowerCase().includes(normalizedSearch);
+
+    if (!matchesSearch) {
+      return false;
+    }
+
+    if (statusFilter === 'all') {
+      return true;
+    }
+
+    return credential.deliveryStatus === statusFilter;
+  });
+  const emptyStateMessage =
+    normalizedSearch || statusFilter !== 'all'
+      ? 'No encontramos credenciales con los filtros seleccionados.'
+      : universityAdminContent.credentialsPage.emptyState;
   const handleStartEmailEdit = (row: CredentialRow) => {
     setEditingCredentialId(row.id);
     setEmailDraft(row.studentEmail);
@@ -193,6 +238,32 @@ export function UniversityCredentialsPage() {
     };
   }, [feedbackMessage]);
 
+  useEffect(() => {
+    if (!isFilterMenuOpen) {
+      return undefined;
+    }
+
+    function handlePointerDown(event: MouseEvent) {
+      if (!filterMenuRef.current?.contains(event.target as Node)) {
+        setIsFilterMenuOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsFilterMenuOpen(false);
+      }
+    }
+
+    window.addEventListener('mousedown', handlePointerDown);
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('mousedown', handlePointerDown);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isFilterMenuOpen]);
+
   const confirmationTitle =
     pendingConfirmation?.action === 'delete'
       ? 'Quieres eliminar esta credencial?'
@@ -251,8 +322,8 @@ export function UniversityCredentialsPage() {
       ) : null}
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
         <div className="flex flex-col gap-3 border-b border-slate-200/80 px-4 py-3 sm:px-5 sm:py-3.5">
-          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-1">
+          <div className="flex flex-col gap-2.5 xl:flex-row xl:items-center xl:justify-between">
+            <div className="min-w-0 space-y-1">
               <h2 className="font-headline text-[1.12rem] font-extrabold tracking-tight text-ink sm:text-[1.25rem]">
                 {universityAdminContent.credentialsPage.tableTitle}
               </h2>
@@ -262,15 +333,93 @@ export function UniversityCredentialsPage() {
                 </p>
               ) : null}
             </div>
-            <button
-              className="inline-flex items-center justify-center gap-2 self-start rounded-xl bg-brand-gradient px-3.5 py-2.5 text-[0.82rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 sm:self-center"
-              disabled={isLoading}
-              type="button"
-              onClick={handleSendAll}
-            >
-              <Send aria-hidden="true" className="h-4 w-4" />
-              <span>{universityAdminContent.credentialsPage.actionLabels.sendAll}</span>
-            </button>
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+              <label className="relative min-w-0 sm:w-[17rem] lg:w-[19rem]">
+                <span className="sr-only">Buscar credenciales por estudiante, documento o correo</span>
+                <Search
+                  aria-hidden="true"
+                  className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ghost"
+                />
+                <input
+                  className="h-10 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-10 pr-4 text-[0.82rem] text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                  placeholder="Buscar estudiante, documento o correo..."
+                  type="search"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                />
+              </label>
+              <div ref={filterMenuRef} className="relative shrink-0">
+                <button
+                  aria-controls="university-credential-status-menu"
+                  aria-expanded={isFilterMenuOpen}
+                  aria-haspopup="menu"
+                  aria-label={
+                    statusFilter === 'all'
+                      ? 'Filtrar credenciales por estado'
+                      : `Filtrar credenciales por estado. Actual: ${
+                          credentialFilterOptions.find((option) => option.value === statusFilter)?.label
+                        }`
+                  }
+                  className={classNames(
+                    'relative inline-flex h-10 w-10 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                    statusFilter === 'all'
+                      ? 'border-slate-200/90 hover:border-primary/30 hover:bg-white'
+                      : 'border-primary/30 bg-primary/10 text-primary hover:bg-primary/15',
+                  )}
+                  type="button"
+                  onClick={() => setIsFilterMenuOpen((currentValue) => !currentValue)}
+                >
+                  <SlidersHorizontal aria-hidden="true" className="h-[1.02rem] w-[1.02rem]" />
+                </button>
+                {isFilterMenuOpen ? (
+                  <div
+                    className="absolute right-0 top-[calc(100%+0.6rem)] z-20 min-w-[11rem] rounded-[1.2rem] border border-slate-200/80 bg-white p-2 shadow-[0_22px_60px_-30px_rgba(15,23,42,0.35)]"
+                    id="university-credential-status-menu"
+                    role="menu"
+                  >
+                    <p className="px-2.5 pb-1.5 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-ink-muted">
+                      Filtrar por estado
+                    </p>
+                    <div className="space-y-1">
+                      {credentialFilterOptions.map((option) => {
+                        const isSelected = statusFilter === option.value;
+
+                        return (
+                          <button
+                            key={option.value}
+                            className={classNames(
+                              'flex w-full items-center justify-between rounded-[0.95rem] px-2.5 py-2 text-left text-[0.82rem] font-medium transition duration-200',
+                              isSelected
+                                ? 'bg-primary/10 text-primary'
+                                : 'text-ink-muted hover:bg-slate-100 hover:text-ink',
+                            )}
+                            role="menuitemradio"
+                            type="button"
+                            aria-checked={isSelected}
+                            onClick={() => {
+                              setStatusFilter(option.value);
+                              setIsFilterMenuOpen(false);
+                            }}
+                          >
+                            <span>{option.label}</span>
+                            {isSelected ? <Check aria-hidden="true" className="h-4 w-4" /> : null}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+              <button
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-gradient px-3.5 py-2.5 text-[0.82rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+                disabled={isLoading}
+                type="button"
+                onClick={handleSendAll}
+              >
+                <Send aria-hidden="true" className="h-4 w-4" />
+                <span>{universityAdminContent.credentialsPage.actionLabels.sendAll}</span>
+              </button>
+            </div>
           </div>
           {universityAdminContent.credentialsPage.editEmailHelp ? (
             <SurfaceCard
@@ -281,7 +430,7 @@ export function UniversityCredentialsPage() {
             </SurfaceCard>
           ) : null}
         </div>
-        {credentialRows.length > 0 ? (
+        {filteredCredentialRows.length > 0 ? (
           <div className="admin-scrollbar min-h-0 flex-1 overflow-x-auto overflow-y-auto">
             <table className="min-w-full">
               <thead className="sticky top-0 z-10 bg-slate-100 text-left">
@@ -293,10 +442,10 @@ export function UniversityCredentialsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200/80">
-                {credentialRows.map((credential, index) => {
+                {filteredCredentialRows.map((credential, index) => {
                   const isGenerated = credential.deliveryStatus === 'generated';
                   const isEditing = editingCredentialId === credential.id;
-                  const isLast = index === credentialRows.length - 1;
+                  const isLast = index === filteredCredentialRows.length - 1;
 
                   return (
                     <tr key={credential.id} className="align-top">
@@ -484,7 +633,7 @@ export function UniversityCredentialsPage() {
         ) : (
           <div className="flex flex-1 items-center justify-center px-4 py-8 text-center sm:px-5">
             <p className="text-sm font-medium text-ink-muted">
-              {isLoading ? 'Cargando credenciales...' : universityAdminContent.credentialsPage.emptyState}
+              {isLoading ? 'Cargando credenciales...' : emptyStateMessage}
             </p>
           </div>
         )}
