@@ -374,7 +374,7 @@ export function UniversityCredentialsPage() {
                             <>
                               <button
                                 aria-label={universityAdminContent.credentialsPage.actionLabels.saveEmail}
-                                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition duration-200 hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-auto sm:w-auto sm:min-h-[2.4rem] sm:min-w-[7rem] sm:gap-1.5 sm:px-3 sm:py-2 sm:text-[0.68rem] sm:font-semibold"
+                                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition duration-200 hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs sm:font-semibold"
                                 disabled={isLoading}
                                 type="button"
                                 onClick={() =>
@@ -388,7 +388,7 @@ export function UniversityCredentialsPage() {
                               </button>
                               <button
                                 aria-label="Cancelar"
-                                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 sm:h-auto sm:w-auto sm:min-h-[2.4rem] sm:min-w-[7rem] sm:gap-1.5 sm:px-3 sm:py-2 sm:text-[0.68rem] sm:font-semibold"
+                                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs sm:font-semibold"
                                 disabled={isLoading}
                                 type="button"
                                 onClick={handleCancelEmailEdit}
@@ -411,7 +411,7 @@ export function UniversityCredentialsPage() {
                                     : universityAdminContent.credentialsPage.actionLabels.resend
                                 }
                                 className={classNames(
-                                  'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-auto sm:w-auto sm:min-h-[2.4rem] sm:min-w-[7rem] sm:gap-1.5 sm:px-3 sm:py-2 sm:text-[0.68rem] sm:font-semibold',
+                                  'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs sm:font-semibold',
                                   isGenerated
                                     ? 'bg-primary/10 text-primary hover:bg-primary/15'
                                     : 'bg-sky-50 text-sky-700 hover:bg-sky-100',
@@ -439,7 +439,7 @@ export function UniversityCredentialsPage() {
                               <button
                                 aria-label={universityAdminContent.credentialsPage.actionLabels.editEmail}
                                 title={universityAdminContent.credentialsPage.actionLabels.editEmail}
-                                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 sm:h-auto sm:w-auto sm:min-h-[2.4rem] sm:min-w-[8rem] sm:gap-1.5 sm:px-3 sm:py-2 sm:text-[0.68rem] sm:font-semibold"
+                                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs sm:font-semibold"
                                 disabled={isLoading}
                                 type="button"
                                 onClick={() => handleStartEmailEdit(credential)}
@@ -452,7 +452,7 @@ export function UniversityCredentialsPage() {
                               <button
                                 aria-label={universityAdminContent.credentialsPage.actionLabels.delete}
                                 title={universityAdminContent.credentialsPage.actionLabels.delete}
-                                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-700 transition duration-200 hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200/70 sm:h-auto sm:w-auto sm:min-h-[2.4rem] sm:min-w-[6.75rem] sm:gap-1.5 sm:px-3 sm:py-2 sm:text-[0.68rem] sm:font-semibold"
+                                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-700 transition duration-200 hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200/70 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs sm:font-semibold"
                                 disabled={isLoading}
                                 type="button"
                                 onClick={() => {
