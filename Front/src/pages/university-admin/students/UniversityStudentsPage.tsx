@@ -271,7 +271,7 @@ export function UniversityStudentsPage() {
                   <th className="px-4 py-2.5 sm:px-5">Estudiante</th>
                   <th className="px-4 py-2.5">Documento</th>
                   <th className="px-4 py-2.5">Correo</th>
-                  <th className="px-4 py-2.5">Semestre</th>
+                  <th className="px-4 py-2.5 text-center">Semestre</th>
                     <th className="px-4 py-2.5 text-center">Estado</th>
                     <th className="px-4 py-2.5 text-center sm:px-5">Acciones</th>
                 </tr>
@@ -320,13 +320,15 @@ export function UniversityStudentsPage() {
                       </td>
                       <td
                         className={classNames(
-                          'px-4 pt-3.5',
+                          'px-4 pt-3.5 text-center',
                           isLast ? 'pb-4' : 'pb-3.5',
                         )}
                       >
-                        <span className="inline-flex rounded-full bg-sky-50 px-2.5 py-1 text-[0.7rem] font-semibold text-sky-700 ring-1 ring-inset ring-sky-200">
-                          {student.semester}
-                        </span>
+                        <div className="flex items-center justify-center">
+                          <span className="inline-flex rounded-full bg-sky-50 px-2.5 py-1 text-[0.7rem] font-semibold text-sky-700 ring-1 ring-inset ring-sky-200">
+                            {student.semester}
+                          </span>
+                        </div>
                       </td>
                       <td
                         className={classNames(
