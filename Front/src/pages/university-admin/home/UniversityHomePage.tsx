@@ -1,9 +1,9 @@
 import {
   ArrowRight,
-  Badge,
   Building2,
   GraduationCap,
   MapPin,
+  Presentation,
   Users,
 } from 'lucide-react';
 import { useMemo } from 'react';
@@ -191,7 +191,7 @@ export function UniversityHomePage() {
               </p>
             </div>
             <div className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1.5 ring-1 ring-white/15 backdrop-blur-sm">
-              <Badge aria-hidden="true" className="h-3.5 w-3.5 text-white" />
+              <Presentation aria-hidden="true" className="h-3.5 w-3.5 text-white" />
               <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-white/75">
                 Docentes
               </p>

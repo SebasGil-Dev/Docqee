@@ -1,4 +1,4 @@
-import { Badge, Check, Plus, Power, PowerOff, Search, SlidersHorizontal, Upload } from 'lucide-react';
+import { Check, Plus, Power, PowerOff, Presentation, Search, SlidersHorizontal, Upload } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
@@ -138,7 +138,7 @@ export function UniversityTeachersPage() {
         >
           <div className="flex items-center gap-2 px-3 py-1.75 sm:gap-2.5 sm:px-3.5 sm:py-2">
             <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-[0.8rem] bg-white/12 text-white ring-1 ring-white/20 sm:h-7 sm:w-7">
-              <Badge aria-hidden="true" className="h-3.25 w-3.25" />
+              <Presentation aria-hidden="true" className="h-3.25 w-3.25" />
             </span>
             <span className="font-headline text-[1.28rem] font-extrabold tracking-tight text-white sm:text-[1.45rem]">
               {teachers.length}

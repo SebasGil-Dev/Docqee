@@ -159,7 +159,7 @@ export const universityAdminContent = {
         to: ROUTES.universityStudents,
       },
       {
-        icon: 'badge',
+        icon: 'presentation',
         label: 'Docentes',
         matchPrefix: ROUTES.universityTeachers,
         to: ROUTES.universityTeachers,
