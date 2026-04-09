@@ -521,7 +521,10 @@ describe('Auth pages', () => {
     expect(screen.queryByText(/el celular es obligatorio/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/la contrase.a es obligatoria/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/debes confirmar la contrase.a/i)).not.toBeInTheDocument();
-    expect(screen.getByLabelText(/^correo electr.nico$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^correo electr.nico$/i)).toHaveAttribute('aria-invalid', 'false');
+    expect(screen.getByLabelText(/^celular$/i)).toHaveAttribute('aria-invalid', 'false');
+    expect(screen.getByLabelText(/^contrase.a$/i)).toHaveAttribute('aria-invalid', 'false');
+    expect(screen.getByLabelText(/confirmar contrase.a/i)).toHaveAttribute('aria-invalid', 'false');
 
     await user.type(screen.getByLabelText(/^correo electr.nico$/i), 'paciente@correo.com');
     await user.type(screen.getByLabelText(/^celular$/i), '3001234567');

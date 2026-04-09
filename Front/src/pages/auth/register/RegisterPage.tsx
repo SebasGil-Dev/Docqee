@@ -1525,6 +1525,31 @@ export function RegisterPage({
     );
   }, [mobileSteps.length]);
 
+  useEffect(() => {
+    if (!isMobileView) {
+      return;
+    }
+
+    setFormState((currentState) => {
+      const hasStepErrors = currentMobileStep.fields.some((fieldName) => Boolean(currentState.errors[fieldName]));
+
+      if (!hasStepErrors) {
+        return currentState;
+      }
+
+      const nextErrors = { ...currentState.errors };
+
+      currentMobileStep.fields.forEach((fieldName) => {
+        delete nextErrors[fieldName];
+      });
+
+      return {
+        ...currentState,
+        errors: nextErrors,
+      };
+    });
+  }, [currentMobileStep.id, currentMobileStepIndex, isMobileView]);
+
   const handleNextMobileStep = () => {
     const validationErrors = validateRegisterForm(formState.values, currentDate);
     const firstInvalidField = currentMobileStep.fields.find((fieldName) => Boolean(validationErrors[fieldName]));
