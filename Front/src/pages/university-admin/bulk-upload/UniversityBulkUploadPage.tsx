@@ -208,6 +208,7 @@ export function UniversityBulkUploadPage() {
   const [processedSummary, setProcessedSummary] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const parsedRowsRef = useRef<BulkStudentRow[] | BulkTeacherRow[]>([]);
   const fileRef = useRef<File | null>(null);
 
@@ -218,12 +219,7 @@ export function UniversityBulkUploadPage() {
     setProcessedSummary(null);
   };
 
-  const handleFileSelection = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-
-    if (!file) return;
-
+  const processFile = async (file: File) => {
     if (!/\.(xlsx|xls)$/i.test(file.name)) {
       setUploadState({ errors: ['Solo se aceptan archivos .xlsx o .xls.'], fileName: file.name, status: 'invalid', templateType: uploadState.templateType });
       setProcessedSummary(null);
@@ -264,6 +260,29 @@ export function UniversityBulkUploadPage() {
     parsedRowsRef.current = [];
     setUploadState({ errors: [], fileName: file.name, status: 'file_selected', templateType: detected });
     setProcessedSummary(null);
+  };
+
+  const handleFileSelection = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (file) void processFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) void processFile(file);
   };
 
   const handleValidate = async () => {
@@ -418,8 +437,16 @@ export function UniversityBulkUploadPage() {
                 </div>
 
                 <label
-                  className="flex cursor-pointer flex-col items-center justify-center gap-2.5 rounded-[1.4rem] border-2 border-dashed border-slate-300 bg-slate-50 px-5 py-6 text-center transition duration-300 hover:border-primary/50 hover:bg-white lg:py-5"
+                  className={classNames(
+                    'flex cursor-pointer flex-col items-center justify-center gap-2.5 rounded-[1.4rem] border-2 border-dashed px-5 py-6 text-center transition duration-300 lg:py-5',
+                    isDragging
+                      ? 'border-primary bg-primary/5 scale-[1.01]'
+                      : 'border-slate-300 bg-slate-50 hover:border-primary/50 hover:bg-white',
+                  )}
                   htmlFor="bulk-upload-input"
+                  onDragLeave={handleDragLeave}
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
                 >
                   <span className="inline-flex h-11 w-11 items-center justify-center rounded-[1.2rem] bg-white text-primary ring-1 ring-slate-200">
                     <FileSpreadsheet aria-hidden="true" className="h-5 w-5" />
