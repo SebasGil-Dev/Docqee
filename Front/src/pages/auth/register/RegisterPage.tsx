@@ -1576,7 +1576,10 @@ export function RegisterPage({
   })();
 
   return (
-    <AuthShell mainClassName="items-start px-2.5 py-4 sm:px-6 sm:py-7 lg:px-8">
+    <AuthShell
+      headerLogoCompact={isMobileView}
+      mainClassName="items-start px-2.5 py-4 sm:px-6 sm:py-7 lg:px-8"
+    >
       <Seo
         description={content.meta.description}
         noIndex

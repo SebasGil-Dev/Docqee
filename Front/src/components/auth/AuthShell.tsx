@@ -7,10 +7,16 @@ import { classNames } from '@/lib/classNames';
 
 type AuthShellProps = PropsWithChildren<{
   footerClassName?: string;
+  headerLogoCompact?: boolean;
   mainClassName?: string;
 }>;
 
-export function AuthShell({ children, footerClassName, mainClassName }: AuthShellProps) {
+export function AuthShell({
+  children,
+  footerClassName,
+  headerLogoCompact = false,
+  mainClassName,
+}: AuthShellProps) {
   return (
     <div className="relative flex min-h-screen flex-col overflow-hidden bg-surface">
       <div
@@ -32,7 +38,7 @@ export function AuthShell({ children, footerClassName, mainClassName }: AuthShel
             className="flex w-fit items-center justify-center"
             to={ROUTES.home}
           >
-            <LogoMark />
+            <LogoMark compact={headerLogoCompact} />
           </Link>
         </div>
       </header>
