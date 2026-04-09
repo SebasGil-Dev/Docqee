@@ -8,7 +8,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import type { ChangeEvent } from 'react';
-import { useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
@@ -221,11 +221,6 @@ export function UniversityBulkUploadPage() {
   const parsedRowsRef = useRef<BulkStudentRow[] | BulkTeacherRow[]>([]);
   const fileRef = useRef<File | null>(null);
 
-  const selectedTemplate = useMemo(
-    () => universityAdminContent.bulkUploadPage.templateOptions.find((o) => o.value === uploadState.templateType),
-    [uploadState.templateType],
-  );
-
   const handleTemplateChange = (templateType: UniversityBulkTemplateType) => {
     parsedRowsRef.current = [];
     fileRef.current = null;
@@ -233,7 +228,7 @@ export function UniversityBulkUploadPage() {
     setProcessedSummary(null);
   };
 
-  const handleFileSelection = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelection = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = '';
 
@@ -245,9 +240,39 @@ export function UniversityBulkUploadPage() {
       return;
     }
 
+    let detected: UniversityBulkTemplateType | null = null;
+    try {
+      const buffer = await file.arrayBuffer();
+      const wb = XLSX.read(buffer, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0] ?? ''];
+      if (ws) {
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' }) as (string | number)[][];
+        const header = (rows[0] ?? []).map((h) => String(h).trim().toLowerCase());
+        const studentSpecific = ['correo', 'celular', 'semestre'];
+        if (studentSpecific.every((c) => header.includes(c))) {
+          detected = 'students';
+        } else if (TEACHER_COLUMNS.every((c) => header.includes(c))) {
+          detected = 'teachers';
+        }
+      }
+    } catch {
+      // si falla la lectura, lo detectará el paso de validación
+    }
+
+    if (!detected) {
+      setUploadState({
+        errors: ['No se pudo detectar el tipo de plantilla. Verifica que estés usando la plantilla correcta (estudiantes o docentes).'],
+        fileName: file.name,
+        status: 'invalid',
+        templateType: uploadState.templateType,
+      });
+      setProcessedSummary(null);
+      return;
+    }
+
     fileRef.current = file;
     parsedRowsRef.current = [];
-    setUploadState({ errors: [], fileName: file.name, status: 'file_selected', templateType: uploadState.templateType });
+    setUploadState({ errors: [], fileName: file.name, status: 'file_selected', templateType: detected });
     setProcessedSummary(null);
   };
 
@@ -416,7 +441,7 @@ export function UniversityBulkUploadPage() {
                   <span className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-3.5 py-1.75 text-[0.8rem] font-semibold text-white">
                     {universityAdminContent.bulkUploadPage.filePickerLabel}
                   </span>
-                  <input accept=".xlsx,.xls" className="sr-only" id="bulk-upload-input" type="file" onChange={handleFileSelection} />
+                  <input accept=".xlsx,.xls" className="sr-only" id="bulk-upload-input" type="file" onChange={(e) => { void handleFileSelection(e); }} />
                 </label>
 
                 <div className="space-y-3">
@@ -498,12 +523,14 @@ export function UniversityBulkUploadPage() {
                     </button>
                   </div>
 
-                  <p className="text-center text-[0.72rem] leading-5 text-ink-muted">
-                    Tipo seleccionado:{' '}
-                    <span className="font-semibold text-ink">
-                      {selectedTemplate?.value === 'students' ? 'Estudiantes' : 'Docentes'}
-                    </span>
-                  </p>
+                  {uploadState.status !== 'idle' && uploadState.fileName ? (
+                    <p className="text-center text-[0.72rem] leading-5 text-ink-muted">
+                      Tipo detectado:{' '}
+                      <span className="font-semibold text-ink">
+                        {uploadState.templateType === 'students' ? 'Estudiantes' : 'Docentes'}
+                      </span>
+                    </p>
+                  ) : null}
                 </div>
               </div>
             </SurfaceCard>
