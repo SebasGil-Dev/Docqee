@@ -171,7 +171,7 @@ async function parseAndValidateFile(
     return { errors: ['El archivo no contiene hojas de datos.'], parsed: [] };
   }
 
-  const allRows = XLSX.utils.sheet_to_json<(string | number)[]>(ws, { header: 1, defval: '' });
+  const allRows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' }) as (string | number)[][];
 
   if (allRows.length < 2) {
     return { errors: ['El archivo no contiene filas de datos (solo el encabezado o está vacío).'], parsed: [] };
