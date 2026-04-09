@@ -333,6 +333,7 @@ function SelectField({
 
 function CheckboxField({
   checked,
+  compact = false,
   error,
   id,
   label,
@@ -340,6 +341,7 @@ function CheckboxField({
   onChange,
 }: {
   checked: boolean;
+  compact?: boolean | undefined;
   error?: string | undefined;
   id: string;
   label: string;
@@ -353,6 +355,7 @@ function CheckboxField({
       <label
         className={classNames(
           'flex cursor-pointer items-start gap-3 rounded-2xl border px-4 py-3 text-[13px] transition-colors duration-300 sm:text-sm',
+          compact ? 'gap-2.5 rounded-[1.15rem] px-3 py-2.5 text-[12px] sm:text-[12px]' : '',
           error
             ? 'border-rose-300 bg-rose-50/80 text-rose-900'
             : 'border-slate-200/80 bg-white/75 text-ink hover:border-primary/25',
@@ -363,13 +366,16 @@ function CheckboxField({
           aria-describedby={errorId}
           aria-invalid={Boolean(error)}
           checked={checked}
-          className="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary/20"
+          className={classNames(
+            'mt-0.5 h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary/20',
+            compact ? 'h-3.5 w-3.5' : '',
+          )}
           id={id}
           type="checkbox"
           onBlur={onBlur}
           onChange={(event) => onChange(event.target.checked)}
         />
-        <span className="leading-5">{label}</span>
+        <span className={classNames('leading-5', compact ? 'leading-[1.15rem]' : '')}>{label}</span>
       </label>
       {error ? (
         <p
@@ -1437,6 +1443,7 @@ export function RegisterPage({
     <div className="space-y-3">
       <CheckboxField
         checked={formState.values.acceptTerms}
+        compact={isMobileView}
         error={formState.errors.acceptTerms}
         id={fieldIds.acceptTerms}
         label={content.termsConsent.label}
@@ -1445,6 +1452,7 @@ export function RegisterPage({
       />
       <CheckboxField
         checked={formState.values.acceptPrivacyPolicy}
+        compact={isMobileView}
         error={formState.errors.acceptPrivacyPolicy}
         id={fieldIds.acceptPrivacyPolicy}
         label={content.privacyConsent.label}
@@ -1619,7 +1627,7 @@ export function RegisterPage({
             <h1 className="font-headline text-[2rem] font-extrabold tracking-tight text-ink sm:text-[2.35rem]">
               {content.title}
             </h1>
-            {!(isMobileView && currentMobileStep.id === 'profile-location') ? (
+            {!(isMobileView && (currentMobileStep.id === 'profile-location' || currentMobileStep.id === 'account')) ? (
               <p className="max-w-3xl text-sm leading-7 text-ink-muted sm:text-base">
                 {content.subtitle}
               </p>
@@ -1638,7 +1646,9 @@ export function RegisterPage({
                     <SectionHeader
                       align={currentMobileStep.id === 'personal' ? 'center' : 'left'}
                       description={
-                        currentMobileStep.id === 'personal' || currentMobileStep.id === 'profile-location'
+                        currentMobileStep.id === 'personal' ||
+                        currentMobileStep.id === 'profile-location' ||
+                        currentMobileStep.id === 'account'
                           ? undefined
                           : currentMobileStep.description
                       }

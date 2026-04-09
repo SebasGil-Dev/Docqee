@@ -511,6 +511,16 @@ describe('Auth pages', () => {
     await user.click(screen.getByRole('button', { name: /siguiente paso/i }));
 
     expect(screen.getByText(/paso 3\/3/i)).toBeInTheDocument();
+    expect(
+      screen.queryByText(/registra tus datos para comenzar tu vinculaci.n con estudiantes de odontolog.a/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/define un acceso seguro para continuar con tu vinculaci.n como paciente dentro de docqee/i),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/el correo electr.nico es obligatorio/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/el celular es obligatorio/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/la contrase.a es obligatoria/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/debes confirmar la contrase.a/i)).not.toBeInTheDocument();
     expect(screen.getByLabelText(/^correo electr.nico$/i)).toBeInTheDocument();
 
     await user.type(screen.getByLabelText(/^correo electr.nico$/i), 'paciente@correo.com');
