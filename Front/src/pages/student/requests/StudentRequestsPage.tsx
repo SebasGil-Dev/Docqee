@@ -160,27 +160,27 @@ export function StudentRequestsPage() {
           <p role="alert">{errorMessage}</p>
         </SurfaceCard>
       ) : null}
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid gap-2.5 md:grid-cols-2">
         <SurfaceCard className="min-w-0 overflow-hidden bg-brand-gradient text-white" paddingClassName="p-0">
-          <div className="flex items-center gap-3 px-4 py-2.5">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-white/12 text-white ring-1 ring-white/18">
-              <UserRound aria-hidden="true" className="h-4.5 w-4.5" />
+          <div className="flex items-center gap-2.5 px-3.5 py-2">
+            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.9rem] bg-white/12 text-white ring-1 ring-white/18">
+              <UserRound aria-hidden="true" className="h-4 w-4" />
             </span>
-            <span className="font-headline text-[1.45rem] font-extrabold tracking-tight text-white">
+            <span className="font-headline text-[1.28rem] font-extrabold tracking-tight text-white">
               {pendingCount}
             </span>
-            <p className="min-w-0 text-sm font-semibold text-white/90">Solicitudes pendientes</p>
+            <p className="min-w-0 text-[0.82rem] font-semibold text-white/90">Solicitudes pendientes</p>
           </div>
         </SurfaceCard>
         <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-0">
-          <div className="flex items-center gap-3 px-4 py-2.5">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-primary/10 text-primary ring-1 ring-primary/10">
-              <MessageSquareMore aria-hidden="true" className="h-4.5 w-4.5" />
+          <div className="flex items-center gap-2.5 px-3.5 py-2">
+            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.9rem] bg-primary/10 text-primary ring-1 ring-primary/10">
+              <MessageSquareMore aria-hidden="true" className="h-4 w-4" />
             </span>
-            <span className="font-headline text-[1.45rem] font-extrabold tracking-tight text-ink">
+            <span className="font-headline text-[1.28rem] font-extrabold tracking-tight text-ink">
               {activeConversationCount}
             </span>
-            <p className="min-w-0 text-sm font-semibold text-ink-muted">Conversaciones activas</p>
+            <p className="min-w-0 text-[0.82rem] font-semibold text-ink-muted">Conversaciones activas</p>
           </div>
         </SurfaceCard>
       </div>

@@ -278,14 +278,7 @@ export function StudentAppointmentsPage() {
   const filteredAppointments = useMemo(
     () =>
       appointments.filter((appointment) => {
-        const matchesSearch =
-          appointment.patientName.toLowerCase().includes(normalizedSearch) ||
-          appointment.siteName.toLowerCase().includes(normalizedSearch) ||
-          appointment.city.toLowerCase().includes(normalizedSearch) ||
-          appointment.appointmentType.toLowerCase().includes(normalizedSearch) ||
-          appointment.supervisorName.toLowerCase().includes(normalizedSearch) ||
-          appointment.treatmentNames.join(' ').toLowerCase().includes(normalizedSearch) ||
-          (appointment.additionalInfo ?? '').toLowerCase().includes(normalizedSearch);
+        const matchesSearch = appointment.patientName.toLowerCase().includes(normalizedSearch);
 
         return matchesSearch && (statusFilter === 'all' || appointment.status === statusFilter);
       }),
@@ -455,38 +448,38 @@ export function StudentAppointmentsPage() {
           <p role="alert">{errorMessage}</p>
         </SurfaceCard>
       ) : null}
-      <div className="grid gap-3 md:grid-cols-3">
+      <div className="grid gap-2.5 md:grid-cols-3">
         <SurfaceCard className="min-w-0 overflow-hidden bg-brand-gradient text-white" paddingClassName="p-0">
-          <div className="flex items-center gap-3 px-4 py-2.5">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-white/12 text-white">
-              <Clock3 aria-hidden="true" className="h-4.5 w-4.5" />
+          <div className="flex items-center gap-2.5 px-3.5 py-2">
+            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.9rem] bg-white/12 text-white">
+              <Clock3 aria-hidden="true" className="h-4 w-4" />
             </span>
-            <span className="font-headline text-[1.45rem] font-extrabold tracking-tight text-white">
+            <span className="font-headline text-[1.28rem] font-extrabold tracking-tight text-white">
               {pendingCount}
             </span>
-            <p className="min-w-0 text-sm font-semibold text-white/90">Propuestas activas</p>
+            <p className="min-w-0 text-[0.82rem] font-semibold text-white/90">Propuestas activas</p>
           </div>
         </SurfaceCard>
         <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-0">
-          <div className="flex items-center gap-3 px-4 py-2.5">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-emerald-50 text-emerald-700">
-              <CalendarCheck2 aria-hidden="true" className="h-4.5 w-4.5" />
+          <div className="flex items-center gap-2.5 px-3.5 py-2">
+            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.9rem] bg-emerald-50 text-emerald-700">
+              <CalendarCheck2 aria-hidden="true" className="h-4 w-4" />
             </span>
-            <span className="font-headline text-[1.45rem] font-extrabold tracking-tight text-ink">
+            <span className="font-headline text-[1.28rem] font-extrabold tracking-tight text-ink">
               {acceptedCount}
             </span>
-            <p className="min-w-0 text-sm font-semibold text-ink-muted">Aceptadas</p>
+            <p className="min-w-0 text-[0.82rem] font-semibold text-ink-muted">Aceptadas</p>
           </div>
         </SurfaceCard>
         <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-0">
-          <div className="flex items-center gap-3 px-4 py-2.5">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-sky-50 text-sky-700">
-              <CheckCircle2 aria-hidden="true" className="h-4.5 w-4.5" />
+          <div className="flex items-center gap-2.5 px-3.5 py-2">
+            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.9rem] bg-sky-50 text-sky-700">
+              <CheckCircle2 aria-hidden="true" className="h-4 w-4" />
             </span>
-            <span className="font-headline text-[1.45rem] font-extrabold tracking-tight text-ink">
+            <span className="font-headline text-[1.28rem] font-extrabold tracking-tight text-ink">
               {completedCount}
             </span>
-            <p className="min-w-0 text-sm font-semibold text-ink-muted">Finalizadas</p>
+            <p className="min-w-0 text-[0.82rem] font-semibold text-ink-muted">Finalizadas</p>
           </div>
         </SurfaceCard>
       </div>
@@ -511,88 +504,90 @@ export function StudentAppointmentsPage() {
                 onChange={(event) => setSearchTerm(event.target.value)}
               />
             </label>
-            <button
-              className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-brand-gradient px-4 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
-              type="button"
-              onClick={openCreateDialog}
-            >
-              <Plus aria-hidden="true" className="h-4 w-4" />
-              <span>{studentContent.appointmentsPage.actionLabels.create}</span>
-            </button>
-            <div className="relative shrink-0" ref={statusMenuRef}>
+            <div className="flex items-center justify-end gap-2.5">
               <button
-                aria-controls="student-appointment-status-menu"
-                aria-expanded={isStatusMenuOpen}
-                aria-haspopup="menu"
-                aria-label={
-                  statusFilter === 'all'
-                    ? 'Filtrar citas por estado'
-                    : `Filtrar citas por estado. Actual: ${
-                        appointmentStatusOptions.find((option) => option.value === statusFilter)
-                          ?.label
-                      }`
-                }
-                className={classNames(
-                  'relative inline-flex h-11 w-11 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
-                  statusFilter === 'all'
-                    ? 'border-slate-200/90 hover:border-primary/30 hover:bg-white'
-                    : 'border-primary/25 bg-primary/[0.08] text-primary hover:bg-primary/[0.12]',
-                )}
+                className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-brand-gradient px-4 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
                 type="button"
-                onClick={() => setIsStatusMenuOpen((currentValue) => !currentValue)}
+                onClick={openCreateDialog}
               >
-                <SlidersHorizontal aria-hidden="true" className="h-[1.05rem] w-[1.05rem]" />
-                {statusFilter !== 'all' ? (
-                  <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary ring-2 ring-white" />
-                ) : null}
+                <Plus aria-hidden="true" className="h-4 w-4" />
+                <span>{studentContent.appointmentsPage.actionLabels.create}</span>
               </button>
-              {isStatusMenuOpen ? (
-                <div
-                  className="absolute right-0 top-[calc(100%+0.6rem)] z-20 w-[14rem] overflow-hidden rounded-[1.4rem] border border-slate-200/80 bg-white/95 p-2 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.45)] backdrop-blur"
-                  id="student-appointment-status-menu"
-                  role="menu"
+              <div className="relative shrink-0" ref={statusMenuRef}>
+                <button
+                  aria-controls="student-appointment-status-menu"
+                  aria-expanded={isStatusMenuOpen}
+                  aria-haspopup="menu"
+                  aria-label={
+                    statusFilter === 'all'
+                      ? 'Filtrar citas por estado'
+                      : `Filtrar citas por estado. Actual: ${
+                          appointmentStatusOptions.find((option) => option.value === statusFilter)
+                            ?.label
+                        }`
+                  }
+                  className={classNames(
+                    'relative inline-flex h-11 w-11 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                    statusFilter === 'all'
+                      ? 'border-slate-200/90 hover:border-primary/30 hover:bg-white'
+                      : 'border-primary/25 bg-primary/[0.08] text-primary hover:bg-primary/[0.12]',
+                  )}
+                  type="button"
+                  onClick={() => setIsStatusMenuOpen((currentValue) => !currentValue)}
                 >
-                  <div className="px-2.5 pb-2 pt-1">
-                    <p className="text-[0.7rem] font-bold uppercase tracking-[0.24em] text-primary/75">
-                      Filtrar por estado
-                    </p>
-                  </div>
-                  <div className="space-y-1">
-                    {appointmentStatusOptions.map((option) => {
-                      const isSelected = statusFilter === option.value;
+                  <SlidersHorizontal aria-hidden="true" className="h-[1.05rem] w-[1.05rem]" />
+                  {statusFilter !== 'all' ? (
+                    <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary ring-2 ring-white" />
+                  ) : null}
+                </button>
+                {isStatusMenuOpen ? (
+                  <div
+                    className="absolute right-0 top-[calc(100%+0.6rem)] z-20 w-[14rem] overflow-hidden rounded-[1.4rem] border border-slate-200/80 bg-white/95 p-2 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.45)] backdrop-blur"
+                    id="student-appointment-status-menu"
+                    role="menu"
+                  >
+                    <div className="px-2.5 pb-2 pt-1">
+                      <p className="text-[0.7rem] font-bold uppercase tracking-[0.24em] text-primary/75">
+                        Filtrar por estado
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      {appointmentStatusOptions.map((option) => {
+                        const isSelected = statusFilter === option.value;
 
-                      return (
-                        <button
-                          key={option.value}
-                          aria-checked={isSelected}
-                          className={classNames(
-                            'flex w-full items-center justify-between rounded-[1rem] px-3 py-2.5 text-left text-sm font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
-                            isSelected
-                              ? 'bg-primary text-white shadow-[0_14px_30px_-20px_rgba(22,78,99,0.9)]'
-                              : 'bg-slate-50/70 text-ink hover:bg-slate-100',
-                          )}
-                          role="menuitemradio"
-                          type="button"
-                          onClick={() => {
-                            setStatusFilter(option.value);
-                            setIsStatusMenuOpen(false);
-                          }}
-                        >
-                          <span>{option.label}</span>
-                          <span
+                        return (
+                          <button
+                            key={option.value}
+                            aria-checked={isSelected}
                             className={classNames(
-                              'inline-flex h-5 w-5 items-center justify-center rounded-full',
-                              isSelected ? 'bg-white/18 text-white' : 'bg-white text-slate-300',
+                              'flex w-full items-center justify-between rounded-[1rem] px-3 py-2.5 text-left text-sm font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                              isSelected
+                                ? 'bg-primary text-white shadow-[0_14px_30px_-20px_rgba(22,78,99,0.9)]'
+                                : 'bg-slate-50/70 text-ink hover:bg-slate-100',
                             )}
+                            role="menuitemradio"
+                            type="button"
+                            onClick={() => {
+                              setStatusFilter(option.value);
+                              setIsStatusMenuOpen(false);
+                            }}
                           >
-                            <Check aria-hidden="true" className="h-3.5 w-3.5" />
-                          </span>
-                        </button>
-                      );
-                    })}
+                            <span>{option.label}</span>
+                            <span
+                              className={classNames(
+                                'inline-flex h-5 w-5 items-center justify-center rounded-full',
+                                isSelected ? 'bg-white/18 text-white' : 'bg-white text-slate-300',
+                              )}
+                            >
+                              <Check aria-hidden="true" className="h-3.5 w-3.5" />
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ) : null}
+                ) : null}
+              </div>
             </div>
           </div>
         </div>
