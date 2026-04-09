@@ -427,16 +427,6 @@ export function StudentAppointmentsPage() {
         title={studentContent.appointmentsPage.meta.title}
       />
       <AdminPageHeader
-        action={
-          <button
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-3.5 py-2.5 text-[0.84rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
-            type="button"
-            onClick={openCreateDialog}
-          >
-            <Plus aria-hidden="true" className="h-4 w-4" />
-            <span>{studentContent.appointmentsPage.actionLabels.create}</span>
-          </button>
-        }
         className="gap-2.5"
         description={studentContent.appointmentsPage.description}
         descriptionClassName="text-sm leading-5 sm:text-[0.95rem]"
@@ -527,6 +517,14 @@ export function StudentAppointmentsPage() {
                 onChange={(event) => setSearchTerm(event.target.value)}
               />
             </label>
+            <button
+              className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-brand-gradient px-4 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+              type="button"
+              onClick={openCreateDialog}
+            >
+              <Plus aria-hidden="true" className="h-4 w-4" />
+              <span>{studentContent.appointmentsPage.actionLabels.create}</span>
+            </button>
             <div className="relative shrink-0" ref={statusMenuRef}>
               <button
                 aria-controls="student-appointment-status-menu"
