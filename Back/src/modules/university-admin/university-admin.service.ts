@@ -117,7 +117,9 @@ export class UniversityAdminService {
     const localities = await this.prisma.localidad.findMany({ include: { ciudad: true } });
 
     for (const campus of campuses) {
-      const numericId = extractNumericId(campus.id);
+      // Only treat as existing DB record if the entire id is a pure integer string ("1", "42")
+      // Frontend temp ids like "campus-1" must create new records
+      const numericId = /^\d+$/.test(campus.id) ? parseInt(campus.id, 10) : null;
       const estado = campus.status === 'active' ? estado_simple_enum.ACTIVO : estado_simple_enum.INACTIVO;
 
       const locality =
@@ -158,9 +160,9 @@ export class UniversityAdminService {
       }
     }
 
-    // Mark sedes not in the list as inactive
+    // Mark sedes not in the list as inactive (only consider existing numeric IDs)
     const sentIds = campuses
-      .map((c) => extractNumericId(c.id))
+      .map((c) => (/^\d+$/.test(c.id) ? parseInt(c.id, 10) : null))
       .filter((id): id is number => id !== null);
 
     if (sentIds.length > 0) {
