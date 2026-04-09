@@ -248,8 +248,8 @@ function SelectField({
   showChevron = false,
   value,
 }: FieldBaseProps & {
-  chevronClassName?: string;
-  containerClassName?: string;
+  chevronClassName?: string | undefined;
+  containerClassName?: string | undefined;
   name: string;
   onChange: (value: string) => void;
   options: {
@@ -257,8 +257,8 @@ function SelectField({
     label: string;
   }[];
   placeholder: string;
-  selectClassName?: string;
-  showChevron?: boolean;
+  selectClassName?: string | undefined;
+  showChevron?: boolean | undefined;
   value: string;
 }) {
   const message = error ?? helpText;
