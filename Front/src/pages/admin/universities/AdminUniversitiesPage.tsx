@@ -136,28 +136,28 @@ export function AdminUniversitiesPage() {
           <p role="alert">{errorMessage}</p>
         </SurfaceCard>
       ) : null}
-      <div className="flex items-stretch gap-2.5 md:gap-3">
+      <div className="flex items-stretch gap-2 md:gap-2.5">
         <SurfaceCard
           className="min-w-0 flex-1 overflow-hidden bg-brand-gradient text-white md:flex-[1.75]"
           paddingClassName="p-0"
         >
-          <div className="flex items-center gap-2 px-3 py-2 sm:gap-3 sm:px-4 sm:py-2.25">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/12 text-white sm:h-11 sm:w-11">
-              <Building2 aria-hidden="true" className="h-4.5 w-4.5 sm:h-5.5 sm:w-5.5" />
+          <div className="flex items-center gap-2 px-3 py-1.75 sm:gap-2.5 sm:px-3.5 sm:py-2">
+            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/12 text-white sm:h-9 sm:w-9">
+              <Building2 aria-hidden="true" className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
             </span>
-            <span className="font-headline text-[1.05rem] font-extrabold tracking-tight text-white sm:text-[1.4rem]">
+            <span className="font-headline text-[1rem] font-extrabold tracking-tight text-white sm:text-[1.25rem]">
               {universities.length}
             </span>
-            <p className="min-w-0 text-[0.68rem] font-semibold leading-tight text-white/90 sm:text-[0.86rem]">
+            <p className="min-w-0 text-[0.64rem] font-semibold leading-tight text-white/90 sm:text-[0.78rem]">
               {adminContent.universitiesPage.summaryLabel}
             </p>
           </div>
         </SurfaceCard>
         <Link
-          className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-[1.35rem] bg-brand-gradient px-3 py-2 text-[0.78rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm md:min-w-[13.25rem] md:flex-none"
+          className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-[1.2rem] bg-brand-gradient px-2.75 py-1.75 text-[0.74rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 sm:gap-2 sm:px-3.5 sm:py-2 sm:text-[0.82rem] md:min-w-[12.25rem] md:flex-none"
           to={ROUTES.adminRegisterUniversity}
         >
-          <Plus aria-hidden="true" className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+          <Plus aria-hidden="true" className="h-3.5 w-3.5" />
           <span className="leading-none">{adminContent.universitiesPage.actionLabels.register}</span>
         </Link>
       </div>
