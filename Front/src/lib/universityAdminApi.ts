@@ -22,7 +22,17 @@ export function updateUniversityAdminProfile(values: UniversityInstitutionFormVa
   return apiRequest<UniversityInstitutionProfile>('/university-admin/profile', {
     body: {
       adminEmail: values.adminEmail,
+      adminFirstName: values.adminFirstName,
+      adminLastName: values.adminLastName,
       adminPhone: values.adminPhone,
+      campuses: values.campuses.map((campus) => ({
+        address: campus.address,
+        cityId: campus.cityId,
+        id: campus.id,
+        localityId: campus.localityId,
+        name: campus.name,
+        status: campus.status,
+      })),
       cityId: values.cityId,
       logoSrc: values.logoSrc,
       mainLocalityId: values.mainLocalityId,

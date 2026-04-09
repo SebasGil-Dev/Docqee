@@ -5,6 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { estado_simple_enum } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 import { PrismaService } from '@/shared/database/prisma.service';
@@ -54,17 +55,21 @@ export class UniversityAdminService {
       }),
       this.prisma.cuenta_acceso.update({
         where: { id_cuenta: universityAdmin.id_cuenta },
-        data: {
-          correo: adminEmail,
-        },
+        data: { correo: adminEmail },
       }),
       this.prisma.cuenta_admin_universidad.update({
         where: { id_cuenta: universityAdmin.id_cuenta },
         data: {
+          nombres: normalizeText(input.adminFirstName),
+          apellidos: normalizeText(input.adminLastName),
           celular: input.adminPhone ? normalizeText(input.adminPhone) : null,
         },
       }),
     ]);
+
+    if (input.campuses && input.campuses.length > 0) {
+      await this.syncCampuses(universityAdmin.id_universidad, input.campuses);
+    }
 
     const updatedUniversityAdmin = await this.findCurrentUniversityAdmin(user);
     return this.toInstitutionProfile(updatedUniversityAdmin);
@@ -105,6 +110,70 @@ export class UniversityAdminService {
     return { ok: true };
   }
 
+  private async syncCampuses(
+    universityId: number,
+    campuses: UpdateInstitutionProfileDto['campuses'] & object[],
+  ) {
+    const localities = await this.prisma.localidad.findMany({ include: { ciudad: true } });
+
+    for (const campus of campuses) {
+      const numericId = extractNumericId(campus.id);
+      const estado = campus.status === 'active' ? estado_simple_enum.ACTIVO : estado_simple_enum.INACTIVO;
+
+      const locality =
+        localities.find((l) => l.id_localidad === extractNumericId(campus.localityId)) ??
+        localities.find(
+          (l) =>
+            buildLocalityFrontId(l.ciudad.nombre, l.nombre) === campus.localityId &&
+            buildCityFrontId(l.ciudad.nombre) === campus.cityId,
+        ) ??
+        localities.find(
+          (l) =>
+            buildCityFrontId(l.ciudad.nombre) === campus.cityId &&
+            slugify(l.nombre) === slugify(campus.localityId),
+        );
+
+      if (!locality) continue;
+
+      if (numericId) {
+        await this.prisma.sede.updateMany({
+          where: { id_sede: numericId, id_universidad: universityId },
+          data: {
+            nombre: normalizeText(campus.name),
+            direccion: normalizeText(campus.address),
+            id_localidad: locality.id_localidad,
+            estado,
+          },
+        });
+      } else {
+        await this.prisma.sede.create({
+          data: {
+            id_universidad: universityId,
+            id_localidad: locality.id_localidad,
+            nombre: normalizeText(campus.name),
+            direccion: normalizeText(campus.address),
+            estado,
+          },
+        });
+      }
+    }
+
+    // Mark sedes not in the list as inactive
+    const sentIds = campuses
+      .map((c) => extractNumericId(c.id))
+      .filter((id): id is number => id !== null);
+
+    if (sentIds.length > 0) {
+      await this.prisma.sede.updateMany({
+        where: {
+          id_universidad: universityId,
+          id_sede: { notIn: sentIds },
+        },
+        data: { estado: estado_simple_enum.INACTIVO },
+      });
+    }
+  }
+
   private assertUniversityAdmin(user: RequestUser) {
     if (user.role !== 'UNIVERSITY_ADMIN' || !user.universityId) {
       throw new ForbiddenException('Este recurso es exclusivo del administrador universitario.');
@@ -120,10 +189,10 @@ export class UniversityAdminService {
         cuenta_acceso: true,
         universidad: {
           include: {
-            localidad: {
-              include: {
-                ciudad: true,
-              },
+            localidad: { include: { ciudad: true } },
+            sede: {
+              where: { estado: estado_simple_enum.ACTIVO },
+              include: { localidad: { include: { ciudad: true } } },
             },
           },
         },
@@ -167,20 +236,21 @@ export class UniversityAdminService {
 
   private toInstitutionProfile(universityAdmin: {
     id_cuenta: number;
+    nombres: string;
+    apellidos: string;
     celular: string | null;
-    cuenta_acceso: {
-      correo: string;
-    };
+    cuenta_acceso: { correo: string };
     universidad: {
       id_universidad: number;
       nombre: string;
       logo_url: string | null;
-      localidad: {
+      localidad: { nombre: string; ciudad: { nombre: string } };
+      sede: {
+        id_sede: number;
         nombre: string;
-        ciudad: {
-          nombre: string;
-        };
-      };
+        direccion: string;
+        localidad: { nombre: string; ciudad: { nombre: string } };
+      }[];
     };
   }) {
     const cityName = universityAdmin.universidad.localidad.ciudad.nombre;
@@ -188,7 +258,19 @@ export class UniversityAdminService {
 
     return {
       adminEmail: universityAdmin.cuenta_acceso.correo,
+      adminFirstName: universityAdmin.nombres,
+      adminLastName: universityAdmin.apellidos,
       adminPhone: universityAdmin.celular ?? '',
+      campuses: universityAdmin.universidad.sede.map((s) => ({
+        address: s.direccion,
+        city: s.localidad.ciudad.nombre,
+        cityId: buildCityFrontId(s.localidad.ciudad.nombre),
+        id: String(s.id_sede),
+        locality: s.localidad.nombre,
+        localityId: buildLocalityFrontId(s.localidad.ciudad.nombre, s.localidad.nombre),
+        name: s.nombre,
+        status: 'active' as const,
+      })),
       id: String(universityAdmin.universidad.id_universidad),
       logoAlt: `Logo institucional de ${universityAdmin.universidad.nombre}`,
       logoFileName: universityAdmin.universidad.logo_url ? 'Logo guardado' : null,
