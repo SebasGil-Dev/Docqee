@@ -14,6 +14,7 @@ import {
   extractNumericId,
   normalizeText,
 } from '@/shared/utils/front-format.util';
+import { BulkCreateTeachersDto } from './application/dto/bulk-create-teachers.dto';
 import { CreateTeacherDto } from './application/dto/create-teacher.dto';
 
 const DEFAULT_DOCUMENT_TYPES = [
@@ -102,6 +103,59 @@ export class TeachersService {
 
     const teachers = await this.listTeachers(user);
     return teachers[0] ?? null;
+  }
+
+  async bulkCreateTeachers(user: RequestUser, input: BulkCreateTeachersDto) {
+    const universityId = this.getUniversityId(user);
+    const errors: { row: number; column: string; message: string }[] = [];
+    let created = 0;
+
+    for (let i = 0; i < input.rows.length; i++) {
+      const row = input.rows[i];
+      const rowNum = i + 2;
+
+      if (!row) continue;
+
+      try {
+        const documentType = await this.resolveDocumentType(row.tipo_documento);
+        const documentNumber = normalizeText(row.numero_documento);
+
+        const existingTeacher = await this.prisma.docente.findFirst({
+          where: { id_tipo_documento: documentType.id_tipo_documento, numero_documento: documentNumber },
+        });
+
+        const teacher =
+          existingTeacher ??
+          (await this.prisma.docente.create({
+            data: {
+              id_tipo_documento: documentType.id_tipo_documento,
+              numero_documento: documentNumber,
+              nombres: normalizeText(row.nombres),
+              apellidos: normalizeText(row.apellidos),
+            },
+          }));
+
+        const existingLink = await this.prisma.docente_universidad.findFirst({
+          where: { id_docente: teacher.id_docente, id_universidad: universityId },
+          select: { id_docente_universidad: true },
+        });
+
+        if (existingLink) {
+          errors.push({ row: rowNum, column: 'numero_documento', message: `El docente con documento "${row.numero_documento}" ya está vinculado a esta universidad.` });
+          continue;
+        }
+
+        await this.prisma.docente_universidad.create({
+          data: { id_docente: teacher.id_docente, id_universidad: universityId, estado: estado_simple_enum.ACTIVO },
+        });
+
+        created++;
+      } catch {
+        errors.push({ row: rowNum, column: 'general', message: 'Error inesperado al procesar esta fila.' });
+      }
+    }
+
+    return { created, createdCredentials: 0, errors };
   }
 
   async toggleTeacherStatus(user: RequestUser, teacherIdentifier: string) {

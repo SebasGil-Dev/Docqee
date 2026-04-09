@@ -1,6 +1,9 @@
 import { useEffect, useSyncExternalStore } from 'react';
 
 import type {
+  BulkRowError,
+  BulkStudentRow,
+  BulkTeacherRow,
   DocumentTypeOption,
   PersonOperationalStatus,
   RegisterStudentFormValues,
@@ -18,6 +21,8 @@ import type {
 import { IS_TEST_MODE } from '@/lib/apiClient';
 import { patientRegisterCatalogDataSource } from '@/lib/patientRegisterCatalogDataSource';
 import {
+  bulkCreateStudents,
+  bulkCreateTeachers,
   changeUniversityAdminPassword,
   createUniversityStudent,
   createUniversityTeacher,
@@ -39,13 +44,14 @@ type BulkProcessResult = {
   createdCredentials: number;
   createdStudents: number;
   createdTeachers: number;
+  errors: BulkRowError[];
 };
 
 type UniversityAdminModuleActions = {
   changePassword: (values: UniversityPasswordFormValues) => Promise<boolean>;
   deleteStudentCredential: (credentialId: string) => Promise<boolean>;
   editStudentCredentialEmail: (credentialId: string, email: string) => Promise<boolean>;
-  processBulkUpload: (templateType: UniversityBulkTemplateType) => Promise<BulkProcessResult | null>;
+  processBulkUpload: (templateType: UniversityBulkTemplateType, rows: BulkStudentRow[] | BulkTeacherRow[]) => Promise<BulkProcessResult | null>;
   refresh: () => Promise<void>;
   registerStudent: (values: RegisterStudentFormValues) => Promise<{
     credentialId: string;
@@ -671,6 +677,7 @@ function processBulkUploadMock(templateType: UniversityBulkTemplateType) {
       createdCredentials: createdStudents.length,
       createdStudents: createdStudents.length,
       createdTeachers: 0,
+      errors: [],
     };
   }
 
@@ -690,6 +697,7 @@ function processBulkUploadMock(templateType: UniversityBulkTemplateType) {
     createdCredentials: 0,
     createdStudents: 0,
     createdTeachers: createdTeachers.length,
+    errors: [],
   };
 }
 
@@ -1066,18 +1074,57 @@ async function changePassword(values: UniversityPasswordFormValues) {
   }
 }
 
-async function processBulkUpload(templateType: UniversityBulkTemplateType) {
+async function processBulkUpload(
+  templateType: UniversityBulkTemplateType,
+  rows: BulkStudentRow[] | BulkTeacherRow[],
+) {
   if (IS_TEST_MODE) {
     return processBulkUploadMock(templateType);
   }
 
-  patchState({
-    errorMessage:
-      'La carga masiva aun requiere procesamiento real de archivos y un endpoint dedicado.',
-    isLoading: false,
-  });
+  patchState({ errorMessage: null, isLoading: true });
 
-  return null;
+  try {
+    if (templateType === 'students') {
+      const result = await bulkCreateStudents(rows as BulkStudentRow[]);
+
+      updateState({
+        ...state,
+        errorMessage: null,
+        isLoading: false,
+        isReady: true,
+      });
+
+      return {
+        createdCredentials: result.createdCredentials,
+        createdStudents: result.created,
+        createdTeachers: 0,
+        errors: result.errors,
+      };
+    }
+
+    const result = await bulkCreateTeachers(rows as BulkTeacherRow[]);
+
+    updateState({
+      ...state,
+      errorMessage: null,
+      isLoading: false,
+      isReady: true,
+    });
+
+    return {
+      createdCredentials: 0,
+      createdStudents: 0,
+      createdTeachers: result.created,
+      errors: result.errors,
+    };
+  } catch (error) {
+    patchState({
+      errorMessage: getErrorMessage(error, 'No pudimos procesar la carga masiva.'),
+      isLoading: false,
+    });
+    return null;
+  }
 }
 
 export function resetUniversityAdminModuleState() {

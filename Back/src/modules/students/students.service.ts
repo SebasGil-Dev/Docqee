@@ -17,6 +17,7 @@ import {
   normalizeEmail,
   normalizeText,
 } from '@/shared/utils/front-format.util';
+import { BulkCreateStudentsDto } from './application/dto/bulk-create-students.dto';
 import { CreateStudentDto } from './application/dto/create-student.dto';
 
 const DEFAULT_DOCUMENT_TYPES = [
@@ -142,6 +143,87 @@ export class StudentsService {
 
     const students = await this.listStudents(user);
     return students[0] ?? null;
+  }
+
+  async bulkCreateStudents(user: RequestUser, input: BulkCreateStudentsDto) {
+    const universityId = this.getUniversityId(user);
+    const errors: { row: number; column: string; message: string }[] = [];
+    let created = 0;
+    let createdCredentials = 0;
+
+    for (let i = 0; i < input.rows.length; i++) {
+      const row = input.rows[i];
+      const rowNum = i + 2;
+
+      if (!row) continue;
+
+      try {
+        const email = normalizeEmail(row.correo);
+        const documentType = await this.resolveDocumentType(row.tipo_documento);
+
+        const [existingAccount, existingPerson] = await Promise.all([
+          this.prisma.cuenta_acceso.findUnique({ where: { correo: email }, select: { id_cuenta: true } }),
+          this.prisma.persona.findFirst({
+            where: { id_tipo_documento: documentType.id_tipo_documento, numero_documento: normalizeText(row.numero_documento) },
+            select: { id_persona: true },
+          }),
+        ]);
+
+        if (existingAccount) {
+          errors.push({ row: rowNum, column: 'correo', message: `El correo "${row.correo}" ya está registrado.` });
+          continue;
+        }
+
+        if (existingPerson) {
+          errors.push({ row: rowNum, column: 'numero_documento', message: `El documento "${row.numero_documento}" ya está registrado.` });
+          continue;
+        }
+
+        const passwordHash = await bcrypt.hash(generateTemporaryPassword(), 8);
+
+        await this.prisma.$transaction(async (tx) => {
+          const person = await tx.persona.create({
+            data: {
+              id_tipo_documento: documentType.id_tipo_documento,
+              numero_documento: normalizeText(row.numero_documento),
+              nombres: normalizeText(row.nombres),
+              apellidos: normalizeText(row.apellidos),
+            },
+          });
+
+          const account = await tx.cuenta_acceso.create({
+            data: {
+              tipo_cuenta: tipo_cuenta_enum.ESTUDIANTE,
+              correo: email,
+              password_hash: passwordHash,
+              correo_verificado: true,
+              correo_verificado_at: new Date(),
+              primer_ingreso_pendiente: true,
+              estado: estado_simple_enum.ACTIVO,
+            },
+          });
+
+          await tx.cuenta_estudiante.create({
+            data: {
+              id_cuenta: account.id_cuenta,
+              id_persona: person.id_persona,
+              id_universidad: universityId,
+              celular: normalizeText(row.celular),
+              semestre: row.semestre,
+            },
+          });
+
+          await tx.credencial_inicial.create({ data: { id_cuenta_acceso: account.id_cuenta } });
+        });
+
+        created++;
+        createdCredentials++;
+      } catch {
+        errors.push({ row: rowNum, column: 'general', message: 'Error inesperado al procesar esta fila.' });
+      }
+    }
+
+    return { created, createdCredentials, errors };
   }
 
   async toggleStudentStatus(user: RequestUser, studentIdentifier: string) {

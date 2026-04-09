@@ -705,6 +705,29 @@ export type UniversityStudentCredential = {
 
 export type UniversityBulkTemplateType = 'students' | 'teachers';
 
+export type BulkRowError = {
+  row: number;
+  column: string;
+  message: string;
+};
+
+export type BulkStudentRow = {
+  nombres: string;
+  apellidos: string;
+  tipo_documento: string;
+  numero_documento: string;
+  correo: string;
+  celular: string;
+  semestre: number;
+};
+
+export type BulkTeacherRow = {
+  nombres: string;
+  apellidos: string;
+  tipo_documento: string;
+  numero_documento: string;
+};
+
 export type UniversityBulkUploadStatus =
   | 'file_selected'
   | 'idle'

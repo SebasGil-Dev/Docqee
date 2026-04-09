@@ -1,4 +1,7 @@
 import type {
+  BulkRowError,
+  BulkStudentRow,
+  BulkTeacherRow,
   RegisterStudentFormValues,
   RegisterTeacherFormValues,
   UniversityInstitutionFormValues,
@@ -8,6 +11,12 @@ import type {
   UniversityStudentCredential,
   UniversityTeacher,
 } from '@/content/types';
+
+export type BulkUploadResult = {
+  created: number;
+  createdCredentials: number;
+  errors: BulkRowError[];
+};
 import { apiRequest } from '@/lib/apiClient';
 
 function toDocumentTypeCode(identifier: string) {
@@ -140,5 +149,19 @@ export function sendAllUniversityStudentCredentials() {
 export function deleteUniversityStudentCredential(credentialId: string) {
   return apiRequest<{ ok: boolean }>(`/credentials/students/${credentialId}`, {
     method: 'DELETE',
+  });
+}
+
+export function bulkCreateStudents(rows: BulkStudentRow[]) {
+  return apiRequest<BulkUploadResult>('/students/bulk', {
+    body: { rows },
+    method: 'POST',
+  });
+}
+
+export function bulkCreateTeachers(rows: BulkTeacherRow[]) {
+  return apiRequest<BulkUploadResult>('/teachers/bulk', {
+    body: { rows },
+    method: 'POST',
   });
 }
