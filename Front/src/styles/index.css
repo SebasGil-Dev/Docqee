@@ -119,6 +119,116 @@
   .skip-link:focus {
     transform: translateY(0);
   }
+
+  .student-page-compact .surface-card {
+    border-radius: 1.45rem;
+  }
+
+  .student-page-compact .admin-panel-card-shell {
+    padding: 0.2rem;
+  }
+
+  .student-page-compact .admin-panel-card-body {
+    border-radius: 1.18rem;
+  }
+
+  .student-page-compact .section-heading {
+    gap: 0.65rem;
+  }
+
+  .student-page-compact .section-heading__title {
+    font-size: clamp(1.55rem, 2.1vw, 1.95rem);
+    line-height: 1.05;
+  }
+
+  .student-page-compact .section-heading__description {
+    font-size: 0.9rem;
+    line-height: 1.45;
+  }
+
+  .student-page-compact .admin-page-header {
+    gap: 0.65rem;
+  }
+
+  .student-page-compact .admin-text-field__label,
+  .student-page-compact .admin-dropdown-field__label {
+    font-size: 0.82rem;
+  }
+
+  .student-page-compact .admin-text-field__input,
+  .student-page-compact .admin-dropdown-field__trigger,
+  .student-page-compact textarea,
+  .student-page-compact input[type='search'],
+  .student-page-compact input[type='text'],
+  .student-page-compact input[type='date'],
+  .student-page-compact input[type='time'] {
+    font-size: 0.88rem;
+    line-height: 1.4;
+  }
+
+  .student-page-compact .admin-text-field__input,
+  .student-page-compact .admin-dropdown-field__trigger {
+    min-height: 2.55rem;
+    padding-top: 0.55rem;
+    padding-bottom: 0.55rem;
+  }
+
+  .student-page-compact .admin-text-field__input {
+    padding-left: 2.65rem;
+    padding-right: 0.9rem;
+    border-radius: 1.1rem;
+  }
+
+  .student-page-compact .admin-dropdown-field__trigger {
+    padding-left: 2.65rem;
+    padding-right: 2.5rem;
+    border-radius: 1.1rem;
+  }
+
+  .student-page-compact .admin-dropdown-field__menu {
+    width: min(13rem, calc(100% - 1.5rem));
+  }
+
+  .student-page-compact .admin-status-badge {
+    padding: 0.25rem 0.7rem;
+    font-size: 0.68rem;
+  }
+
+  .student-page-compact :is(button, a, label).rounded-2xl {
+    padding: 0.55rem 0.9rem;
+    font-size: 0.82rem;
+  }
+
+  .student-page-compact :is(button, a, label).rounded-full {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.72rem;
+  }
+
+  .student-page-compact .admin-panel-card-body h2,
+  .student-page-compact .surface-card h2 {
+    line-height: 1.12;
+  }
+
+  .student-page-compact .admin-panel-card-body p,
+  .student-page-compact .surface-card p {
+    line-height: 1.45;
+  }
+
+  .student-page-compact .admin-scrollbar table thead th {
+    padding-top: 0.58rem;
+    padding-bottom: 0.58rem;
+    font-size: 0.62rem;
+    letter-spacing: 0.15em;
+  }
+
+  .student-page-compact .admin-scrollbar table tbody td {
+    padding-top: 0.7rem;
+    padding-bottom: 0.7rem;
+  }
+
+  .student-page-compact .admin-scrollbar table tbody p {
+    line-height: 1.38;
+  }
 }
 
 @media (min-width: 1024px) and (max-width: 1535px), (min-width: 1024px) and (max-height: 900px) {

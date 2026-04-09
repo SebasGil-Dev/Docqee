@@ -75,7 +75,7 @@ export function AdminStatusBadge(props: AdminStatusBadgeProps) {
   return (
     <span
       className={classNames(
-        'inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset',
+        'admin-status-badge inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset',
         tone,
       )}
     >

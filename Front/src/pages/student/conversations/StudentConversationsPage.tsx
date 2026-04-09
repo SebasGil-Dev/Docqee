@@ -190,7 +190,7 @@ export function StudentConversationsPage() {
   };
 
   return (
-    <div className="mx-auto flex h-full max-w-[90rem] min-h-0 flex-col gap-3 overflow-hidden 2xl:max-w-[98rem]">
+    <div className="student-page-compact mx-auto flex h-full max-w-[90rem] min-h-0 flex-col gap-3 overflow-hidden 2xl:max-w-[98rem]">
       <Seo
         description={studentContent.conversationsPage.meta.description}
         noIndex
