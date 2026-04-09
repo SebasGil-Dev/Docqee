@@ -376,6 +376,7 @@ export function StudentAgendaPage() {
         className="gap-2"
         description={studentContent.agendaPage.description}
         descriptionClassName="text-sm leading-5 sm:text-[0.95rem]"
+        headingAlign="center"
         title={studentContent.agendaPage.title}
         titleClassName="text-[1.8rem] sm:text-[2.1rem]"
       />

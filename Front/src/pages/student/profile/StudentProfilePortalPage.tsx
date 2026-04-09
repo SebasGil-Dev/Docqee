@@ -191,6 +191,7 @@ export function StudentProfilePage() {
         className="gap-3"
         description={studentContent.profilePage.description}
         descriptionClassName="text-sm leading-6 sm:text-base"
+        headingAlign="center"
         title={studentContent.profilePage.title}
         titleClassName="text-[2rem] sm:text-[2.35rem]"
       />

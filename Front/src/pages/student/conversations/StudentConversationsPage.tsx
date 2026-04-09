@@ -200,6 +200,7 @@ export function StudentConversationsPage() {
         className="gap-3"
         description={studentContent.conversationsPage.description}
         descriptionClassName="text-sm leading-6 sm:text-base"
+        headingAlign="center"
         title={studentContent.conversationsPage.title}
         titleClassName="text-[2rem] sm:text-[2.35rem]"
       />

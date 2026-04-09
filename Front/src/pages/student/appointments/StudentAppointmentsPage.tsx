@@ -440,6 +440,7 @@ export function StudentAppointmentsPage() {
         className="gap-2.5"
         description={studentContent.appointmentsPage.description}
         descriptionClassName="text-sm leading-5 sm:text-[0.95rem]"
+        headingAlign="center"
         title={studentContent.appointmentsPage.title}
         titleClassName="text-[1.85rem] sm:text-[2.15rem]"
       />
