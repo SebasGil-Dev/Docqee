@@ -1087,13 +1087,7 @@ async function processBulkUpload(
   try {
     if (templateType === 'students') {
       const result = await bulkCreateStudents(rows as BulkStudentRow[]);
-
-      updateState({
-        ...state,
-        errorMessage: null,
-        isLoading: false,
-        isReady: true,
-      });
+      await refreshRuntimeState();
 
       return {
         createdCredentials: result.createdCredentials,
@@ -1104,13 +1098,7 @@ async function processBulkUpload(
     }
 
     const result = await bulkCreateTeachers(rows as BulkTeacherRow[]);
-
-    updateState({
-      ...state,
-      errorMessage: null,
-      isLoading: false,
-      isReady: true,
-    });
+    await refreshRuntimeState();
 
     return {
       createdCredentials: 0,
