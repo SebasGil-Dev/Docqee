@@ -542,6 +542,73 @@ describe('Auth pages', () => {
     ).toBeInTheDocument();
   });
 
+  it('en movil con tutor entra al paso 4 sin errores y solo valida al crear la cuenta', async () => {
+    const user = userEvent.setup();
+
+    setViewportWidth(390);
+    renderAuthApp({
+      initialEntries: [ROUTES.register],
+      registerPageProps: { today: new Date('2026-04-03T12:00:00.000Z') },
+    });
+
+    await screen.findByRole('option', { name: /c.dula de ciudadan.a/i });
+
+    await user.type(screen.getByLabelText(/^nombres$/i), 'Ana');
+    await user.type(screen.getByLabelText(/^apellidos$/i), 'Perez');
+    await user.selectOptions(screen.getByLabelText(/^tipo de documento$/i), 'document-cc');
+    await user.type(screen.getByLabelText(/n.mero de documento$/i), '123456789');
+    await user.click(screen.getByRole('button', { name: /siguiente paso/i }));
+
+    await user.selectOptions(screen.getByLabelText(/^sexo$/i), 'FEMENINO');
+    fireEvent.change(screen.getByLabelText(/fecha de nacimiento/i), { target: { value: '2010-04-04' } });
+    await screen.findByRole('option', { name: /bogot./i });
+    await user.selectOptions(screen.getByLabelText(/^ciudad$/i), 'city-bogota');
+    await screen.findByRole('option', { name: /suba/i });
+    await user.selectOptions(screen.getByLabelText(/^localidad$/i), 'locality-bogota-suba');
+    await user.click(screen.getByRole('button', { name: /siguiente paso/i }));
+
+    expect(screen.getByText(/paso 3\/4/i)).toBeInTheDocument();
+    expect(
+      screen.queryByText(/registra tus datos para comenzar tu vinculaci.n con estudiantes de odontolog.a/i),
+    ).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/tipo de documento del tutor/i)).toHaveDisplayValue('Seleccione un tipo.');
+
+    await user.type(screen.getByLabelText(/nombres del tutor/i), 'Maria');
+    await user.type(screen.getByLabelText(/apellidos del tutor/i), 'Perez');
+    await user.selectOptions(screen.getByLabelText(/tipo de documento del tutor/i), 'document-cc');
+    await user.type(screen.getByLabelText(/n.mero de documento del tutor/i), '987654321');
+    await user.type(screen.getByLabelText(/correo electr.nico del tutor/i), 'tutor@correo.com');
+    await user.type(screen.getByLabelText(/celular del tutor/i), '3009876543');
+    await user.click(screen.getByRole('button', { name: /siguiente paso/i }));
+
+    expect(screen.getByText(/paso 4\/4/i)).toBeInTheDocument();
+    expect(screen.queryByText(/el correo electr.nico es obligatorio/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/el celular es obligatorio/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/la contrase.a es obligatoria/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/debes confirmar la contrase.a/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/debes aceptar los t.rminos y condiciones/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/debes autorizar el tratamiento de datos personales/i),
+    ).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/^correo electr.nico$/i)).toHaveAttribute('aria-invalid', 'false');
+    expect(screen.getByLabelText(/^celular$/i)).toHaveAttribute('aria-invalid', 'false');
+    expect(screen.getByLabelText(/^contrase.a$/i)).toHaveAttribute('aria-invalid', 'false');
+    expect(screen.getByLabelText(/confirmar contrase.a/i)).toHaveAttribute('aria-invalid', 'false');
+    expect(screen.getByLabelText(/acepto los t.rminos y condiciones/i)).toHaveAttribute('aria-invalid', 'false');
+    expect(screen.getByLabelText(/autorizo el tratamiento de mis datos/i)).toHaveAttribute('aria-invalid', 'false');
+
+    await user.click(screen.getByRole('button', { name: /^crear cuenta$/i }));
+
+    expect(screen.getByText(/el correo electr.nico es obligatorio/i)).toBeInTheDocument();
+    expect(screen.getByText(/el celular es obligatorio/i)).toBeInTheDocument();
+    expect(screen.getByText(/la contrase.a es obligatoria/i)).toBeInTheDocument();
+    expect(screen.getByText(/debes confirmar la contrase.a/i)).toBeInTheDocument();
+    expect(screen.getByText(/debes aceptar los t.rminos y condiciones/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/debes autorizar el tratamiento de datos personales/i),
+    ).toBeInTheDocument();
+  });
+
   it('renderiza la pantalla de verificacion con seis casillas para el codigo', () => {
     renderAuthApp({
       initialEntries: [{ pathname: ROUTES.verifyEmail, state: { email: 'paciente@correo.com' } }],

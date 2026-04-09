@@ -78,6 +78,15 @@ const tutorFieldNames: RegisterFormField[] = [
   'tutorPhone',
 ];
 
+const mobileAccountFieldNames: RegisterFormField[] = [
+  'email',
+  'phone',
+  'password',
+  'confirmPassword',
+  'acceptTerms',
+  'acceptPrivacyPolicy',
+];
+
 const fieldIds: Record<RegisterFormField, string> = {
   acceptPrivacyPolicy: 'register-accept-privacy-policy',
   acceptTerms: 'register-accept-terms',
@@ -829,12 +838,22 @@ export function RegisterPage({
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentMobileStepIndex, setCurrentMobileStepIndex] = useState(0);
+  const [hasAttemptedMobileAccountSubmit, setHasAttemptedMobileAccountSubmit] = useState(false);
   const passwordInputRef = useRef<HTMLInputElement>(null);
   const confirmPasswordInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const content = authContent.register;
   const isMobileView = useIsMobileRegisterView();
   const showTutor = shouldShowTutorSection(formState.values.birthDate, currentDate);
+  const isMobileAccountStep = isMobileView && currentMobileStepIndex === (showTutor ? 3 : 2);
+  const shouldDeferMobileAccountValidation =
+    isMobileAccountStep && !hasAttemptedMobileAccountSubmit;
+
+  const shouldHideMobileAccountFieldError = (field: RegisterFormField) =>
+    shouldDeferMobileAccountValidation && mobileAccountFieldNames.includes(field);
+
+  const getVisibleFieldError = (field: RegisterFormField) =>
+    shouldHideMobileAccountFieldError(field) ? undefined : formState.errors[field];
 
   useEffect(() => {
     let isCancelled = false;
@@ -966,6 +985,11 @@ export function RegisterPage({
       const fieldsToRefresh = [field, ...getDependentFields(field)];
 
       fieldsToRefresh.forEach((fieldName) => {
+        if (shouldHideMobileAccountFieldError(fieldName)) {
+          delete nextErrors[fieldName];
+          return;
+        }
+
         if (validationErrors[fieldName]) {
           nextErrors[fieldName] = validationErrors[fieldName];
         } else {
@@ -995,6 +1019,11 @@ export function RegisterPage({
       const fieldsToRefresh = [field, ...getDependentFields(field)];
 
       fieldsToRefresh.forEach((fieldName) => {
+        if (shouldHideMobileAccountFieldError(fieldName)) {
+          delete nextErrors[fieldName];
+          return;
+        }
+
         if (validationErrors[fieldName]) {
           nextErrors[fieldName] = validationErrors[fieldName];
         } else {
@@ -1042,6 +1071,10 @@ export function RegisterPage({
     event.preventDefault();
 
     void (async () => {
+      if (isMobileAccountStep) {
+        setHasAttemptedMobileAccountSubmit(true);
+      }
+
       const validationErrors = validateRegisterForm(formState.values, currentDate);
 
       setFormState((currentState) => ({
@@ -1131,7 +1164,9 @@ export function RegisterPage({
         ? content.tutorFields.documentType.errorMessage
         : tutorDocumentTypeOptions.length === 0
           ? content.tutorFields.documentType.emptyMessage
-          : content.tutorFields.documentType.placeholder;
+          : isMobileView
+            ? 'Seleccione un tipo.'
+            : content.tutorFields.documentType.placeholder;
   const tutorDocumentTypeHelpText =
     !formState.errors.tutorDocumentTypeId &&
     documentTypesState.status === 'error' &&
@@ -1297,7 +1332,7 @@ export function RegisterPage({
     <div className="grid gap-4 md:grid-cols-2">
       <TextField
         autoComplete="email"
-        error={formState.errors.email}
+        error={getVisibleFieldError('email')}
         id={fieldIds.email}
         label={content.patientFields.email.label}
         name="email"
@@ -1309,7 +1344,7 @@ export function RegisterPage({
       />
       <TextField
         autoComplete="tel"
-        error={formState.errors.phone}
+        error={getVisibleFieldError('phone')}
         id={fieldIds.phone}
         inputMode="tel"
         label={content.patientFields.phone.label}
@@ -1323,7 +1358,7 @@ export function RegisterPage({
       <div className="space-y-4 md:col-span-2">
         <PasswordField
           autoComplete="new-password"
-          error={formState.errors.password}
+          error={getVisibleFieldError('password')}
           hidePasswordLabel={content.password.hidePasswordLabel}
           id={fieldIds.password}
           inputRef={passwordInputRef}
@@ -1342,7 +1377,7 @@ export function RegisterPage({
       <div className="md:col-span-2">
         <PasswordField
           autoComplete="new-password"
-          error={formState.errors.confirmPassword}
+          error={getVisibleFieldError('confirmPassword')}
           hidePasswordLabel={content.password.hidePasswordLabel}
           id={fieldIds.confirmPassword}
           inputRef={confirmPasswordInputRef}
@@ -1444,7 +1479,7 @@ export function RegisterPage({
       <CheckboxField
         checked={formState.values.acceptTerms}
         compact={isMobileView}
-        error={formState.errors.acceptTerms}
+        error={getVisibleFieldError('acceptTerms')}
         id={fieldIds.acceptTerms}
         label={content.termsConsent.label}
         onBlur={() => handleFieldBlur('acceptTerms')}
@@ -1453,7 +1488,7 @@ export function RegisterPage({
       <CheckboxField
         checked={formState.values.acceptPrivacyPolicy}
         compact={isMobileView}
-        error={formState.errors.acceptPrivacyPolicy}
+        error={getVisibleFieldError('acceptPrivacyPolicy')}
         id={fieldIds.acceptPrivacyPolicy}
         label={content.privacyConsent.label}
         onBlur={() => handleFieldBlur('acceptPrivacyPolicy')}
@@ -1487,7 +1522,7 @@ export function RegisterPage({
         },
         {
           description: content.accountSection.description,
-          fields: ['email', 'phone', 'password', 'confirmPassword', 'acceptTerms', 'acceptPrivacyPolicy'],
+          fields: mobileAccountFieldNames,
           id: 'account',
           shortLabel: 'Acceso',
           title: content.accountSection.title,
@@ -1510,7 +1545,7 @@ export function RegisterPage({
         },
         {
           description: content.accountSection.description,
-          fields: ['email', 'phone', 'password', 'confirmPassword', 'acceptTerms', 'acceptPrivacyPolicy'],
+          fields: mobileAccountFieldNames,
           id: 'account',
           shortLabel: 'Acceso',
           title: content.accountSection.title,
@@ -1524,6 +1559,10 @@ export function RegisterPage({
       Math.min(currentIndex, Math.max(mobileSteps.length - 1, 0)),
     );
   }, [mobileSteps.length]);
+
+  useEffect(() => {
+    setHasAttemptedMobileAccountSubmit(false);
+  }, [currentMobileStepIndex, isMobileView, showTutor]);
 
   useEffect(() => {
     if (!isMobileView) {
@@ -1652,7 +1691,10 @@ export function RegisterPage({
             <h1 className="font-headline text-[2rem] font-extrabold tracking-tight text-ink sm:text-[2.35rem]">
               {content.title}
             </h1>
-            {!(isMobileView && (currentMobileStep.id === 'profile-location' || currentMobileStep.id === 'account')) ? (
+            {!(isMobileView &&
+              (currentMobileStep.id === 'profile-location' ||
+                currentMobileStep.id === 'tutor' ||
+                currentMobileStep.id === 'account')) ? (
               <p className="max-w-3xl text-sm leading-7 text-ink-muted sm:text-base">
                 {content.subtitle}
               </p>
