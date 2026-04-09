@@ -115,6 +115,7 @@ export class UniversityAdminService {
     campuses: UpdateInstitutionProfileDto['campuses'] & object[],
   ) {
     const localities = await this.prisma.localidad.findMany({ include: { ciudad: true } });
+    const savedIds: number[] = [];
 
     for (const campus of campuses) {
       // Only treat as existing DB record if the entire id is a pure integer string ("1", "42")
@@ -147,8 +148,9 @@ export class UniversityAdminService {
             estado,
           },
         });
+        savedIds.push(numericId);
       } else {
-        await this.prisma.sede.create({
+        const newSede = await this.prisma.sede.create({
           data: {
             id_universidad: universityId,
             id_localidad: locality.id_localidad,
@@ -157,19 +159,16 @@ export class UniversityAdminService {
             estado,
           },
         });
+        savedIds.push(newSede.id_sede);
       }
     }
 
-    // Mark sedes not in the list as inactive (only consider existing numeric IDs)
-    const sentIds = campuses
-      .map((c) => (/^\d+$/.test(c.id) ? parseInt(c.id, 10) : null))
-      .filter((id): id is number => id !== null);
-
-    if (sentIds.length > 0) {
+    // Mark any sede of this university not in savedIds as inactive
+    if (savedIds.length > 0) {
       await this.prisma.sede.updateMany({
         where: {
           id_universidad: universityId,
-          id_sede: { notIn: sentIds },
+          id_sede: { notIn: savedIds },
         },
         data: { estado: estado_simple_enum.INACTIVO },
       });
