@@ -140,7 +140,7 @@ describe('Student pages', () => {
 
     renderStudentApp([ROUTES.studentAgenda]);
 
-    expect(screen.getByText(/calendario de citas/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Semana$/i })).toBeInTheDocument();
     expect(screen.getAllByText(/valoracion inicial/i).length).toBeGreaterThan(0);
 
     await user.click(screen.getByRole('button', { name: /agregar bloqueo/i }));

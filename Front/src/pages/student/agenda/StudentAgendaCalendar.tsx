@@ -283,39 +283,34 @@ export function StudentAgendaCalendar({
     >
       <div className="space-y-3">
         <div className="flex flex-col gap-2.5 border-b border-slate-200/70 pb-3">
-          <div className="flex flex-col gap-2.5 lg:flex-row lg:items-start lg:justify-between">
-            <h2 className="font-headline text-[1rem] font-extrabold tracking-tight text-ink sm:text-[1.08rem]">
-              Calendario de citas
-            </h2>
-            <div className="flex flex-col items-start gap-2 lg:items-end">
-              <div className="inline-flex rounded-full border border-slate-200/80 bg-white/90 p-1 shadow-[0_12px_28px_-24px_rgba(15,23,42,0.28)]">
-                {(['day', 'week', 'month'] as const).map((option) => (
-                  <button
-                    key={option}
-                    className={classNames(
-                      'rounded-full px-3 py-1 text-[0.7rem] font-semibold transition duration-200',
-                      viewMode === option
-                        ? 'bg-brand-gradient text-white shadow-[0_12px_24px_-18px_rgba(0,100,124,0.55)]'
-                        : 'text-ink-muted hover:text-ink',
-                    )}
-                    type="button"
-                    onClick={() => setViewMode(option)}
-                  >
-                    {option === 'day' ? 'Dia' : option === 'week' ? 'Semana' : 'Mes'}
-                  </button>
-                ))}
-              </div>
-              {onAddBlock ? (
+          <div className="flex items-center justify-between gap-2">
+            <div className="inline-flex rounded-full border border-slate-200/80 bg-white/90 p-1 shadow-[0_12px_28px_-24px_rgba(15,23,42,0.28)]">
+              {(['day', 'week', 'month'] as const).map((option) => (
                 <button
-                  className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-brand-gradient px-4 text-[0.82rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+                  key={option}
+                  className={classNames(
+                    'rounded-full px-3 py-1 text-[0.7rem] font-semibold transition duration-200',
+                    viewMode === option
+                      ? 'bg-brand-gradient text-white shadow-[0_12px_24px_-18px_rgba(0,100,124,0.55)]'
+                      : 'text-ink-muted hover:text-ink',
+                  )}
                   type="button"
-                  onClick={onAddBlock}
+                  onClick={() => setViewMode(option)}
                 >
-                  <Plus aria-hidden="true" className="h-4 w-4" />
-                  <span>{addBlockLabel ?? 'Agregar bloqueo'}</span>
+                  {option === 'day' ? 'Dia' : option === 'week' ? 'Semana' : 'Mes'}
                 </button>
-              ) : null}
+              ))}
             </div>
+            {onAddBlock ? (
+              <button
+                className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-brand-gradient px-4 text-[0.82rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+                type="button"
+                onClick={onAddBlock}
+              >
+                <Plus aria-hidden="true" className="h-4 w-4" />
+                <span>{addBlockLabel ?? 'Agregar bloqueo'}</span>
+              </button>
+            ) : null}
           </div>
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
