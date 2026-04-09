@@ -223,7 +223,7 @@ export function StudentConversationsPage() {
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
         <div className="border-b border-slate-200/80 px-4 py-3.5 sm:px-5 sm:py-3.5">
           <div className="flex flex-col gap-3.5">
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-start">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
               <div className="flex min-w-0 shrink-0 items-center gap-3">
                 <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[1.1rem] bg-primary/10 text-primary ring-1 ring-primary/10">
                   <MessageSquareMore aria-hidden="true" className="h-5 w-5" />
@@ -232,97 +232,99 @@ export function StudentConversationsPage() {
                   Chat con pacientes
                 </h2>
               </div>
-              <label
-                className="relative min-w-0 w-full sm:w-[22rem] xl:w-[26rem]"
-                htmlFor="student-conversation-search"
-              >
-                <span className="sr-only">{studentContent.conversationsPage.searchLabel}</span>
-                <Search
-                  aria-hidden="true"
-                  className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ghost"
-                />
-                <input
-                  className="h-11 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-11 pr-4 text-sm text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
-                  id="student-conversation-search"
-                  placeholder={studentContent.conversationsPage.searchPlaceholder}
-                  type="search"
-                  value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.target.value)}
-                />
-              </label>
-              <div className="relative shrink-0" ref={statusMenuRef}>
-                <button
-                  aria-controls="student-conversation-status-menu"
-                  aria-expanded={isStatusMenuOpen}
-                  aria-haspopup="menu"
-                  aria-label={
-                    statusFilter === 'all'
-                      ? 'Filtrar conversaciones por estado'
-                      : `Filtrar conversaciones por estado. Actual: ${
-                          conversationStatusOptions.find((option) => option.value === statusFilter)?.label
-                        }`
-                  }
-                  className={classNames(
-                    'relative inline-flex h-11 w-11 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
-                    statusFilter === 'all'
-                      ? 'border-slate-200/90 hover:border-primary/30 hover:bg-white'
-                      : 'border-primary/25 bg-primary/[0.08] text-primary hover:bg-primary/[0.12]',
-                  )}
-                  type="button"
-                  onClick={() => setIsStatusMenuOpen((currentValue) => !currentValue)}
+              <div className="flex w-full items-center justify-end gap-2.5 sm:w-auto">
+                <label
+                  className="relative min-w-0 flex-1 sm:w-[22rem] sm:flex-none xl:w-[26rem]"
+                  htmlFor="student-conversation-search"
                 >
-                  <SlidersHorizontal aria-hidden="true" className="h-[1.05rem] w-[1.05rem]" />
-                  {statusFilter !== 'all' ? (
-                    <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary ring-2 ring-white" />
-                  ) : null}
-                </button>
-                {isStatusMenuOpen ? (
-                  <div
-                    className="absolute right-0 top-[calc(100%+0.6rem)] z-20 w-[14rem] overflow-hidden rounded-[1.4rem] border border-slate-200/80 bg-white/95 p-2 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.45)] backdrop-blur"
-                    id="student-conversation-status-menu"
-                    role="menu"
+                  <span className="sr-only">{studentContent.conversationsPage.searchLabel}</span>
+                  <Search
+                    aria-hidden="true"
+                    className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ghost"
+                  />
+                  <input
+                    className="h-11 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-11 pr-4 text-sm text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                    id="student-conversation-search"
+                    placeholder={studentContent.conversationsPage.searchPlaceholder}
+                    type="search"
+                    value={searchTerm}
+                    onChange={(event) => setSearchTerm(event.target.value)}
+                  />
+                </label>
+                <div className="relative shrink-0" ref={statusMenuRef}>
+                  <button
+                    aria-controls="student-conversation-status-menu"
+                    aria-expanded={isStatusMenuOpen}
+                    aria-haspopup="menu"
+                    aria-label={
+                      statusFilter === 'all'
+                        ? 'Filtrar conversaciones por estado'
+                        : `Filtrar conversaciones por estado. Actual: ${
+                            conversationStatusOptions.find((option) => option.value === statusFilter)?.label
+                          }`
+                    }
+                    className={classNames(
+                      'relative inline-flex h-11 w-11 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                      statusFilter === 'all'
+                        ? 'border-slate-200/90 hover:border-primary/30 hover:bg-white'
+                        : 'border-primary/25 bg-primary/[0.08] text-primary hover:bg-primary/[0.12]',
+                    )}
+                    type="button"
+                    onClick={() => setIsStatusMenuOpen((currentValue) => !currentValue)}
                   >
-                    <div className="px-2.5 pb-2 pt-1">
-                      <p className="text-[0.7rem] font-bold uppercase tracking-[0.24em] text-primary/75">
-                        Filtrar por estado
-                      </p>
-                    </div>
-                    <div className="space-y-1">
-                      {conversationStatusOptions.map((option) => {
-                        const isSelected = statusFilter === option.value;
+                    <SlidersHorizontal aria-hidden="true" className="h-[1.05rem] w-[1.05rem]" />
+                    {statusFilter !== 'all' ? (
+                      <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary ring-2 ring-white" />
+                    ) : null}
+                  </button>
+                  {isStatusMenuOpen ? (
+                    <div
+                      className="absolute right-0 top-[calc(100%+0.6rem)] z-20 w-[14rem] overflow-hidden rounded-[1.4rem] border border-slate-200/80 bg-white/95 p-2 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.45)] backdrop-blur"
+                      id="student-conversation-status-menu"
+                      role="menu"
+                    >
+                      <div className="px-2.5 pb-2 pt-1">
+                        <p className="text-[0.7rem] font-bold uppercase tracking-[0.24em] text-primary/75">
+                          Filtrar por estado
+                        </p>
+                      </div>
+                      <div className="space-y-1">
+                        {conversationStatusOptions.map((option) => {
+                          const isSelected = statusFilter === option.value;
 
-                        return (
-                          <button
-                            key={option.value}
-                            aria-checked={isSelected}
-                            className={classNames(
-                              'flex w-full items-center justify-between rounded-[1rem] px-3 py-2.5 text-left text-sm font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
-                              isSelected
-                                ? 'bg-primary text-white shadow-[0_14px_30px_-20px_rgba(22,78,99,0.9)]'
-                                : 'bg-slate-50/70 text-ink hover:bg-slate-100',
-                            )}
-                            role="menuitemradio"
-                            type="button"
-                            onClick={() => {
-                              setStatusFilter(option.value);
-                              setIsStatusMenuOpen(false);
-                            }}
-                          >
-                            <span>{option.label}</span>
-                            <span
+                          return (
+                            <button
+                              key={option.value}
+                              aria-checked={isSelected}
                               className={classNames(
-                                'inline-flex h-5 w-5 items-center justify-center rounded-full',
-                                isSelected ? 'bg-white/18 text-white' : 'bg-white text-slate-300',
+                                'flex w-full items-center justify-between rounded-[1rem] px-3 py-2.5 text-left text-sm font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                                isSelected
+                                  ? 'bg-primary text-white shadow-[0_14px_30px_-20px_rgba(22,78,99,0.9)]'
+                                  : 'bg-slate-50/70 text-ink hover:bg-slate-100',
                               )}
+                              role="menuitemradio"
+                              type="button"
+                              onClick={() => {
+                                setStatusFilter(option.value);
+                                setIsStatusMenuOpen(false);
+                              }}
                             >
-                              <Check aria-hidden="true" className="h-3.5 w-3.5" />
-                            </span>
-                          </button>
-                        );
-                      })}
+                              <span>{option.label}</span>
+                              <span
+                                className={classNames(
+                                  'inline-flex h-5 w-5 items-center justify-center rounded-full',
+                                  isSelected ? 'bg-white/18 text-white' : 'bg-white text-slate-300',
+                                )}
+                              >
+                                <Check aria-hidden="true" className="h-3.5 w-3.5" />
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                ) : null}
+                  ) : null}
+                </div>
               </div>
             </div>
             {selectedConversation ? (
