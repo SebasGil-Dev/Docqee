@@ -88,12 +88,7 @@ export function StudentConversationsPage() {
   const filteredConversations = useMemo(
     () =>
       conversations.filter((conversation) => {
-        const lastMessage = getLastMessage(conversation);
-        const matchesSearch =
-          conversation.patientName.toLowerCase().includes(normalizedSearch) ||
-          conversation.patientCity.toLowerCase().includes(normalizedSearch) ||
-          (conversation.reason ?? '').toLowerCase().includes(normalizedSearch) ||
-          (lastMessage?.content ?? '').toLowerCase().includes(normalizedSearch);
+        const matchesSearch = conversation.patientName.toLowerCase().includes(normalizedSearch);
 
         return matchesSearch && (statusFilter === 'all' || conversation.status === statusFilter);
       }),
@@ -228,7 +223,7 @@ export function StudentConversationsPage() {
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
         <div className="border-b border-slate-200/80 px-4 py-3.5 sm:px-5 sm:py-3.5">
           <div className="flex flex-col gap-3.5">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-start">
               <div className="flex min-w-0 shrink-0 items-center gap-3">
                 <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[1.1rem] bg-primary/10 text-primary ring-1 ring-primary/10">
                   <MessageSquareMore aria-hidden="true" className="h-5 w-5" />
@@ -237,7 +232,10 @@ export function StudentConversationsPage() {
                   Chat con pacientes
                 </h2>
               </div>
-              <label className="relative min-w-0 flex-1 sm:max-w-[32rem] xl:max-w-[36rem]" htmlFor="student-conversation-search">
+              <label
+                className="relative min-w-0 w-full sm:w-[22rem] xl:w-[26rem]"
+                htmlFor="student-conversation-search"
+              >
                 <span className="sr-only">{studentContent.conversationsPage.searchLabel}</span>
                 <Search
                   aria-hidden="true"
