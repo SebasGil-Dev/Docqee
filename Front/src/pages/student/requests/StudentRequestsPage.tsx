@@ -166,12 +166,10 @@ export function StudentRequestsPage() {
             <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-white/12 text-white ring-1 ring-white/18">
               <UserRound aria-hidden="true" className="h-4.5 w-4.5" />
             </span>
-            <div>
-              <p className="font-headline text-[1.45rem] font-extrabold tracking-tight text-white">
-                {pendingCount}
-              </p>
-              <p className="text-sm font-semibold text-white/90">Solicitudes pendientes</p>
-            </div>
+            <span className="font-headline text-[1.45rem] font-extrabold tracking-tight text-white">
+              {pendingCount}
+            </span>
+            <p className="min-w-0 text-sm font-semibold text-white/90">Solicitudes pendientes</p>
           </div>
         </SurfaceCard>
         <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-0">
@@ -179,12 +177,10 @@ export function StudentRequestsPage() {
             <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-primary/10 text-primary ring-1 ring-primary/10">
               <MessageSquareMore aria-hidden="true" className="h-4.5 w-4.5" />
             </span>
-            <div>
-              <p className="font-headline text-[1.45rem] font-extrabold tracking-tight text-ink">
-                {activeConversationCount}
-              </p>
-              <p className="text-sm font-semibold text-ink-muted">Conversaciones activas</p>
-            </div>
+            <span className="font-headline text-[1.45rem] font-extrabold tracking-tight text-ink">
+              {activeConversationCount}
+            </span>
+            <p className="min-w-0 text-sm font-semibold text-ink-muted">Conversaciones activas</p>
           </div>
         </SurfaceCard>
       </div>
