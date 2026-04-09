@@ -101,8 +101,6 @@ export function StudentConversationsPage() {
       null,
     [filteredConversations, selectedConversationId],
   );
-  const selectedStatusFilterLabel =
-    conversationStatusOptions.find((option) => option.value === statusFilter)?.label ?? 'Todas';
   const visibleErrorMessage =
     errorMessage && errorMessage.trim() !== 'No pudimos completar la solicitud.'
       ? errorMessage
@@ -350,16 +348,6 @@ export function StudentConversationsPage() {
         <div className="grid min-h-0 flex-1 gap-3 px-4 py-3.5 sm:px-5 sm:py-4 xl:grid-cols-[minmax(0,21rem)_minmax(0,1fr)] 2xl:grid-cols-[minmax(0,23rem)_minmax(0,1fr)]">
           <SurfaceCard className="min-h-0 border border-slate-200/80 bg-white shadow-none" paddingClassName="p-0">
             <div className="flex h-full min-h-[17rem] flex-col">
-              <div className="flex items-center justify-between gap-3 border-b border-slate-200/80 px-4 py-3.5">
-                <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
-                  Hilos disponibles
-                </h2>
-                {statusFilter !== 'all' ? (
-                  <span className="inline-flex rounded-full bg-primary/[0.08] px-3 py-1 text-[0.72rem] font-semibold text-primary">
-                    {selectedStatusFilterLabel}
-                  </span>
-                ) : null}
-              </div>
               <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto p-2.5">
                 {filteredConversations.length > 0 ? (
                   <div className="space-y-2.5">
