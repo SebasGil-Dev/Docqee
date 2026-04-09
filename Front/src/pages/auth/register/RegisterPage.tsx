@@ -1520,11 +1520,30 @@ export function RegisterPage({
   const handleNextMobileStep = () => {
     const validationErrors = validateRegisterForm(formState.values, currentDate);
     const firstInvalidField = currentMobileStep.fields.find((fieldName) => Boolean(validationErrors[fieldName]));
+    const nextMobileStep = mobileSteps[Math.min(currentMobileStepIndex + 1, mobileSteps.length - 1)];
 
-    setFormState((currentState) => ({
-      ...currentState,
-      errors: validationErrors,
-    }));
+    setFormState((currentState) => {
+      const nextErrors = { ...currentState.errors };
+
+      currentMobileStep.fields.forEach((fieldName) => {
+        if (validationErrors[fieldName]) {
+          nextErrors[fieldName] = validationErrors[fieldName];
+        } else {
+          delete nextErrors[fieldName];
+        }
+      });
+
+      if (!firstInvalidField && nextMobileStep) {
+        nextMobileStep.fields.forEach((fieldName) => {
+          delete nextErrors[fieldName];
+        });
+      }
+
+      return {
+        ...currentState,
+        errors: nextErrors,
+      };
+    });
     setSubmissionError(null);
 
     if (firstInvalidField) {
@@ -1600,9 +1619,11 @@ export function RegisterPage({
             <h1 className="font-headline text-[2rem] font-extrabold tracking-tight text-ink sm:text-[2.35rem]">
               {content.title}
             </h1>
-            <p className="max-w-3xl text-sm leading-7 text-ink-muted sm:text-base">
-              {content.subtitle}
-            </p>
+            {!(isMobileView && currentMobileStep.id === 'profile-location') ? (
+              <p className="max-w-3xl text-sm leading-7 text-ink-muted sm:text-base">
+                {content.subtitle}
+              </p>
+            ) : null}
           </div>
 
           <form
@@ -1617,7 +1638,7 @@ export function RegisterPage({
                     <SectionHeader
                       align={currentMobileStep.id === 'personal' ? 'center' : 'left'}
                       description={
-                        currentMobileStep.id === 'personal'
+                        currentMobileStep.id === 'personal' || currentMobileStep.id === 'profile-location'
                           ? undefined
                           : currentMobileStep.description
                       }

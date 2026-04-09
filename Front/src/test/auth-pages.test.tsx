@@ -492,6 +492,16 @@ describe('Auth pages', () => {
     await user.click(screen.getByRole('button', { name: /siguiente paso/i }));
 
     expect(screen.getByText(/paso 2\/3/i)).toBeInTheDocument();
+    expect(
+      screen.queryByText(/registra tus datos para comenzar tu vinculaci.n con estudiantes de odontolog.a/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/completa tu sexo, fecha de nacimiento y ubicaci.n principal/i),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/debes seleccionar una opci.n de sexo/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/la fecha de nacimiento es obligatoria/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/la ciudad es obligatoria/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/la localidad es obligatoria/i)).not.toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText(/^sexo$/i), 'FEMENINO');
     fireEvent.change(screen.getByLabelText(/fecha de nacimiento/i), { target: { value: '2000-04-03' } });
     await screen.findByRole('option', { name: /bogot./i });
