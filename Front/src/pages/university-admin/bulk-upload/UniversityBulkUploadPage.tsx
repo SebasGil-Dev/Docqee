@@ -34,22 +34,12 @@ function downloadTemplate(templateType: UniversityBulkTemplateType) {
   const wb = XLSX.utils.book_new();
 
   if (templateType === 'students') {
-    const data = [
-      STUDENT_COLUMNS,
-      ['Lucia', 'Mejia', 'CC', '1001234567', 'lucia.mejia@universidad.edu.co', '3001234567', 5],
-      ['Carlos', 'Ruiz', 'TI', '1002345678', 'carlos.ruiz@universidad.edu.co', '3102345678', 8],
-    ];
-    const ws = XLSX.utils.aoa_to_sheet(data);
+    const ws = XLSX.utils.aoa_to_sheet([STUDENT_COLUMNS]);
     ws['!cols'] = [{ wch: 18 }, { wch: 18 }, { wch: 16 }, { wch: 16 }, { wch: 34 }, { wch: 14 }, { wch: 10 }];
     XLSX.utils.book_append_sheet(wb, ws, 'Estudiantes');
     XLSX.writeFile(wb, 'plantilla-estudiantes.xlsx');
   } else {
-    const data = [
-      TEACHER_COLUMNS,
-      ['Adriana', 'Londono', 'CC', '80124567'],
-      ['Jorge', 'Ramirez', 'CC', '80234568'],
-    ];
-    const ws = XLSX.utils.aoa_to_sheet(data);
+    const ws = XLSX.utils.aoa_to_sheet([TEACHER_COLUMNS]);
     ws['!cols'] = [{ wch: 18 }, { wch: 18 }, { wch: 16 }, { wch: 16 }];
     XLSX.utils.book_append_sheet(wb, ws, 'Docentes');
     XLSX.writeFile(wb, 'plantilla-docentes.xlsx');
