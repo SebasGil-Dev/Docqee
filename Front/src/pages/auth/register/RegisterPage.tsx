@@ -363,14 +363,16 @@ function CheckboxField({
 }
 
 function SectionHeader({
+  align = 'left',
   description,
   title,
 }: {
+  align?: 'center' | 'left';
   description?: string | undefined;
   title: string;
 }) {
   return (
-    <div className="space-y-2">
+    <div className={classNames('space-y-2', align === 'center' ? 'text-center' : '')}>
       <p className="text-[11px] font-black uppercase tracking-[0.28em] text-primary">{title}</p>
       {description ? <p className="text-sm leading-6 text-ink-muted">{description}</p> : null}
     </div>
@@ -1573,63 +1575,23 @@ export function RegisterPage({
           >
             {isMobileView ? (
               <div className="space-y-5">
-                <div className="rounded-[1.7rem] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(233,238,245,0.78)_0%,rgba(255,255,255,0.96)_100%)] p-4 shadow-float">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-[11px] font-black uppercase tracking-[0.28em] text-primary">
-                          Paso {currentMobileStepIndex + 1}/{mobileSteps.length}
-                        </p>
-                        <p className="mt-1 text-sm font-semibold text-ink-muted">
-                          {currentMobileStep.shortLabel}
-                        </p>
-                      </div>
-                      <span className="inline-flex rounded-full bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.22em] text-primary shadow-[0_10px_24px_-18px_rgba(15,23,42,0.38)]">
-                        Registro móvil
-                      </span>
-                    </div>
-                    <div className="h-2 rounded-full bg-slate-200/80">
-                      <div
-                        className="h-full rounded-full bg-brand-gradient transition-all duration-300"
-                        style={{
-                          width: `${((currentMobileStepIndex + 1) / mobileSteps.length) * 100}%`,
-                        }}
-                      />
-                    </div>
-                    <div
-                      className="grid gap-2"
-                      style={{
-                        gridTemplateColumns: `repeat(${mobileSteps.length}, minmax(0, 1fr))`,
-                      }}
-                    >
-                      {mobileSteps.map((step, index) => {
-                        const isCurrent = index === currentMobileStepIndex;
-                        const isComplete = index < currentMobileStepIndex;
-
-                        return (
-                          <div
-                            className={classNames(
-                              'rounded-[1.1rem] border px-2.5 py-2 text-center text-[11px] font-bold uppercase tracking-[0.18em] transition-all duration-300',
-                              isCurrent
-                                ? 'border-primary/25 bg-primary/[0.1] text-primary'
-                                : isComplete
-                                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                                  : 'border-slate-200/80 bg-white/70 text-ink-muted',
-                            )}
-                            key={step.id}
-                          >
-                            {step.shortLabel}
-                          </div>
-                        );
-                      })}
-                    </div>
+                <div className="rounded-[1.7rem] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(233,238,245,0.78)_0%,rgba(255,255,255,0.96)_100%)] px-4 py-3 shadow-float">
+                  <div className="flex items-center justify-center">
+                    <p className="text-center text-[11px] font-black uppercase tracking-[0.28em] text-primary">
+                      Paso {currentMobileStepIndex + 1}/{mobileSteps.length}
+                    </p>
                   </div>
                 </div>
 
                 <section className="rounded-[1.7rem] border border-slate-200/80 bg-white/80 p-4 shadow-float">
                   <div className="space-y-4">
                     <SectionHeader
-                      description={currentMobileStep.description}
+                      align={currentMobileStep.id === 'personal' ? 'center' : 'left'}
+                      description={
+                        currentMobileStep.id === 'personal'
+                          ? undefined
+                          : currentMobileStep.description
+                      }
                       title={currentMobileStep.title}
                     />
                     {mobileStepBody}

@@ -479,6 +479,10 @@ describe('Auth pages', () => {
 
     expect(screen.getByText(/paso 1\/3/i)).toBeInTheDocument();
     expect(screen.getByText(/informaci.n personal/i)).toBeInTheDocument();
+    expect(screen.queryByText(/registro m.vil/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/completa la informaci.n para iniciar el proceso de vinculaci.n/i),
+    ).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/^correo electr.nico$/i)).not.toBeInTheDocument();
 
     await user.type(screen.getByLabelText(/^nombres$/i), 'Ana');
