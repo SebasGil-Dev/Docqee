@@ -3,6 +3,7 @@ import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/co
 import { CurrentUser } from '@/shared/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@/shared/guards/jwt-auth.guard';
 import type { RequestUser } from '@/shared/types/request-user.type';
+import { BulkCreateStudentsDto } from '../application/dto/bulk-create-students.dto';
 import { CreateStudentDto } from '../application/dto/create-student.dto';
 import { StudentsService } from '../students.service';
 @Controller('students')
@@ -18,6 +19,11 @@ export class StudentsController {
   @Post()
   createStudent(@CurrentUser() user: RequestUser, @Body() body: CreateStudentDto) {
     return this.studentsService.createStudent(user, body);
+  }
+
+  @Post('bulk')
+  bulkCreateStudents(@CurrentUser() user: RequestUser, @Body() body: BulkCreateStudentsDto) {
+    return this.studentsService.bulkCreateStudents(user, body);
   }
 
   @Patch(':studentId/status')
