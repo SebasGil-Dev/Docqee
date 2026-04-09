@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, CheckCircle2, Circle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, Circle } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -232,6 +232,8 @@ function TextField({
 }
 
 function SelectField({
+  chevronClassName,
+  containerClassName,
   disabled = false,
   error,
   helpText,
@@ -242,8 +244,12 @@ function SelectField({
   onChange,
   options,
   placeholder,
+  selectClassName,
+  showChevron = false,
   value,
 }: FieldBaseProps & {
+  chevronClassName?: string;
+  containerClassName?: string;
   name: string;
   onChange: (value: string) => void;
   options: {
@@ -251,50 +257,65 @@ function SelectField({
     label: string;
   }[];
   placeholder: string;
+  selectClassName?: string;
+  showChevron?: boolean;
   value: string;
 }) {
   const message = error ?? helpText;
   const messageId = message ? `${id}-message` : undefined;
 
   return (
-    <div className="space-y-1.5">
+    <div className={classNames('space-y-1.5', containerClassName)}>
       <label
         className="block px-1 text-[11px] font-bold uppercase tracking-[0.22em] text-ink-muted"
         htmlFor={id}
       >
         {label}
       </label>
-      <select
-        aria-describedby={messageId}
-        aria-invalid={Boolean(error)}
-        className={classNames(
-          'w-full rounded-xl border border-slate-200/80 bg-surface-high px-4 py-3.5 text-base leading-6 text-ink transition-all duration-300 sm:py-3 sm:text-sm',
-          'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/12',
-          disabled
-            ? 'cursor-not-allowed bg-slate-100 text-ghost'
-            : 'focus-visible:border-primary/35 focus-visible:bg-surface-card',
-          error ? 'border-rose-300 ring-2 ring-rose-500/15 focus-visible:ring-rose-500/25' : '',
-        )}
-        disabled={disabled}
-        id={id}
-        name={name}
-        value={value}
-        onBlur={onBlur}
-        onChange={(event) => onChange(event.target.value)}
-      >
-        <option disabled value="">
-          {placeholder}
-        </option>
-        {options.map((option) => (
-          <option
-            className="text-base"
-            key={option.id}
-            value={option.id}
-          >
-            {option.label}
+      <div className="relative">
+        <select
+          aria-describedby={messageId}
+          aria-invalid={Boolean(error)}
+          className={classNames(
+            'w-full rounded-xl border border-slate-200/80 bg-surface-high px-4 py-3.5 text-base leading-6 text-ink transition-all duration-300 sm:py-3 sm:text-sm',
+            'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/12',
+            disabled
+              ? 'cursor-not-allowed bg-slate-100 text-ghost'
+              : 'focus-visible:border-primary/35 focus-visible:bg-surface-card',
+            showChevron ? 'appearance-none pr-12' : '',
+            error ? 'border-rose-300 ring-2 ring-rose-500/15 focus-visible:ring-rose-500/25' : '',
+            selectClassName,
+          )}
+          disabled={disabled}
+          id={id}
+          name={name}
+          value={value}
+          onBlur={onBlur}
+          onChange={(event) => onChange(event.target.value)}
+        >
+          <option disabled value="">
+            {placeholder}
           </option>
-        ))}
-      </select>
+          {options.map((option) => (
+            <option
+              className="text-base"
+              key={option.id}
+              value={option.id}
+            >
+              {option.label}
+            </option>
+          ))}
+        </select>
+        {showChevron ? (
+          <ChevronDown
+            aria-hidden="true"
+            className={classNames(
+              'pointer-events-none absolute right-5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-ghost',
+              chevronClassName,
+            )}
+          />
+        ) : null}
+      </div>
       {message ? (
         <p
           className={classNames(
@@ -1165,6 +1186,7 @@ export function RegisterPage({
         onChange={(value) => updateFieldValue('lastName', value)}
       />
       <SelectField
+        chevronClassName={isMobileView ? 'right-[1.15rem]' : undefined}
         disabled={
           documentTypesState.status !== 'ready' || documentTypesState.options.length === 0
         }
@@ -1175,6 +1197,12 @@ export function RegisterPage({
         name="documentTypeId"
         options={documentTypesState.options}
         placeholder={documentTypePlaceholder}
+        selectClassName={
+          isMobileView
+            ? 'rounded-[1.45rem] border-slate-200/90 bg-white/98 py-3 pl-4 pr-14 text-sm shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] focus-visible:border-primary focus-visible:bg-white focus-visible:ring-primary/10'
+            : undefined
+        }
+        showChevron={isMobileView}
         value={formState.values.documentTypeId}
         onBlur={() => handleFieldBlur('documentTypeId')}
         onChange={(value) => updateFieldValue('documentTypeId', value)}
@@ -1557,9 +1585,15 @@ export function RegisterPage({
       <AuthCard className="w-full max-w-[min(64rem,calc(100vw-1rem))] rounded-[1.8rem] px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
         <div className="space-y-8">
           <div className="space-y-3 text-center lg:text-left">
-            <p className="text-[11px] font-black uppercase tracking-[0.28em] text-primary">
-              Docqee
-            </p>
+            {isMobileView ? (
+              <p className="text-[11px] font-black uppercase tracking-[0.28em] text-primary">
+                Paso {currentMobileStepIndex + 1}/{mobileSteps.length}
+              </p>
+            ) : (
+              <p className="text-[11px] font-black uppercase tracking-[0.28em] text-primary">
+                Docqee
+              </p>
+            )}
             <h1 className="font-headline text-[2rem] font-extrabold tracking-tight text-ink sm:text-[2.35rem]">
               {content.title}
             </h1>
@@ -1575,14 +1609,6 @@ export function RegisterPage({
           >
             {isMobileView ? (
               <div className="space-y-5">
-                <div className="rounded-[1.7rem] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(233,238,245,0.78)_0%,rgba(255,255,255,0.96)_100%)] px-4 py-3 shadow-float">
-                  <div className="flex items-center justify-center">
-                    <p className="text-center text-[11px] font-black uppercase tracking-[0.28em] text-primary">
-                      Paso {currentMobileStepIndex + 1}/{mobileSteps.length}
-                    </p>
-                  </div>
-                </div>
-
                 <section className="rounded-[1.7rem] border border-slate-200/80 bg-white/80 p-4 shadow-float">
                   <div className="space-y-4">
                     <SectionHeader
