@@ -9,10 +9,12 @@ import {
   getDefaultRouteForRole,
   shouldRequireFirstLoginPasswordChange,
 } from '@/lib/authRouting';
+import { useUniversityAdminModuleStore } from '@/lib/universityAdminModuleStore';
 
 export function UniversityAdminLayout() {
   const { session } = useAuth();
   const location = useLocation();
+  const { institutionProfile } = useUniversityAdminModuleStore();
 
   if (!IS_TEST_MODE) {
     if (!session) {
@@ -28,8 +30,17 @@ export function UniversityAdminLayout() {
     }
   }
 
+  const overrideName =
+    institutionProfile.adminFirstName || institutionProfile.adminLastName
+      ? { firstName: institutionProfile.adminFirstName, lastName: institutionProfile.adminLastName }
+      : undefined;
+
   return (
-    <AdminShell content={universityAdminContent.shell}>
+    <AdminShell
+      avatarSrc={institutionProfile.logoSrc}
+      content={universityAdminContent.shell}
+      overrideName={overrideName}
+    >
       <Outlet />
     </AdminShell>
   );

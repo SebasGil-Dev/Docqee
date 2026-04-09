@@ -33,7 +33,9 @@ import type {
 import { classNames } from '@/lib/classNames';
 
 type AdminShellProps = PropsWithChildren<{
+  avatarSrc?: string | null;
   content?: AdminShellContent;
+  overrideName?: { firstName: string; lastName: string };
 }>;
 
 const SIDEBAR_STATE_STORAGE_KEY = 'docqee-admin-sidebar-collapsed';
@@ -118,8 +120,10 @@ function useIsMobileViewport() {
 }
 
 export function AdminShell({
+  avatarSrc,
   children,
   content = adminContent.shell,
+  overrideName,
 }: AdminShellProps) {
   const { logout, session } = useAuth();
   const location = useLocation();
@@ -127,8 +131,8 @@ export function AdminShell({
     getStoredSidebarState,
   );
   const isMobileViewport = useIsMobileViewport();
-  const adminFirstName = session?.user.firstName ?? content.adminUser.firstName;
-  const adminLastName = session?.user.lastName ?? content.adminUser.lastName;
+  const adminFirstName = overrideName?.firstName || session?.user.firstName || content.adminUser.firstName;
+  const adminLastName = overrideName?.lastName || session?.user.lastName || content.adminUser.lastName;
   const adminInitials =
     `${adminFirstName.charAt(0)}${adminLastName.charAt(0)}`.toUpperCase();
   const adminFullName = `${adminFirstName} ${adminLastName}`;
@@ -177,9 +181,17 @@ export function AdminShell({
                 </Link>
               </div>
               <div className="inline-flex max-w-full items-center gap-2 self-start sm:self-center">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-[0.8rem] font-extrabold uppercase tracking-[0.12em] text-white sm:h-8 sm:w-8 sm:text-[0.72rem]">
-                  {adminInitials}
-                </span>
+                {avatarSrc ? (
+                  <img
+                    alt={adminFullName}
+                    className="h-9 w-9 shrink-0 rounded-full object-cover ring-2 ring-primary/20 sm:h-8 sm:w-8"
+                    src={avatarSrc}
+                  />
+                ) : (
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-[0.8rem] font-extrabold uppercase tracking-[0.12em] text-white sm:h-8 sm:w-8 sm:text-[0.72rem]">
+                    {adminInitials}
+                  </span>
+                )}
                 <p className="hidden truncate text-[0.78rem] font-semibold text-ink sm:block sm:text-[0.82rem]">
                   {adminFullName}
                 </p>
