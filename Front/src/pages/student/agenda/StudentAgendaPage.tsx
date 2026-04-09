@@ -2,7 +2,6 @@ import {
   CalendarDays,
   Clock3,
   PencilLine,
-  Plus,
   Power,
   PowerOff,
   Repeat,
@@ -363,16 +362,6 @@ export function StudentAgendaPage() {
         title={studentContent.agendaPage.meta.title}
       />
       <AdminPageHeader
-        action={
-          <button
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-3.5 py-2.5 text-[0.84rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
-            type="button"
-            onClick={handleOpenCreateDialog}
-          >
-            <Plus aria-hidden="true" className="h-4 w-4" />
-            <span>{studentContent.agendaPage.actionLabels.add}</span>
-          </button>
-        }
         className="gap-2"
         description={studentContent.agendaPage.description}
         descriptionClassName="text-sm leading-5 sm:text-[0.95rem]"
@@ -397,6 +386,8 @@ export function StudentAgendaPage() {
         <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-2.5 sm:px-3.5 sm:py-3">
           <StudentAgendaCalendar
             appointments={appointments}
+            addBlockLabel={studentContent.agendaPage.actionLabels.add}
+            onAddBlock={handleOpenCreateDialog}
             scheduleBlocks={scheduleBlocks}
             onSelectScheduleBlock={handleSelectBlock}
           />
