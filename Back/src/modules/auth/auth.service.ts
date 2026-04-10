@@ -1,4 +1,4 @@
-import {
+﻿import {
   BadRequestException,
   ConflictException,
   Injectable,
@@ -23,6 +23,7 @@ import {
 } from '@/shared/utils/front-format.util';
 import { slugify } from '@/shared/utils/text.util';
 import { LoginDto } from './dto/login.dto';
+import { RefreshSessionDto } from './dto/refresh-session.dto';
 import { RegisterPatientDto } from './dto/register-patient.dto';
 import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
@@ -39,23 +40,27 @@ type SessionAccount = {
   correo_verificado: boolean;
   primer_ingreso_pendiente: boolean;
   cuenta_admin_plataforma: {
-    nombres: string;
     apellidos: string;
+    nombres: string;
   } | null;
   cuenta_admin_universidad: {
-    nombres: string;
     apellidos: string;
     id_universidad: number;
+    nombres: string;
     universidad: {
       estado: estado_simple_enum;
     };
   } | null;
-  cuenta_paciente: {
-    persona: { nombres: string; apellidos: string };
-  } | null;
   cuenta_estudiante: {
-    persona: { nombres: string; apellidos: string };
+    persona: { apellidos: string; nombres: string };
   } | null;
+  cuenta_paciente: {
+    persona: { apellidos: string; nombres: string };
+  } | null;
+};
+
+type RefreshTokenPayload = RequestUser & {
+  tokenType: 'refresh';
 };
 
 @Injectable()
@@ -83,25 +88,7 @@ export class AuthService {
       throw new UnauthorizedException('Correo o contrasena incorrectos.');
     }
 
-    if (
-      account.tipo_cuenta === tipo_cuenta_enum.PACIENTE &&
-      account.correo_verificado !== true
-    ) {
-      throw new UnauthorizedException('Debes verificar tu correo antes de iniciar sesion.');
-    }
-
-    if (
-      account.tipo_cuenta === tipo_cuenta_enum.ADMIN_UNIVERSIDAD &&
-      account.cuenta_admin_universidad?.universidad.estado === estado_simple_enum.INACTIVO
-    ) {
-      throw new UnauthorizedException('Tu institución se encuentra inactiva. Contacta al administrador de la plataforma.');
-    }
-
-    const user = this.buildRequestUser(account);
-    const accessToken = await this.jwtService.signAsync(user, {
-      expiresIn: (this.configService.get<string>('auth.jwtExpiresIn') ?? '15m') as never,
-      secret: this.configService.get<string>('auth.jwtSecret') ?? 'change_me',
-    });
+    this.assertSessionAccessAllowed(account);
 
     await this.prisma.cuenta_acceso.update({
       where: { id_cuenta: account.id_cuenta },
@@ -110,20 +97,48 @@ export class AuthService {
       },
     });
 
-    const requiresPasswordChange =
-      account.primer_ingreso_pendiente &&
-      (account.tipo_cuenta === tipo_cuenta_enum.ADMIN_UNIVERSIDAD ||
-        account.tipo_cuenta === tipo_cuenta_enum.ESTUDIANTE);
+    return this.buildSessionResponse(account);
+  }
+
+  async getSession(user: RequestUser) {
+    const account = await this.findSessionAccountById(user.id);
+
+    if (!account) {
+      throw new UnauthorizedException('No encontramos una sesion activa para esta cuenta.');
+    }
+
+    this.assertSessionAccessAllowed(account);
 
     return {
-      accessToken,
-      requiresPasswordChange,
-      user,
+      requiresPasswordChange: this.resolveRequiresPasswordChange(account),
+      user: this.buildRequestUser(account),
     };
   }
 
-  getSession(user: RequestUser) {
-    return { user };
+  async refreshSession(input: RefreshSessionDto) {
+    let payload: RefreshTokenPayload;
+
+    try {
+      payload = await this.jwtService.verifyAsync<RefreshTokenPayload>(input.refreshToken, {
+        secret: this.configService.get<string>('auth.jwtRefreshSecret') ?? 'change_me_too',
+      });
+    } catch {
+      throw new UnauthorizedException('La sesion expiro. Inicia sesion nuevamente.');
+    }
+
+    if (payload.tokenType !== 'refresh') {
+      throw new UnauthorizedException('El token de renovacion no es valido.');
+    }
+
+    const account = await this.findSessionAccountById(payload.id);
+
+    if (!account) {
+      throw new UnauthorizedException('No encontramos una sesion activa para esta cuenta.');
+    }
+
+    this.assertSessionAccessAllowed(account);
+
+    return this.buildSessionResponse(account);
   }
 
   async registerPatient(input: RegisterPatientDto) {
@@ -374,7 +389,7 @@ export class AuthService {
       (account.tipo_cuenta !== tipo_cuenta_enum.ADMIN_UNIVERSIDAD &&
         account.tipo_cuenta !== tipo_cuenta_enum.ESTUDIANTE)
     ) {
-      throw new UnauthorizedException('Esta operación no está permitida para tu cuenta.');
+      throw new UnauthorizedException('Esta operacion no esta permitida para tu cuenta.');
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -467,6 +482,99 @@ export class AuthService {
         },
       },
     });
+  }
+
+  private async findSessionAccountById(id: number): Promise<SessionAccount | null> {
+    return this.prisma.cuenta_acceso.findUnique({
+      where: { id_cuenta: id },
+      select: {
+        id_cuenta: true,
+        correo: true,
+        password_hash: true,
+        tipo_cuenta: true,
+        correo_verificado: true,
+        primer_ingreso_pendiente: true,
+        cuenta_admin_plataforma: {
+          select: {
+            nombres: true,
+            apellidos: true,
+          },
+        },
+        cuenta_admin_universidad: {
+          select: {
+            nombres: true,
+            apellidos: true,
+            id_universidad: true,
+            universidad: {
+              select: { estado: true },
+            },
+          },
+        },
+        cuenta_paciente: {
+          select: {
+            persona: { select: { nombres: true, apellidos: true } },
+          },
+        },
+        cuenta_estudiante: {
+          select: {
+            persona: { select: { nombres: true, apellidos: true } },
+          },
+        },
+      },
+    });
+  }
+
+  private assertSessionAccessAllowed(account: SessionAccount) {
+    if (
+      account.tipo_cuenta === tipo_cuenta_enum.PACIENTE &&
+      account.correo_verificado !== true
+    ) {
+      throw new UnauthorizedException('Debes verificar tu correo antes de iniciar sesion.');
+    }
+
+    if (
+      account.tipo_cuenta === tipo_cuenta_enum.ADMIN_UNIVERSIDAD &&
+      account.cuenta_admin_universidad?.universidad.estado === estado_simple_enum.INACTIVO
+    ) {
+      throw new UnauthorizedException(
+        'Tu institucion se encuentra inactiva. Contacta al administrador de la plataforma.',
+      );
+    }
+  }
+
+  private resolveRequiresPasswordChange(
+    account: Pick<SessionAccount, 'primer_ingreso_pendiente' | 'tipo_cuenta'>,
+  ) {
+    return (
+      account.primer_ingreso_pendiente &&
+      (account.tipo_cuenta === tipo_cuenta_enum.ADMIN_UNIVERSIDAD ||
+        account.tipo_cuenta === tipo_cuenta_enum.ESTUDIANTE)
+    );
+  }
+
+  private async buildSessionResponse(account: SessionAccount) {
+    const user = this.buildRequestUser(account);
+    const accessToken = await this.jwtService.signAsync(user, {
+      expiresIn: (this.configService.get<string>('auth.jwtExpiresIn') ?? '15m') as never,
+      secret: this.configService.get<string>('auth.jwtSecret') ?? 'change_me',
+    });
+    const refreshToken = await this.jwtService.signAsync(
+      {
+        ...user,
+        tokenType: 'refresh',
+      } satisfies RefreshTokenPayload,
+      {
+        expiresIn: (this.configService.get<string>('auth.jwtRefreshExpiresIn') ?? '7d') as never,
+        secret: this.configService.get<string>('auth.jwtRefreshSecret') ?? 'change_me_too',
+      },
+    );
+
+    return {
+      accessToken,
+      refreshToken,
+      requiresPasswordChange: this.resolveRequiresPasswordChange(account),
+      user,
+    };
   }
 
   private buildRequestUser(account: SessionAccount): RequestUser {

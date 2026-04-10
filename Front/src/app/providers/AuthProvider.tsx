@@ -1,9 +1,15 @@
 import type { PropsWithChildren } from 'react';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
-import { IS_TEST_MODE } from '@/lib/apiClient';
 import { readCurrentSession } from '@/lib/authApi';
-import { clearAuthSession, persistAuthSession, readAuthSession, type AuthSession } from '@/lib/authSession';
+import { ApiError, IS_TEST_MODE } from '@/lib/apiClient';
+import {
+  AUTH_SESSION_SYNC_EVENT,
+  clearAuthSession,
+  persistAuthSession,
+  readAuthSession,
+  type AuthSession,
+} from '@/lib/authSession';
 
 type AuthContextValue = {
   isAuthenticated: boolean;
@@ -48,6 +54,24 @@ export function AuthProvider({ children }: PropsWithChildren) {
   );
 
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const syncSession = () => {
+      setSessionState(readAuthSession());
+    };
+
+    window.addEventListener('storage', syncSession);
+    window.addEventListener(AUTH_SESSION_SYNC_EVENT, syncSession);
+
+    return () => {
+      window.removeEventListener('storage', syncSession);
+      window.removeEventListener(AUTH_SESSION_SYNC_EVENT, syncSession);
+    };
+  }, []);
+
+  useEffect(() => {
     if (IS_TEST_MODE || !session?.accessToken) {
       return;
     }
@@ -60,13 +84,17 @@ export function AuthProvider({ children }: PropsWithChildren) {
           return;
         }
 
+        const latestStoredSession = readAuthSession();
+
         setSessionState((currentSession) => {
-          if (!currentSession) {
-            return currentSession;
+          const baseSession = latestStoredSession ?? currentSession;
+
+          if (!baseSession) {
+            return baseSession;
           }
 
           const nextSession = {
-            ...currentSession,
+            ...baseSession,
             ...(typeof payload.requiresPasswordChange === 'boolean'
               ? { requiresPasswordChange: payload.requiresPasswordChange }
               : {}),
@@ -77,13 +105,18 @@ export function AuthProvider({ children }: PropsWithChildren) {
           return nextSession;
         });
       })
-      .catch(() => {
+      .catch((error) => {
         if (isCancelled) {
           return;
         }
 
-        clearAuthSession();
-        setSessionState(null);
+        if (
+          error instanceof ApiError &&
+          (error.statusCode === 401 || error.statusCode === 403)
+        ) {
+          clearAuthSession();
+          setSessionState(null);
+        }
       });
 
     return () => {

@@ -6,6 +6,7 @@ import type { RequestUser } from '@/shared/types/request-user.type';
 import { AuthService } from '../auth.service';
 import { ChangeFirstLoginPasswordDto } from '../dto/change-first-login-password.dto';
 import { LoginDto } from '../dto/login.dto';
+import { RefreshSessionDto } from '../dto/refresh-session.dto';
 import { RegisterPatientDto } from '../dto/register-patient.dto';
 import { RequestPasswordResetDto } from '../dto/request-password-reset.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
@@ -23,6 +24,11 @@ export class AuthController {
   @Get('me')
   me(@CurrentUser() user: RequestUser) {
     return this.authService.getSession(user);
+  }
+
+  @Post('refresh')
+  refresh(@Body() body: RefreshSessionDto) {
+    return this.authService.refreshSession(body);
   }
 
   @Post('register-patient')
