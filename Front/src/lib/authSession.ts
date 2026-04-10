@@ -11,11 +11,13 @@ export type SessionUser = {
 
 export type AuthSession = {
   accessToken: string;
+  refreshToken?: string | undefined;
   requiresPasswordChange?: boolean;
   user: SessionUser;
 };
 
 export const AUTH_SESSION_STORAGE_KEY = 'docqee.auth-session';
+export const AUTH_SESSION_SYNC_EVENT = 'docqee:auth-session-sync';
 
 function readLocalStorage() {
   if (typeof window === 'undefined') {
@@ -27,6 +29,26 @@ function readLocalStorage() {
   } catch {
     return null;
   }
+}
+
+function notifyAuthSessionChange() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.dispatchEvent(new Event(AUTH_SESSION_SYNC_EVENT));
+}
+
+function isValidAuthSession(session: Partial<AuthSession>): session is AuthSession {
+  return (
+    typeof session.accessToken === 'string' &&
+    (session.refreshToken === undefined || typeof session.refreshToken === 'string') &&
+    typeof session.user?.email === 'string' &&
+    typeof session.user?.firstName === 'string' &&
+    typeof session.user?.id === 'number' &&
+    typeof session.user?.lastName === 'string' &&
+    typeof session.user?.role === 'string'
+  );
 }
 
 export function readAuthSession() {
@@ -45,14 +67,7 @@ export function readAuthSession() {
   try {
     const parsedSession = JSON.parse(rawSession) as Partial<AuthSession>;
 
-    if (
-      typeof parsedSession.accessToken !== 'string' ||
-      typeof parsedSession.user?.email !== 'string' ||
-      typeof parsedSession.user?.firstName !== 'string' ||
-      typeof parsedSession.user?.id !== 'number' ||
-      typeof parsedSession.user?.lastName !== 'string' ||
-      typeof parsedSession.user?.role !== 'string'
-    ) {
+    if (!isValidAuthSession(parsedSession)) {
       storage.removeItem(AUTH_SESSION_STORAGE_KEY);
       return null;
     }
@@ -72,6 +87,7 @@ export function persistAuthSession(session: AuthSession) {
   }
 
   storage.setItem(AUTH_SESSION_STORAGE_KEY, JSON.stringify(session));
+  notifyAuthSessionChange();
 }
 
 export function clearAuthSession() {
@@ -82,4 +98,5 @@ export function clearAuthSession() {
   }
 
   storage.removeItem(AUTH_SESSION_STORAGE_KEY);
+  notifyAuthSessionChange();
 }

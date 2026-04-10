@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { MemoryRouterProps } from 'react-router-dom';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AppProviders } from '@/app/providers/AppProviders';
 import { ROUTES } from '@/constants/routes';
@@ -14,6 +14,7 @@ import { RegisterPage } from '@/pages/auth/register/RegisterPage';
 import { VerifyEmailPage } from '@/pages/auth/verify-email/VerifyEmailPage';
 import { HomePage } from '@/pages/home/HomePage';
 import { NotFoundPage } from '@/pages/home/NotFoundPage';
+import { readCurrentSession } from '@/lib/authApi';
 import {
   persistForgotPasswordRecoverySession,
   readForgotPasswordRecoverySession,
@@ -87,6 +88,13 @@ function setViewportWidth(width: number) {
   window.dispatchEvent(new Event('resize'));
 }
 
+function createJsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    headers: { 'Content-Type': 'application/json' },
+    status,
+  });
+}
+
 async function waitForRegisterCatalogs() {
   await screen.findByRole('option', { name: /c.dula de ciudadan.a/i });
   await screen.findByRole('option', { name: /bogot./i });
@@ -133,6 +141,8 @@ async function requestForgotPasswordCode(
 
 describe('Auth pages', () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
     window.localStorage.clear();
     window.sessionStorage.clear();
     setViewportWidth(1280);
@@ -378,6 +388,101 @@ describe('Auth pages', () => {
     expect(await screen.findByText(/panel universidad/i)).toBeInTheDocument();
     expect(JSON.parse(window.localStorage.getItem('docqee.auth-session') ?? '{}')).toMatchObject({
       requiresPasswordChange: false,
+    });
+  });
+
+  it('renueva la sesion automaticamente cuando el access token expira', async () => {
+    const fetchMock = vi.fn();
+
+    persistAuthSession({
+      accessToken: 'access-expired',
+      refreshToken: 'refresh-valid',
+      user: {
+        email: 'estudiante@docqee.com',
+        firstName: 'Valentina',
+        id: 21,
+        lastName: 'Rios',
+        role: 'STUDENT',
+      },
+    });
+
+    fetchMock
+      .mockResolvedValueOnce(createJsonResponse({ message: 'Unauthorized' }, 401))
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          accessToken: 'access-renovado',
+          refreshToken: 'refresh-renovado',
+          requiresPasswordChange: false,
+          user: {
+            email: 'estudiante@docqee.com',
+            firstName: 'Valentina',
+            id: 21,
+            lastName: 'Rios',
+            role: 'STUDENT',
+          },
+        }),
+      )
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          requiresPasswordChange: false,
+          user: {
+            email: 'estudiante@docqee.com',
+            firstName: 'Valentina',
+            id: 21,
+            lastName: 'Rios',
+            role: 'STUDENT',
+          },
+        }),
+      );
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(readCurrentSession()).resolves.toMatchObject({
+      requiresPasswordChange: false,
+      user: {
+        email: 'estudiante@docqee.com',
+      },
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('http://localhost:3000/auth/me');
+    expect(fetchMock.mock.calls[1]?.[0]).toBe('http://localhost:3000/auth/refresh');
+    expect(fetchMock.mock.calls[2]?.[0]).toBe('http://localhost:3000/auth/me');
+    expect(
+      JSON.parse(window.localStorage.getItem('docqee.auth-session') ?? '{}'),
+    ).toMatchObject({
+      accessToken: 'access-renovado',
+      refreshToken: 'refresh-renovado',
+    });
+  });
+
+  it('mantiene la sesion guardada si falla temporalmente la renovacion', async () => {
+    const fetchMock = vi.fn();
+
+    persistAuthSession({
+      accessToken: 'access-expired',
+      refreshToken: 'refresh-valid',
+      user: {
+        email: 'paciente@docqee.com',
+        firstName: 'Ana',
+        id: 7,
+        lastName: 'Perez',
+        role: 'PATIENT',
+      },
+    });
+
+    fetchMock
+      .mockResolvedValueOnce(createJsonResponse({ message: 'Unauthorized' }, 401))
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'));
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(readCurrentSession()).rejects.toThrow(/failed to fetch/i);
+    expect(
+      JSON.parse(window.localStorage.getItem('docqee.auth-session') ?? '{}'),
+    ).toMatchObject({
+      accessToken: 'access-expired',
+      refreshToken: 'refresh-valid',
     });
   });
 

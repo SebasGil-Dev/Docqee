@@ -1,4 +1,27 @@
-import { readAuthSession } from '@/lib/authSession';
+﻿import {
+  clearAuthSession,
+  persistAuthSession,
+  readAuthSession,
+  type AuthSession,
+} from '@/lib/authSession';
+
+type ApiRequestInit = Omit<RequestInit, 'body'> & {
+  body?: BodyInit | Record<string, unknown> | null;
+};
+
+type PreparedRequest = {
+  body: BodyInit | null;
+  headers: Headers;
+};
+
+type ParsedApiResponse<T> = {
+  payload: T | null;
+  response: Response;
+};
+
+const REFRESH_SESSION_PATH = '/auth/refresh';
+
+let refreshSessionPromise: Promise<AuthSession | null> | null = null;
 
 function getEnvValue(key: string) {
   const envRecord: unknown = import.meta.env;
@@ -24,9 +47,26 @@ export class ApiError extends Error {
   }
 }
 
-function buildHeaders(headers?: HeadersInit) {
+function isUnauthorizedStatus(statusCode: number) {
+  return statusCode === 401 || statusCode === 403;
+}
+
+function isValidAuthSession(session: Partial<AuthSession> | null): session is AuthSession {
+  return (
+    session !== null &&
+    typeof session.accessToken === 'string' &&
+    typeof session.refreshToken === 'string' &&
+    typeof session.user?.email === 'string' &&
+    typeof session.user?.firstName === 'string' &&
+    typeof session.user?.id === 'number' &&
+    typeof session.user?.lastName === 'string' &&
+    typeof session.user?.role === 'string'
+  );
+}
+
+function buildHeaders(headers?: HeadersInit, sessionOverride?: AuthSession | null) {
   const nextHeaders = new Headers(headers);
-  const session = readAuthSession();
+  const session = sessionOverride ?? readAuthSession();
 
   if (!nextHeaders.has('Accept')) {
     nextHeaders.set('Accept', 'application/json');
@@ -37,6 +77,32 @@ function buildHeaders(headers?: HeadersInit) {
   }
 
   return nextHeaders;
+}
+
+function prepareRequest(
+  init?: ApiRequestInit,
+  sessionOverride?: AuthSession | null,
+): PreparedRequest {
+  const headers = buildHeaders(init?.headers, sessionOverride);
+  const rawBody = init?.body ?? null;
+  let body: BodyInit | null;
+
+  if (
+    rawBody &&
+    typeof rawBody === 'object' &&
+    !(rawBody instanceof FormData) &&
+    !(rawBody instanceof Blob) &&
+    !(rawBody instanceof URLSearchParams) &&
+    !(rawBody instanceof ArrayBuffer) &&
+    !ArrayBuffer.isView(rawBody)
+  ) {
+    headers.set('Content-Type', 'application/json');
+    body = JSON.stringify(rawBody);
+  } else {
+    body = rawBody as BodyInit | null;
+  }
+
+  return { body, headers };
 }
 
 function resolveErrorMessage(payload: unknown) {
@@ -62,44 +128,111 @@ function resolveErrorMessage(payload: unknown) {
   return 'No pudimos completar la solicitud.';
 }
 
-export async function apiRequest<T>(
-  path: string,
-  init?: Omit<RequestInit, 'body'> & { body?: BodyInit | Record<string, unknown> | null },
-) {
-  const headers = buildHeaders(init?.headers);
-  const rawBody = init?.body ?? null;
-  let body: BodyInit | null;
-
-  if (
-    rawBody &&
-    typeof rawBody === 'object' &&
-    !(rawBody instanceof FormData) &&
-    !(rawBody instanceof Blob) &&
-    !(rawBody instanceof URLSearchParams) &&
-    !(rawBody instanceof ArrayBuffer) &&
-    !ArrayBuffer.isView(rawBody)
-  ) {
-    headers.set('Content-Type', 'application/json');
-    body = JSON.stringify(rawBody);
-  } else {
-    body = rawBody as BodyInit | null;
+async function parseResponsePayload<T>(response: Response) {
+  if (response.status === 204) {
+    return null as T | null;
   }
 
+  return (await response.json().catch(() => null)) as T | null;
+}
+
+async function performFetch<T>(
+  path: string,
+  init?: ApiRequestInit,
+  sessionOverride?: AuthSession | null,
+): Promise<ParsedApiResponse<T>> {
+  const { body, headers } = prepareRequest(init, sessionOverride);
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     body,
+    credentials: init?.credentials ?? 'include',
     headers,
   });
 
-  if (response.status === 204) {
-    return null as T;
+  return {
+    payload: await parseResponsePayload<T>(response),
+    response,
+  };
+}
+
+async function refreshAuthSession(currentSession: AuthSession) {
+  if (refreshSessionPromise) {
+    return refreshSessionPromise;
   }
 
-  const payload = (await response.json().catch(() => null)) as T | null;
-
-  if (!response.ok) {
-    throw new ApiError(resolveErrorMessage(payload), response.status);
+  if (!currentSession.refreshToken) {
+    clearAuthSession();
+    return null;
   }
 
-  return payload as T;
+  refreshSessionPromise = (async () => {
+    const { response, payload } = await performFetch<AuthSession>(REFRESH_SESSION_PATH, {
+      body: { refreshToken: currentSession.refreshToken },
+      method: 'POST',
+    });
+
+    if (!response.ok) {
+      if (isUnauthorizedStatus(response.status)) {
+        clearAuthSession();
+        return null;
+      }
+
+      throw new ApiError(resolveErrorMessage(payload), response.status);
+    }
+
+    if (!isValidAuthSession(payload)) {
+      throw new ApiError('No pudimos renovar la sesion.', response.status);
+    }
+
+    persistAuthSession(payload);
+    return payload;
+  })().finally(() => {
+    refreshSessionPromise = null;
+  });
+
+  return refreshSessionPromise;
+}
+
+export async function apiRequest<T>(path: string, init?: ApiRequestInit) {
+  const currentSession = readAuthSession();
+  const initialResponse = await performFetch<T>(path, init);
+
+  if (initialResponse.response.ok) {
+    return initialResponse.payload as T;
+  }
+
+  if (
+    isUnauthorizedStatus(initialResponse.response.status) &&
+    currentSession?.accessToken &&
+    path !== REFRESH_SESSION_PATH
+  ) {
+    const refreshedSession = await refreshAuthSession(currentSession);
+
+    if (refreshedSession) {
+      const retryResponse = await performFetch<T>(path, init, refreshedSession);
+
+      if (retryResponse.response.ok) {
+        return retryResponse.payload as T;
+      }
+
+      if (isUnauthorizedStatus(retryResponse.response.status)) {
+        clearAuthSession();
+      }
+
+      throw new ApiError(resolveErrorMessage(retryResponse.payload), retryResponse.response.status);
+    }
+  }
+
+  if (
+    isUnauthorizedStatus(initialResponse.response.status) &&
+    currentSession?.accessToken &&
+    !currentSession.refreshToken
+  ) {
+    clearAuthSession();
+  }
+
+  throw new ApiError(
+    resolveErrorMessage(initialResponse.payload),
+    initialResponse.response.status,
+  );
 }
