@@ -339,37 +339,85 @@ export function PatientSearchStudentsPage() {
                   {filteredStudents.length} perfiles
                 </span>
               </div>
-              <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto p-2.5">
+              <div className="admin-scrollbar min-h-0 flex-1 overflow-x-auto overflow-y-auto">
                 {filteredStudents.length > 0 ? (
-                  <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                  <table className="min-w-[58rem] w-full lg:min-w-0 lg:table-fixed">
+                    <thead className="sticky top-0 z-10 bg-slate-100 text-left">
+                      <tr className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-ink-muted">
+                        <th className="px-4 py-2.5 sm:px-5">Estudiante</th>
+                        <th className="px-4 py-2.5">Universidad</th>
+                        <th className="px-4 py-2.5">Ubicacion</th>
+                        <th className="px-4 py-2.5">Tratamientos</th>
+                        <th className="px-4 py-2.5 text-center">Estado</th>
+                        <th className="px-4 py-2.5 text-right sm:px-5">Accion</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200/80">
                     {filteredStudents.map((student) => {
                       const isSelected = selectedStudent?.id === student.id;
+                      const visibleTreatments = student.treatments.slice(0, 2);
+                      const hiddenTreatmentsCount = student.treatments.length - visibleTreatments.length;
 
                       return (
-                        <button
+                        <tr
                           key={student.id}
                           className={classNames(
-                            'h-full w-full rounded-[1rem] border px-3 py-2.5 text-left transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                            'align-top transition duration-200',
                             isSelected
-                              ? 'border-primary/35 bg-primary/[0.08] shadow-[0_18px_40px_-28px_rgba(22,78,99,0.65)]'
-                              : 'border-slate-200/80 bg-slate-50 hover:border-primary/20 hover:bg-slate-100/70',
+                              ? 'bg-primary/[0.06]'
+                              : 'hover:bg-slate-50/90',
                           )}
-                          data-testid={`patient-student-card-${student.id}`}
-                          type="button"
-                          onClick={() => handleOpenStudentModal(student.id)}
                         >
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0">
-                              <p className="truncate text-sm font-semibold text-ink">
+                          <td className="px-4 py-3 sm:px-5">
+                            <div className="space-y-1">
+                              <p className="truncate text-[0.83rem] font-semibold text-ink">
                                 {getStudentFullName(student)}
                               </p>
-                              <p className="truncate text-xs text-ink-muted">
-                                Semestre {student.semester} - {student.universityName}
+                              <p className="text-[0.72rem] text-ink-muted sm:text-[0.76rem]">
+                                Semestre {student.semester}
                               </p>
                             </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <p className="truncate text-[0.83rem] font-medium text-ink">
+                              {student.universityName}
+                            </p>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="space-y-1">
+                              <p className="truncate text-[0.83rem] font-medium text-ink">
+                                {getStudentPracticeSite(student)}
+                              </p>
+                              <p className="truncate text-[0.72rem] text-ink-muted sm:text-[0.76rem]">
+                                {getStudentLocation(student)}
+                              </p>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            {student.treatments.length > 0 ? (
+                              <div className="flex flex-wrap gap-1.5">
+                                {visibleTreatments.map((treatment) => (
+                                  <span
+                                    key={treatment}
+                                    className="inline-flex rounded-full bg-primary/10 px-2.5 py-1 text-[0.68rem] font-semibold text-primary"
+                                  >
+                                    {treatment}
+                                  </span>
+                                ))}
+                                {hiddenTreatmentsCount > 0 ? (
+                                  <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[0.68rem] font-semibold text-ink-muted">
+                                    +{hiddenTreatmentsCount}
+                                  </span>
+                                ) : null}
+                              </div>
+                            ) : (
+                              <span className="text-[0.78rem] text-ink-muted">Sin tratamientos</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-center">
                             <span
                               className={classNames(
-                                'inline-flex shrink-0 rounded-full px-2 py-0.5 text-[0.66rem] font-semibold ring-1 ring-inset',
+                                'inline-flex rounded-full px-2.5 py-1 text-[0.72rem] font-semibold ring-1 ring-inset',
                                 student.availabilityStatus === 'available'
                                   ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
                                   : 'bg-amber-50 text-amber-700 ring-amber-200',
@@ -377,17 +425,22 @@ export function PatientSearchStudentsPage() {
                             >
                               {student.availabilityStatus === 'available' ? 'Disponible' : 'Limitado'}
                             </span>
-                          </div>
-                          <p className="mt-1 line-clamp-2 text-xs leading-5 text-ink-muted">
-                            {student.biography}
-                          </p>
-                          <p className="mt-1 truncate text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-primary/70">
-                            {getStudentLocation(student)}
-                          </p>
-                        </button>
+                          </td>
+                          <td className="px-4 py-3 text-right sm:px-5">
+                            <button
+                              className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary transition duration-200 hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                              data-testid={`patient-student-card-${student.id}`}
+                              type="button"
+                              onClick={() => handleOpenStudentModal(student.id)}
+                            >
+                              Ver perfil
+                            </button>
+                          </td>
+                        </tr>
                       );
                     })}
-                  </div>
+                    </tbody>
+                  </table>
                 ) : (
                   <div className="rounded-[1.35rem] border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-ink-muted">
                     {patientContent.searchPage.emptyState}
