@@ -18,10 +18,10 @@ export const adminContent = {
     meta: {
       description:
         'Docqee permite revisar y administrar las credenciales pendientes del modulo admin.',
-      title: 'Docqee | Envio de Credenciales',
+      title: 'Docqee | Envío de credenciales',
     },
     subtitle: '',
-    title: 'Envio de Credenciales',
+    title: 'Envío de credenciales',
   },
   registerPage: {
     administratorSectionTitle: 'Datos del administrador universitario',
@@ -92,7 +92,7 @@ export const adminContent = {
     eyebrow: 'Panel administrativo',
     logoutCta: {
       kind: 'internal',
-      label: 'Cerrar sesion',
+      label: 'Cerrar sesión',
       to: ROUTES.login,
     },
     navigation: [
@@ -104,7 +104,7 @@ export const adminContent = {
       },
       {
         icon: 'key-round',
-        label: 'Envio de Credenciales',
+        label: 'Envío de credenciales',
         matchPrefix: ROUTES.adminCredentials,
         to: ROUTES.adminCredentials,
       },
@@ -139,7 +139,7 @@ export const adminContent = {
     meta: {
       description:
         'Consulta el estado de las universidades registradas dentro del modulo admin de Docqee.',
-      title: 'Docqee | Gestion de Universidades',
+      title: 'Docqee | Gestión Universitaria',
     },
     pendingActionLabel: 'Pendiente',
     searchLabel: 'Buscar universidad',
@@ -148,6 +148,6 @@ export const adminContent = {
     successNoticePrefix: 'Actualizacion completada:',
     summaryLabel: 'Universidades registradas',
     tableTitle: 'Instituciones registradas',
-    title: 'Gestion de Universidades',
+    title: 'Gestión Universitaria',
   },
 } as const;

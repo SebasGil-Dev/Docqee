@@ -11,6 +11,7 @@ import { ROUTES } from '@/constants/routes';
 import { adminContent } from '@/content/adminContent';
 import type { AdminUniversity, UniversityStatus } from '@/content/types';
 import { classNames } from '@/lib/classNames';
+import { formatDisplayName } from '@/lib/formatDisplayName';
 import { useAdminModuleStore } from '@/lib/adminModuleStore';
 
 type UniversitiesLocationState = {
@@ -30,7 +31,7 @@ const universityStatusFilterOptions: Array<{
 ];
 
 function buildAdministratorLabel(university: AdminUniversity) {
-  return `${university.adminFirstName} ${university.adminLastName}`;
+  return formatDisplayName(`${university.adminFirstName} ${university.adminLastName}`);
 }
 
 function getLocationState(locationState: unknown): UniversitiesLocationState {
@@ -109,11 +110,12 @@ export function AdminUniversitiesPage() {
         title={adminContent.universitiesPage.meta.title}
       />
       <AdminPageHeader
-        className="gap-3"
+        className="items-center gap-3"
         description=""
         descriptionClassName="max-w-3xl text-sm leading-6 sm:text-[0.95rem]"
+        headingAlign="center"
         title={adminContent.universitiesPage.title}
-        titleClassName="mx-auto whitespace-nowrap text-center text-[clamp(1.25rem,6vw,1.85rem)] leading-none sm:mx-0 sm:text-left sm:text-[2.2rem]"
+        titleClassName="whitespace-nowrap text-center text-[clamp(1.25rem,6vw,1.85rem)] leading-none sm:text-[2.2rem]"
       />
       {successNotice ? (
         <SurfaceCard
@@ -287,7 +289,9 @@ export function AdminUniversitiesPage() {
                           )}
                         >
                           <div className="space-y-1">
-                            <p className="text-sm font-semibold text-ink">{university.name}</p>
+                            <p className="text-sm font-semibold text-ink">
+                              {formatDisplayName(university.name)}
+                            </p>
                             <p className="text-xs text-ink-muted sm:text-[0.82rem]">
                               Registrada {new Date(university.createdAt).toLocaleDateString('es-CO')}
                             </p>
