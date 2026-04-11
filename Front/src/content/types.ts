@@ -662,6 +662,16 @@ export type UniversityInstitutionProfile = {
   name: string;
 };
 
+export type UniversityHomeInstitution = {
+  adminFirstName: string;
+  adminLastName: string;
+  logoAlt: string;
+  logoSrc: string | null;
+  mainCity: string;
+  mainLocality: string;
+  name: string;
+};
+
 export type UniversityCampus = {
   address: string;
   city: string;
@@ -672,6 +682,11 @@ export type UniversityCampus = {
   name: string;
   status: PersonOperationalStatus;
 };
+
+export type UniversityHomeCampus = Pick<
+  UniversityCampus,
+  'city' | 'id' | 'locality' | 'name' | 'status'
+>;
 
 export type UniversityStudent = {
   createdAt: string;
@@ -688,6 +703,15 @@ export type UniversityStudent = {
   status: PersonOperationalStatus;
 };
 
+export type UniversityHomeStudentStatus = PersonOperationalStatus | 'pending';
+
+export type UniversityHomeStudent = Pick<
+  UniversityStudent,
+  'createdAt' | 'firstName' | 'id' | 'lastName' | 'semester'
+> & {
+  displayStatus: UniversityHomeStudentStatus;
+};
+
 export type UniversityTeacher = {
   createdAt: string;
   documentNumber: string;
@@ -699,12 +723,40 @@ export type UniversityTeacher = {
   status: PersonOperationalStatus;
 };
 
+export type UniversityHomeTeacher = Pick<
+  UniversityTeacher,
+  'createdAt' | 'documentNumber' | 'documentTypeCode' | 'firstName' | 'id' | 'lastName' | 'status'
+>;
+
 export type UniversityStudentCredential = {
   deliveryStatus: CredentialDeliveryStatus;
   id: string;
   lastSentAt: string | null;
   sentCount: number;
   studentId: string;
+};
+
+export type UniversityHomeStudentSummary = {
+  active: number;
+  inactive: number;
+  pending: number;
+  total: number;
+};
+
+export type UniversityHomeTeacherSummary = {
+  active: number;
+  inactive: number;
+  total: number;
+};
+
+export type UniversityAdminOverview = {
+  activeCampusesCount: number;
+  institution: UniversityHomeInstitution;
+  recentCampuses: UniversityHomeCampus[];
+  recentStudents: UniversityHomeStudent[];
+  recentTeachers: UniversityHomeTeacher[];
+  studentSummary: UniversityHomeStudentSummary;
+  teacherSummary: UniversityHomeTeacherSummary;
 };
 
 export type UniversityBulkTemplateType = 'students' | 'teachers';

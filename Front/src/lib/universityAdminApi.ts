@@ -3,6 +3,7 @@ import type {
   BulkStudentRow,
   BulkTeacherRow,
   RegisterStudentFormValues,
+  UniversityAdminOverview,
   RegisterTeacherFormValues,
   UniversityInstitutionFormValues,
   UniversityInstitutionProfile,
@@ -25,6 +26,10 @@ function toDocumentTypeCode(identifier: string) {
 
 export function getUniversityAdminProfile() {
   return apiRequest<UniversityInstitutionProfile>('/university-admin/profile');
+}
+
+export function getUniversityAdminOverview() {
+  return apiRequest<UniversityAdminOverview>('/university-admin/overview');
 }
 
 export function updateUniversityAdminProfile(values: UniversityInstitutionFormValues) {

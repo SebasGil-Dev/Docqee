@@ -20,6 +20,7 @@ import type {
 } from '@/content/types';
 import { IS_TEST_MODE } from '@/lib/apiClient';
 import { patientRegisterCatalogDataSource } from '@/lib/patientRegisterCatalogDataSource';
+import { resetUniversityAdminOverviewState } from '@/lib/universityAdminOverviewStore';
 import {
   bulkCreateStudents,
   bulkCreateTeachers,
@@ -66,6 +67,10 @@ type UniversityAdminModuleActions = {
   toggleStudentStatus: (studentId: string) => Promise<PersonOperationalStatus | null>;
   toggleTeacherStatus: (teacherId: string) => Promise<PersonOperationalStatus | null>;
   updateInstitutionProfile: (values: UniversityInstitutionFormValues) => Promise<boolean>;
+};
+
+type UseUniversityAdminModuleStoreOptions = {
+  autoLoad?: boolean;
 };
 
 const listeners = new Set<() => void>();
@@ -773,6 +778,7 @@ async function registerStudent(values: RegisterStudentFormValues) {
   try {
     const student = await createUniversityStudent(values);
     await refreshRuntimeState();
+    resetUniversityAdminOverviewState();
 
     return {
       credentialId: student.credentialId ?? '',
@@ -800,6 +806,7 @@ async function registerTeacher(values: RegisterTeacherFormValues) {
   try {
     const teacher = await createUniversityTeacher(values);
     await refreshRuntimeState();
+    resetUniversityAdminOverviewState();
 
     return {
       teacherId: teacher.id,
@@ -831,6 +838,7 @@ async function toggleStudentStatus(studentId: string) {
 
   try {
     const result = await toggleUniversityStudentStatus(studentId);
+    resetUniversityAdminOverviewState();
 
     updateState({
       ...state,
@@ -863,6 +871,7 @@ async function toggleTeacherStatus(teacherId: string) {
 
   try {
     const result = await toggleUniversityTeacherStatus(teacherId);
+    resetUniversityAdminOverviewState();
 
     updateState({
       ...state,
@@ -896,6 +905,7 @@ async function sendStudentCredential(credentialId: string) {
   try {
     const result = await sendUniversityStudentCredential(credentialId);
     await refreshRuntimeState();
+    resetUniversityAdminOverviewState();
     return result.temporaryPassword;
   } catch (error) {
     patchState({
@@ -919,6 +929,7 @@ async function resendStudentCredential(credentialId: string) {
   try {
     const result = await resendUniversityStudentCredential(credentialId);
     await refreshRuntimeState();
+    resetUniversityAdminOverviewState();
     return result.temporaryPassword;
   } catch (error) {
     patchState({
@@ -942,6 +953,7 @@ async function sendAllStudentCredentials() {
   try {
     const result = await sendAllUniversityStudentCredentials();
     await refreshRuntimeState();
+    resetUniversityAdminOverviewState();
     return result.sentCount;
   } catch (error) {
     patchState({
@@ -999,6 +1011,7 @@ async function deleteStudentCredential(credentialId: string) {
   try {
     await deleteUniversityStudentCredential(credentialId);
     await refreshRuntimeState();
+    resetUniversityAdminOverviewState();
     return true;
   } catch (error) {
     patchState({
@@ -1022,6 +1035,7 @@ async function updateInstitutionProfile(values: UniversityInstitutionFormValues)
 
   try {
     const institutionProfile = await updateUniversityAdminProfile(values);
+    resetUniversityAdminOverviewState();
 
     updateState({
       ...state,
@@ -1088,6 +1102,7 @@ async function processBulkUpload(
     if (templateType === 'students') {
       const result = await bulkCreateStudents(rows as BulkStudentRow[]);
       await refreshRuntimeState();
+      resetUniversityAdminOverviewState();
 
       return {
         createdCredentials: result.createdCredentials,
@@ -1099,6 +1114,7 @@ async function processBulkUpload(
 
     const result = await bulkCreateTeachers(rows as BulkTeacherRow[]);
     await refreshRuntimeState();
+    resetUniversityAdminOverviewState();
 
     return {
       createdCredentials: 0,
@@ -1121,19 +1137,23 @@ export function resetUniversityAdminModuleState() {
   nextTeacherSequence = initialMockState.teachers.length + 1;
   nextCredentialSequence = initialMockState.credentials.length + 1;
   runtimeLoadPromise = null;
+  resetUniversityAdminOverviewState();
   emitChange();
 }
 
-export function useUniversityAdminModuleStore() {
+export function useUniversityAdminModuleStore(
+  options: UseUniversityAdminModuleStoreOptions = {},
+) {
   const snapshot = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  const shouldAutoLoad = options.autoLoad ?? true;
 
   useEffect(() => {
-    if (IS_TEST_MODE || snapshot.isLoading || snapshot.isReady) {
+    if (!shouldAutoLoad || IS_TEST_MODE || snapshot.isLoading || snapshot.isReady) {
       return;
     }
 
     void loadRuntimeState();
-  }, [snapshot.isLoading, snapshot.isReady]);
+  }, [shouldAutoLoad, snapshot.isLoading, snapshot.isReady]);
 
   const actions: UniversityAdminModuleActions = {
     changePassword,

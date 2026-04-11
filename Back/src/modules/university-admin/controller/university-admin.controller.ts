@@ -22,6 +22,11 @@ import { UniversityAdminService } from '../university-admin.service';
 export class UniversityAdminController {
   constructor(private readonly universityAdminService: UniversityAdminService) {}
 
+  @Get('overview')
+  getOverview(@CurrentUser() user: RequestUser) {
+    return this.universityAdminService.getOverview(user);
+  }
+
   @Get('profile')
   getProfile(@CurrentUser() user: RequestUser) {
     return this.universityAdminService.getProfile(user);

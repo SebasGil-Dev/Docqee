@@ -10,11 +10,18 @@ import {
   shouldRequireFirstLoginPasswordChange,
 } from '@/lib/authRouting';
 import { useUniversityAdminModuleStore } from '@/lib/universityAdminModuleStore';
+import { useUniversityAdminOverviewStore } from '@/lib/universityAdminOverviewStore';
 
 export function UniversityAdminLayout() {
   const { session } = useAuth();
   const location = useLocation();
-  const { institutionProfile } = useUniversityAdminModuleStore();
+  const isHomeRoute = location.pathname === ROUTES.universityHome;
+  const { institutionProfile } = useUniversityAdminModuleStore({
+    autoLoad: !isHomeRoute,
+  });
+  const { institution: overviewInstitution } = useUniversityAdminOverviewStore({
+    autoLoad: isHomeRoute,
+  });
 
   if (!IS_TEST_MODE) {
     if (!session) {
@@ -30,15 +37,26 @@ export function UniversityAdminLayout() {
     }
   }
 
+  const currentInstitution = isHomeRoute
+    ? overviewInstitution
+    : {
+        adminFirstName: institutionProfile.adminFirstName,
+        adminLastName: institutionProfile.adminLastName,
+        logoSrc: institutionProfile.logoSrc,
+      };
+
   const overrideName =
-    institutionProfile.adminFirstName || institutionProfile.adminLastName
-      ? { firstName: institutionProfile.adminFirstName, lastName: institutionProfile.adminLastName }
+    currentInstitution.adminFirstName || currentInstitution.adminLastName
+      ? {
+          firstName: currentInstitution.adminFirstName,
+          lastName: currentInstitution.adminLastName,
+        }
       : undefined;
 
   return (
     <AdminShell
       avatarKind="logo"
-      avatarSrc={institutionProfile.logoSrc}
+      avatarSrc={currentInstitution.logoSrc}
       content={universityAdminContent.shell}
       {...(overrideName ? { overrideName } : {})}
     >
