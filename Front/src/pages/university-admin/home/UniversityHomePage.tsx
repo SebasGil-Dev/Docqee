@@ -3,7 +3,6 @@ import {
   Building2,
   GraduationCap,
   MapPin,
-  Presentation,
   Users,
 } from 'lucide-react';
 import { useMemo } from 'react';
@@ -55,7 +54,6 @@ function formatDisplayName(value: string) {
 export function UniversityHomePage() {
   const { session } = useAuth();
   const {
-    activeCampusesCount,
     errorMessage,
     institution,
     recentCampuses,
@@ -70,14 +68,6 @@ export function UniversityHomePage() {
       campuses: recentCampuses,
     }),
     [institution, recentCampuses],
-  );
-  const students = useMemo(
-    () => ({ length: studentSummary.total }),
-    [studentSummary.total],
-  );
-  const teachers = useMemo(
-    () => ({ length: teacherSummary.total }),
-    [teacherSummary.total],
   );
   const activeStudentsCount = studentSummary.active;
   const pendingStudentsCount = studentSummary.pending;
@@ -169,35 +159,6 @@ export function UniversityHomePage() {
                   </span>
                 </span>
               </div>
-            </div>
-          </div>
-          <div className="flex shrink-0 flex-wrap items-center gap-2 lg:flex-nowrap">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1.5 ring-1 ring-white/15 backdrop-blur-sm">
-              <GraduationCap aria-hidden="true" className="h-3.5 w-3.5 text-white" />
-              <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-white/75">
-                Estudiantes
-              </p>
-              <p className="font-headline text-[1.05rem] font-extrabold tracking-tight text-white">
-                {students.length}
-              </p>
-            </div>
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1.5 ring-1 ring-white/15 backdrop-blur-sm">
-              <Presentation aria-hidden="true" className="h-3.5 w-3.5 text-white" />
-              <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-white/75">
-                Docentes
-              </p>
-              <p className="font-headline text-[1.05rem] font-extrabold tracking-tight text-white">
-                {teachers.length}
-              </p>
-            </div>
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1.5 ring-1 ring-white/15 backdrop-blur-sm">
-              <MapPin aria-hidden="true" className="h-3.5 w-3.5 text-white" />
-              <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-white/75">
-                Sedes activas
-              </p>
-              <p className="font-headline text-[1.05rem] font-extrabold tracking-tight text-white">
-                {activeCampusesCount}
-              </p>
             </div>
           </div>
         </div>
