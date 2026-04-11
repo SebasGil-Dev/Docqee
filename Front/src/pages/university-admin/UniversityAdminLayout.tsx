@@ -10,7 +10,6 @@ import {
   shouldRequireFirstLoginPasswordChange,
 } from '@/lib/authRouting';
 import { useUniversityAdminHeaderStore } from '@/lib/universityAdminHeaderStore';
-import { useUniversityAdminModuleStore } from '@/lib/universityAdminModuleStore';
 import { useUniversityAdminOverviewStore } from '@/lib/universityAdminOverviewStore';
 import { useUniversityAdminProfileStore } from '@/lib/universityAdminProfileStore';
 
@@ -18,12 +17,8 @@ export function UniversityAdminLayout() {
   const { session } = useAuth();
   const location = useLocation();
   const isHomeRoute = location.pathname === ROUTES.universityHome;
-  const isInstitutionRoute = location.pathname === ROUTES.universityInstitution;
-  useUniversityAdminModuleStore({
-    autoLoad: !isHomeRoute && !isInstitutionRoute,
-  });
   useUniversityAdminProfileStore({
-    autoLoad: isInstitutionRoute,
+    autoLoad: !isHomeRoute,
   });
   const { institution: overviewInstitution } = useUniversityAdminOverviewStore({
     autoLoad: isHomeRoute,

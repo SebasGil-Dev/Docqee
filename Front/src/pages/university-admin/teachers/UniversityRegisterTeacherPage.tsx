@@ -60,7 +60,9 @@ function validateField(
 export function UniversityRegisterTeacherPage({
   catalogDataSource = patientRegisterCatalogDataSource,
 }: UniversityRegisterTeacherPageProps) {
-  const { errorMessage, isLoading, registerTeacher } = useUniversityAdminModuleStore();
+  const { errorMessage, isLoading, registerTeacher } = useUniversityAdminModuleStore({
+    autoLoad: false,
+  });
   const navigate = useNavigate();
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<RegisterTeacherFormErrors>({});

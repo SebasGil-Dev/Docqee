@@ -19,8 +19,9 @@ import { Seo } from '@/components/ui/Seo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { universityAdminContent } from '@/content/universityAdminContent';
 import { classNames } from '@/lib/classNames';
-import { useUniversityAdminModuleStore } from '@/lib/universityAdminModuleStore';
+import { useUniversityAdminStudentRecordsStore } from '@/lib/universityAdminStudentRecordsStore';
 
+type StudentRecordsStore = ReturnType<typeof useUniversityAdminStudentRecordsStore>;
 type CredentialRow = ReturnType<typeof buildCredentialRows>[number];
 type UniversityCredentialFilterValue = 'all' | 'generated' | 'sent';
 
@@ -50,8 +51,8 @@ function formatLastSentAt(value: string | null) {
 }
 
 function buildCredentialRows(
-  credentials: ReturnType<typeof useUniversityAdminModuleStore>['credentials'],
-  students: ReturnType<typeof useUniversityAdminModuleStore>['students'],
+  credentials: StudentRecordsStore['credentials'],
+  students: StudentRecordsStore['students'],
 ) {
   return credentials
     .map((credential) => {
@@ -91,7 +92,7 @@ export function UniversityCredentialsPage() {
     sendAllStudentCredentials,
     sendStudentCredential,
     students,
-  } = useUniversityAdminModuleStore();
+  } = useUniversityAdminStudentRecordsStore();
   const credentialRows = useMemo(
     () => buildCredentialRows(credentials, students),
     [credentials, students],

@@ -27,6 +27,18 @@ import {
   resetUniversityAdminProfileState,
 } from '@/lib/universityAdminProfileStore';
 import {
+  prependUniversityAdminStudentRecord,
+  refreshUniversityAdminStudentRecordsState,
+  resetUniversityAdminStudentRecordsState,
+  syncUniversityAdminStudentRecordsState,
+} from '@/lib/universityAdminStudentRecordsStore';
+import {
+  prependUniversityAdminTeacherRecord,
+  refreshUniversityAdminTeacherRecordsState,
+  resetUniversityAdminTeacherRecordsState,
+  syncUniversityAdminTeacherRecordsState,
+} from '@/lib/universityAdminTeacherRecordsStore';
+import {
   bulkCreateStudents,
   bulkCreateTeachers,
   changeUniversityAdminPassword,
@@ -781,7 +793,17 @@ async function refreshRuntimeState() {
 
 async function registerStudent(values: RegisterStudentFormValues) {
   if (IS_TEST_MODE) {
-    return registerStudentMock(values);
+    const result = registerStudentMock(values);
+
+    if (result) {
+      const student = state.students.find((item) => item.id === result.studentId);
+
+      if (student) {
+        prependUniversityAdminStudentRecord(student);
+      }
+    }
+
+    return result;
   }
 
   patchState({
@@ -791,8 +813,35 @@ async function registerStudent(values: RegisterStudentFormValues) {
 
   try {
     const student = await createUniversityStudent(values);
-    await refreshRuntimeState();
+    const nextStudents = [
+      student,
+      ...state.students.filter((currentStudent) => currentStudent.id !== student.id),
+    ];
+    const nextCredentials = student.credentialId
+      ? [
+          {
+            deliveryStatus: 'generated' as const,
+            id: student.credentialId,
+            lastSentAt: null,
+            sentCount: 0,
+            studentId: student.id,
+          },
+          ...state.credentials.filter(
+            (credential) => credential.id !== student.credentialId,
+          ),
+        ]
+      : state.credentials;
+
+    prependUniversityAdminStudentRecord(student);
     resetUniversityAdminOverviewState();
+    updateState({
+      ...state,
+      credentials: nextCredentials,
+      errorMessage: null,
+      isLoading: false,
+      isReady: true,
+      students: nextStudents,
+    });
 
     return {
       credentialId: student.credentialId ?? '',
@@ -809,7 +858,17 @@ async function registerStudent(values: RegisterStudentFormValues) {
 
 async function registerTeacher(values: RegisterTeacherFormValues) {
   if (IS_TEST_MODE) {
-    return registerTeacherMock(values);
+    const result = registerTeacherMock(values);
+
+    if (result) {
+      const teacher = state.teachers.find((item) => item.id === result.teacherId);
+
+      if (teacher) {
+        prependUniversityAdminTeacherRecord(teacher);
+      }
+    }
+
+    return result;
   }
 
   patchState({
@@ -819,8 +878,20 @@ async function registerTeacher(values: RegisterTeacherFormValues) {
 
   try {
     const teacher = await createUniversityTeacher(values);
-    await refreshRuntimeState();
+    const nextTeachers = [
+      teacher,
+      ...state.teachers.filter((currentTeacher) => currentTeacher.id !== teacher.id),
+    ];
+
+    prependUniversityAdminTeacherRecord(teacher);
     resetUniversityAdminOverviewState();
+    updateState({
+      ...state,
+      errorMessage: null,
+      isLoading: false,
+      isReady: true,
+      teachers: nextTeachers,
+    });
 
     return {
       teacherId: teacher.id,
@@ -1111,7 +1182,15 @@ async function processBulkUpload(
   rows: BulkStudentRow[] | BulkTeacherRow[],
 ) {
   if (IS_TEST_MODE) {
-    return processBulkUploadMock(templateType);
+    const result = processBulkUploadMock(templateType);
+
+    if (templateType === 'students') {
+      syncUniversityAdminStudentRecordsState(state.students, state.credentials);
+    } else {
+      syncUniversityAdminTeacherRecordsState(state.teachers);
+    }
+
+    return result;
   }
 
   patchState({ errorMessage: null, isLoading: true });
@@ -1119,8 +1198,13 @@ async function processBulkUpload(
   try {
     if (templateType === 'students') {
       const result = await bulkCreateStudents(rows as BulkStudentRow[]);
-      await refreshRuntimeState();
+      await refreshUniversityAdminStudentRecordsState();
       resetUniversityAdminOverviewState();
+      patchState({
+        errorMessage: null,
+        isLoading: false,
+        isReady: true,
+      });
 
       return {
         createdCredentials: result.createdCredentials,
@@ -1131,8 +1215,13 @@ async function processBulkUpload(
     }
 
     const result = await bulkCreateTeachers(rows as BulkTeacherRow[]);
-    await refreshRuntimeState();
+    await refreshUniversityAdminTeacherRecordsState();
     resetUniversityAdminOverviewState();
+    patchState({
+      errorMessage: null,
+      isLoading: false,
+      isReady: true,
+    });
 
     return {
       createdCredentials: 0,
@@ -1156,6 +1245,8 @@ export function resetUniversityAdminModuleState() {
   nextCredentialSequence = initialMockState.credentials.length + 1;
   runtimeLoadPromise = null;
   resetUniversityAdminProfileState();
+  resetUniversityAdminStudentRecordsState();
+  resetUniversityAdminTeacherRecordsState();
   resetUniversityAdminOverviewState();
   emitChange();
 }
