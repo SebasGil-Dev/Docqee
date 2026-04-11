@@ -215,7 +215,7 @@ function validateForm(values: RegisterUniversityFormValues): RegisterUniversityF
 export function AdminRegisterUniversityPage({
   catalogDataSource = patientRegisterCatalogDataSource,
 }: AdminRegisterUniversityPageProps) {
-  const { errorMessage, isLoading, registerUniversity } = useAdminModuleStore();
+  const { errorMessage, isLoading, registerUniversity } = useAdminModuleStore({ autoLoad: false });
   const navigate = useNavigate();
   const nameRef = useRef<HTMLInputElement>(null);
   const cityRef = useRef<HTMLSelectElement>(null);

@@ -74,6 +74,7 @@ model credencial_inicial {
   envio_credencial      envio_credencial[]
 
   @@index([fecha_creacion], map: "idx_credencial_inicial_fecha")
+  @@index([anulada_at, fecha_creacion], map: "idx_credencial_inicial_pendientes_fecha")
 }
 
 model cuenta_acceso {
@@ -461,6 +462,7 @@ model universidad {
   localidad                localidad                 @relation(fields: [id_localidad_principal], references: [id_localidad], onDelete: NoAction, onUpdate: NoAction, map: "fk_universidad_localidad")
 
   @@index([id_localidad_principal], map: "idx_universidad_localidad")
+  @@index([fecha_creacion], map: "idx_universidad_fecha")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.

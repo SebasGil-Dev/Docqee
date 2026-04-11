@@ -22,12 +22,7 @@ import type { PendingCredential } from '@/content/types';
 import { classNames } from '@/lib/classNames';
 import { useAdminModuleStore } from '@/lib/adminModuleStore';
 
-type CredentialRow = PendingCredential & {
-  administratorEmail: string;
-  administratorName: string;
-  universityStatus: 'active' | 'inactive' | 'pending';
-  universityName: string;
-};
+type CredentialRow = PendingCredential;
 
 type CredentialFilterValue = 'all' | 'generated' | 'pending' | 'sent';
 
@@ -78,7 +73,6 @@ export function AdminCredentialsPage() {
     resendCredential,
     refresh,
     sendCredential,
-    universities,
   } = useAdminModuleStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<CredentialFilterValue>('all');
@@ -91,27 +85,7 @@ export function AdminCredentialsPage() {
   const [isConfirmationSubmitting, setIsConfirmationSubmitting] = useState(false);
   const filterMenuRef = useRef<HTMLDivElement | null>(null);
   const lastAutoRefreshAtRef = useRef(0);
-  const credentialRows = useMemo<CredentialRow[]>(
-    () =>
-      credentials
-        .map((credential) => {
-          const university = universities.find((item) => item.id === credential.universityId);
-
-          if (!university) {
-            return null;
-          }
-
-          return {
-            ...credential,
-            administratorEmail: university.adminEmail,
-            administratorName: `${university.adminFirstName} ${university.adminLastName}`,
-            universityName: university.name,
-            universityStatus: university.status,
-          };
-        })
-        .filter((row): row is CredentialRow => row !== null),
-    [credentials, universities],
-  );
+  const credentialRows = useMemo<CredentialRow[]>(() => credentials, [credentials]);
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const filteredCredentialRows = credentialRows.filter((credential) => {
     const matchesSearch =

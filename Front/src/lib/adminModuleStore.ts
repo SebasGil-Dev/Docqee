@@ -12,8 +12,7 @@ import { patientRegisterCatalogDataSource } from '@/lib/patientRegisterCatalogDa
 import {
   createPlatformAdminUniversity,
   deletePlatformAdminCredential,
-  listPlatformAdminCredentials,
-  listPlatformAdminUniversities,
+  getPlatformAdminOverview,
   resendPlatformAdminCredential,
   sendPlatformAdminCredential,
   togglePlatformAdminUniversityStatus,
@@ -35,6 +34,10 @@ type AdminModuleActions = {
   resendCredential: (credentialId: string) => Promise<string | null>;
   sendCredential: (credentialId: string) => Promise<string | null>;
   toggleUniversityStatus: (universityId: string) => Promise<UniversityStatus | null>;
+};
+
+type UseAdminModuleStoreOptions = {
+  autoLoad?: boolean;
 };
 
 const listeners = new Set<() => void>();
@@ -105,18 +108,26 @@ function createMockState(): AdminModuleStoreState {
 
   const credentials: PendingCredential[] = [
     {
+      administratorEmail: 'sofia.rojas@universidadpacifico.edu.co',
+      administratorName: 'Sofia Rojas',
       deliveryStatus: 'generated',
       id: 'cred-1',
       lastSentAt: null,
       sentCount: 0,
       universityId: 'uni-3',
+      universityName: 'Universidad del Pacifico Dental',
+      universityStatus: 'pending',
     },
     {
+      administratorEmail: 'mateo.diaz@corporacionoral.edu.co',
+      administratorName: 'Mateo Diaz',
       deliveryStatus: 'sent',
       id: 'cred-2',
       lastSentAt: '2026-04-03T16:05:00.000Z',
       sentCount: 1,
       universityId: 'uni-4',
+      universityName: 'Corporacion Oral del Caribe',
+      universityStatus: 'active',
     },
   ];
 
@@ -223,6 +234,7 @@ function markCredentialAsSentMock(credentialId: string) {
             deliveryStatus: 'sent',
             lastSentAt: new Date().toISOString(),
             sentCount: credential.sentCount + 1,
+            universityStatus: 'active',
           }
         : credential,
     ),
@@ -255,11 +267,15 @@ function registerUniversityMock(values: RegisterUniversityFormValues) {
   };
 
   const nextCredential: PendingCredential = {
+    administratorEmail: nextUniversity.adminEmail,
+    administratorName: `${nextUniversity.adminFirstName} ${nextUniversity.adminLastName}`,
     deliveryStatus: 'generated',
     id: credentialId,
     lastSentAt: null,
     sentCount: 0,
     universityId,
+    universityName: nextUniversity.name,
+    universityStatus: 'pending',
   };
 
   updateState({
@@ -313,6 +329,14 @@ function editCredentialEmailMock(credentialId: string, email: string) {
 
   updateState({
     ...state,
+    credentials: state.credentials.map((item) =>
+      item.id === credentialId
+        ? {
+            ...item,
+            administratorEmail: normalizeEmail(email),
+          }
+        : item,
+    ),
     universities: state.universities.map((university) =>
       university.id === credential.universityId
         ? {
@@ -365,11 +389,8 @@ async function loadRuntimeState(forceRefresh = false) {
     isLoading: true,
   });
 
-  runtimeLoadPromise = Promise.all([
-    listPlatformAdminUniversities(),
-    listPlatformAdminCredentials(),
-  ])
-    .then(([universities, credentials]) => {
+  runtimeLoadPromise = getPlatformAdminOverview()
+    .then(({ universities, credentials }) => {
       updateState({
         credentials,
         errorMessage: null,
@@ -414,11 +435,15 @@ async function registerUniversity(values: RegisterUniversityFormValues) {
 
     const newCredential: PendingCredential | null = university.credentialId
       ? {
+          administratorEmail: university.adminEmail,
+          administratorName: `${university.adminFirstName} ${university.adminLastName}`,
           deliveryStatus: 'generated',
           id: university.credentialId,
           lastSentAt: null,
           sentCount: 0,
           universityId: university.id,
+          universityName: university.name,
+          universityStatus: 'pending',
         }
       : null;
 
@@ -600,6 +625,14 @@ async function editCredentialEmail(credentialId: string, email: string) {
 
   updateState({
     ...state,
+    credentials: state.credentials.map((item) =>
+      item.id === credentialId
+        ? {
+            ...item,
+            administratorEmail: normalizeEmail(email),
+          }
+        : item,
+    ),
     errorMessage: null,
     isReady: true,
     universities: state.universities.map((university) =>
@@ -623,16 +656,17 @@ export function resetAdminModuleState() {
   emitChange();
 }
 
-export function useAdminModuleStore() {
+export function useAdminModuleStore(options: UseAdminModuleStoreOptions = {}) {
   const snapshot = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  const shouldAutoLoad = options.autoLoad ?? true;
 
   useEffect(() => {
-    if (IS_TEST_MODE || snapshot.isLoading || snapshot.isReady) {
+    if (!shouldAutoLoad || IS_TEST_MODE || snapshot.isLoading || snapshot.isReady) {
       return;
     }
 
     void loadRuntimeState();
-  }, [snapshot.isLoading, snapshot.isReady]);
+  }, [shouldAutoLoad, snapshot.isLoading, snapshot.isReady]);
 
   const actions: AdminModuleActions = {
     deleteCredential,

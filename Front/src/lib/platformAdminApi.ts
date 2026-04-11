@@ -5,6 +5,13 @@ import type {
 } from '@/content/types';
 import { apiRequest } from '@/lib/apiClient';
 
+export function getPlatformAdminOverview() {
+  return apiRequest<{
+    credentials: PendingCredential[];
+    universities: AdminUniversity[];
+  }>('/platform-admin/overview');
+}
+
 export function listPlatformAdminUniversities() {
   return apiRequest<AdminUniversity[]>('/platform-admin/universities');
 }

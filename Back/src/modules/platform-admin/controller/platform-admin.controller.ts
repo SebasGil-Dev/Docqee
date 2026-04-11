@@ -19,6 +19,11 @@ import { PlatformAdminService } from '../platform-admin.service';
 export class PlatformAdminController {
   constructor(private readonly platformAdminService: PlatformAdminService) {}
 
+  @Get('overview')
+  getOverview(@CurrentUser() user: RequestUser) {
+    return this.platformAdminService.getOverview(user);
+  }
+
   @Get('universities')
   listUniversities(@CurrentUser() user: RequestUser) {
     return this.platformAdminService.listUniversities(user);

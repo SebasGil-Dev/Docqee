@@ -575,11 +575,15 @@ export type AdminUniversity = {
 };
 
 export type PendingCredential = {
+  administratorEmail: string;
+  administratorName: string;
   deliveryStatus: CredentialDeliveryStatus;
   id: string;
   lastSentAt: string | null;
   sentCount: number;
   universityId: string;
+  universityName: string;
+  universityStatus: UniversityStatus;
 };
 
 export type AdminModuleState = {
