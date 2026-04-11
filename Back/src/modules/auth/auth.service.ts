@@ -98,13 +98,16 @@ export class AuthService implements OnModuleInit {
       throw new UnauthorizedException('Correo o contrasena incorrectos.');
     }
 
-    const isValidPassword = await bcrypt.compare(input.password, account.password_hash);
+    const passwordValidationPromise = bcrypt.compare(input.password, account.password_hash);
+    const sessionAccountPromise = this.hydrateSessionAccount(account);
+    const [isValidPassword, sessionAccount] = await Promise.all([
+      passwordValidationPromise,
+      sessionAccountPromise,
+    ]);
 
     if (!isValidPassword) {
       throw new UnauthorizedException('Correo o contrasena incorrectos.');
     }
-
-    const sessionAccount = await this.hydrateSessionAccount(account);
 
     this.assertSessionAccessAllowed(sessionAccount);
 
@@ -595,20 +598,22 @@ export class AuthService implements OnModuleInit {
 
   private async buildSessionResponse(account: SessionAccount) {
     const user = this.buildRequestUser(account);
-    const accessToken = await this.jwtService.signAsync(user, {
-      expiresIn: (this.configService.get<string>('auth.jwtExpiresIn') ?? '15m') as never,
-      secret: this.configService.get<string>('auth.jwtSecret') ?? 'change_me',
-    });
-    const refreshToken = await this.jwtService.signAsync(
-      {
-        ...user,
-        tokenType: 'refresh',
-      } satisfies RefreshTokenPayload,
-      {
-        expiresIn: (this.configService.get<string>('auth.jwtRefreshExpiresIn') ?? '7d') as never,
-        secret: this.configService.get<string>('auth.jwtRefreshSecret') ?? 'change_me_too',
-      },
-    );
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync(user, {
+        expiresIn: (this.configService.get<string>('auth.jwtExpiresIn') ?? '15m') as never,
+        secret: this.configService.get<string>('auth.jwtSecret') ?? 'change_me',
+      }),
+      this.jwtService.signAsync(
+        {
+          ...user,
+          tokenType: 'refresh',
+        } satisfies RefreshTokenPayload,
+        {
+          expiresIn: (this.configService.get<string>('auth.jwtRefreshExpiresIn') ?? '7d') as never,
+          secret: this.configService.get<string>('auth.jwtRefreshSecret') ?? 'change_me_too',
+        },
+      ),
+    ]);
 
     return {
       accessToken,

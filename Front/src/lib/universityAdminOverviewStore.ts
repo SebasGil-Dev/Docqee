@@ -478,7 +478,7 @@ async function loadRuntimeState(forceRefresh = false) {
   return runtimeLoadPromise;
 }
 
-async function refreshRuntimeState() {
+export async function refreshUniversityAdminOverviewState() {
   await loadRuntimeState(true);
 }
 
@@ -513,7 +513,7 @@ export function useUniversityAdminOverviewStore(
   ]);
 
   const actions: UniversityAdminOverviewActions = {
-    refresh: refreshRuntimeState,
+    refresh: refreshUniversityAdminOverviewState,
   };
 
   return {

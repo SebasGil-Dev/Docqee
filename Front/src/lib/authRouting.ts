@@ -37,3 +37,63 @@ export function getLandingRouteForSession(
 
   return getDefaultRouteForRole(session.user.role);
 }
+
+export function preloadLandingRouteForSession(
+  session: Pick<AuthSession, 'requiresPasswordChange' | 'user'>,
+) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  const preloads: Array<Promise<unknown>> = [];
+
+  if (shouldRequireFirstLoginPasswordChange(session)) {
+    preloads.push(
+      import('@/pages/auth/first-login/FirstLoginPasswordPage'),
+    );
+  } else {
+    switch (session.user.role) {
+      case 'PATIENT':
+        preloads.push(
+          import('@/pages/patient/PatientLayout'),
+          import('@/pages/patient/search/PatientSearchStudentsPage'),
+          import('@/lib/patientModuleStore').then(({ refreshPatientModuleState }) =>
+            refreshPatientModuleState(),
+          ),
+        );
+        break;
+      case 'PLATFORM_ADMIN':
+        preloads.push(
+          import('@/pages/admin/AdminLayout'),
+          import('@/pages/admin/universities/AdminUniversitiesPage'),
+          import('@/lib/adminModuleStore').then(({ refreshAdminModuleState }) =>
+            refreshAdminModuleState(),
+          ),
+        );
+        break;
+      case 'STUDENT':
+        preloads.push(
+          import('@/pages/student/StudentLayout'),
+          import('@/pages/student/treatments/StudentTreatmentsPage'),
+          import('@/lib/studentModuleStore').then(({ refreshStudentModuleState }) =>
+            refreshStudentModuleState(),
+          ),
+        );
+        break;
+      case 'UNIVERSITY_ADMIN':
+        preloads.push(
+          import('@/pages/university-admin/UniversityAdminLayout'),
+          import('@/pages/university-admin/home/UniversityHomePage'),
+          import('@/lib/universityAdminOverviewStore').then(
+            ({ refreshUniversityAdminOverviewState }) =>
+              refreshUniversityAdminOverviewState(),
+          ),
+        );
+        break;
+      default:
+        break;
+    }
+  }
+
+  void Promise.allSettled(preloads);
+}

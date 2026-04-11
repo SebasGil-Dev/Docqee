@@ -1161,7 +1161,7 @@ async function loadRuntimeState(forceRefresh = false) {
   return runtimeLoadPromise;
 }
 
-async function refreshRuntimeState() {
+export async function refreshStudentModuleState() {
   await loadRuntimeState(true);
 }
 
@@ -1552,7 +1552,7 @@ export function useStudentModuleStore() {
 
   const actions: StudentModuleActions = {
     deleteScheduleBlock,
-    refresh: refreshRuntimeState,
+    refresh: refreshStudentModuleState,
     updateAppointmentStatus,
     respondToRequest,
     sendConversationMessage,

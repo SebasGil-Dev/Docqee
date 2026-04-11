@@ -7,6 +7,8 @@
 
 type ApiRequestInit = Omit<RequestInit, 'body'> & {
   body?: BodyInit | Record<string, unknown> | null;
+  skipAuth?: boolean;
+  skipRefresh?: boolean;
 };
 
 type PreparedRequest = {
@@ -64,9 +66,13 @@ function isValidAuthSession(session: Partial<AuthSession> | null): session is Au
   );
 }
 
-function buildHeaders(headers?: HeadersInit, sessionOverride?: AuthSession | null) {
+function buildHeaders(
+  headers?: HeadersInit,
+  sessionOverride?: AuthSession | null,
+  skipAuth = false,
+) {
   const nextHeaders = new Headers(headers);
-  const session = sessionOverride ?? readAuthSession();
+  const session = skipAuth ? null : sessionOverride ?? readAuthSession();
 
   if (!nextHeaders.has('Accept')) {
     nextHeaders.set('Accept', 'application/json');
@@ -83,7 +89,7 @@ function prepareRequest(
   init?: ApiRequestInit,
   sessionOverride?: AuthSession | null,
 ): PreparedRequest {
-  const headers = buildHeaders(init?.headers, sessionOverride);
+  const headers = buildHeaders(init?.headers, sessionOverride, init?.skipAuth);
   const rawBody = init?.body ?? null;
   let body: BodyInit | null;
 
@@ -142,10 +148,16 @@ async function performFetch<T>(
   sessionOverride?: AuthSession | null,
 ): Promise<ParsedApiResponse<T>> {
   const { body, headers } = prepareRequest(init, sessionOverride);
+  const {
+    body: _rawBody,
+    skipAuth: _skipAuth,
+    skipRefresh: _skipRefresh,
+    ...fetchInit
+  } = init ?? {};
   const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
+    ...fetchInit,
     body,
-    credentials: init?.credentials ?? 'include',
+    credentials: fetchInit.credentials ?? 'include',
     headers,
   });
 
@@ -194,7 +206,7 @@ async function refreshAuthSession(currentSession: AuthSession) {
 }
 
 export async function apiRequest<T>(path: string, init?: ApiRequestInit) {
-  const currentSession = readAuthSession();
+  const currentSession = init?.skipAuth ? null : readAuthSession();
   const initialResponse = await performFetch<T>(path, init);
 
   if (initialResponse.response.ok) {
@@ -203,6 +215,7 @@ export async function apiRequest<T>(path: string, init?: ApiRequestInit) {
 
   if (
     isUnauthorizedStatus(initialResponse.response.status) &&
+    !init?.skipRefresh &&
     currentSession?.accessToken &&
     path !== REFRESH_SESSION_PATH
   ) {

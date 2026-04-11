@@ -22,6 +22,8 @@ export function login(email: string, password: string) {
       password,
     },
     method: 'POST',
+    skipAuth: true,
+    skipRefresh: true,
   });
 }
 

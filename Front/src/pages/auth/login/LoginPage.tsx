@@ -12,7 +12,10 @@ import { ROUTES } from '@/constants/routes';
 import { authContent } from '@/content/authContent';
 import { IS_TEST_MODE } from '@/lib/apiClient';
 import { login as loginRequest } from '@/lib/authApi';
-import { getLandingRouteForSession } from '@/lib/authRouting';
+import {
+  getLandingRouteForSession,
+  preloadLandingRouteForSession,
+} from '@/lib/authRouting';
 import type { LoginFormErrors, LoginFormState, LoginFormValues } from '@/content/types';
 import { classNames } from '@/lib/classNames';
 import {
@@ -229,6 +232,7 @@ export function LoginPage() {
         );
 
         setSession(authSession);
+        preloadLandingRouteForSession(authSession);
         navigate(getLandingRouteForSession(authSession), { replace: true });
       } catch (error) {
         setFormState((currentState) => ({
@@ -352,7 +356,7 @@ export function LoginPage() {
                 disabled={isSubmitting}
                 type="submit"
               >
-                {content.submitLabel}
+                {isSubmitting ? 'Ingresando...' : content.submitLabel}
               </button>
             </form>
           </div>

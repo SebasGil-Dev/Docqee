@@ -590,7 +590,7 @@ async function loadRuntimeState(forceRefresh = false) {
   return runtimeLoadPromise;
 }
 
-async function refreshRuntimeState() {
+export async function refreshPatientModuleState() {
   await loadRuntimeState(true);
 }
 
@@ -799,7 +799,7 @@ export function usePatientModuleStore() {
 
   const actions: PatientModuleActions = {
     createRequest,
-    refresh: refreshRuntimeState,
+    refresh: refreshPatientModuleState,
     sendConversationMessage,
     updateAppointmentStatus,
     updateProfile,

@@ -597,7 +597,7 @@ async function loadRuntimeState(forceRefresh = false) {
   return runtimeLoadPromise;
 }
 
-async function refreshRuntimeState() {
+export async function refreshAdminModuleState() {
   await loadRuntimeState(true);
 }
 
@@ -878,7 +878,7 @@ export function useAdminModuleStore(options: UseAdminModuleStoreOptions = {}) {
   const actions: AdminModuleActions = {
     deleteCredential,
     editCredentialEmail,
-    refresh: refreshRuntimeState,
+    refresh: refreshAdminModuleState,
     registerUniversity,
     resendCredential,
     sendCredential,
