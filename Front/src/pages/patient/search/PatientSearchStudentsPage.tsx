@@ -5,13 +5,11 @@ import {
   SendHorizontal,
   ShieldCheck,
   SlidersHorizontal,
-  Stethoscope,
   UserRound,
   X,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
 import { Seo } from '@/components/ui/Seo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
@@ -190,16 +188,28 @@ export function PatientSearchStudentsPage() {
   };
 
   return (
-    <div className="mx-auto flex h-full max-w-[90rem] min-h-0 flex-col gap-4 overflow-hidden 2xl:max-w-[98rem]">
+    <div className="mx-auto flex h-full max-w-[90rem] min-h-0 flex-col gap-2.5 overflow-hidden 2xl:max-w-[98rem]">
       <Seo
         description={patientContent.searchPage.meta.description}
         noIndex
         title={patientContent.searchPage.meta.title}
       />
-      <AdminPageHeader
-        description={patientContent.searchPage.description}
-        title={patientContent.searchPage.title}
-      />
+      <div className="flex flex-col gap-2 rounded-[1.15rem] border border-slate-200/80 bg-white px-3.5 py-3 shadow-[0_14px_36px_-28px_rgba(15,23,42,0.42)] sm:flex-row sm:items-center sm:justify-between sm:px-4">
+        <div className="min-w-0">
+          <h1 className="font-headline text-xl font-extrabold leading-tight tracking-tight text-ink sm:text-[1.35rem]">
+            {patientContent.searchPage.title}
+          </h1>
+          <p className="mt-0.5 max-w-3xl text-xs leading-5 text-ink-muted sm:text-sm">
+            {patientContent.searchPage.description}
+          </p>
+        </div>
+        <div className="inline-flex shrink-0 items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-primary ring-1 ring-primary/10">
+          <span className="font-headline text-lg font-extrabold leading-none">
+            {filteredStudents.length}
+          </span>
+          <span className="text-xs font-semibold">Estudiantes visibles</span>
+        </div>
+      </div>
       {successMessage ? (
         <SurfaceCard
           className="border border-emerald-200 bg-emerald-50/90 text-sm font-medium text-emerald-800"
@@ -221,26 +231,8 @@ export function PatientSearchStudentsPage() {
           <p role="alert">{errorMessage}</p>
         </SurfaceCard>
       ) : null}
-      <div className="grid gap-3 sm:max-w-sm">
-        <SurfaceCard
-          className="min-w-0 overflow-hidden bg-brand-gradient text-white"
-          paddingClassName="p-0"
-        >
-          <div className="flex items-center gap-3 px-4 py-3">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-white/12 text-white ring-1 ring-white/18">
-              <Stethoscope aria-hidden="true" className="h-4.5 w-4.5" />
-            </span>
-            <div>
-              <p className="font-headline text-[1.55rem] font-extrabold tracking-tight text-white">
-                {filteredStudents.length}
-              </p>
-              <p className="text-sm font-semibold text-white/90">Estudiantes visibles</p>
-            </div>
-          </div>
-        </SurfaceCard>
-      </div>
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
-        <div className="border-b border-slate-200/80 px-4 py-4 sm:px-5 sm:py-4">
+        <div className="border-b border-slate-200/80 px-3 py-3 sm:px-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <label className="relative min-w-0 flex-1 sm:max-w-[34rem] xl:max-w-[38rem]" htmlFor="patient-student-search">
               <span className="sr-only">{patientContent.searchPage.searchLabel}</span>
@@ -249,7 +241,7 @@ export function PatientSearchStudentsPage() {
                 className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ghost"
               />
               <input
-                className="h-11 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-11 pr-4 text-sm text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                className="h-10 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-11 pr-4 text-sm text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
                 id="patient-student-search"
                 placeholder={patientContent.searchPage.searchPlaceholder}
                 type="search"
@@ -268,7 +260,7 @@ export function PatientSearchStudentsPage() {
                     : `Filtrar estudiantes por tratamiento. Actual: ${treatmentFilter}`
                 }
                 className={classNames(
-                  'relative inline-flex h-11 w-11 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                  'relative inline-flex h-10 w-10 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
                   treatmentFilter === 'all'
                     ? 'border-slate-200/90 hover:border-primary/30 hover:bg-white'
                     : 'border-primary/25 bg-primary/[0.08] text-primary hover:bg-primary/[0.12]',
@@ -331,20 +323,25 @@ export function PatientSearchStudentsPage() {
             </div>
           </div>
         </div>
-        <div className="min-h-0 flex-1 px-4 py-4 sm:px-5 sm:py-5">
+        <div className="min-h-0 flex-1 px-3 py-3 sm:px-4">
           <SurfaceCard className="h-full min-h-0 border border-slate-200/80 bg-white shadow-none" paddingClassName="p-0">
             <div className="flex h-full min-h-[18rem] flex-col">
-              <div className="border-b border-slate-200/80 px-4 py-4">
-                <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
-                  Estudiantes sugeridos
-                </h2>
-                <p className="mt-1 text-sm leading-6 text-ink-muted">
-                  Selecciona un perfil para revisar su oferta y enviar tu solicitud.
-                </p>
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 px-3 py-2.5">
+                <div className="min-w-0">
+                  <h2 className="font-headline text-lg font-extrabold tracking-tight text-ink">
+                    Estudiantes sugeridos
+                  </h2>
+                  <p className="text-xs leading-5 text-ink-muted">
+                    Selecciona un perfil para revisar su oferta y enviar tu solicitud.
+                  </p>
+                </div>
+                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-ink-muted">
+                  {filteredStudents.length} perfiles
+                </span>
               </div>
-              <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto p-3">
+              <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto p-2.5">
                 {filteredStudents.length > 0 ? (
-                  <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
+                  <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                     {filteredStudents.map((student) => {
                       const isSelected = selectedStudent?.id === student.id;
 
@@ -352,7 +349,7 @@ export function PatientSearchStudentsPage() {
                         <button
                           key={student.id}
                           className={classNames(
-                            'h-full w-full rounded-[1.35rem] border px-4 py-3 text-left transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                            'h-full w-full rounded-[1rem] border px-3 py-2.5 text-left transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
                             isSelected
                               ? 'border-primary/35 bg-primary/[0.08] shadow-[0_18px_40px_-28px_rgba(22,78,99,0.65)]'
                               : 'border-slate-200/80 bg-slate-50 hover:border-primary/20 hover:bg-slate-100/70',
@@ -361,18 +358,18 @@ export function PatientSearchStudentsPage() {
                           type="button"
                           onClick={() => handleOpenStudentModal(student.id)}
                         >
-                          <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
                               <p className="truncate text-sm font-semibold text-ink">
                                 {getStudentFullName(student)}
                               </p>
-                              <p className="text-xs text-ink-muted">
+                              <p className="truncate text-xs text-ink-muted">
                                 Semestre {student.semester} - {student.universityName}
                               </p>
                             </div>
                             <span
                               className={classNames(
-                                'inline-flex rounded-full px-2.5 py-1 text-[0.68rem] font-semibold ring-1 ring-inset',
+                                'inline-flex shrink-0 rounded-full px-2 py-0.5 text-[0.66rem] font-semibold ring-1 ring-inset',
                                 student.availabilityStatus === 'available'
                                   ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
                                   : 'bg-amber-50 text-amber-700 ring-amber-200',
@@ -381,8 +378,10 @@ export function PatientSearchStudentsPage() {
                               {student.availabilityStatus === 'available' ? 'Disponible' : 'Limitado'}
                             </span>
                           </div>
-                          <p className="mt-2 text-sm leading-6 text-ink-muted">{student.biography}</p>
-                          <p className="mt-2 text-xs font-medium uppercase tracking-[0.18em] text-primary/70">
+                          <p className="mt-1 line-clamp-2 text-xs leading-5 text-ink-muted">
+                            {student.biography}
+                          </p>
+                          <p className="mt-1 truncate text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-primary/70">
                             {getStudentLocation(student)}
                           </p>
                         </button>
