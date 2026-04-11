@@ -8,6 +8,7 @@ import type {
   UniversityStatus,
 } from '@/content/types';
 import { IS_TEST_MODE } from '@/lib/apiClient';
+import { readAuthSession } from '@/lib/authSession';
 import { patientRegisterCatalogDataSource } from '@/lib/patientRegisterCatalogDataSource';
 import {
   createPlatformAdminUniversity,
@@ -22,6 +23,7 @@ type AdminModuleStoreState = AdminModuleState & {
   errorMessage: string | null;
   isLoading: boolean;
   isReady: boolean;
+  shouldRefresh: boolean;
 };
 
 type AdminModuleActions = {
@@ -39,6 +41,16 @@ type AdminModuleActions = {
 type UseAdminModuleStoreOptions = {
   autoLoad?: boolean;
 };
+
+type PersistedAdminModuleCache = {
+  credentials: PendingCredential[];
+  universities: AdminUniversity[];
+  updatedAt: number;
+  userId: number;
+};
+
+const ADMIN_MODULE_CACHE_STORAGE_KEY = 'docqee.platform-admin.module-cache';
+const ADMIN_MODULE_CACHE_MAX_AGE_MS = 30 * 60 * 1000;
 
 const listeners = new Set<() => void>();
 
@@ -136,22 +148,170 @@ function createMockState(): AdminModuleStoreState {
     errorMessage: null,
     isLoading: false,
     isReady: true,
+    shouldRefresh: false,
     universities,
   };
 }
 
-function createRuntimeInitialState(): AdminModuleStoreState {
+function createEmptyRuntimeState(): AdminModuleStoreState {
   return {
     credentials: [],
     errorMessage: null,
     isLoading: false,
     isReady: false,
+    shouldRefresh: false,
     universities: [],
   };
 }
 
 function getErrorMessage(error: unknown, fallbackMessage: string) {
   return error instanceof Error ? error.message : fallbackMessage;
+}
+
+function readSessionStorage() {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    return window.sessionStorage;
+  } catch {
+    return null;
+  }
+}
+
+function isUniversityStatus(value: unknown): value is UniversityStatus {
+  return value === 'active' || value === 'inactive' || value === 'pending';
+}
+
+function isAdminUniversity(value: unknown): value is AdminUniversity {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<AdminUniversity>;
+
+  return (
+    typeof candidate.adminEmail === 'string' &&
+    typeof candidate.adminFirstName === 'string' &&
+    typeof candidate.adminLastName === 'string' &&
+    (candidate.adminPhone === null || typeof candidate.adminPhone === 'string') &&
+    typeof candidate.createdAt === 'string' &&
+    (candidate.credentialId === null || typeof candidate.credentialId === 'string') &&
+    typeof candidate.id === 'string' &&
+    typeof candidate.mainCity === 'string' &&
+    typeof candidate.mainCityId === 'string' &&
+    typeof candidate.mainLocality === 'string' &&
+    typeof candidate.mainLocalityId === 'string' &&
+    typeof candidate.name === 'string' &&
+    isUniversityStatus(candidate.status)
+  );
+}
+
+function isPendingCredential(value: unknown): value is PendingCredential {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<PendingCredential>;
+
+  return (
+    typeof candidate.administratorEmail === 'string' &&
+    typeof candidate.administratorName === 'string' &&
+    (candidate.deliveryStatus === 'generated' || candidate.deliveryStatus === 'sent') &&
+    typeof candidate.id === 'string' &&
+    (candidate.lastSentAt === null || typeof candidate.lastSentAt === 'string') &&
+    typeof candidate.sentCount === 'number' &&
+    typeof candidate.universityId === 'string' &&
+    typeof candidate.universityName === 'string' &&
+    isUniversityStatus(candidate.universityStatus)
+  );
+}
+
+function persistAdminModuleCache(
+  universities: AdminUniversity[],
+  credentials: PendingCredential[],
+) {
+  const storage = readSessionStorage();
+  const session = readAuthSession();
+
+  if (!storage || !session || session.user.role !== 'PLATFORM_ADMIN') {
+    return;
+  }
+
+  const payload: PersistedAdminModuleCache = {
+    credentials,
+    universities,
+    updatedAt: Date.now(),
+    userId: session.user.id,
+  };
+
+  storage.setItem(ADMIN_MODULE_CACHE_STORAGE_KEY, JSON.stringify(payload));
+}
+
+function clearPersistedAdminModuleCache() {
+  const storage = readSessionStorage();
+
+  if (!storage) {
+    return;
+  }
+
+  storage.removeItem(ADMIN_MODULE_CACHE_STORAGE_KEY);
+}
+
+function readPersistedAdminModuleCache() {
+  const storage = readSessionStorage();
+  const session = readAuthSession();
+
+  if (!storage || !session || session.user.role !== 'PLATFORM_ADMIN') {
+    return null;
+  }
+
+  const rawCache = storage.getItem(ADMIN_MODULE_CACHE_STORAGE_KEY);
+
+  if (!rawCache) {
+    return null;
+  }
+
+  try {
+    const parsedCache = JSON.parse(rawCache) as Partial<PersistedAdminModuleCache>;
+
+    if (
+      typeof parsedCache.updatedAt !== 'number' ||
+      Date.now() - parsedCache.updatedAt > ADMIN_MODULE_CACHE_MAX_AGE_MS ||
+      parsedCache.userId !== session.user.id ||
+      !Array.isArray(parsedCache.universities) ||
+      !Array.isArray(parsedCache.credentials)
+    ) {
+      storage.removeItem(ADMIN_MODULE_CACHE_STORAGE_KEY);
+      return null;
+    }
+
+    return {
+      credentials: parsedCache.credentials.filter(isPendingCredential),
+      universities: parsedCache.universities.filter(isAdminUniversity),
+    };
+  } catch {
+    storage.removeItem(ADMIN_MODULE_CACHE_STORAGE_KEY);
+    return null;
+  }
+}
+
+function createRuntimeInitialState(): AdminModuleStoreState {
+  const cachedRecords = readPersistedAdminModuleCache();
+
+  if (!cachedRecords) {
+    return createEmptyRuntimeState();
+  }
+
+  return {
+    credentials: cachedRecords.credentials,
+    errorMessage: null,
+    isLoading: false,
+    isReady: true,
+    shouldRefresh: true,
+    universities: cachedRecords.universities,
+  };
 }
 
 const initialMockState = createMockState();
@@ -188,6 +348,28 @@ function patchState(partialState: Partial<AdminModuleStoreState>) {
   updateState({
     ...state,
     ...partialState,
+  });
+}
+
+function setAdminModuleRecords(
+  universities: AdminUniversity[],
+  credentials: PendingCredential[],
+  options?: {
+    errorMessage?: string | null;
+    isLoading?: boolean;
+    isReady?: boolean;
+    shouldRefresh?: boolean;
+  },
+) {
+  persistAdminModuleCache(universities, credentials);
+  updateState({
+    ...state,
+    credentials,
+    errorMessage: options?.errorMessage ?? null,
+    isLoading: options?.isLoading ?? false,
+    isReady: options?.isReady ?? true,
+    shouldRefresh: options?.shouldRefresh ?? false,
+    universities,
   });
 }
 
@@ -376,7 +558,7 @@ async function loadRuntimeState(forceRefresh = false) {
     return state;
   }
 
-  if (state.isReady && !forceRefresh) {
+  if (state.isReady && !state.shouldRefresh && !forceRefresh) {
     return state;
   }
 
@@ -391,12 +573,10 @@ async function loadRuntimeState(forceRefresh = false) {
 
   runtimeLoadPromise = getPlatformAdminOverview()
     .then(({ universities, credentials }) => {
-      updateState({
-        credentials,
-        errorMessage: null,
+      setAdminModuleRecords(universities, credentials, {
         isLoading: false,
         isReady: true,
-        universities,
+        shouldRefresh: false,
       });
 
       return state;
@@ -405,6 +585,7 @@ async function loadRuntimeState(forceRefresh = false) {
       patchState({
         errorMessage: getErrorMessage(error, 'No pudimos cargar el modulo administrativo.'),
         isLoading: false,
+        shouldRefresh: false,
       });
 
       return state;
@@ -447,15 +628,15 @@ async function registerUniversity(values: RegisterUniversityFormValues) {
         }
       : null;
 
-    updateState({
-      ...state,
-      isLoading: false,
-      isReady: true,
-      universities: [university, ...state.universities],
-      credentials: newCredential
-        ? [newCredential, ...state.credentials]
-        : state.credentials,
-    });
+    setAdminModuleRecords(
+      [university, ...state.universities],
+      newCredential ? [newCredential, ...state.credentials] : state.credentials,
+      {
+        isLoading: false,
+        isReady: true,
+        shouldRefresh: false,
+      },
+    );
 
     return {
       credentialId: university.credentialId ?? '',
@@ -483,14 +664,17 @@ async function toggleUniversityStatus(universityId: string) {
   try {
     const updatedUniversity = await togglePlatformAdminUniversityStatus(universityId);
 
-    updateState({
-      ...state,
-      isLoading: false,
-      isReady: true,
-      universities: state.universities.map((university) =>
+    setAdminModuleRecords(
+      state.universities.map((university) =>
         university.id === updatedUniversity.id ? updatedUniversity : university,
       ),
-    });
+      state.credentials,
+      {
+        isLoading: false,
+        isReady: true,
+        shouldRefresh: false,
+      },
+    );
 
     return updatedUniversity.status;
   } catch (error) {
@@ -516,19 +700,21 @@ async function sendCredential(credentialId: string) {
     const result = await sendPlatformAdminCredential(credentialId);
     const updatedCredential = result.credential;
 
-    updateState({
-      ...state,
-      isLoading: false,
-      isReady: true,
-      credentials: state.credentials.map((credential) =>
-        credential.id === credentialId ? updatedCredential : credential,
-      ),
-      universities: state.universities.map((university) =>
+    setAdminModuleRecords(
+      state.universities.map((university) =>
         university.credentialId === credentialId
           ? { ...university, status: 'active' }
           : university,
       ),
-    });
+      state.credentials.map((credential) =>
+        credential.id === credentialId ? updatedCredential : credential,
+      ),
+      {
+        isLoading: false,
+        isReady: true,
+        shouldRefresh: false,
+      },
+    );
 
     return result.temporaryPassword;
   } catch (error) {
@@ -554,14 +740,17 @@ async function resendCredential(credentialId: string) {
     const result = await resendPlatformAdminCredential(credentialId);
     const updatedCredential = result.credential;
 
-    updateState({
-      ...state,
-      isLoading: false,
-      isReady: true,
-      credentials: state.credentials.map((credential) =>
+    setAdminModuleRecords(
+      state.universities,
+      state.credentials.map((credential) =>
         credential.id === credentialId ? updatedCredential : credential,
       ),
-    });
+      {
+        isLoading: false,
+        isReady: true,
+        shouldRefresh: false,
+      },
+    );
 
     return result.temporaryPassword;
   } catch (error) {
@@ -588,16 +777,18 @@ async function deleteCredential(credentialId: string) {
     await deletePlatformAdminCredential(credentialId);
     const credential = state.credentials.find((item) => item.id === credentialId);
 
-    updateState({
-      ...state,
-      isLoading: false,
-      isReady: true,
-      credentials: state.credentials.filter((item) => item.id !== credentialId),
-      universities: state.universities.filter(
+    setAdminModuleRecords(
+      state.universities.filter(
         (university) =>
           !(university.id === credential?.universityId && university.status === 'pending'),
       ),
-    });
+      state.credentials.filter((item) => item.id !== credentialId),
+      {
+        isLoading: false,
+        isReady: true,
+        shouldRefresh: false,
+      },
+    );
 
     return true;
   } catch (error) {
@@ -623,19 +814,8 @@ async function editCredentialEmail(credentialId: string, email: string) {
     return false;
   }
 
-  updateState({
-    ...state,
-    credentials: state.credentials.map((item) =>
-      item.id === credentialId
-        ? {
-            ...item,
-            administratorEmail: normalizeEmail(email),
-          }
-        : item,
-    ),
-    errorMessage: null,
-    isReady: true,
-    universities: state.universities.map((university) =>
+  setAdminModuleRecords(
+    state.universities.map((university) =>
       university.id === credential.universityId
         ? {
             ...university,
@@ -643,13 +823,30 @@ async function editCredentialEmail(credentialId: string, email: string) {
           }
         : university,
     ),
-  });
+    state.credentials.map((item) =>
+      item.id === credentialId
+        ? {
+            ...item,
+            administratorEmail: normalizeEmail(email),
+          }
+        : item,
+    ),
+    {
+      isLoading: false,
+      isReady: true,
+      shouldRefresh: false,
+    },
+  );
 
   return true;
 }
 
 export function resetAdminModuleState() {
-  state = IS_TEST_MODE ? createMockState() : createRuntimeInitialState();
+  if (!IS_TEST_MODE) {
+    clearPersistedAdminModuleCache();
+  }
+
+  state = IS_TEST_MODE ? createMockState() : createEmptyRuntimeState();
   nextUniversitySequence = initialMockState.universities.length + 1;
   nextCredentialSequence = initialMockState.credentials.length + 1;
   runtimeLoadPromise = null;
@@ -661,12 +858,22 @@ export function useAdminModuleStore(options: UseAdminModuleStoreOptions = {}) {
   const shouldAutoLoad = options.autoLoad ?? true;
 
   useEffect(() => {
-    if (!shouldAutoLoad || IS_TEST_MODE || snapshot.isLoading || snapshot.isReady) {
+    if (
+      !shouldAutoLoad ||
+      IS_TEST_MODE ||
+      snapshot.isLoading ||
+      (snapshot.isReady && !snapshot.shouldRefresh)
+    ) {
       return;
     }
 
     void loadRuntimeState();
-  }, [shouldAutoLoad, snapshot.isLoading, snapshot.isReady]);
+  }, [
+    shouldAutoLoad,
+    snapshot.isLoading,
+    snapshot.isReady,
+    snapshot.shouldRefresh,
+  ]);
 
   const actions: AdminModuleActions = {
     deleteCredential,
