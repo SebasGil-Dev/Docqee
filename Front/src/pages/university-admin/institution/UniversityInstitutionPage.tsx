@@ -563,6 +563,8 @@ export function UniversityInstitutionPage({
         fit: 'contain',
         maxHeight: 800,
         maxWidth: 1200,
+        outputType: 'image/png',
+        quality: 1,
       });
       handleInstitutionFieldChange('logoFileName', file.name);
       handleInstitutionFieldChange('logoSrc', logoSrc);
@@ -1023,7 +1025,7 @@ export function UniversityInstitutionPage({
                                 alt={institutionProfile.logoAlt}
                                 className="h-full w-full object-contain"
                                 decoding="async"
-                                src={getOptimizedLogoUrl(values.logoSrc, 360, 360)}
+                                src={getOptimizedLogoUrl(values.logoSrc, 720, 720)}
                               />
                             ) : (
                               <span className="font-headline text-[1.35rem] font-extrabold tracking-tight text-primary">

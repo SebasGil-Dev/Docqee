@@ -519,7 +519,7 @@ export function StudentTreatmentsPage() {
                         alt={profile.universityLogoAlt}
                         className="h-full w-full object-contain"
                         decoding="async"
-                        src={getOptimizedLogoUrl(profile.universityLogoSrc, 80, 80)}
+                        src={getOptimizedLogoUrl(profile.universityLogoSrc, 240, 240)}
                       />
                     ) : (
                       <span className="text-[0.65rem] font-extrabold uppercase">

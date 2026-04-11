@@ -48,7 +48,7 @@ export function getOptimizedLogoUrl(
 ) {
   return getCloudinaryImageUrl(
     src,
-    `e_trim:10,f_auto,q_auto,c_fit,w_${width},h_${height},dpr_auto`,
+    `e_trim:10,f_auto,q_auto:best,c_fit,w_${width},h_${height},dpr_auto`,
   );
 }
 

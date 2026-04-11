@@ -171,7 +171,7 @@ export function AdminShell({
   const showMobileBottomNavigation = isMobileViewport;
   const optimizedAvatarSrc =
     avatarKind === 'logo'
-      ? getOptimizedLogoUrl(avatarSrc, 96, 96)
+      ? getOptimizedLogoUrl(avatarSrc, 320, 320)
       : getOptimizedAvatarUrl(avatarSrc, 96);
 
   useEffect(() => {

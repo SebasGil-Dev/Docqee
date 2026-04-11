@@ -281,7 +281,7 @@ export function StudentProfilePage() {
                               alt={profile.universityLogoAlt}
                               className="h-full w-full object-contain"
                               decoding="async"
-                              src={getOptimizedLogoUrl(profile.universityLogoSrc, 96, 96)}
+                              src={getOptimizedLogoUrl(profile.universityLogoSrc, 240, 240)}
                             />
                           ) : (
                             <Building2 aria-hidden="true" className="h-4.5 w-4.5 text-primary" />
