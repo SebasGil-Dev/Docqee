@@ -1219,9 +1219,6 @@ export function UniversityInstitutionPage({
                               type="file"
                               onChange={handleLogoSelection}
                             />
-                            <p className="text-[0.68rem] text-ink-muted">
-                              {values.logoFileName ?? 'Aun no has seleccionado un archivo'}
-                            </p>
                             {logoUploadMessage ? (
                               <p
                                 className={logoUploadMessageClassName}
@@ -1365,9 +1362,9 @@ export function UniversityInstitutionPage({
                             </span>
                           </button>
                         </div>
-                        <div className="mt-3 grid gap-2.5">
+                        <div className="mt-6 grid gap-2.5">
                           {values.campuses.length > 0 ? (
-                            <div className="hidden gap-2.5 px-3 text-[0.62rem] font-bold uppercase tracking-[0.14em] text-ink-muted md:grid md:grid-cols-[minmax(7rem,1fr)_minmax(8rem,1.15fr)_minmax(7rem,0.85fr)_minmax(7rem,0.85fr)_minmax(5.5rem,0.55fr)_minmax(6.5rem,0.55fr)] md:items-center">
+                            <div className="hidden gap-2.5 px-3 text-[0.66rem] font-extrabold uppercase tracking-[0.14em] text-ink md:grid md:grid-cols-[minmax(7rem,1fr)_minmax(8rem,1.15fr)_minmax(7rem,0.85fr)_minmax(7rem,0.85fr)_minmax(5.5rem,0.55fr)_minmax(6.5rem,0.55fr)] md:items-center">
                               <span>Nombre</span>
                               <span>Dirección</span>
                               <span>Ciudad</span>
@@ -1446,7 +1443,7 @@ export function UniversityInstitutionPage({
                         onBlur={() => handleInstitutionFieldBlur('adminLastName')}
                         onChange={(value) => handleInstitutionFieldChange('adminLastName', value)}
                       />
-                      <div className="grid gap-4 md:grid-cols-[minmax(0,1.45fr)_minmax(12rem,0.75fr)] lg:col-span-2">
+                      <div className="grid gap-4 md:grid-cols-2 lg:col-span-2">
                         <AdminTextField
                           error={errors.adminEmail}
                           icon={Mail}
