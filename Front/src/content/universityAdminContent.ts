@@ -79,8 +79,7 @@ export const universityAdminContent = {
       uploadLogo: 'Subir logo',
     },
     description: '',
-    logoHelper:
-      'Sube un PNG o JPG para previsualizar el logo',
+    logoHelper: '',
     meta: {
       description:
         'Edita la informacion institucional del modulo universitario de Docqee.',
