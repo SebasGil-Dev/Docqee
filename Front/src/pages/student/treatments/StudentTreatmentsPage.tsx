@@ -21,6 +21,10 @@ import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { studentContent } from '@/content/studentContent';
 import type { PersonOperationalStatus } from '@/content/types';
 import { classNames } from '@/lib/classNames';
+import {
+  getOptimizedAvatarUrl,
+  getOptimizedLogoUrl,
+} from '@/lib/imageOptimization';
 import { useStudentModuleStore } from '@/lib/studentModuleStore';
 
 const reviewDateFormatter = new Intl.DateTimeFormat('es-CO', {
@@ -227,7 +231,8 @@ export function StudentTreatmentsPage() {
               <img
                 alt={profile.avatarAlt}
                 className="h-12 w-12 rounded-[1.2rem] object-cover ring-4 ring-white/20 sm:h-14 sm:w-14"
-                src={profile.avatarSrc ?? undefined}
+                decoding="async"
+                src={getOptimizedAvatarUrl(profile.avatarSrc, 160)}
               />
             ) : (
               <span className="inline-flex h-12 w-12 items-center justify-center rounded-[1.2rem] bg-white/14 text-base font-extrabold uppercase text-white ring-4 ring-white/15 sm:h-14 sm:w-14 sm:text-lg">
@@ -494,7 +499,8 @@ export function StudentTreatmentsPage() {
               <img
                 alt={profile.avatarAlt}
                 className="h-20 w-20 rounded-[1.75rem] object-cover ring-4 ring-white/20"
-                src={profile.avatarSrc ?? undefined}
+                decoding="async"
+                src={getOptimizedAvatarUrl(profile.avatarSrc, 240)}
               />
             ) : (
               <span className="inline-flex h-20 w-20 items-center justify-center rounded-[1.75rem] bg-white/14 text-2xl font-extrabold uppercase text-white ring-4 ring-white/15">
@@ -511,8 +517,9 @@ export function StudentTreatmentsPage() {
                     {profile.universityLogoSrc ? (
                       <img
                         alt={profile.universityLogoAlt}
-                        className="h-full w-full object-cover"
-                        src={profile.universityLogoSrc ?? undefined}
+                        className="h-full w-full object-contain p-0.5"
+                        decoding="async"
+                        src={getOptimizedLogoUrl(profile.universityLogoSrc, 80, 80)}
                       />
                     ) : (
                       <span className="text-[0.65rem] font-extrabold uppercase">

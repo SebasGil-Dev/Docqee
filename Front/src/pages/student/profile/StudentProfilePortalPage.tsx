@@ -31,6 +31,11 @@ import type {
   StudentProfileFormValues,
 } from '@/content/types';
 import { classNames } from '@/lib/classNames';
+import {
+  getOptimizedAvatarUrl,
+  getOptimizedLogoUrl,
+  readOptimizedImageFileAsDataUrl,
+} from '@/lib/imageOptimization';
 import { useStudentModuleStore } from '@/lib/studentModuleStore';
 
 type StudentLinkDraft = {
@@ -125,18 +130,15 @@ export function StudentProfilePage() {
       return;
     }
 
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      if (typeof reader.result !== 'string') {
-        return;
-      }
-
+    void (async () => {
+      const avatarSrc = await readOptimizedImageFileAsDataUrl(file, {
+        fit: 'cover',
+        maxHeight: 800,
+        maxWidth: 800,
+      });
       handleFieldChange('avatarFileName', file.name);
-      handleFieldChange('avatarSrc', reader.result);
-    };
-
-    reader.readAsDataURL(file);
+      handleFieldChange('avatarSrc', avatarSrc);
+    })();
   };
 
   const handleAddLink = () => {
@@ -220,12 +222,13 @@ export function StudentProfilePage() {
                 paddingClassName="p-4 sm:p-5"
               >
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center 2xl:gap-5">
-                    <div className="flex flex-col items-center gap-3">
-                      {values.avatarSrc ? (
-                        <img
-                          alt={profile.avatarAlt}
+                  <div className="flex flex-col items-center gap-3">
+                    {values.avatarSrc ? (
+                      <img
+                        alt={profile.avatarAlt}
                         className="h-20 w-20 rounded-[1.7rem] object-cover ring-4 ring-primary/10"
-                        src={values.avatarSrc}
+                        decoding="async"
+                        src={getOptimizedAvatarUrl(values.avatarSrc, 240)}
                       />
                     ) : (
                       <span className="inline-flex h-20 w-20 items-center justify-center rounded-[1.7rem] bg-primary/10 text-2xl font-extrabold uppercase text-primary ring-4 ring-primary/10">
@@ -236,7 +239,7 @@ export function StudentProfilePage() {
                       <ImagePlus aria-hidden="true" className="h-4 w-4" />
                       <span>{studentContent.profilePage.actionLabels.uploadPhoto}</span>
                       <input
-                        accept=".png,.jpg,.jpeg,image/png,image/jpeg"
+                        accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
                         className="sr-only"
                         type="file"
                         onChange={handleAvatarSelection}
@@ -276,8 +279,9 @@ export function StudentProfilePage() {
                           {profile.universityLogoSrc ? (
                             <img
                               alt={profile.universityLogoAlt}
-                              className="h-full w-full object-cover"
-                              src={profile.universityLogoSrc}
+                              className="h-full w-full object-contain p-1"
+                              decoding="async"
+                              src={getOptimizedLogoUrl(profile.universityLogoSrc, 96, 96)}
                             />
                           ) : (
                             <Building2 aria-hidden="true" className="h-4.5 w-4.5 text-primary" />

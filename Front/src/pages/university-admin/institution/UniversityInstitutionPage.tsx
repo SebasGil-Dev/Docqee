@@ -40,6 +40,10 @@ import type {
   UniversityPasswordFormField,
   UniversityPasswordFormValues,
 } from '@/content/types';
+import {
+  getOptimizedLogoUrl,
+  readOptimizedImageFileAsDataUrl,
+} from '@/lib/imageOptimization';
 import { patientRegisterCatalogDataSource } from '@/lib/patientRegisterCatalogDataSource';
 import { useUniversityAdminModuleStore } from '@/lib/universityAdminModuleStore';
 
@@ -554,18 +558,15 @@ export function UniversityInstitutionPage({
       return;
     }
 
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      if (typeof reader.result !== 'string') {
-        return;
-      }
-
+    void (async () => {
+      const logoSrc = await readOptimizedImageFileAsDataUrl(file, {
+        fit: 'contain',
+        maxHeight: 800,
+        maxWidth: 1200,
+      });
       handleInstitutionFieldChange('logoFileName', file.name);
-      handleInstitutionFieldChange('logoSrc', reader.result);
-    };
-
-    reader.readAsDataURL(file);
+      handleInstitutionFieldChange('logoSrc', logoSrc);
+    })();
   };
 
   const handleInstitutionSubmit = (event?: FormEvent<HTMLFormElement>) => {
@@ -1020,8 +1021,9 @@ export function UniversityInstitutionPage({
                             {values.logoSrc ? (
                               <img
                                 alt={institutionProfile.logoAlt}
-                                className="h-full w-full object-cover"
-                                src={values.logoSrc}
+                                className="h-full w-full object-contain p-2"
+                                decoding="async"
+                                src={getOptimizedLogoUrl(values.logoSrc, 240, 240)}
                               />
                             ) : (
                               <span className="font-headline text-[1.35rem] font-extrabold tracking-tight text-primary">

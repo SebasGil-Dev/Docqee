@@ -31,8 +31,13 @@ import type {
   AdminShellNavigationIcon,
 } from '@/content/types';
 import { classNames } from '@/lib/classNames';
+import {
+  getOptimizedAvatarUrl,
+  getOptimizedLogoUrl,
+} from '@/lib/imageOptimization';
 
 type AdminShellProps = PropsWithChildren<{
+  avatarKind?: 'logo' | 'photo';
   avatarSrc?: string | null;
   content?: AdminShellContent;
   overrideName?: { firstName: string; lastName: string };
@@ -142,6 +147,7 @@ function formatDisplayName(value: string) {
 }
 
 export function AdminShell({
+  avatarKind = 'photo',
   avatarSrc,
   children,
   content = adminContent.shell,
@@ -163,6 +169,10 @@ export function AdminShell({
     : 'Cerrar menu lateral';
   const homePath = content.homePath ?? ROUTES.home;
   const showMobileBottomNavigation = isMobileViewport;
+  const optimizedAvatarSrc =
+    avatarKind === 'logo'
+      ? getOptimizedLogoUrl(avatarSrc, 96, 96)
+      : getOptimizedAvatarUrl(avatarSrc, 96);
 
   useEffect(() => {
     try {
@@ -203,11 +213,17 @@ export function AdminShell({
                 </Link>
               </div>
               <div className="inline-flex max-w-full items-center gap-2 self-start sm:self-center">
-                {avatarSrc ? (
+                {optimizedAvatarSrc ? (
                   <img
                     alt={adminFullName}
-                    className="h-9 w-9 shrink-0 rounded-full object-cover ring-2 ring-primary/20 sm:h-8 sm:w-8"
-                    src={avatarSrc}
+                    className={classNames(
+                      'h-9 w-9 shrink-0 rounded-full ring-2 ring-primary/20 sm:h-8 sm:w-8',
+                      avatarKind === 'logo'
+                        ? 'bg-white object-contain p-1'
+                        : 'object-cover',
+                    )}
+                    decoding="async"
+                    src={optimizedAvatarSrc}
                   />
                 ) : (
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-[0.8rem] font-extrabold uppercase tracking-[0.12em] text-white sm:h-8 sm:w-8 sm:text-[0.72rem]">

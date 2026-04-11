@@ -37,6 +37,7 @@ export function UniversityAdminLayout() {
 
   return (
     <AdminShell
+      avatarKind="logo"
       avatarSrc={institutionProfile.logoSrc}
       content={universityAdminContent.shell}
       {...(overrideName ? { overrideName } : {})}

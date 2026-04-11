@@ -18,6 +18,7 @@ import { ROUTES } from '@/constants/routes';
 import { universityAdminContent } from '@/content/universityAdminContent';
 import type { PersonOperationalStatus } from '@/content/types';
 import { classNames } from '@/lib/classNames';
+import { getOptimizedLogoUrl } from '@/lib/imageOptimization';
 import { useUniversityAdminModuleStore } from '@/lib/universityAdminModuleStore';
 
 const createdAtFormatter = new Intl.DateTimeFormat('es-CO', {
@@ -149,8 +150,9 @@ export function UniversityHomePage() {
             {institutionProfile.logoSrc ? (
               <img
                 alt={institutionProfile.logoAlt}
-                className="h-12 w-12 rounded-[1.2rem] object-cover ring-4 ring-white/20 sm:h-14 sm:w-14"
-                src={institutionProfile.logoSrc ?? undefined}
+                className="h-12 w-12 rounded-[1.2rem] bg-white object-contain p-1.5 ring-4 ring-white/20 sm:h-14 sm:w-14"
+                decoding="async"
+                src={getOptimizedLogoUrl(institutionProfile.logoSrc, 160, 160)}
               />
             ) : (
               <span className="inline-flex h-12 w-12 items-center justify-center rounded-[1.2rem] bg-white/14 text-white ring-4 ring-white/15 sm:h-14 sm:w-14">

@@ -26,6 +26,10 @@ import type {
   StudentProfileFormValues,
 } from '@/content/types';
 import { classNames } from '@/lib/classNames';
+import {
+  getOptimizedAvatarUrl,
+  readOptimizedImageFileAsDataUrl,
+} from '@/lib/imageOptimization';
 import { useStudentModuleStore } from '@/lib/studentModuleStore';
 
 type StudentLinkDraft = {
@@ -119,18 +123,15 @@ export function StudentProfilePage() {
       return;
     }
 
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      if (typeof reader.result !== 'string') {
-        return;
-      }
-
+    void (async () => {
+      const avatarSrc = await readOptimizedImageFileAsDataUrl(file, {
+        fit: 'cover',
+        maxHeight: 800,
+        maxWidth: 800,
+      });
       handleFieldChange('avatarFileName', file.name);
-      handleFieldChange('avatarSrc', reader.result);
-    };
-
-    reader.readAsDataURL(file);
+      handleFieldChange('avatarSrc', avatarSrc);
+    })();
   };
 
   const handleAddLink = () => {
@@ -211,7 +212,8 @@ export function StudentProfilePage() {
                     <img
                       alt={profile.avatarAlt}
                       className="h-20 w-20 rounded-[1.75rem] object-cover ring-4 ring-white/25"
-                      src={values.avatarSrc}
+                      decoding="async"
+                      src={getOptimizedAvatarUrl(values.avatarSrc, 240)}
                     />
                   ) : (
                     <span className="inline-flex h-20 w-20 items-center justify-center rounded-[1.75rem] bg-white/14 text-2xl font-extrabold uppercase text-white ring-4 ring-white/15">
@@ -271,7 +273,7 @@ export function StudentProfilePage() {
                       <ImagePlus aria-hidden="true" className="h-4 w-4" />
                       <span>{studentContent.profilePage.actionLabels.uploadPhoto}</span>
                       <input
-                        accept=".png,.jpg,.jpeg,image/png,image/jpeg"
+                        accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
                         className="sr-only"
                         type="file"
                         onChange={handleAvatarSelection}
