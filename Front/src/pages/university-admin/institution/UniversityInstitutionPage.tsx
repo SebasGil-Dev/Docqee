@@ -1017,13 +1017,13 @@ export function UniversityInstitutionPage({
                           </p>
                         </div>
                         <div className="flex flex-col items-center gap-2.5">
-                          <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-[1.15rem] bg-white ring-1 ring-slate-200">
+                          <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-[1.15rem] bg-white ring-1 ring-slate-200">
                             {values.logoSrc ? (
                               <img
                                 alt={institutionProfile.logoAlt}
-                                className="h-full w-full object-contain p-2"
+                                className="h-full w-full object-contain"
                                 decoding="async"
-                                src={getOptimizedLogoUrl(values.logoSrc, 240, 240)}
+                                src={getOptimizedLogoUrl(values.logoSrc, 360, 360)}
                               />
                             ) : (
                               <span className="font-headline text-[1.35rem] font-extrabold tracking-tight text-primary">

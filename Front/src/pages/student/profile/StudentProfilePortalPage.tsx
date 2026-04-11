@@ -279,7 +279,7 @@ export function StudentProfilePage() {
                           {profile.universityLogoSrc ? (
                             <img
                               alt={profile.universityLogoAlt}
-                              className="h-full w-full object-contain p-1"
+                              className="h-full w-full object-contain"
                               decoding="async"
                               src={getOptimizedLogoUrl(profile.universityLogoSrc, 96, 96)}
                             />

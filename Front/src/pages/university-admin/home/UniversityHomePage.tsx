@@ -150,9 +150,9 @@ export function UniversityHomePage() {
             {institutionProfile.logoSrc ? (
               <img
                 alt={institutionProfile.logoAlt}
-                className="h-12 w-12 rounded-[1.2rem] bg-white object-contain p-1.5 ring-4 ring-white/20 sm:h-14 sm:w-14"
+                className="h-14 w-14 rounded-[1.2rem] bg-white object-contain ring-4 ring-white/20 sm:h-16 sm:w-16"
                 decoding="async"
-                src={getOptimizedLogoUrl(institutionProfile.logoSrc, 160, 160)}
+                src={getOptimizedLogoUrl(institutionProfile.logoSrc, 220, 220)}
               />
             ) : (
               <span className="inline-flex h-12 w-12 items-center justify-center rounded-[1.2rem] bg-white/14 text-white ring-4 ring-white/15 sm:h-14 sm:w-14">

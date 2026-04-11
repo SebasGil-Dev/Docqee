@@ -217,10 +217,10 @@ export function AdminShell({
                   <img
                     alt={adminFullName}
                     className={classNames(
-                      'h-9 w-9 shrink-0 rounded-full ring-2 ring-primary/20 sm:h-8 sm:w-8',
+                      'h-9 w-9 shrink-0 ring-2 ring-primary/20 sm:h-8 sm:w-8',
                       avatarKind === 'logo'
-                        ? 'bg-white object-contain p-1'
-                        : 'object-cover',
+                        ? 'rounded-xl bg-white object-contain'
+                        : 'rounded-full object-cover',
                     )}
                     decoding="async"
                     src={optimizedAvatarSrc}
