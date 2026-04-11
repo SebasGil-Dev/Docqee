@@ -31,6 +31,28 @@ function formatCreatedAt(value: string) {
   return createdAtFormatter.format(new Date(value));
 }
 
+function formatNamePart(value: string) {
+  return value
+    .trim()
+    .toLocaleLowerCase('es-CO')
+    .split('-')
+    .map((part) =>
+      part.length > 0
+        ? `${part.charAt(0).toLocaleUpperCase('es-CO')}${part.slice(1)}`
+        : part,
+    )
+    .join('-');
+}
+
+function formatDisplayName(value: string) {
+  return value
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map(formatNamePart)
+    .join(' ');
+}
+
 export function UniversityHomePage() {
   const { session } = useAuth();
   const { credentials, errorMessage, institutionProfile, students, teachers } =
@@ -102,23 +124,29 @@ export function UniversityHomePage() {
       `${institutionProfile.adminFirstName} ${institutionProfile.adminLastName}`.trim();
 
     if (profileFullName) {
-      return profileFullName;
+      return formatDisplayName(profileFullName);
     }
 
     const sessionFullName =
       `${session?.user.firstName ?? ''} ${session?.user.lastName ?? ''}`.trim();
 
     if (sessionFullName) {
-      return sessionFullName;
+      return formatDisplayName(sessionFullName);
     }
 
-    return `${universityAdminContent.shell.adminUser.firstName} ${universityAdminContent.shell.adminUser.lastName}`.trim();
+    return formatDisplayName(
+      `${universityAdminContent.shell.adminUser.firstName} ${universityAdminContent.shell.adminUser.lastName}`,
+    );
   }, [
     institutionProfile.adminFirstName,
     institutionProfile.adminLastName,
     session?.user.firstName,
     session?.user.lastName,
   ]);
+  const institutionName = useMemo(
+    () => formatDisplayName(institutionProfile.name || 'Universidad'),
+    [institutionProfile.name],
+  );
   const dashboardErrorMessage = useMemo(() => {
     if (!errorMessage) {
       return null;
@@ -160,17 +188,14 @@ export function UniversityHomePage() {
               </span>
             )}
             <div className="flex min-w-0 flex-col gap-1.5">
-              <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white/70">
-                Inicio universidad
-                </p>
-                <h2 className="max-w-[18rem] truncate font-headline text-[1.08rem] font-extrabold tracking-tight text-white sm:max-w-[24rem] sm:text-[1.2rem] xl:max-w-[28rem]">
-                  Bienvenido, {adminFullName}
-                </h2>
+              <h2 className="max-w-[18rem] truncate font-headline text-[1.08rem] font-extrabold tracking-tight text-white sm:max-w-[24rem] sm:text-[1.2rem] xl:max-w-[28rem]">
+                Bienvenido, {adminFullName}
+              </h2>
               <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-[0.75rem] font-semibold text-white/88">
                   <Building2 aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
                   <span className="max-w-[11rem] truncate sm:max-w-[14rem] xl:max-w-[18rem]">
-                    {institutionProfile.name || 'Universidad'}
+                    {institutionName}
                   </span>
                 </span>
                 <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-[0.75rem] font-semibold text-white/88">
@@ -226,9 +251,6 @@ export function UniversityHomePage() {
                     <h2 className="font-headline text-[1rem] font-extrabold tracking-tight text-ink">
                       Estado de estudiantes
                     </h2>
-                    <p className="text-[0.78rem] text-ink-muted">
-                      Revisa rapidamente quienes ya estan activos y quienes siguen pendientes.
-                    </p>
                   </div>
                 </div>
                 <div className="grid gap-1.5 sm:grid-cols-3">
@@ -269,7 +291,7 @@ export function UniversityHomePage() {
                       >
                         <div className="min-w-0">
                           <p className="truncate text-[0.83rem] font-semibold text-ink">
-                            {student.firstName} {student.lastName}
+                            {formatDisplayName(`${student.firstName} ${student.lastName}`)}
                           </p>
                           <p className="text-[0.72rem] text-ink-muted">
                             Semestre {student.semester} · {formatCreatedAt(student.createdAt)}
@@ -367,9 +389,6 @@ export function UniversityHomePage() {
                     <h2 className="font-headline text-[1rem] font-extrabold tracking-tight text-ink">
                       Equipo y sedes
                     </h2>
-                    <p className="text-[0.78rem] text-ink-muted">
-                      Ten a la vista el estado del cuerpo docente y las sedes de practica.
-                    </p>
                   </div>
                 </div>
                 <div className="grid gap-1.5 sm:grid-cols-2">
@@ -400,7 +419,7 @@ export function UniversityHomePage() {
                       >
                         <div className="min-w-0">
                           <p className="truncate text-[0.83rem] font-semibold text-ink">
-                            {teacher.firstName} {teacher.lastName}
+                            {formatDisplayName(`${teacher.firstName} ${teacher.lastName}`)}
                           </p>
                           <p className="text-[0.72rem] text-ink-muted">
                             {teacher.documentTypeCode} {teacher.documentNumber}
@@ -418,7 +437,9 @@ export function UniversityHomePage() {
                         className="flex items-center justify-between gap-2.5 rounded-[1rem] border border-slate-200/80 bg-slate-50 px-3 py-2.5"
                       >
                         <div className="min-w-0">
-                          <p className="truncate text-[0.83rem] font-semibold text-ink">{campus.name}</p>
+                          <p className="truncate text-[0.83rem] font-semibold text-ink">
+                            {formatDisplayName(campus.name)}
+                          </p>
                           <p className="text-[0.72rem] text-ink-muted">
                             {campus.city} · {campus.locality}
                           </p>
