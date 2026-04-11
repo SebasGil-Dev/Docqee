@@ -20,7 +20,9 @@ import type {
 } from '@/content/types';
 import { IS_TEST_MODE } from '@/lib/apiClient';
 import { patientRegisterCatalogDataSource } from '@/lib/patientRegisterCatalogDataSource';
+import { syncUniversityAdminHeaderState } from '@/lib/universityAdminHeaderStore';
 import { resetUniversityAdminOverviewState } from '@/lib/universityAdminOverviewStore';
+import { resetUniversityAdminProfileState } from '@/lib/universityAdminProfileStore';
 import {
   bulkCreateStudents,
   bulkCreateTeachers,
@@ -589,23 +591,26 @@ function updateInstitutionProfileMock(values: UniversityInstitutionFormValues) {
   const city = getCityById(values.cityId);
   const locality = getLocalityById(values.cityId, values.mainLocalityId);
 
+  const nextInstitutionProfile = {
+    ...state.institutionProfile,
+    adminEmail: normalizeEmail(values.adminEmail),
+    adminFirstName: normalizeText(values.adminFirstName),
+    adminLastName: normalizeText(values.adminLastName),
+    adminPhone: normalizeText(values.adminPhone),
+    campuses: values.campuses.map((campus) => ({ ...campus })),
+    logoFileName: values.logoFileName,
+    logoSrc: values.logoSrc,
+    mainCity: city?.label ?? state.institutionProfile.mainCity,
+    mainCityId: values.cityId,
+    mainLocality: locality?.label ?? state.institutionProfile.mainLocality,
+    mainLocalityId: values.mainLocalityId,
+    name: normalizeText(values.name),
+  };
+
+  syncUniversityAdminHeaderState(nextInstitutionProfile);
   updateState({
     ...state,
-    institutionProfile: {
-      ...state.institutionProfile,
-      adminEmail: normalizeEmail(values.adminEmail),
-      adminFirstName: normalizeText(values.adminFirstName),
-      adminLastName: normalizeText(values.adminLastName),
-      adminPhone: normalizeText(values.adminPhone),
-      campuses: values.campuses.map((campus) => ({ ...campus })),
-      logoFileName: values.logoFileName,
-      logoSrc: values.logoSrc,
-      mainCity: city?.label ?? state.institutionProfile.mainCity,
-      mainCityId: values.cityId,
-      mainLocality: locality?.label ?? state.institutionProfile.mainLocality,
-      mainLocalityId: values.mainLocalityId,
-      name: normalizeText(values.name),
-    },
+    institutionProfile: nextInstitutionProfile,
   });
 }
 
@@ -731,6 +736,7 @@ async function loadRuntimeState(forceRefresh = false) {
     listUniversityStudentCredentials(),
   ])
     .then(([institutionProfile, students, teachers, credentials]) => {
+      syncUniversityAdminHeaderState(institutionProfile);
       updateState({
         credentials,
         errorMessage: null,
@@ -1035,18 +1041,21 @@ async function updateInstitutionProfile(values: UniversityInstitutionFormValues)
 
   try {
     const institutionProfile = await updateUniversityAdminProfile(values);
+    const nextInstitutionProfile = {
+      ...state.institutionProfile,
+      ...institutionProfile,
+      adminFirstName: normalizeText(values.adminFirstName),
+      adminLastName: normalizeText(values.adminLastName),
+      campuses: values.campuses.map((campus) => ({ ...campus })),
+    };
+
+    syncUniversityAdminHeaderState(nextInstitutionProfile);
     resetUniversityAdminOverviewState();
 
     updateState({
       ...state,
       errorMessage: null,
-      institutionProfile: {
-        ...state.institutionProfile,
-        ...institutionProfile,
-        adminFirstName: normalizeText(values.adminFirstName),
-        adminLastName: normalizeText(values.adminLastName),
-        campuses: values.campuses.map((campus) => ({ ...campus })),
-      },
+      institutionProfile: nextInstitutionProfile,
       isLoading: false,
       isReady: true,
     });
@@ -1137,6 +1146,7 @@ export function resetUniversityAdminModuleState() {
   nextTeacherSequence = initialMockState.teachers.length + 1;
   nextCredentialSequence = initialMockState.credentials.length + 1;
   runtimeLoadPromise = null;
+  resetUniversityAdminProfileState();
   resetUniversityAdminOverviewState();
   emitChange();
 }
