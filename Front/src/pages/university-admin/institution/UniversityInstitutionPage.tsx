@@ -1243,9 +1243,6 @@ export function UniversityInstitutionPage({
                               Sedes de la universidad
                             </h3>
                           </div>
-                          <span className="inline-flex items-center justify-center rounded-full bg-white px-2.5 py-1 text-[0.72rem] font-semibold text-ink-muted ring-1 ring-slate-200">
-                            {values.campuses.length} registradas
-                          </span>
                         </div>
                         <div className="grid gap-3 lg:grid-cols-2">
                           <AdminTextField
@@ -1330,7 +1327,7 @@ export function UniversityInstitutionPage({
                             ) : (
                               <div className="space-y-1">
                                 <span className="block text-[0.83rem] font-semibold text-ink">Estado</span>
-                                <div className="inline-flex min-h-[2.75rem] w-full items-center rounded-xl bg-white px-3.5 py-2.5 text-[0.83rem] font-semibold text-emerald-700 ring-1 ring-slate-200">
+                                <div className="inline-flex min-h-[2.75rem] w-full items-center rounded-2xl border border-slate-200 bg-surface px-3.5 py-2.5 text-[0.83rem] font-semibold text-ink">
                                   Activa
                                 </div>
                               </div>
@@ -1368,21 +1365,21 @@ export function UniversityInstitutionPage({
                             </span>
                           </button>
                         </div>
-                        <div className="grid gap-2.5">
+                        <div className="mt-3 grid gap-2.5">
                           {values.campuses.length > 0 ? (
-                            <div className="hidden px-3 text-[0.62rem] font-bold uppercase tracking-[0.14em] text-ink-muted md:grid md:grid-cols-[minmax(7rem,1fr)_minmax(8rem,1.15fr)_minmax(7rem,0.85fr)_minmax(7rem,0.85fr)_auto_auto] md:items-center">
+                            <div className="hidden gap-2.5 px-3 text-[0.62rem] font-bold uppercase tracking-[0.14em] text-ink-muted md:grid md:grid-cols-[minmax(7rem,1fr)_minmax(8rem,1.15fr)_minmax(7rem,0.85fr)_minmax(7rem,0.85fr)_minmax(5.5rem,0.55fr)_minmax(6.5rem,0.55fr)] md:items-center">
                               <span>Nombre</span>
-                              <span>Direccion</span>
+                              <span>Dirección</span>
                               <span>Ciudad</span>
                               <span>Localidad</span>
                               <span>Estado</span>
-                              <span className="justify-self-end">Accion</span>
+                              <span className="justify-self-end">Acción</span>
                             </div>
                           ) : null}
                           {values.campuses.map((campus) => (
                             <div
                               key={campus.id}
-                              className="grid gap-2.5 rounded-[1.15rem] border border-slate-200/80 bg-white p-3 md:grid-cols-[minmax(7rem,1fr)_minmax(8rem,1.15fr)_minmax(7rem,0.85fr)_minmax(7rem,0.85fr)_auto_auto] md:items-center"
+                              className="grid gap-2.5 rounded-[1.15rem] border border-slate-200/80 bg-white p-3 md:grid-cols-[minmax(7rem,1fr)_minmax(8rem,1.15fr)_minmax(7rem,0.85fr)_minmax(7rem,0.85fr)_minmax(5.5rem,0.55fr)_minmax(6.5rem,0.55fr)] md:items-center"
                             >
                               <h4 className="min-w-0 truncate text-[0.83rem] font-semibold text-ink">
                                 {campus.name}
