@@ -20,6 +20,7 @@ import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { adminContent } from '@/content/adminContent';
 import type { PendingCredential } from '@/content/types';
 import { classNames } from '@/lib/classNames';
+import { formatDisplayName } from '@/lib/formatDisplayName';
 import { useAdminModuleStore } from '@/lib/adminModuleStore';
 
 type CredentialRow = PendingCredential;
@@ -136,6 +137,7 @@ export function AdminCredentialsPage() {
 
   const handleSaveEmail = (credentialId: string, administratorName: string) => {
     const normalizedEmail = emailDraft.trim().toLowerCase();
+    const formattedAdministratorName = formatDisplayName(administratorName);
 
     if (!isValidEmail(normalizedEmail)) {
       setEmailError(adminContent.credentialsPage.emailInvalidMessage);
@@ -153,7 +155,7 @@ export function AdminCredentialsPage() {
       setEditingCredentialId(null);
       setEmailDraft('');
       setEmailError(null);
-      setFeedbackMessage(`El correo de ${administratorName} se actualizo correctamente.`);
+      setFeedbackMessage(`El correo de ${formattedAdministratorName} se actualizo correctamente.`);
     })();
   };
 
@@ -282,7 +284,7 @@ export function AdminCredentialsPage() {
 
   const confirmationDescription = pendingConfirmation
     ? pendingConfirmation.action === 'delete'
-      ? `Se eliminara la credencial pendiente de ${pendingConfirmation.credential.universityName}.`
+      ? `Se eliminara la credencial pendiente de ${formatDisplayName(pendingConfirmation.credential.universityName)}.`
       : pendingConfirmation.action === 'send'
         ? `Se enviara la credencial al correo ${pendingConfirmation.credential.administratorEmail}.`
         : `Se reenviara la credencial al correo ${pendingConfirmation.credential.administratorEmail}.`
@@ -298,7 +300,8 @@ export function AdminCredentialsPage() {
       <AdminPageHeader
         className="items-center gap-3"
         description=""
-        titleClassName="mx-auto whitespace-nowrap text-center text-[clamp(1.25rem,6vw,1.85rem)] leading-none sm:mx-0 sm:text-left sm:text-[2.2rem]"
+        headingAlign="center"
+        titleClassName="whitespace-nowrap text-center text-[clamp(1.25rem,6vw,1.85rem)] leading-none sm:text-[2.2rem]"
         title={adminContent.credentialsPage.title}
       />
       {feedbackMessage ? (
@@ -445,7 +448,7 @@ export function AdminCredentialsPage() {
                         >
                           <div className="space-y-1">
                             <p className="text-sm font-semibold text-ink lg:text-[0.92rem]">
-                              {credential.universityName}
+                              {formatDisplayName(credential.universityName)}
                             </p>
                             <p className="text-xs text-ink-muted sm:text-[0.82rem]">
                               Ultimo movimiento: {formatLastSentAt(credential.lastSentAt)}
@@ -459,7 +462,7 @@ export function AdminCredentialsPage() {
                           )}
                         >
                           <p className="text-sm font-medium text-ink lg:text-[0.92rem]">
-                            {credential.administratorName}
+                            {formatDisplayName(credential.administratorName)}
                           </p>
                         </td>
                         <td
@@ -471,7 +474,7 @@ export function AdminCredentialsPage() {
                           {isEditing ? (
                             <div className="max-w-[20rem] space-y-2">
                               <label className="sr-only" htmlFor={`credential-email-${credential.id}`}>
-                                Correo electronico de {credential.administratorName}
+                                Correo electronico de {formatDisplayName(credential.administratorName)}
                               </label>
                               <div className="relative">
                                 <Mail

@@ -31,6 +31,7 @@ import type {
   AdminShellNavigationIcon,
 } from '@/content/types';
 import { classNames } from '@/lib/classNames';
+import { formatDisplayName } from '@/lib/formatDisplayName';
 import {
   getOptimizedAvatarUrl,
   getOptimizedLogoUrl,
@@ -122,28 +123,6 @@ function useIsMobileViewport() {
   }, []);
 
   return isMobileViewport;
-}
-
-function formatNamePart(value: string) {
-  return value
-    .trim()
-    .toLocaleLowerCase('es-CO')
-    .split('-')
-    .map((part) =>
-      part.length > 0
-        ? `${part.charAt(0).toLocaleUpperCase('es-CO')}${part.slice(1)}`
-        : part,
-    )
-    .join('-');
-}
-
-function formatDisplayName(value: string) {
-  return value
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .map(formatNamePart)
-    .join(' ');
 }
 
 export function AdminShell({

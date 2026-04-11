@@ -96,7 +96,7 @@ describe('Admin pages', () => {
       screen.getByRole('link', { name: /^Universidades$/i }),
     ).toHaveAttribute('aria-current', 'page');
     expect(
-      screen.getByRole('link', { name: /Envio de Credenciales/i }),
+      screen.getByRole('link', { name: /Envío de credenciales/i }),
     ).not.toHaveAttribute('aria-current');
 
     firstRender.unmount();
@@ -249,7 +249,7 @@ describe('Admin pages', () => {
     ).not.toHaveLength(0);
 
     await user.click(
-      screen.getByRole('link', { name: /Envio de Credenciales/i }),
+      screen.getByRole('link', { name: /Envío de credenciales/i }),
     );
 
     const credentialRow = (
@@ -416,21 +416,21 @@ describe('Admin pages', () => {
     ).toHaveAttribute('aria-current', 'page');
     expect(
       within(mobileNavigation).getByRole('link', {
-        name: /Envio de Credenciales/i,
+        name: /Envío de credenciales/i,
       }),
     ).toBeInTheDocument();
     expect(
-      within(mobileNavigation).getByRole('button', { name: /cerrar sesion/i }),
+      within(mobileNavigation).getByRole('button', { name: /cerrar sesión/i }),
     ).toBeInTheDocument();
 
     await user.click(
       within(mobileNavigation).getByRole('link', {
-        name: /Envio de Credenciales/i,
+        name: /Envío de credenciales/i,
       }),
     );
 
     expect(
-      await screen.findByRole('heading', { name: /Envio de Credenciales/i }),
+      await screen.findByRole('heading', { name: /Envío de credenciales/i }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /cerrar menu lateral/i }),
@@ -442,7 +442,7 @@ describe('Admin pages', () => {
 
     expect(
       within(credentialsNavigation).getByRole('link', {
-        name: /Envio de Credenciales/i,
+        name: /Envío de credenciales/i,
       }),
     ).toHaveAttribute('aria-current', 'page');
 
