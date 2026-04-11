@@ -1,0 +1,9 @@
+{
+  "name": "docqee",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix Front run build",
+    "build:back": "npm --prefix Back run build",
+    "build:front": "npm --prefix Front run build"
+  }
+}

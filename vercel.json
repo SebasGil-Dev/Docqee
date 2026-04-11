@@ -1,0 +1,11 @@
+{
+  "installCommand": "npm --prefix Front ci",
+  "buildCommand": "npm --prefix Front run build",
+  "outputDirectory": "Front/dist",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
