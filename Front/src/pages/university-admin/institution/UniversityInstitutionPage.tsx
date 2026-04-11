@@ -288,6 +288,7 @@ export function UniversityInstitutionPage({
   const [isPasswordPanelOpen, setIsPasswordPanelOpen] = useState(false);
   const [passwordValues, setPasswordValues] = useState(passwordInitialValues);
   const [passwordErrors, setPasswordErrors] = useState<UniversityPasswordFormErrors>({});
+  const [passwordWarningMessage, setPasswordWarningMessage] = useState<string | null>(null);
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
   const [campusDraft, setCampusDraft] = useState(campusInitialValues);
   const [campusErrors, setCampusErrors] = useState<CampusFormErrors>({});
@@ -410,6 +411,7 @@ export function UniversityInstitutionPage({
         setIsPasswordPanelOpen(false);
         setPasswordErrors({});
         setPasswordValues(passwordInitialValues);
+        setPasswordWarningMessage(null);
         setPasswordMessage(null);
         setShowPasswords({
           confirmPassword: false,
@@ -764,6 +766,7 @@ export function UniversityInstitutionPage({
     setErrors({});
     setPasswordErrors({});
     setPasswordValues(passwordInitialValues);
+    setPasswordWarningMessage(null);
     setPasswordMessage(null);
     setLogoUploadStatus('idle');
     setLogoUploadMessage(null);
@@ -841,6 +844,7 @@ export function UniversityInstitutionPage({
   const openPasswordPanel = () => {
     setPasswordErrors({});
     setPasswordValues(passwordInitialValues);
+    setPasswordWarningMessage(null);
     setPasswordMessage(null);
     setShowPasswords({
       confirmPassword: false,
@@ -854,6 +858,7 @@ export function UniversityInstitutionPage({
     setIsPasswordPanelOpen(false);
     setPasswordErrors({});
     setPasswordValues(passwordInitialValues);
+    setPasswordWarningMessage(null);
     setPasswordMessage(null);
     setShowPasswords({
       confirmPassword: false,
@@ -1029,6 +1034,8 @@ export function UniversityInstitutionPage({
     });
 
     setPasswordErrors(nextErrors);
+    setPasswordWarningMessage(null);
+    setPasswordMessage(null);
 
     const firstErrorField = fieldOrder.find((field) => nextErrors[field]);
 
@@ -1038,14 +1045,18 @@ export function UniversityInstitutionPage({
     }
 
     void (async () => {
-      const updated = await changePassword(passwordValues);
+      const result = await changePassword(passwordValues);
 
-      if (!updated) {
+      if (!result.ok) {
+        setPasswordWarningMessage(
+          result.errorMessage ?? 'No pudimos actualizar la contrasena.',
+        );
         return;
       }
 
       setPasswordValues(passwordInitialValues);
       setPasswordErrors({});
+      setPasswordWarningMessage(null);
       setPasswordMessage(universityAdminContent.institutionPage.passwordSuccessMessage);
     })();
   };
@@ -1107,7 +1118,7 @@ export function UniversityInstitutionPage({
           <p role="status">{saveMessage}</p>
         </SurfaceCard>
       ) : null}
-      {errorMessage ? (
+      {errorMessage && !isPasswordPanelOpen ? (
         <SurfaceCard
           className="border border-rose-200 bg-rose-50/90 text-sm font-medium text-rose-800"
           paddingClassName="p-3.5"
@@ -1376,9 +1387,9 @@ export function UniversityInstitutionPage({
                             </span>
                           </button>
                         </div>
-                        <div className="mt-6 grid gap-2.5">
+                        <div className="mt-[30px] grid gap-2.5">
                           {values.campuses.length > 0 ? (
-                            <div className="hidden gap-2.5 px-[30px] text-[0.66rem] font-extrabold uppercase tracking-[0.14em] text-ink md:grid md:grid-cols-[minmax(7rem,1fr)_minmax(8rem,1.15fr)_minmax(7rem,0.85fr)_minmax(7rem,0.85fr)_minmax(5.5rem,0.55fr)_minmax(6.5rem,0.55fr)] md:items-center">
+                            <div className="hidden gap-2.5 px-3 text-[0.66rem] font-extrabold uppercase tracking-[0.14em] text-ink md:grid md:grid-cols-[minmax(7rem,1fr)_minmax(8rem,1.15fr)_minmax(7rem,0.85fr)_minmax(7rem,0.85fr)_minmax(5.5rem,0.55fr)_minmax(6.5rem,0.55fr)] md:items-center">
                               <span>Nombre</span>
                               <span>Dirección</span>
                               <span>Ciudad</span>
@@ -1390,7 +1401,7 @@ export function UniversityInstitutionPage({
                           {values.campuses.map((campus) => (
                             <div
                               key={campus.id}
-                              className="grid gap-2.5 rounded-[1.15rem] border border-slate-200/80 bg-white p-[30px] md:grid-cols-[minmax(7rem,1fr)_minmax(8rem,1.15fr)_minmax(7rem,0.85fr)_minmax(7rem,0.85fr)_minmax(5.5rem,0.55fr)_minmax(6.5rem,0.55fr)] md:items-center"
+                              className="grid gap-2.5 rounded-[1.15rem] border border-slate-200/80 bg-white p-3 md:grid-cols-[minmax(7rem,1fr)_minmax(8rem,1.15fr)_minmax(7rem,0.85fr)_minmax(7rem,0.85fr)_minmax(5.5rem,0.55fr)_minmax(6.5rem,0.55fr)] md:items-center"
                             >
                               <h4 className="min-w-0 truncate text-[0.83rem] font-semibold text-ink">
                                 {campus.name}
@@ -1567,6 +1578,14 @@ export function UniversityInstitutionPage({
               </div>
             </div>
             <form className="space-y-5 px-5 py-5 sm:px-6 sm:py-6" noValidate onSubmit={handlePasswordSubmit}>
+              {passwordWarningMessage ? (
+                <p
+                  className="rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-3 text-sm font-medium text-rose-700"
+                  role="alert"
+                >
+                  {passwordWarningMessage}
+                </p>
+              ) : null}
               {passwordMessage ? (
                 <p className="text-sm font-medium text-ink" role="status">
                   {passwordMessage}
