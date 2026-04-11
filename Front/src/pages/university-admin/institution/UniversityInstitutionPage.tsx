@@ -1321,26 +1321,29 @@ export function UniversityInstitutionPage({
                               key={campus.id}
                               className="grid gap-2.5 rounded-[1.15rem] border border-slate-200/80 bg-slate-50 p-3 md:grid-cols-[minmax(7rem,1fr)_minmax(8rem,1.15fr)_minmax(7rem,0.85fr)_minmax(7rem,0.85fr)_auto_auto] md:items-center"
                             >
-                              <div className="space-y-1">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <h4 className="text-[0.83rem] font-semibold text-ink">{campus.name}</h4>
-                                  <span
-                                    className={
-                                      campus.status === 'active'
-                                        ? 'inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-[0.66rem] font-semibold text-emerald-700 ring-1 ring-emerald-200'
-                                        : 'inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[0.66rem] font-semibold text-slate-600 ring-1 ring-slate-200'
-                                    }
-                                  >
-                                    {campus.status === 'active' ? 'Activa' : 'Inactiva'}
-                                  </span>
-                                </div>
-                                <p className="text-[0.82rem] text-ink-muted">{campus.address}</p>
-                                <p className="text-[0.68rem] font-medium uppercase tracking-[0.15em] text-ink-muted">
-                                  {campus.city} · {campus.locality}
-                                </p>
-                              </div>
+                              <h4 className="min-w-0 truncate text-[0.83rem] font-semibold text-ink">
+                                {campus.name}
+                              </h4>
+                              <p className="min-w-0 truncate text-[0.82rem] text-ink-muted">
+                                {campus.address}
+                              </p>
+                              <p className="min-w-0 truncate text-[0.78rem] font-semibold text-ink-muted">
+                                {campus.city}
+                              </p>
+                              <p className="min-w-0 truncate text-[0.78rem] font-semibold text-ink-muted">
+                                {campus.locality}
+                              </p>
+                              <span
+                                className={
+                                  campus.status === 'active'
+                                    ? 'inline-flex w-fit rounded-full bg-emerald-50 px-2.5 py-1 text-[0.66rem] font-semibold text-emerald-700 ring-1 ring-emerald-200'
+                                    : 'inline-flex w-fit rounded-full bg-white px-2.5 py-1 text-[0.66rem] font-semibold text-slate-600 ring-1 ring-slate-200'
+                                }
+                              >
+                                {campus.status === 'active' ? 'Activa' : 'Inactiva'}
+                              </span>
                               <button
-                                className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[0.8rem] font-semibold text-primary transition duration-300 hover:bg-slate-100"
+                                className="inline-flex items-center justify-center gap-2 justify-self-start rounded-xl border border-slate-200 bg-white px-3 py-2 text-[0.8rem] font-semibold text-primary transition duration-300 hover:bg-slate-100 md:justify-self-end"
                                 type="button"
                                 onClick={() => handleCampusEdit(campus)}
                               >
@@ -1352,7 +1355,6 @@ export function UniversityInstitutionPage({
                         </div>
                       </div>
                     </div>
-                  </div>
 
                   <div className="space-y-4 rounded-[1.6rem] border border-slate-200/80 bg-white p-4 sm:p-5">
                     <div>
