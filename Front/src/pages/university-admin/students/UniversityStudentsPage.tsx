@@ -11,7 +11,7 @@ import { ROUTES } from '@/constants/routes';
 import { universityAdminContent } from '@/content/universityAdminContent';
 import type { PersonOperationalStatus } from '@/content/types';
 import { classNames } from '@/lib/classNames';
-import { useUniversityAdminModuleStore } from '@/lib/universityAdminModuleStore';
+import { useUniversityAdminStudentRecordsStore } from '@/lib/universityAdminStudentRecordsStore';
 
 type StudentsLocationState = {
   successNotice?: string;
@@ -32,7 +32,8 @@ function formatDocumentLabel(documentTypeCode: string, documentNumber: string) {
 }
 
 export function UniversityStudentsPage() {
-  const { credentials, errorMessage, isLoading, students, toggleStudentStatus } = useUniversityAdminModuleStore();
+  const { credentials, errorMessage, isLoading, students, toggleStudentStatus } =
+    useUniversityAdminStudentRecordsStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<StudentStatusFilter>('all');
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);

@@ -11,7 +11,7 @@ import { ROUTES } from '@/constants/routes';
 import { universityAdminContent } from '@/content/universityAdminContent';
 import type { PersonOperationalStatus } from '@/content/types';
 import { classNames } from '@/lib/classNames';
-import { useUniversityAdminModuleStore } from '@/lib/universityAdminModuleStore';
+import { useUniversityAdminTeacherRecordsStore } from '@/lib/universityAdminTeacherRecordsStore';
 
 type TeachersLocationState = {
   successNotice?: string;
@@ -32,7 +32,8 @@ function formatDocumentLabel(documentTypeCode: string, documentNumber: string) {
 }
 
 export function UniversityTeachersPage() {
-  const { errorMessage, isLoading, teachers, toggleTeacherStatus } = useUniversityAdminModuleStore();
+  const { errorMessage, isLoading, teachers, toggleTeacherStatus } =
+    useUniversityAdminTeacherRecordsStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<TeacherStatusFilter>('all');
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);

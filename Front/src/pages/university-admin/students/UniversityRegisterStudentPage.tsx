@@ -86,7 +86,9 @@ function validateField(
 export function UniversityRegisterStudentPage({
   catalogDataSource = patientRegisterCatalogDataSource,
 }: UniversityRegisterStudentPageProps) {
-  const { errorMessage, isLoading, registerStudent } = useUniversityAdminModuleStore();
+  const { errorMessage, isLoading, registerStudent } = useUniversityAdminModuleStore({
+    autoLoad: false,
+  });
   const navigate = useNavigate();
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<RegisterStudentFormErrors>({});

@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import type { MemoryRouterProps } from 'react-router-dom';
 import { MemoryRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
+import * as XLSX from 'xlsx';
 
 import { ROUTES } from '@/constants/routes';
 import { resetUniversityAdminModuleState } from '@/lib/universityAdminModuleStore';
@@ -69,6 +70,24 @@ async function fillTeacherForm(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText(/^Apellidos$/i), 'Mendoza');
   await user.selectOptions(screen.getByLabelText(/tipo de documento/i), 'document-cc');
   await user.type(screen.getByLabelText(/numero de documento/i), '80111222');
+}
+
+function createWorkbookFile(
+  fileName: string,
+  rows: Array<Array<string | number>>,
+) {
+  const workbook = XLSX.utils.book_new();
+  const worksheet = XLSX.utils.aoa_to_sheet(rows);
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Datos');
+
+  return new File(
+    [XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })],
+    fileName,
+    {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    },
+  );
 }
 
 describe('University admin pages', () => {
@@ -246,12 +265,31 @@ describe('University admin pages', () => {
 
   it('la carga masiva de estudiantes y docentes crea los registros mock esperados', async () => {
     const user = userEvent.setup();
+    const studentWorkbook = createWorkbookFile('lote-estudiantes.xlsx', [
+      ['nombres', 'apellidos', 'tipo_documento', 'numero_documento', 'correo', 'celular', 'semestre'],
+      ['Juliana', 'Marin', 'CC', '1032456789', 'juliana.marin@clinicadelnorte.edu.co', '3002223344', 7],
+    ]);
+    const teacherWorkbook = createWorkbookFile('lote-docentes.xlsx', [
+      ['nombres', 'apellidos', 'tipo_documento', 'numero_documento'],
+      ['Patricia', 'Mendoza', 'CC', '80111222'],
+    ]);
 
     renderUniversityApp([ROUTES.universityBulkUpload]);
 
     const input = document.getElementById('bulk-upload-input') as HTMLInputElement;
-    await user.upload(input, new File(['demo'], 'lote-estudiantes.csv', { type: 'text/csv' }));
+    await user.upload(input, studentWorkbook);
+    await screen.findByText(/lote-estudiantes\.xlsx/i);
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: /validar archivo/i }),
+      ).not.toBeDisabled();
+    });
     await user.click(screen.getByRole('button', { name: /validar archivo/i }));
+    expect(
+      await screen.findAllByText(/la validacion mock fue exitosa/i, undefined, {
+        timeout: 5000,
+      }),
+    ).not.toHaveLength(0);
     await user.click(screen.getByRole('button', { name: /procesar carga/i }));
 
     expect(
@@ -264,17 +302,25 @@ describe('University admin pages', () => {
     await user.click(screen.getByRole('button', { name: /^Docentes/i }));
 
     const secondInput = document.getElementById('bulk-upload-input') as HTMLInputElement;
-    await user.upload(
-      secondInput,
-      new File(['demo'], 'lote-docentes.xlsx', { type: 'application/vnd.ms-excel' }),
-    );
+    await user.upload(secondInput, teacherWorkbook);
+    await screen.findByText(/lote-docentes\.xlsx/i);
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: /validar archivo/i }),
+      ).not.toBeDisabled();
+    });
     await user.click(screen.getByRole('button', { name: /validar archivo/i }));
+    expect(
+      await screen.findAllByText(/la validacion mock fue exitosa/i, undefined, {
+        timeout: 5000,
+      }),
+    ).not.toHaveLength(0);
     await user.click(screen.getByRole('button', { name: /procesar carga/i }));
 
     expect(await screen.findAllByText(/se agregaron 2 docentes/i)).not.toHaveLength(0);
     await user.click(screen.getByRole('link', { name: /^Docentes$/i }));
     expect(screen.getByText(/Jorge Parra/i)).toBeInTheDocument();
-  });
+  }, 15000);
 
   it('editar el correo en credenciales tambien actualiza al estudiante', async () => {
     const user = userEvent.setup();

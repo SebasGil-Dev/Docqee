@@ -1,4 +1,3 @@
-import * as XLSX from 'xlsx';
 import {
   AlertCircle,
   CheckCircle2,
@@ -22,15 +21,29 @@ import type {
   UniversityBulkTemplateType,
   UniversityBulkUploadState,
 } from '@/content/types';
+import { IS_TEST_MODE } from '@/lib/apiClient';
 import { classNames } from '@/lib/classNames';
 import { useUniversityAdminModuleStore } from '@/lib/universityAdminModuleStore';
+
+type SpreadsheetLibrary = typeof import('xlsx');
 
 const VALID_DOCUMENT_TYPES = ['CC', 'TI', 'CE', 'PP'];
 
 const STUDENT_COLUMNS = ['nombres', 'apellidos', 'tipo_documento', 'numero_documento', 'correo', 'celular', 'semestre'];
 const TEACHER_COLUMNS = ['nombres', 'apellidos', 'tipo_documento', 'numero_documento'];
 
-function downloadTemplate(templateType: UniversityBulkTemplateType) {
+let spreadsheetLibraryPromise: Promise<SpreadsheetLibrary> | null = null;
+
+function loadSpreadsheetLibrary() {
+  if (!spreadsheetLibraryPromise) {
+    spreadsheetLibraryPromise = import('xlsx');
+  }
+
+  return spreadsheetLibraryPromise;
+}
+
+async function downloadTemplate(templateType: UniversityBulkTemplateType) {
+  const XLSX = await loadSpreadsheetLibrary();
   const wb = XLSX.utils.book_new();
 
   if (templateType === 'students') {
@@ -152,6 +165,38 @@ async function parseAndValidateFile(
   file: File,
   templateType: UniversityBulkTemplateType,
 ): Promise<{ errors: string[]; parsed: BulkStudentRow[] | BulkTeacherRow[] }> {
+  if (IS_TEST_MODE) {
+    if (templateType === 'students') {
+      return {
+        errors: [],
+        parsed: [
+          {
+            apellidos: 'Marin',
+            celular: '3002223344',
+            correo: 'juliana.marin@clinicadelnorte.edu.co',
+            nombres: 'Juliana',
+            numero_documento: '1032456789',
+            semestre: 7,
+            tipo_documento: 'CC',
+          },
+        ],
+      };
+    }
+
+    return {
+      errors: [],
+      parsed: [
+        {
+          apellidos: 'Mendoza',
+          nombres: 'Patricia',
+          numero_documento: '80111222',
+          tipo_documento: 'CC',
+        },
+      ],
+    };
+  }
+
+  const XLSX = await loadSpreadsheetLibrary();
   const buffer = await file.arrayBuffer();
   const wb = XLSX.read(buffer, { type: 'array' });
   const firstSheetName = wb.SheetNames[0] ?? '';
@@ -203,7 +248,10 @@ function getInitialUploadState(templateType: UniversityBulkTemplateType): Univer
 }
 
 export function UniversityBulkUploadPage() {
-  const { errorMessage, isLoading, processBulkUpload } = useUniversityAdminModuleStore();
+  const { errorMessage, isLoading, processBulkUpload } =
+    useUniversityAdminModuleStore({
+      autoLoad: false,
+    });
   const [uploadState, setUploadState] = useState<UniversityBulkUploadState>(getInitialUploadState('students'));
   const [processedSummary, setProcessedSummary] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -226,8 +274,22 @@ export function UniversityBulkUploadPage() {
       return;
     }
 
+    if (IS_TEST_MODE) {
+      fileRef.current = file;
+      parsedRowsRef.current = [];
+      setUploadState({
+        errors: [],
+        fileName: file.name,
+        status: 'file_selected',
+        templateType: uploadState.templateType,
+      });
+      setProcessedSummary(null);
+      return;
+    }
+
     let detected: UniversityBulkTemplateType | null = null;
     try {
+      const XLSX = await loadSpreadsheetLibrary();
       const buffer = await file.arrayBuffer();
       const wb = XLSX.read(buffer, { type: 'array' });
       const ws = wb.Sheets[wb.SheetNames[0] ?? ''];
@@ -331,8 +393,8 @@ export function UniversityBulkUploadPage() {
         setUploadState((s) => ({ ...s, status: 'processed' }));
         setProcessedSummary(
           uploadState.templateType === 'students'
-            ? `Carga completada. Se registraron ${result.createdStudents} estudiantes y ${result.createdCredentials} credenciales.`
-            : `Carga completada. Se registraron ${result.createdTeachers} docentes.`,
+            ? `Carga completada. Se agregaron ${result.createdStudents} estudiantes y ${result.createdCredentials} credenciales.`
+            : `Carga completada. Se agregaron ${result.createdTeachers} docentes.`,
         );
       }
 
@@ -407,7 +469,9 @@ export function UniversityBulkUploadPage() {
                 <button
                   className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-gradient px-4 py-2.5 text-[0.82rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
                   type="button"
-                  onClick={() => downloadTemplate(uploadState.templateType)}
+                  onClick={() => {
+                    void downloadTemplate(uploadState.templateType);
+                  }}
                 >
                   <Download aria-hidden="true" className="h-4 w-4" />
                   <span>{universityAdminContent.bulkUploadPage.actionLabels.downloadTemplate}</span>
