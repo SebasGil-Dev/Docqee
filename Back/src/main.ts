@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import compression from 'compression';
 
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './shared/filters/http-exception.filter';
@@ -6,6 +7,8 @@ import { appValidationPipe } from './shared/pipes/validation.pipe';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.use(compression());
 
   app.enableCors({
     origin: process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : true,
