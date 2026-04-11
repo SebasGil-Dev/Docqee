@@ -7,6 +7,20 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 
+function resolveExceptionMessage(exception: HttpException) {
+  const response = exception.getResponse();
+
+  if (typeof response === 'string') {
+    return response;
+  }
+
+  if (typeof response === 'object' && response !== null && 'message' in response) {
+    return (response as { message: unknown }).message;
+  }
+
+  return response;
+}
+
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
@@ -18,7 +32,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       : HttpStatus.INTERNAL_SERVER_ERROR;
 
     const message = exception instanceof HttpException
-      ? exception.getResponse()
+      ? resolveExceptionMessage(exception)
       : 'Unexpected server error';
 
     response.status(status).json({

@@ -20,20 +20,23 @@ export class CloudinaryService {
     const apiKey = this.configService.get<string>('cloudinary.apiKey') ?? '';
     const apiSecret = this.configService.get<string>('cloudinary.apiSecret') ?? '';
     const cloudinaryUrl = this.configService.get<string>('cloudinary.url') ?? '';
+    const cloudinaryUrlConfig = this.parseCloudinaryUrl(cloudinaryUrl);
+    const resolvedCloudName = cloudName || cloudinaryUrlConfig?.cloudName || '';
+    const resolvedApiKey = apiKey || cloudinaryUrlConfig?.apiKey || '';
+    const resolvedApiSecret = apiSecret || cloudinaryUrlConfig?.apiSecret || '';
 
-    if (cloudName && apiKey && apiSecret) {
+    if (
+      resolvedCloudName &&
+      resolvedApiKey &&
+      resolvedApiSecret &&
+      !this.hasPlaceholderValue(resolvedCloudName, resolvedApiKey, resolvedApiSecret)
+    ) {
       cloudinary.config({
-        api_key: apiKey,
-        api_secret: apiSecret,
-        cloud_name: cloudName,
+        api_key: resolvedApiKey,
+        api_secret: resolvedApiSecret,
+        cloud_name: resolvedCloudName,
         secure: true,
       });
-      this.isConfigured = true;
-      return;
-    }
-
-    if (cloudinaryUrl) {
-      cloudinary.config({ secure: true });
       this.isConfigured = true;
       return;
     }
@@ -53,18 +56,52 @@ export class CloudinaryService {
 
     const normalizedDataUri = this.validateImageDataUri(dataUri);
 
-    const result = await cloudinary.uploader.upload(normalizedDataUri, {
-      allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
-      folder: options.folder,
-      overwrite: true,
-      public_id: options.publicId,
-      resource_type: 'image',
-    });
+    const result = await cloudinary.uploader
+      .upload(normalizedDataUri, {
+        allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+        folder: options.folder,
+        overwrite: true,
+        public_id: options.publicId,
+        resource_type: 'image',
+      })
+      .catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : 'Error desconocido';
+        this.logger.warn(`Cloudinary rechazo la subida de imagen: ${message}`);
+        throw new BadRequestException(
+          'No pudimos subir el logo a Cloudinary. Revisa las variables CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY y CLOUDINARY_API_SECRET.',
+        );
+      });
 
     return {
       publicId: result.public_id,
       secureUrl: result.secure_url,
     };
+  }
+
+  private parseCloudinaryUrl(value: string) {
+    if (!value) {
+      return null;
+    }
+
+    try {
+      const url = new URL(value);
+
+      if (url.protocol !== 'cloudinary:') {
+        return null;
+      }
+
+      return {
+        apiKey: decodeURIComponent(url.username),
+        apiSecret: decodeURIComponent(url.password),
+        cloudName: url.hostname,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  private hasPlaceholderValue(...values: string[]) {
+    return values.some((value) => value.includes('<') || value.includes('>') || value.startsWith('your_'));
   }
 
   private validateImageDataUri(dataUri: string) {
