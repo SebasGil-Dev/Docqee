@@ -1136,9 +1136,6 @@ export function UniversityInstitutionPage({
                           <p className="text-[0.72rem] font-bold uppercase tracking-[0.2em] text-primary">
                             Logo institucional
                           </p>
-                          <p className="text-xs leading-5 text-ink-muted">
-                            {universityAdminContent.institutionPage.logoHelper}
-                          </p>
                         </div>
                         <div className="flex flex-col items-center gap-2.5">
                           <div
@@ -1200,9 +1197,6 @@ export function UniversityInstitutionPage({
                             <h3 className="font-headline text-[1rem] font-extrabold tracking-tight text-ink">
                               Sedes de la universidad
                             </h3>
-                            <p className="text-[0.82rem] leading-5 text-ink-muted">
-                              Agrega sedes y actualiza su estado desde este modulo.
-                            </p>
                           </div>
                           <span className="inline-flex items-center justify-center rounded-full bg-white px-2.5 py-1 text-[0.72rem] font-semibold text-ink-muted ring-1 ring-slate-200">
                             {values.campuses.length} registradas
@@ -1231,70 +1225,72 @@ export function UniversityInstitutionPage({
                             onBlur={() => handleCampusFieldBlur('address')}
                             onChange={(value) => handleCampusFieldChange('address', value)}
                           />
-                          <AdminSelectField
-                            disabled={citiesState.status !== 'ready' || citiesState.options.length === 0}
-                            error={campusErrors.cityId}
-                            helpText={
-                              !campusErrors.cityId && citiesState.status === 'error'
-                                ? citiesState.error ?? undefined
-                                : undefined
-                            }
-                            icon={MapPin}
-                            id="university-campus-city"
-                            label="Ciudad"
-                            name="campusCityId"
-                            options={citiesState.options}
-                            placeholder={cityPlaceholder}
-                            value={campusDraft.cityId}
-                            onBlur={() => handleCampusFieldBlur('cityId')}
-                            onChange={(value) => handleCampusFieldChange('cityId', value)}
-                          />
-                          <AdminSelectField
-                            disabled={
-                              !campusDraft.cityId ||
-                              campusLocalitiesState.status !== 'ready' ||
-                              campusLocalitiesState.options.length === 0
-                            }
-                            error={campusErrors.localityId}
-                            helpText={
-                              !campusErrors.localityId && campusLocalitiesState.status === 'error'
-                                ? campusLocalitiesState.error ?? undefined
-                                : undefined
-                            }
-                            icon={MapPin}
-                            id="university-campus-locality"
-                            label="Localidad"
-                            name="campusLocalityId"
-                            options={campusLocalitiesState.options}
-                            placeholder={campusLocalityPlaceholder}
-                            value={campusDraft.localityId}
-                            onBlur={() => handleCampusFieldBlur('localityId')}
-                            onChange={(value) => handleCampusFieldChange('localityId', value)}
-                          />
-                          {editingCampusId ? (
+                          <div className="grid gap-3 lg:col-span-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(8rem,0.45fr)] md:items-start">
                             <AdminSelectField
-                              error={campusErrors.status}
-                              icon={Power}
-                              id="university-campus-status"
-                              label="Estado"
-                              name="campusStatus"
-                              options={[
-                                { id: 'active', label: 'Activa' },
-                                { id: 'inactive', label: 'Inactiva' },
-                              ]}
-                              placeholder="Selecciona un estado"
-                              value={campusDraft.status}
-                              onBlur={() => handleCampusFieldBlur('status')}
-                              onChange={(value) => handleCampusFieldChange('status', value)}
+                              disabled={citiesState.status !== 'ready' || citiesState.options.length === 0}
+                              error={campusErrors.cityId}
+                              helpText={
+                                !campusErrors.cityId && citiesState.status === 'error'
+                                  ? citiesState.error ?? undefined
+                                  : undefined
+                              }
+                              icon={MapPin}
+                              id="university-campus-city"
+                              label="Ciudad"
+                              name="campusCityId"
+                              options={citiesState.options}
+                              placeholder={cityPlaceholder}
+                              value={campusDraft.cityId}
+                              onBlur={() => handleCampusFieldBlur('cityId')}
+                              onChange={(value) => handleCampusFieldChange('cityId', value)}
                             />
-                          ) : (
-                            <div className="space-y-1">
-                              <span className="block text-[0.83rem] font-semibold text-ink">Estado inicial</span>
-                              <div className="inline-flex min-h-[2.75rem] items-center rounded-xl bg-white px-3.5 py-2.5 text-[0.83rem] font-semibold text-emerald-700 ring-1 ring-slate-200">
-                                Activa
+                            <AdminSelectField
+                              disabled={
+                                !campusDraft.cityId ||
+                                campusLocalitiesState.status !== 'ready' ||
+                                campusLocalitiesState.options.length === 0
+                              }
+                              error={campusErrors.localityId}
+                              helpText={
+                                !campusErrors.localityId && campusLocalitiesState.status === 'error'
+                                  ? campusLocalitiesState.error ?? undefined
+                                  : undefined
+                              }
+                              icon={MapPin}
+                              id="university-campus-locality"
+                              label="Localidad"
+                              name="campusLocalityId"
+                              options={campusLocalitiesState.options}
+                              placeholder={campusLocalityPlaceholder}
+                              value={campusDraft.localityId}
+                              onBlur={() => handleCampusFieldBlur('localityId')}
+                              onChange={(value) => handleCampusFieldChange('localityId', value)}
+                            />
+                            {editingCampusId ? (
+                              <AdminSelectField
+                                error={campusErrors.status}
+                                icon={Power}
+                                id="university-campus-status"
+                                label="Estado"
+                                name="campusStatus"
+                                options={[
+                                  { id: 'active', label: 'Activa' },
+                                  { id: 'inactive', label: 'Inactiva' },
+                                ]}
+                                placeholder="Selecciona un estado"
+                                value={campusDraft.status}
+                                onBlur={() => handleCampusFieldBlur('status')}
+                                onChange={(value) => handleCampusFieldChange('status', value)}
+                              />
+                            ) : (
+                              <div className="space-y-1">
+                                <span className="block text-[0.83rem] font-semibold text-ink">Estado</span>
+                                <div className="inline-flex min-h-[2.75rem] w-full items-center rounded-xl bg-white px-3.5 py-2.5 text-[0.83rem] font-semibold text-emerald-700 ring-1 ring-slate-200">
+                                  Activa
+                                </div>
                               </div>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
                         <div className="flex flex-wrap items-center justify-center gap-3">
                           {editingCampusId ? (
