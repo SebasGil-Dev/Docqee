@@ -260,7 +260,7 @@ function buildNextInstitutionProfile(
     adminFirstName: normalizeText(values.adminFirstName),
     adminLastName: normalizeText(values.adminLastName),
     adminPhone: normalizeText(values.adminPhone),
-    campuses: values.campuses.map((campus) => ({ ...campus })),
+    campuses: profilePatch.campuses.map((campus) => ({ ...campus })),
     logoFileName: values.logoFileName,
     logoSrc: values.logoSrc,
     mainCityId: values.cityId,
@@ -362,10 +362,14 @@ async function refreshRuntimeState() {
 
 async function updateInstitutionProfile(values: UniversityInstitutionFormValues) {
   if (IS_TEST_MODE) {
+    const testProfilePatch = {
+      ...state.institutionProfile,
+      campuses: values.campuses.map((campus) => ({ ...campus })),
+    };
     const nextInstitutionProfile = buildNextInstitutionProfile(
       state.institutionProfile,
       values,
-      state.institutionProfile,
+      testProfilePatch,
     );
 
     syncUniversityAdminHeaderState(nextInstitutionProfile);
