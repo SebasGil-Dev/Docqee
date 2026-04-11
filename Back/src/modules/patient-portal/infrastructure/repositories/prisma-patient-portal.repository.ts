@@ -16,60 +16,60 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
   }
 
   async getDashboard(patientAccountId: number): Promise<PatientPortalDashboardDto> {
-    const patient = await this.prisma.cuenta_paciente.findUnique({
-      where: { id_cuenta: patientAccountId },
-      include: {
-        persona: true,
-        localidad: { include: { ciudad: true } },
-        tutor_responsable: true,
-        cuenta_acceso: { select: { correo: true } },
-      },
-    });
-
-    const solicitudes = await this.prisma.solicitud.findMany({
-      where: { id_cuenta_paciente: patientAccountId },
-      include: {
-        cuenta_estudiante: {
-          include: {
-            persona: true,
-            universidad: true,
-          },
+    const [patient, solicitudes, students] = await Promise.all([
+      this.prisma.cuenta_paciente.findUnique({
+        where: { id_cuenta: patientAccountId },
+        include: {
+          persona: true,
+          localidad: { include: { ciudad: true } },
+          tutor_responsable: true,
+          cuenta_acceso: { select: { correo: true } },
         },
-        conversacion: {
-          include: {
-            mensaje: {
-              orderBy: { enviado_at: 'asc' },
-              include: { cuenta_acceso: { select: { tipo_cuenta: true } } },
+      }),
+      this.prisma.solicitud.findMany({
+        where: { id_cuenta_paciente: patientAccountId },
+        include: {
+          cuenta_estudiante: {
+            include: {
+              persona: true,
+              universidad: true,
+            },
+          },
+          conversacion: {
+            include: {
+              mensaje: {
+                orderBy: { enviado_at: 'asc' },
+                include: { cuenta_acceso: { select: { tipo_cuenta: true } } },
+              },
+            },
+          },
+          cita: {
+            include: {
+              tipo_cita: true,
+              sede: { include: { localidad: { include: { ciudad: true } } } },
+              docente_universidad: { include: { docente: true } },
             },
           },
         },
-        cita: {
-          include: {
-            tipo_cita: true,
-            sede: { include: { localidad: { include: { ciudad: true } } } },
-            docente_universidad: { include: { docente: true } },
+        orderBy: { fecha_envio: 'desc' },
+      }),
+      this.prisma.cuenta_estudiante.findMany({
+        where: { cuenta_acceso: { estado: 'ACTIVO' } },
+        include: {
+          persona: true,
+          universidad: true,
+          perfil_estudiante: true,
+          estudiante_tratamiento: {
+            where: { estado: 'ACTIVO' },
+            include: { tipo_tratamiento: true },
+          },
+          estudiante_sede_practica: {
+            where: { estado: 'ACTIVO' },
+            include: { sede: { include: { localidad: { include: { ciudad: true } } } } },
           },
         },
-      },
-      orderBy: { fecha_envio: 'desc' },
-    });
-
-    const students = await this.prisma.cuenta_estudiante.findMany({
-      where: { cuenta_acceso: { estado: 'ACTIVO' } },
-      include: {
-        persona: true,
-        universidad: true,
-        perfil_estudiante: true,
-        estudiante_tratamiento: {
-          where: { estado: 'ACTIVO' },
-          include: { tipo_tratamiento: true },
-        },
-        estudiante_sede_practica: {
-          where: { estado: 'ACTIVO' },
-          include: { sede: { include: { localidad: { include: { ciudad: true } } } } },
-        },
-      },
-    });
+      }),
+    ]);
 
     const profile = patient ? this.toProfileDto(patient) : this.emptyProfile();
 

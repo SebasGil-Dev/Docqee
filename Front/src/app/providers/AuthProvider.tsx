@@ -1,5 +1,5 @@
 import type { PropsWithChildren } from 'react';
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { readCurrentSession } from '@/lib/authApi';
 import { ApiError, IS_TEST_MODE } from '@/lib/apiClient';
@@ -31,16 +31,20 @@ const AuthContext = createContext<AuthContextValue>(fallbackAuthContext);
 
 export function AuthProvider({ children }: PropsWithChildren) {
   const [session, setSessionState] = useState<AuthSession | null>(() => readAuthSession());
+  const shouldValidateStoredSessionRef = useRef(session !== null);
 
   const value = useMemo<AuthContextValue>(
     () => ({
       isAuthenticated: session !== null,
       logout() {
+        shouldValidateStoredSessionRef.current = false;
         clearAuthSession();
         setSessionState(null);
       },
       session,
       setSession(nextSession) {
+        shouldValidateStoredSessionRef.current = false;
+
         if (nextSession) {
           persistAuthSession(nextSession);
         } else {
@@ -75,6 +79,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
     if (IS_TEST_MODE || !session?.accessToken) {
       return;
     }
+
+    if (!shouldValidateStoredSessionRef.current) {
+      return;
+    }
+
+    shouldValidateStoredSessionRef.current = false;
 
     let isCancelled = false;
 

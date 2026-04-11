@@ -2,7 +2,9 @@
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
+  OnModuleInit,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -63,8 +65,20 @@ type RefreshTokenPayload = RequestUser & {
   tokenType: 'refresh';
 };
 
+type SessionAccountBase = Pick<
+  SessionAccount,
+  | 'correo'
+  | 'correo_verificado'
+  | 'id_cuenta'
+  | 'password_hash'
+  | 'primer_ingreso_pendiente'
+  | 'tipo_cuenta'
+>;
+
 @Injectable()
-export class AuthService {
+export class AuthService implements OnModuleInit {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
@@ -72,11 +86,13 @@ export class AuthService {
     private readonly mailService: MailService,
   ) {}
 
-  async login(input: LoginDto) {
+  async onModuleInit() {
     await this.ensureDefaultPlatformAdmin();
+  }
 
+  async login(input: LoginDto) {
     const email = normalizeEmail(input.email);
-    const account = await this.findSessionAccountByEmail(email);
+    const account = await this.findSessionAccountBaseByEmail(email);
 
     if (!account) {
       throw new UnauthorizedException('Correo o contrasena incorrectos.');
@@ -88,16 +104,13 @@ export class AuthService {
       throw new UnauthorizedException('Correo o contrasena incorrectos.');
     }
 
-    this.assertSessionAccessAllowed(account);
+    const sessionAccount = await this.hydrateSessionAccount(account);
 
-    await this.prisma.cuenta_acceso.update({
-      where: { id_cuenta: account.id_cuenta },
-      data: {
-        ultimo_login_at: new Date(),
-      },
-    });
+    this.assertSessionAccessAllowed(sessionAccount);
 
-    return this.buildSessionResponse(account);
+    void this.touchLastLogin(sessionAccount.id_cuenta);
+
+    return this.buildSessionResponse(sessionAccount);
   }
 
   async getSession(user: RequestUser) {
@@ -444,7 +457,9 @@ export class AuthService {
     });
   }
 
-  private async findSessionAccountByEmail(email: string): Promise<SessionAccount | null> {
+  private async findSessionAccountBaseByEmail(
+    email: string,
+  ): Promise<SessionAccountBase | null> {
     return this.prisma.cuenta_acceso.findUnique({
       where: { correo: email },
       select: {
@@ -454,38 +469,12 @@ export class AuthService {
         tipo_cuenta: true,
         correo_verificado: true,
         primer_ingreso_pendiente: true,
-        cuenta_admin_plataforma: {
-          select: {
-            nombres: true,
-            apellidos: true,
-          },
-        },
-        cuenta_admin_universidad: {
-          select: {
-            nombres: true,
-            apellidos: true,
-            id_universidad: true,
-            universidad: {
-              select: { estado: true },
-            },
-          },
-        },
-        cuenta_paciente: {
-          select: {
-            persona: { select: { nombres: true, apellidos: true } },
-          },
-        },
-        cuenta_estudiante: {
-          select: {
-            persona: { select: { nombres: true, apellidos: true } },
-          },
-        },
       },
     });
   }
 
   private async findSessionAccountById(id: number): Promise<SessionAccount | null> {
-    return this.prisma.cuenta_acceso.findUnique({
+    const account = await this.prisma.cuenta_acceso.findUnique({
       where: { id_cuenta: id },
       select: {
         id_cuenta: true,
@@ -494,34 +483,86 @@ export class AuthService {
         tipo_cuenta: true,
         correo_verificado: true,
         primer_ingreso_pendiente: true,
-        cuenta_admin_plataforma: {
+      },
+    });
+
+    return account ? this.hydrateSessionAccount(account) : null;
+  }
+
+  private async hydrateSessionAccount(account: SessionAccountBase): Promise<SessionAccount> {
+    const baseAccount = {
+      ...account,
+      cuenta_admin_plataforma: null,
+      cuenta_admin_universidad: null,
+      cuenta_estudiante: null,
+      cuenta_paciente: null,
+    } satisfies SessionAccount;
+
+    if (account.tipo_cuenta === tipo_cuenta_enum.ADMIN_PLATAFORMA) {
+      return {
+        ...baseAccount,
+        cuenta_admin_plataforma: await this.prisma.cuenta_admin_plataforma.findUnique({
+          where: { id_cuenta: account.id_cuenta },
           select: {
-            nombres: true,
             apellidos: true,
-          },
-        },
-        cuenta_admin_universidad: {
-          select: {
             nombres: true,
+          },
+        }),
+      };
+    }
+
+    if (account.tipo_cuenta === tipo_cuenta_enum.ADMIN_UNIVERSIDAD) {
+      return {
+        ...baseAccount,
+        cuenta_admin_universidad: await this.prisma.cuenta_admin_universidad.findUnique({
+          where: { id_cuenta: account.id_cuenta },
+          select: {
             apellidos: true,
             id_universidad: true,
+            nombres: true,
             universidad: {
               select: { estado: true },
             },
           },
-        },
-        cuenta_paciente: {
+        }),
+      };
+    }
+
+    if (account.tipo_cuenta === tipo_cuenta_enum.ESTUDIANTE) {
+      return {
+        ...baseAccount,
+        cuenta_estudiante: await this.prisma.cuenta_estudiante.findUnique({
+          where: { id_cuenta: account.id_cuenta },
           select: {
-            persona: { select: { nombres: true, apellidos: true } },
+            persona: { select: { apellidos: true, nombres: true } },
           },
+        }),
+      };
+    }
+
+    return {
+      ...baseAccount,
+      cuenta_paciente: await this.prisma.cuenta_paciente.findUnique({
+        where: { id_cuenta: account.id_cuenta },
+        select: {
+          persona: { select: { apellidos: true, nombres: true } },
         },
-        cuenta_estudiante: {
-          select: {
-            persona: { select: { nombres: true, apellidos: true } },
-          },
+      }),
+    };
+  }
+
+  private async touchLastLogin(accountId: number) {
+    try {
+      await this.prisma.cuenta_acceso.update({
+        where: { id_cuenta: accountId },
+        data: {
+          ultimo_login_at: new Date(),
         },
-      },
-    });
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error desconocido';
+      this.logger.warn(`No pudimos actualizar ultimo_login_at para ${accountId}: ${message}`);
+    }
   }
 
   private assertSessionAccessAllowed(account: SessionAccount) {
