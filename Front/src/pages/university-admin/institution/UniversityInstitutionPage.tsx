@@ -1408,7 +1408,7 @@ export function UniversityInstitutionPage({
                         </div>
                       </div>
 
-                  <div className="space-y-4 rounded-[1.6rem] border border-slate-200/80 bg-white p-4 sm:p-5">
+                  <div className="space-y-4 rounded-[1.6rem] border border-slate-200/80 bg-slate-50/80 p-4 sm:p-5">
                     <div>
                       <h2 className="font-headline text-[1.15rem] font-extrabold tracking-tight text-ink">
                         {universityAdminContent.institutionPage.sectionTitles.administrator}
