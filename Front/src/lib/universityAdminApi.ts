@@ -51,6 +51,20 @@ export function updateUniversityAdminProfile(values: UniversityInstitutionFormVa
   });
 }
 
+export function uploadUniversityAdminLogo(file: File) {
+  const body = new FormData();
+  body.append('logo', file);
+
+  return apiRequest<{
+    logoFileName: string;
+    logoSrc: string;
+    publicId: string;
+  }>('/university-admin/profile/logo', {
+    body,
+    method: 'POST',
+  });
+}
+
 export function changeUniversityAdminPassword(values: UniversityPasswordFormValues) {
   return apiRequest<{ ok: boolean }>('/university-admin/password', {
     body: {

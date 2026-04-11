@@ -7,9 +7,13 @@ import {
 } from '@nestjs/common';
 import { estado_simple_enum } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { randomUUID } from 'node:crypto';
 
 import { PrismaService } from '@/shared/database/prisma.service';
-import { CloudinaryService } from '@/shared/storage/cloudinary.service';
+import {
+  CloudinaryService,
+  type UploadImageFile,
+} from '@/shared/storage/cloudinary.service';
 import type { RequestUser } from '@/shared/types/request-user.type';
 import {
   buildCityFrontId,
@@ -117,6 +121,25 @@ export class UniversityAdminService {
     ]);
 
     return { ok: true };
+  }
+
+  async uploadProfileLogo(user: RequestUser, file: UploadImageFile | undefined) {
+    const universityAdmin = await this.findCurrentUniversityAdmin(user);
+
+    if (!file) {
+      throw new BadRequestException('Selecciona un logo institucional.');
+    }
+
+    const uploadedLogo = await this.cloudinaryService.uploadImageFile(file, {
+      folder: `docqee/universidades/${universityAdmin.id_universidad}/logos`,
+      publicId: `logo-${Date.now()}-${randomUUID()}`,
+    });
+
+    return {
+      logoFileName: file.originalname ?? 'Logo cargado',
+      logoSrc: uploadedLogo.secureUrl,
+      publicId: uploadedLogo.publicId,
+    };
   }
 
   private async resolveInstitutionLogoUrl(logoSrc: string | null | undefined, universityId: number) {

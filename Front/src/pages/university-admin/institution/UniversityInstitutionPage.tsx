@@ -40,11 +40,9 @@ import type {
   UniversityPasswordFormField,
   UniversityPasswordFormValues,
 } from '@/content/types';
-import {
-  getOptimizedLogoUrl,
-  readOptimizedImageFileAsDataUrl,
-} from '@/lib/imageOptimization';
+import { getOptimizedLogoUrl } from '@/lib/imageOptimization';
 import { patientRegisterCatalogDataSource } from '@/lib/patientRegisterCatalogDataSource';
+import { uploadUniversityAdminLogo } from '@/lib/universityAdminApi';
 import { useUniversityAdminModuleStore } from '@/lib/universityAdminModuleStore';
 
 type UniversityInstitutionPageProps = {
@@ -68,6 +66,7 @@ type CampusFormValues = {
 type CampusFormField = keyof CampusFormValues;
 
 type CampusFormErrors = Partial<Record<CampusFormField, string>>;
+type LogoUploadStatus = 'idle' | 'uploading' | 'ready' | 'error';
 
 const campusInitialValues: CampusFormValues = {
   address: '',
@@ -254,6 +253,12 @@ function validatePasswordField(
   return undefined;
 }
 
+function getUploadErrorMessage(error: unknown) {
+  return error instanceof Error
+    ? error.message
+    : 'No pudimos subir el logo institucional.';
+}
+
 export function UniversityInstitutionPage({
   catalogDataSource = patientRegisterCatalogDataSource,
 }: UniversityInstitutionPageProps) {
@@ -275,6 +280,8 @@ export function UniversityInstitutionPage({
   const [campusDraft, setCampusDraft] = useState(campusInitialValues);
   const [campusErrors, setCampusErrors] = useState<CampusFormErrors>({});
   const [editingCampusId, setEditingCampusId] = useState<string | null>(null);
+  const [logoUploadStatus, setLogoUploadStatus] = useState<LogoUploadStatus>('idle');
+  const [logoUploadMessage, setLogoUploadMessage] = useState<string | null>(null);
   const [campusLocalitiesState, setCampusLocalitiesState] = useState<AsyncCatalogState<LocalityOption>>(
     createEmptyCatalogState('idle'),
   );
@@ -288,6 +295,9 @@ export function UniversityInstitutionPage({
   const currentPasswordRef = useRef<HTMLInputElement>(null);
   const newPasswordRef = useRef<HTMLInputElement>(null);
   const confirmPasswordRef = useRef<HTMLInputElement>(null);
+  const logoPreviewUrlRef = useRef<string | null>(null);
+  const logoUploadPromiseRef = useRef<Promise<string | null> | null>(null);
+  const logoUploadSequenceRef = useRef(0);
   const [showPasswords, setShowPasswords] = useState({
     confirmPassword: false,
     currentPassword: false,
@@ -331,11 +341,28 @@ export function UniversityInstitutionPage({
   );
 
   useEffect(() => {
+    if (logoPreviewUrlRef.current) {
+      URL.revokeObjectURL(logoPreviewUrlRef.current);
+      logoPreviewUrlRef.current = null;
+    }
+    logoUploadSequenceRef.current += 1;
+    logoUploadPromiseRef.current = null;
     setValues(getInstitutionInitialValues(institutionProfile));
     setCampusDraft(campusInitialValues);
     setCampusErrors({});
     setEditingCampusId(null);
+    setLogoUploadStatus('idle');
+    setLogoUploadMessage(null);
   }, [institutionProfile]);
+
+  useEffect(
+    () => () => {
+      if (logoPreviewUrlRef.current) {
+        URL.revokeObjectURL(logoPreviewUrlRef.current);
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!isPasswordPanelOpen) {
@@ -558,17 +585,54 @@ export function UniversityInstitutionPage({
       return;
     }
 
-    void (async () => {
-      const logoSrc = await readOptimizedImageFileAsDataUrl(file, {
-        fit: 'contain',
-        maxHeight: 800,
-        maxWidth: 1200,
-        outputType: 'image/png',
-        quality: 1,
+    const uploadSequence = logoUploadSequenceRef.current + 1;
+    logoUploadSequenceRef.current = uploadSequence;
+
+    if (logoPreviewUrlRef.current) {
+      URL.revokeObjectURL(logoPreviewUrlRef.current);
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    logoPreviewUrlRef.current = previewUrl;
+    handleInstitutionFieldChange('logoFileName', file.name);
+    handleInstitutionFieldChange('logoSrc', previewUrl);
+    setLogoUploadStatus('uploading');
+    setLogoUploadMessage('Subiendo logo...');
+    event.target.value = '';
+
+    const uploadPromise = uploadUniversityAdminLogo(file)
+      .then((result) => {
+        if (logoUploadSequenceRef.current !== uploadSequence) {
+          return null;
+        }
+
+        if (logoPreviewUrlRef.current) {
+          URL.revokeObjectURL(logoPreviewUrlRef.current);
+          logoPreviewUrlRef.current = null;
+        }
+
+        handleInstitutionFieldChange('logoFileName', result.logoFileName || file.name);
+        handleInstitutionFieldChange('logoSrc', result.logoSrc);
+        setLogoUploadStatus('ready');
+        setLogoUploadMessage('Logo cargado. Ya puedes guardar los cambios.');
+        return result.logoSrc;
+      })
+      .catch((error: unknown) => {
+        if (logoUploadSequenceRef.current !== uploadSequence) {
+          return null;
+        }
+
+        setLogoUploadStatus('error');
+        setLogoUploadMessage(getUploadErrorMessage(error));
+        return null;
+      })
+      .finally(() => {
+        if (logoUploadSequenceRef.current === uploadSequence) {
+          logoUploadPromiseRef.current = null;
+        }
       });
-      handleInstitutionFieldChange('logoFileName', file.name);
-      handleInstitutionFieldChange('logoSrc', logoSrc);
-    })();
+
+    logoUploadPromiseRef.current = uploadPromise;
   };
 
   const handleInstitutionSubmit = (event?: FormEvent<HTMLFormElement>) => {
@@ -606,8 +670,30 @@ export function UniversityInstitutionPage({
       return;
     }
 
+    if (logoUploadStatus === 'error') {
+      setSaveMessage(null);
+      return;
+    }
+
     void (async () => {
-      const updated = await updateInstitutionProfile(values);
+      let submissionValues = values;
+
+      if (logoUploadPromiseRef.current) {
+        setLogoUploadMessage('Terminando de subir el logo...');
+        const uploadedLogoSrc = await logoUploadPromiseRef.current;
+
+        if (!uploadedLogoSrc) {
+          setSaveMessage(null);
+          return;
+        }
+
+        submissionValues = {
+          ...values,
+          logoSrc: uploadedLogoSrc,
+        };
+      }
+
+      const updated = await updateInstitutionProfile(submissionValues);
 
       if (!updated) {
         return;
@@ -618,6 +704,12 @@ export function UniversityInstitutionPage({
   };
 
   const handleReset = () => {
+    if (logoPreviewUrlRef.current) {
+      URL.revokeObjectURL(logoPreviewUrlRef.current);
+      logoPreviewUrlRef.current = null;
+    }
+    logoUploadSequenceRef.current += 1;
+    logoUploadPromiseRef.current = null;
     setValues(getInstitutionInitialValues(institutionProfile));
     setCampusDraft(campusInitialValues);
     setCampusErrors({});
@@ -626,6 +718,8 @@ export function UniversityInstitutionPage({
     setPasswordErrors({});
     setPasswordValues(passwordInitialValues);
     setPasswordMessage(null);
+    setLogoUploadStatus('idle');
+    setLogoUploadMessage(null);
     setSaveMessage(null);
   };
 
@@ -905,6 +999,14 @@ export function UniversityInstitutionPage({
     .map((token) => token.charAt(0))
     .join('')
     .toUpperCase();
+  const isLogoUploading = logoUploadStatus === 'uploading';
+  const isLogoUploadBlocked = isLogoUploading || logoUploadStatus === 'error';
+  const logoUploadMessageClassName =
+    logoUploadStatus === 'error'
+      ? 'text-[0.68rem] font-medium text-rose-600'
+      : logoUploadStatus === 'ready'
+        ? 'text-[0.68rem] font-medium text-emerald-700'
+        : 'text-[0.68rem] font-medium text-primary';
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden">
@@ -1019,7 +1121,10 @@ export function UniversityInstitutionPage({
                           </p>
                         </div>
                         <div className="flex flex-col items-center gap-2.5">
-                          <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-[1.15rem] bg-white ring-1 ring-slate-200">
+                          <div
+                            aria-busy={isLogoUploading}
+                            className="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-[1.15rem] bg-white ring-1 ring-slate-200"
+                          >
                             {values.logoSrc ? (
                               <img
                                 alt={institutionProfile.logoAlt}
@@ -1032,6 +1137,11 @@ export function UniversityInstitutionPage({
                                 {logoInitials || 'UC'}
                               </span>
                             )}
+                            {isLogoUploading ? (
+                              <span className="absolute inset-x-0 bottom-0 bg-primary/90 px-2 py-1 text-[0.62rem] font-semibold text-white">
+                                Subiendo
+                              </span>
+                            ) : null}
                           </div>
                           <div className="space-y-1">
                             <label
@@ -1042,7 +1152,7 @@ export function UniversityInstitutionPage({
                               <span>{universityAdminContent.institutionPage.actionLabels.uploadLogo}</span>
                             </label>
                             <input
-                              accept=".jpg,.jpeg,.png,.webp"
+                              accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
                               className="sr-only"
                               id="institution-logo-input"
                               type="file"
@@ -1051,6 +1161,14 @@ export function UniversityInstitutionPage({
                             <p className="text-[0.68rem] text-ink-muted">
                               {values.logoFileName ?? 'Aun no has seleccionado un archivo'}
                             </p>
+                            {logoUploadMessage ? (
+                              <p
+                                className={logoUploadMessageClassName}
+                                role={logoUploadStatus === 'error' ? 'alert' : 'status'}
+                              >
+                                {logoUploadMessage}
+                              </p>
+                            ) : null}
                           </div>
                         </div>
                       </div>
@@ -1308,7 +1426,7 @@ export function UniversityInstitutionPage({
             </button>
             <button
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-5 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
-              disabled={isLoading}
+              disabled={isLoading || isLogoUploadBlocked}
               type="button"
               onClick={() => handleInstitutionSubmit()}
             >
