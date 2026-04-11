@@ -54,6 +54,7 @@ function formatDisplayName(value: string) {
 export function UniversityHomePage() {
   const { session } = useAuth();
   const {
+    activeCampusesCount,
     errorMessage,
     institution,
     recentCampuses,
@@ -73,7 +74,6 @@ export function UniversityHomePage() {
   const pendingStudentsCount = studentSummary.pending;
   const inactiveStudentsCount = studentSummary.inactive;
   const activeTeachersCount = teacherSummary.active;
-  const inactiveTeachersCount = teacherSummary.inactive;
   const adminFullName = useMemo(() => {
     const profileFullName = `${institution.adminFirstName} ${institution.adminLastName}`.trim();
 
@@ -327,10 +327,10 @@ export function UniversityHomePage() {
                   </div>
                   <div className="rounded-[1rem] border border-slate-200/80 bg-slate-50 px-3 py-2.5">
                     <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-ink-muted">
-                      Docentes inactivos
+                      Sedes activas
                     </p>
-                    <p className="mt-0.5 font-headline text-[1.25rem] font-extrabold tracking-tight text-slate-700">
-                      {inactiveTeachersCount}
+                    <p className="mt-0.5 font-headline text-[1.25rem] font-extrabold tracking-tight text-emerald-700">
+                      {activeCampusesCount}
                     </p>
                   </div>
                 </div>
