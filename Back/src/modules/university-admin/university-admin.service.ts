@@ -525,6 +525,33 @@ export class UniversityAdminService {
     const savedCampuses = await this.prisma.$transaction(async (transaction) => {
       const saved: InstitutionProfileCampus[] = [];
       const savedIds: number[] = [];
+      const usedCampusNames = new Set<string>();
+
+      if (resolvedCampuses.length === 0) {
+        await transaction.sede.updateMany({
+          where: { id_universidad: universityId },
+          data: { estado: estado_simple_enum.INACTIVO },
+        });
+
+        return saved;
+      }
+
+      const existingCampuses = await transaction.sede.findMany({
+        where: { id_universidad: universityId },
+        select: {
+          id_sede: true,
+          nombre: true,
+        },
+      });
+      const existingById = new Map(
+        existingCampuses.map((campus) => [campus.id_sede, campus]),
+      );
+      const existingByName = new Map(
+        existingCampuses.map((campus) => [
+          this.getCampusNameKey(campus.nombre),
+          campus,
+        ]),
+      );
 
       for (const { campus, locality } of resolvedCampuses) {
         const numericId = this.extractStrictNumericId(campus.id);
@@ -536,14 +563,33 @@ export class UniversityAdminService {
           id_localidad: locality.id_localidad,
           nombre: normalizeText(campus.name),
         };
+        const campusNameKey = this.getCampusNameKey(data.nombre);
+        const campusById = numericId ? existingById.get(numericId) : undefined;
+        const campusByName = existingByName.get(campusNameKey);
+        const campusToUpdate = campusById ?? campusByName;
 
-        if (numericId) {
-          await transaction.sede.updateMany({
-            where: { id_sede: numericId, id_universidad: universityId },
+        if (usedCampusNames.has(campusNameKey)) {
+          throw new ConflictException('Ya existe una sede con ese nombre.');
+        }
+
+        if (campusById && campusByName && campusById.id_sede !== campusByName.id_sede) {
+          throw new ConflictException('Ya existe una sede con ese nombre.');
+        }
+
+        usedCampusNames.add(campusNameKey);
+
+        if (campusToUpdate) {
+          await transaction.sede.update({
+            where: { id_sede: campusToUpdate.id_sede },
             data,
           });
-          savedIds.push(numericId);
-          saved.push(this.toInstitutionProfileCampus(campus, locality, numericId));
+          existingByName.delete(this.getCampusNameKey(campusToUpdate.nombre));
+          existingByName.set(campusNameKey, {
+            id_sede: campusToUpdate.id_sede,
+            nombre: data.nombre,
+          });
+          savedIds.push(campusToUpdate.id_sede);
+          saved.push(this.toInstitutionProfileCampus(campus, locality, campusToUpdate.id_sede));
           continue;
         }
 
@@ -556,23 +602,29 @@ export class UniversityAdminService {
         });
 
         savedIds.push(createdCampus.id_sede);
+        existingById.set(createdCampus.id_sede, {
+          id_sede: createdCampus.id_sede,
+          nombre: data.nombre,
+        });
+        existingByName.set(campusNameKey, {
+          id_sede: createdCampus.id_sede,
+          nombre: data.nombre,
+        });
         saved.push(this.toInstitutionProfileCampus(campus, locality, createdCampus.id_sede));
       }
 
-      if (savedIds.length > 0) {
-        await transaction.sede.updateMany({
-          where: {
-            id_universidad: universityId,
-            id_sede: { notIn: savedIds },
-          },
-          data: { estado: estado_simple_enum.INACTIVO },
-        });
-      }
+      await transaction.sede.updateMany({
+        where: {
+          id_universidad: universityId,
+          id_sede: { notIn: savedIds },
+        },
+        data: { estado: estado_simple_enum.INACTIVO },
+      });
 
       return saved;
     });
 
-    return savedCampuses.filter((campus) => campus.status === 'active');
+    return savedCampuses;
   }
 
   private haveCampusesChanged(
@@ -662,6 +714,10 @@ export class UniversityAdminService {
     return /^\d+$/.test(value) ? Number(value) : null;
   }
 
+  private getCampusNameKey(value: string) {
+    return normalizeText(value).toLocaleLowerCase('es-CO');
+  }
+
   private assertUniversityAdmin(user: RequestUser) {
     if (user.role !== 'UNIVERSITY_ADMIN' || !user.universityId) {
       throw new ForbiddenException('Este recurso es exclusivo del administrador universitario.');
@@ -679,8 +735,8 @@ export class UniversityAdminService {
           include: {
             localidad: { include: { ciudad: true } },
             sede: {
-              where: { estado: estado_simple_enum.ACTIVO },
               include: { localidad: { include: { ciudad: true } } },
+              orderBy: { fecha_creacion: 'desc' },
             },
           },
         },
@@ -909,6 +965,7 @@ export class UniversityAdminService {
         id_sede: number;
         nombre: string;
         direccion: string;
+        estado: estado_simple_enum;
         localidad: { nombre: string; ciudad: { nombre: string } };
       }[];
     };
@@ -929,7 +986,7 @@ export class UniversityAdminService {
         locality: s.localidad.nombre,
         localityId: buildLocalityFrontId(s.localidad.ciudad.nombre, s.localidad.nombre),
         name: s.nombre,
-        status: 'active' as const,
+        status: s.estado === estado_simple_enum.ACTIVO ? 'active' as const : 'inactive' as const,
       })),
       id: String(universityAdmin.universidad.id_universidad),
       logoAlt: `Logo institucional de ${universityAdmin.universidad.nombre}`,

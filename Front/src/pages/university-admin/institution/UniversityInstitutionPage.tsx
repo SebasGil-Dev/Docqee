@@ -1190,8 +1190,7 @@ export function UniversityInstitutionPage({
                         </div>
                       </div>
                     </div>
-                    <div className="rounded-[1.35rem] border border-slate-200/80 bg-slate-50/70 p-3.5 sm:p-4">
-                      <div className="space-y-3">
+                    <div className="space-y-3">
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                           <div>
                             <h3 className="font-headline text-[1rem] font-extrabold tracking-tight text-ink">
@@ -1320,7 +1319,7 @@ export function UniversityInstitutionPage({
                           {values.campuses.map((campus) => (
                             <div
                               key={campus.id}
-                              className="flex flex-col gap-2.5 rounded-[1.15rem] border border-slate-200/80 bg-white p-3 sm:flex-row sm:items-start sm:justify-between"
+                              className="grid gap-2.5 rounded-[1.15rem] border border-slate-200/80 bg-slate-50 p-3 md:grid-cols-[minmax(7rem,1fr)_minmax(8rem,1.15fr)_minmax(7rem,0.85fr)_minmax(7rem,0.85fr)_auto_auto] md:items-center"
                             >
                               <div className="space-y-1">
                                 <div className="flex flex-wrap items-center gap-2">
