@@ -35,6 +35,7 @@ import type {
   UniversityCampus,
   UniversityInstitutionFormErrors,
   UniversityInstitutionFormField,
+  UniversityInstitutionProfile,
   UniversityInstitutionFormValues,
   UniversityPasswordFormErrors,
   UniversityPasswordFormField,
@@ -43,7 +44,7 @@ import type {
 import { getOptimizedLogoUrl } from '@/lib/imageOptimization';
 import { patientRegisterCatalogDataSource } from '@/lib/patientRegisterCatalogDataSource';
 import { uploadUniversityAdminLogo } from '@/lib/universityAdminApi';
-import { useUniversityAdminModuleStore } from '@/lib/universityAdminModuleStore';
+import { useUniversityAdminProfileStore } from '@/lib/universityAdminProfileStore';
 
 type UniversityInstitutionPageProps = {
   catalogDataSource?: PatientRegisterCatalogDataSource;
@@ -118,7 +119,7 @@ function isValidEmail(value: string) {
 }
 
 function getInstitutionInitialValues(
-  institutionProfile: ReturnType<typeof useUniversityAdminModuleStore>['institutionProfile'],
+  institutionProfile: UniversityInstitutionProfile,
 ): UniversityInstitutionFormValues {
   return {
     adminEmail: institutionProfile.adminEmail,
@@ -263,7 +264,7 @@ export function UniversityInstitutionPage({
   catalogDataSource = patientRegisterCatalogDataSource,
 }: UniversityInstitutionPageProps) {
   const { changePassword, errorMessage, institutionProfile, isLoading, updateInstitutionProfile } =
-    useUniversityAdminModuleStore();
+    useUniversityAdminProfileStore();
   const [values, setValues] = useState(() => getInstitutionInitialValues(institutionProfile));
   const [errors, setErrors] = useState<UniversityInstitutionFormErrors>({});
   const [citiesState, setCitiesState] = useState<AsyncCatalogState<CityOption>>(

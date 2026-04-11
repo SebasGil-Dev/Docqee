@@ -9,19 +9,26 @@ import {
   getDefaultRouteForRole,
   shouldRequireFirstLoginPasswordChange,
 } from '@/lib/authRouting';
+import { useUniversityAdminHeaderStore } from '@/lib/universityAdminHeaderStore';
 import { useUniversityAdminModuleStore } from '@/lib/universityAdminModuleStore';
 import { useUniversityAdminOverviewStore } from '@/lib/universityAdminOverviewStore';
+import { useUniversityAdminProfileStore } from '@/lib/universityAdminProfileStore';
 
 export function UniversityAdminLayout() {
   const { session } = useAuth();
   const location = useLocation();
   const isHomeRoute = location.pathname === ROUTES.universityHome;
-  const { institutionProfile } = useUniversityAdminModuleStore({
-    autoLoad: !isHomeRoute,
+  const isInstitutionRoute = location.pathname === ROUTES.universityInstitution;
+  useUniversityAdminModuleStore({
+    autoLoad: !isHomeRoute && !isInstitutionRoute,
+  });
+  useUniversityAdminProfileStore({
+    autoLoad: isInstitutionRoute,
   });
   const { institution: overviewInstitution } = useUniversityAdminOverviewStore({
     autoLoad: isHomeRoute,
   });
+  const currentHeader = useUniversityAdminHeaderStore();
 
   if (!IS_TEST_MODE) {
     if (!session) {
@@ -37,13 +44,7 @@ export function UniversityAdminLayout() {
     }
   }
 
-  const currentInstitution = isHomeRoute
-    ? overviewInstitution
-    : {
-        adminFirstName: institutionProfile.adminFirstName,
-        adminLastName: institutionProfile.adminLastName,
-        logoSrc: institutionProfile.logoSrc,
-      };
+  const currentInstitution = isHomeRoute ? overviewInstitution : currentHeader;
 
   const overrideName =
     currentInstitution.adminFirstName || currentInstitution.adminLastName
