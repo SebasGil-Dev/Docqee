@@ -6,6 +6,7 @@ import type {
   UniversityPasswordFormValues,
 } from '@/content/types';
 import { IS_TEST_MODE } from '@/lib/apiClient';
+import { readAuthSession } from '@/lib/authSession';
 import { syncUniversityAdminHeaderState, resetUniversityAdminHeaderState } from '@/lib/universityAdminHeaderStore';
 import { resetUniversityAdminOverviewState } from '@/lib/universityAdminOverviewStore';
 import {
@@ -14,11 +15,18 @@ import {
   updateUniversityAdminProfile,
 } from '@/lib/universityAdminApi';
 
+type PersistedUniversityAdminProfileCache = {
+  institutionProfile: UniversityInstitutionProfile;
+  updatedAt: number;
+  userId: number;
+};
+
 type UniversityAdminProfileStoreState = {
   errorMessage: string | null;
   institutionProfile: UniversityInstitutionProfile;
   isLoading: boolean;
   isReady: boolean;
+  shouldRefresh: boolean;
 };
 
 type UniversityAdminProfileActions = {
@@ -34,6 +42,8 @@ type UseUniversityAdminProfileStoreOptions = {
 };
 
 const listeners = new Set<() => void>();
+const PROFILE_CACHE_STORAGE_KEY = 'docqee.university-admin.profile-cache';
+const PROFILE_CACHE_MAX_AGE_MS = 30 * 60 * 1000;
 
 function createMockCampuses() {
   return [
@@ -81,10 +91,11 @@ function createMockState(): UniversityAdminProfileStoreState {
     },
     isLoading: false,
     isReady: true,
+    shouldRefresh: false,
   };
 }
 
-function createRuntimeInitialState(): UniversityAdminProfileStoreState {
+function createEmptyRuntimeState(): UniversityAdminProfileStoreState {
   return {
     errorMessage: null,
     institutionProfile: {
@@ -105,11 +116,24 @@ function createRuntimeInitialState(): UniversityAdminProfileStoreState {
     },
     isLoading: false,
     isReady: false,
+    shouldRefresh: false,
   };
 }
 
 function getErrorMessage(error: unknown, fallbackMessage: string) {
   return error instanceof Error ? error.message : fallbackMessage;
+}
+
+function readSessionStorage() {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    return window.sessionStorage;
+  } catch {
+    return null;
+  }
 }
 
 function normalizeText(value: string) {
@@ -118,6 +142,110 @@ function normalizeText(value: string) {
 
 function normalizeEmail(value: string) {
   return normalizeText(value).toLowerCase();
+}
+
+function isValidInstitutionProfile(
+  value: Partial<UniversityInstitutionProfile>,
+): value is UniversityInstitutionProfile {
+  return (
+    typeof value.adminEmail === 'string' &&
+    typeof value.adminFirstName === 'string' &&
+    typeof value.adminLastName === 'string' &&
+    typeof value.adminPhone === 'string' &&
+    Array.isArray(value.campuses) &&
+    typeof value.id === 'string' &&
+    typeof value.logoAlt === 'string' &&
+    (value.logoFileName === null || typeof value.logoFileName === 'string') &&
+    (value.logoSrc === null || typeof value.logoSrc === 'string') &&
+    typeof value.mainCity === 'string' &&
+    typeof value.mainCityId === 'string' &&
+    typeof value.mainLocality === 'string' &&
+    typeof value.mainLocalityId === 'string' &&
+    typeof value.name === 'string'
+  );
+}
+
+function readPersistedProfileCache() {
+  const storage = readSessionStorage();
+  const session = readAuthSession();
+
+  if (!storage || !session || session.user.role !== 'UNIVERSITY_ADMIN') {
+    return null;
+  }
+
+  const rawCache = storage.getItem(PROFILE_CACHE_STORAGE_KEY);
+
+  if (!rawCache) {
+    return null;
+  }
+
+  try {
+    const parsedCache = JSON.parse(rawCache) as Partial<PersistedUniversityAdminProfileCache>;
+
+    if (
+      typeof parsedCache.updatedAt !== 'number' ||
+      Date.now() - parsedCache.updatedAt > PROFILE_CACHE_MAX_AGE_MS ||
+      parsedCache.userId !== session.user.id ||
+      typeof parsedCache.institutionProfile !== 'object' ||
+      parsedCache.institutionProfile === null ||
+      !isValidInstitutionProfile(parsedCache.institutionProfile)
+    ) {
+      storage.removeItem(PROFILE_CACHE_STORAGE_KEY);
+      return null;
+    }
+
+    return parsedCache.institutionProfile;
+  } catch {
+    storage.removeItem(PROFILE_CACHE_STORAGE_KEY);
+    return null;
+  }
+}
+
+export function persistUniversityAdminProfileCache(
+  institutionProfile: UniversityInstitutionProfile,
+) {
+  const storage = readSessionStorage();
+  const session = readAuthSession();
+
+  if (!storage || !session || session.user.role !== 'UNIVERSITY_ADMIN') {
+    return;
+  }
+
+  const payload: PersistedUniversityAdminProfileCache = {
+    institutionProfile,
+    updatedAt: Date.now(),
+    userId: session.user.id,
+  };
+
+  storage.setItem(PROFILE_CACHE_STORAGE_KEY, JSON.stringify(payload));
+}
+
+function clearPersistedProfileCache() {
+  const storage = readSessionStorage();
+
+  if (!storage) {
+    return;
+  }
+
+  storage.removeItem(PROFILE_CACHE_STORAGE_KEY);
+}
+
+function createRuntimeInitialState(): UniversityAdminProfileStoreState {
+  const cachedProfile = readPersistedProfileCache();
+
+  if (!cachedProfile) {
+    return createEmptyRuntimeState();
+  }
+
+  syncUniversityAdminHeaderState(cachedProfile);
+
+  return {
+    errorMessage: null,
+    institutionProfile: cachedProfile,
+    isLoading: false,
+    isReady: true,
+    shouldRefresh: true,
+  };
 }
 
 function buildNextInstitutionProfile(
@@ -179,7 +307,7 @@ async function loadRuntimeState(forceRefresh = false) {
     return state;
   }
 
-  if (state.isReady && !forceRefresh) {
+  if (state.isReady && !state.shouldRefresh && !forceRefresh) {
     return state;
   }
 
@@ -194,15 +322,17 @@ async function loadRuntimeState(forceRefresh = false) {
 
   runtimeLoadPromise = getUniversityAdminProfile()
     .then((institutionProfile) => {
+      persistUniversityAdminProfileCache(institutionProfile);
       syncUniversityAdminHeaderState(institutionProfile);
       updateState({
         errorMessage: null,
         institutionProfile: {
-          ...createRuntimeInitialState().institutionProfile,
+          ...createEmptyRuntimeState().institutionProfile,
           ...institutionProfile,
         },
         isLoading: false,
         isReady: true,
+        shouldRefresh: false,
       });
 
       return state;
@@ -214,6 +344,7 @@ async function loadRuntimeState(forceRefresh = false) {
           'No pudimos cargar la informacion institucional.',
         ),
         isLoading: false,
+        shouldRefresh: false,
       });
 
       return state;
@@ -238,6 +369,7 @@ async function updateInstitutionProfile(values: UniversityInstitutionFormValues)
     );
 
     syncUniversityAdminHeaderState(nextInstitutionProfile);
+    persistUniversityAdminProfileCache(nextInstitutionProfile);
     resetUniversityAdminOverviewState();
     updateState({
       ...state,
@@ -245,6 +377,7 @@ async function updateInstitutionProfile(values: UniversityInstitutionFormValues)
       institutionProfile: nextInstitutionProfile,
       isLoading: false,
       isReady: true,
+      shouldRefresh: false,
     });
 
     return true;
@@ -264,6 +397,7 @@ async function updateInstitutionProfile(values: UniversityInstitutionFormValues)
     );
 
     syncUniversityAdminHeaderState(nextInstitutionProfile);
+    persistUniversityAdminProfileCache(nextInstitutionProfile);
     resetUniversityAdminOverviewState();
     updateState({
       ...state,
@@ -271,6 +405,7 @@ async function updateInstitutionProfile(values: UniversityInstitutionFormValues)
       institutionProfile: nextInstitutionProfile,
       isLoading: false,
       isReady: true,
+      shouldRefresh: false,
     });
 
     return true;
@@ -302,6 +437,7 @@ async function changePassword(values: UniversityPasswordFormValues) {
       errorMessage: null,
       isLoading: false,
       isReady: true,
+      shouldRefresh: false,
     });
     return true;
   } catch (error) {
@@ -314,7 +450,8 @@ async function changePassword(values: UniversityPasswordFormValues) {
 }
 
 export function resetUniversityAdminProfileState() {
-  state = IS_TEST_MODE ? createMockState() : createRuntimeInitialState();
+  clearPersistedProfileCache();
+  state = IS_TEST_MODE ? createMockState() : createEmptyRuntimeState();
   runtimeLoadPromise = null;
   resetUniversityAdminHeaderState();
   emitChange();
@@ -327,7 +464,12 @@ export function useUniversityAdminProfileStore(
   const shouldAutoLoad = options.autoLoad ?? true;
 
   useEffect(() => {
-    if (!shouldAutoLoad || IS_TEST_MODE || snapshot.isLoading || snapshot.isReady) {
+    if (
+      !shouldAutoLoad ||
+      IS_TEST_MODE ||
+      snapshot.isLoading ||
+      (snapshot.isReady && !snapshot.shouldRefresh)
+    ) {
       return;
     }
 

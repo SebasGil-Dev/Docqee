@@ -10,6 +10,21 @@ type CatalogApiOption = {
   name: string;
 };
 
+type PersistedCatalogCache = {
+  areCitiesLoadedFromApi: boolean;
+  areDocumentTypesLoadedFromApi: boolean;
+  backendCityIdByFrontendId: Record<string, number>;
+  cities: CityOption[];
+  cityLabelByFrontendId: Record<string, string>;
+  documentTypes: DocumentTypeOption[];
+  loadedLocalityCityIds: string[];
+  localitiesByCityId: Record<string, LocalityOption[]>;
+  updatedAt: number;
+};
+
+const CATALOG_CACHE_STORAGE_KEY = 'docqee.catalog-cache.v1';
+const CATALOG_CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
 function getEnvValue(key: string) {
   const envRecord: unknown = import.meta.env;
 
@@ -19,6 +34,18 @@ function getEnvValue(key: string) {
 
   const value = (envRecord as Record<string, unknown>)[key];
   return typeof value === 'string' ? value : undefined;
+}
+
+function readLocalStorage() {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
 }
 
 const API_BASE_URL = (getEnvValue('VITE_API_URL') ?? 'http://localhost:3000').replace(/\/+$/, '');
@@ -168,8 +195,157 @@ function refreshCityLabelCache(cities: CityOption[]) {
   });
 }
 
+function isCityOption(value: unknown): value is CityOption {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const option = value as Partial<CityOption>;
+  return typeof option.id === 'string' && typeof option.label === 'string';
+}
+
+function isDocumentTypeOption(value: unknown): value is DocumentTypeOption {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const option = value as Partial<DocumentTypeOption>;
+  return (
+    typeof option.id === 'string' &&
+    typeof option.label === 'string' &&
+    typeof option.code === 'string'
+  );
+}
+
+function isLocalityOption(value: unknown): value is LocalityOption {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const option = value as Partial<LocalityOption>;
+  return (
+    typeof option.id === 'string' &&
+    typeof option.label === 'string' &&
+    typeof option.cityId === 'string'
+  );
+}
+
+function persistCatalogCache() {
+  const storage = readLocalStorage();
+
+  if (!storage) {
+    return;
+  }
+
+  const localitiesByCityId = Object.fromEntries(localitiesCache.entries());
+  const backendCityIds = Object.fromEntries(backendCityIdByFrontendId.entries());
+  const cityLabels = Object.fromEntries(cityLabelByFrontendId.entries());
+
+  const payload: PersistedCatalogCache = {
+    areCitiesLoadedFromApi,
+    areDocumentTypesLoadedFromApi,
+    backendCityIdByFrontendId: backendCityIds,
+    cities: citiesCache,
+    cityLabelByFrontendId: cityLabels,
+    documentTypes: documentTypesCache,
+    loadedLocalityCityIds: [...loadedLocalityCityIds],
+    localitiesByCityId,
+    updatedAt: Date.now(),
+  };
+
+  storage.setItem(CATALOG_CACHE_STORAGE_KEY, JSON.stringify(payload));
+}
+
+function hydrateCatalogCacheFromStorage() {
+  const storage = readLocalStorage();
+
+  if (!storage) {
+    return;
+  }
+
+  const rawCache = storage.getItem(CATALOG_CACHE_STORAGE_KEY);
+
+  if (!rawCache) {
+    return;
+  }
+
+  try {
+    const parsedCache = JSON.parse(rawCache) as Partial<PersistedCatalogCache>;
+
+    if (
+      typeof parsedCache.updatedAt !== 'number' ||
+      Date.now() - parsedCache.updatedAt > CATALOG_CACHE_MAX_AGE_MS
+    ) {
+      storage.removeItem(CATALOG_CACHE_STORAGE_KEY);
+      return;
+    }
+
+    const cachedCities = Array.isArray(parsedCache.cities)
+      ? parsedCache.cities.filter(isCityOption)
+      : [];
+    const cachedDocumentTypes = Array.isArray(parsedCache.documentTypes)
+      ? parsedCache.documentTypes.filter(isDocumentTypeOption)
+      : [];
+
+    if (cachedCities.length > 0) {
+      citiesCache = cachedCities;
+      refreshCityLabelCache(citiesCache);
+    }
+
+    if (cachedDocumentTypes.length > 0) {
+      documentTypesCache = cachedDocumentTypes;
+    }
+
+    backendCityIdByFrontendId.clear();
+    Object.entries(parsedCache.backendCityIdByFrontendId ?? {}).forEach(([frontendId, backendId]) => {
+      if (typeof backendId === 'number') {
+        backendCityIdByFrontendId.set(frontendId, backendId);
+      }
+    });
+
+    cityLabelByFrontendId.clear();
+    Object.entries(parsedCache.cityLabelByFrontendId ?? {}).forEach(([frontendId, label]) => {
+      if (typeof label === 'string') {
+        cityLabelByFrontendId.set(frontendId, label);
+      }
+    });
+
+    if (cityLabelByFrontendId.size === 0) {
+      refreshCityLabelCache(citiesCache);
+    }
+
+    localitiesCache.clear();
+    Object.entries(parsedCache.localitiesByCityId ?? {}).forEach(([cityId, options]) => {
+      if (!Array.isArray(options)) {
+        return;
+      }
+
+      const validOptions = options.filter(isLocalityOption);
+
+      if (validOptions.length > 0) {
+        localitiesCache.set(cityId, validOptions);
+      }
+    });
+
+    loadedLocalityCityIds.clear();
+    if (Array.isArray(parsedCache.loadedLocalityCityIds)) {
+      parsedCache.loadedLocalityCityIds.forEach((cityId) => {
+        if (typeof cityId === 'string') {
+          loadedLocalityCityIds.add(cityId);
+        }
+      });
+    }
+
+    areCitiesLoadedFromApi = parsedCache.areCitiesLoadedFromApi === true;
+    areDocumentTypesLoadedFromApi = parsedCache.areDocumentTypesLoadedFromApi === true;
+  } catch {
+    storage.removeItem(CATALOG_CACHE_STORAGE_KEY);
+  }
+}
+
 seedLocalitiesCache();
 refreshCityLabelCache(citiesCache);
+hydrateCatalogCacheFromStorage();
 
 function normalizeText(value: string) {
   return value.trim();
@@ -250,6 +426,7 @@ function cacheCities(options: CatalogApiOption[]) {
 
   citiesCache = nextCities.length > 0 ? nextCities : [...fallbackCities];
   refreshCityLabelCache(citiesCache);
+  persistCatalogCache();
 }
 
 function cacheDocumentTypes(options: CatalogApiOption[]) {
@@ -266,6 +443,7 @@ function cacheDocumentTypes(options: CatalogApiOption[]) {
   });
 
   documentTypesCache = nextDocumentTypes.length > 0 ? nextDocumentTypes : [...fallbackDocumentTypes];
+  persistCatalogCache();
 }
 
 function ensureCitiesLoaded() {
@@ -381,6 +559,7 @@ async function loadLocalitiesByCity(cityId: string) {
         nextLocalities.length > 0 ? nextLocalities : getFallbackLocalitiesByCity(cityId),
       );
       loadedLocalityCityIds.add(cityId);
+      persistCatalogCache();
 
       return getCachedLocalitiesByCity(cityId);
     })

@@ -22,7 +22,10 @@ import { IS_TEST_MODE } from '@/lib/apiClient';
 import { patientRegisterCatalogDataSource } from '@/lib/patientRegisterCatalogDataSource';
 import { syncUniversityAdminHeaderState } from '@/lib/universityAdminHeaderStore';
 import { resetUniversityAdminOverviewState } from '@/lib/universityAdminOverviewStore';
-import { resetUniversityAdminProfileState } from '@/lib/universityAdminProfileStore';
+import {
+  persistUniversityAdminProfileCache,
+  resetUniversityAdminProfileState,
+} from '@/lib/universityAdminProfileStore';
 import {
   bulkCreateStudents,
   bulkCreateTeachers,
@@ -608,6 +611,7 @@ function updateInstitutionProfileMock(values: UniversityInstitutionFormValues) {
   };
 
   syncUniversityAdminHeaderState(nextInstitutionProfile);
+  persistUniversityAdminProfileCache(nextInstitutionProfile);
   updateState({
     ...state,
     institutionProfile: nextInstitutionProfile,
@@ -737,6 +741,10 @@ async function loadRuntimeState(forceRefresh = false) {
   ])
     .then(([institutionProfile, students, teachers, credentials]) => {
       syncUniversityAdminHeaderState(institutionProfile);
+      persistUniversityAdminProfileCache({
+        ...createRuntimeInitialState().institutionProfile,
+        ...institutionProfile,
+      });
       updateState({
         credentials,
         errorMessage: null,
@@ -1050,6 +1058,7 @@ async function updateInstitutionProfile(values: UniversityInstitutionFormValues)
     };
 
     syncUniversityAdminHeaderState(nextInstitutionProfile);
+    persistUniversityAdminProfileCache(nextInstitutionProfile);
     resetUniversityAdminOverviewState();
 
     updateState({

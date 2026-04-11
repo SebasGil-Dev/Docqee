@@ -271,7 +271,18 @@ export function UniversityInstitutionPage({
     () => createInitialCatalogState(catalogDataSource.getCities(), 'loading'),
   );
   const [localitiesState, setLocalitiesState] = useState<AsyncCatalogState<LocalityOption>>(
-    createEmptyCatalogState('idle'),
+    () => {
+      const initialValues = getInstitutionInitialValues(institutionProfile);
+
+      if (!initialValues.cityId) {
+        return createEmptyCatalogState('idle');
+      }
+
+      return createInitialCatalogState(
+        catalogDataSource.getLocalitiesByCity(initialValues.cityId),
+        'loading',
+      );
+    },
   );
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [isPasswordPanelOpen, setIsPasswordPanelOpen] = useState(false);
@@ -349,12 +360,20 @@ export function UniversityInstitutionPage({
     logoUploadSequenceRef.current += 1;
     logoUploadPromiseRef.current = null;
     setValues(getInstitutionInitialValues(institutionProfile));
+    setLocalitiesState(
+      institutionProfile.mainCityId
+        ? createInitialCatalogState(
+            catalogDataSource.getLocalitiesByCity(institutionProfile.mainCityId),
+            'loading',
+          )
+        : createEmptyCatalogState('idle'),
+    );
     setCampusDraft(campusInitialValues);
     setCampusErrors({});
     setEditingCampusId(null);
     setLogoUploadStatus('idle');
     setLogoUploadMessage(null);
-  }, [institutionProfile]);
+  }, [catalogDataSource, institutionProfile]);
 
   useEffect(
     () => () => {
