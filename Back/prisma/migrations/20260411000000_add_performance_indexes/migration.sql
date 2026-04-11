@@ -4,6 +4,8 @@ CREATE INDEX IF NOT EXISTS "idx_cita_sede" ON "cita" ("id_sede");
 
 CREATE INDEX IF NOT EXISTS "idx_credencial_inicial_fecha" ON "credencial_inicial" ("fecha_creacion");
 
+CREATE INDEX IF NOT EXISTS "idx_cuenta_acceso_credenciales_pendientes" ON "cuenta_acceso" ("tipo_cuenta", "primer_ingreso_pendiente", "ultimo_login_at");
+
 CREATE INDEX IF NOT EXISTS "idx_cuenta_estudiante_universidad_fecha" ON "cuenta_estudiante" ("id_universidad", "fecha_creacion");
 CREATE INDEX IF NOT EXISTS "idx_cuenta_paciente_localidad" ON "cuenta_paciente" ("id_localidad");
 
