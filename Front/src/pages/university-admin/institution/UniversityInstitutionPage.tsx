@@ -1110,7 +1110,7 @@ export function UniversityInstitutionPage({
                 paddingClassName="p-0"
               >
                 <div className="space-y-4">
-                  <div className="space-y-4 rounded-[1.6rem] border border-slate-200/80 bg-white p-4 sm:p-5">
+                  <div className="space-y-4 rounded-[1.6rem] border border-slate-200/80 bg-slate-50/80 p-4 sm:p-5">
                     <div>
                       <h2 className="font-headline text-[1.15rem] font-extrabold tracking-tight text-ink">
                         {universityAdminContent.institutionPage.sectionTitles.institution}
@@ -1234,7 +1234,9 @@ export function UniversityInstitutionPage({
                         </div>
                       </div>
                     </div>
-                    <div className="space-y-3">
+                  </div>
+
+                  <div className="space-y-3 rounded-[1.6rem] border border-slate-200/80 bg-slate-50/80 p-4 sm:p-5">
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                           <div>
                             <h3 className="font-headline text-[1rem] font-extrabold tracking-tight text-ink">
@@ -1405,7 +1407,6 @@ export function UniversityInstitutionPage({
                           ))}
                         </div>
                       </div>
-                    </div>
 
                   <div className="space-y-4 rounded-[1.6rem] border border-slate-200/80 bg-white p-4 sm:p-5">
                     <div>
