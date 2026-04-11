@@ -1,13 +1,29 @@
 import { useEffect, useSyncExternalStore } from 'react';
 
-import type { UniversityAdminOverview } from '@/content/types';
+import type {
+  UniversityAdminOverview,
+  UniversityHomeCampus,
+  UniversityHomeInstitution,
+  UniversityHomeStudent,
+  UniversityHomeStudentSummary,
+  UniversityHomeTeacher,
+  UniversityHomeTeacherSummary,
+} from '@/content/types';
 import { IS_TEST_MODE } from '@/lib/apiClient';
+import { readAuthSession } from '@/lib/authSession';
 import { getUniversityAdminOverview } from '@/lib/universityAdminApi';
+
+type PersistedUniversityAdminOverviewCache = {
+  overview: UniversityAdminOverview;
+  updatedAt: number;
+  userId: number;
+};
 
 type UniversityAdminOverviewStoreState = UniversityAdminOverview & {
   errorMessage: string | null;
   isLoading: boolean;
   isReady: boolean;
+  shouldRefresh: boolean;
 };
 
 type UniversityAdminOverviewActions = {
@@ -18,6 +34,8 @@ type UseUniversityAdminOverviewStoreOptions = {
   autoLoad?: boolean;
 };
 
+const OVERVIEW_CACHE_STORAGE_KEY = 'docqee.university-admin.overview-cache';
+const OVERVIEW_CACHE_MAX_AGE_MS = 30 * 60 * 1000;
 const listeners = new Set<() => void>();
 
 function createMockState(): UniversityAdminOverviewStoreState {
@@ -35,6 +53,7 @@ function createMockState(): UniversityAdminOverviewStoreState {
     },
     isLoading: false,
     isReady: true,
+    shouldRefresh: false,
     recentCampuses: [
       {
         city: 'Bogota',
@@ -113,7 +132,7 @@ function createMockState(): UniversityAdminOverviewStoreState {
   };
 }
 
-function createRuntimeInitialState(): UniversityAdminOverviewStoreState {
+function createEmptyRuntimeState(): UniversityAdminOverviewStoreState {
   return {
     activeCampusesCount: 0,
     errorMessage: null,
@@ -128,6 +147,7 @@ function createRuntimeInitialState(): UniversityAdminOverviewStoreState {
     },
     isLoading: false,
     isReady: false,
+    shouldRefresh: false,
     recentCampuses: [],
     recentStudents: [],
     recentTeachers: [],
@@ -147,6 +167,219 @@ function createRuntimeInitialState(): UniversityAdminOverviewStoreState {
 
 function getErrorMessage(error: unknown, fallbackMessage: string) {
   return error instanceof Error ? error.message : fallbackMessage;
+}
+
+function readSessionStorage() {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    return window.sessionStorage;
+  } catch {
+    return null;
+  }
+}
+
+function isUniversityHomeInstitution(
+  value: unknown,
+): value is UniversityHomeInstitution {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<UniversityHomeInstitution>;
+
+  return (
+    typeof candidate.adminFirstName === 'string' &&
+    typeof candidate.adminLastName === 'string' &&
+    typeof candidate.logoAlt === 'string' &&
+    (candidate.logoSrc === null || typeof candidate.logoSrc === 'string') &&
+    typeof candidate.mainCity === 'string' &&
+    typeof candidate.mainLocality === 'string' &&
+    typeof candidate.name === 'string'
+  );
+}
+
+function isUniversityHomeCampus(value: unknown): value is UniversityHomeCampus {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<UniversityHomeCampus>;
+
+  return (
+    typeof candidate.city === 'string' &&
+    typeof candidate.id === 'string' &&
+    typeof candidate.locality === 'string' &&
+    typeof candidate.name === 'string' &&
+    (candidate.status === 'active' || candidate.status === 'inactive')
+  );
+}
+
+function isUniversityHomeStudent(
+  value: unknown,
+): value is UniversityHomeStudent {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<UniversityHomeStudent>;
+
+  return (
+    typeof candidate.createdAt === 'string' &&
+    (candidate.displayStatus === 'active' ||
+      candidate.displayStatus === 'inactive' ||
+      candidate.displayStatus === 'pending') &&
+    typeof candidate.firstName === 'string' &&
+    typeof candidate.id === 'string' &&
+    typeof candidate.lastName === 'string' &&
+    typeof candidate.semester === 'string'
+  );
+}
+
+function isUniversityHomeTeacher(
+  value: unknown,
+): value is UniversityHomeTeacher {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<UniversityHomeTeacher>;
+
+  return (
+    typeof candidate.createdAt === 'string' &&
+    typeof candidate.documentNumber === 'string' &&
+    typeof candidate.documentTypeCode === 'string' &&
+    typeof candidate.firstName === 'string' &&
+    typeof candidate.id === 'string' &&
+    typeof candidate.lastName === 'string' &&
+    (candidate.status === 'active' || candidate.status === 'inactive')
+  );
+}
+
+function isUniversityHomeStudentSummary(
+  value: unknown,
+): value is UniversityHomeStudentSummary {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<UniversityHomeStudentSummary>;
+
+  return (
+    typeof candidate.active === 'number' &&
+    typeof candidate.inactive === 'number' &&
+    typeof candidate.pending === 'number' &&
+    typeof candidate.total === 'number'
+  );
+}
+
+function isUniversityHomeTeacherSummary(
+  value: unknown,
+): value is UniversityHomeTeacherSummary {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<UniversityHomeTeacherSummary>;
+
+  return (
+    typeof candidate.active === 'number' &&
+    typeof candidate.inactive === 'number' &&
+    typeof candidate.total === 'number'
+  );
+}
+
+function isUniversityAdminOverview(
+  value: unknown,
+): value is UniversityAdminOverview {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<UniversityAdminOverview>;
+
+  return (
+    typeof candidate.activeCampusesCount === 'number' &&
+    isUniversityHomeInstitution(candidate.institution) &&
+    Array.isArray(candidate.recentCampuses) &&
+    candidate.recentCampuses.every(isUniversityHomeCampus) &&
+    Array.isArray(candidate.recentStudents) &&
+    candidate.recentStudents.every(isUniversityHomeStudent) &&
+    Array.isArray(candidate.recentTeachers) &&
+    candidate.recentTeachers.every(isUniversityHomeTeacher) &&
+    isUniversityHomeStudentSummary(candidate.studentSummary) &&
+    isUniversityHomeTeacherSummary(candidate.teacherSummary)
+  );
+}
+
+function persistOverviewCache(overview: UniversityAdminOverview) {
+  const storage = readSessionStorage();
+  const session = readAuthSession();
+
+  if (!storage || !session || session.user.role !== 'UNIVERSITY_ADMIN') {
+    return;
+  }
+
+  const payload: PersistedUniversityAdminOverviewCache = {
+    overview,
+    updatedAt: Date.now(),
+    userId: session.user.id,
+  };
+
+  storage.setItem(OVERVIEW_CACHE_STORAGE_KEY, JSON.stringify(payload));
+}
+
+function readPersistedOverviewCache() {
+  const storage = readSessionStorage();
+  const session = readAuthSession();
+
+  if (!storage || !session || session.user.role !== 'UNIVERSITY_ADMIN') {
+    return null;
+  }
+
+  const rawCache = storage.getItem(OVERVIEW_CACHE_STORAGE_KEY);
+
+  if (!rawCache) {
+    return null;
+  }
+
+  try {
+    const parsedCache =
+      JSON.parse(rawCache) as Partial<PersistedUniversityAdminOverviewCache>;
+
+    if (
+      typeof parsedCache.updatedAt !== 'number' ||
+      Date.now() - parsedCache.updatedAt > OVERVIEW_CACHE_MAX_AGE_MS ||
+      parsedCache.userId !== session.user.id ||
+      !isUniversityAdminOverview(parsedCache.overview)
+    ) {
+      storage.removeItem(OVERVIEW_CACHE_STORAGE_KEY);
+      return null;
+    }
+
+    return parsedCache.overview;
+  } catch {
+    storage.removeItem(OVERVIEW_CACHE_STORAGE_KEY);
+    return null;
+  }
+}
+
+function createRuntimeInitialState(): UniversityAdminOverviewStoreState {
+  const cachedOverview = readPersistedOverviewCache();
+
+  if (!cachedOverview) {
+    return createEmptyRuntimeState();
+  }
+
+  return {
+    ...cachedOverview,
+    errorMessage: null,
+    isLoading: false,
+    isReady: true,
+    shouldRefresh: true,
+  };
 }
 
 let state = IS_TEST_MODE ? createMockState() : createRuntimeInitialState();
@@ -182,12 +415,31 @@ function patchState(partialState: Partial<UniversityAdminOverviewStoreState>) {
   });
 }
 
+function setOverview(
+  overview: UniversityAdminOverview,
+  options?: {
+    errorMessage?: string | null;
+    isLoading?: boolean;
+    isReady?: boolean;
+    shouldRefresh?: boolean;
+  },
+) {
+  persistOverviewCache(overview);
+  updateState({
+    ...overview,
+    errorMessage: options?.errorMessage ?? null,
+    isLoading: options?.isLoading ?? false,
+    isReady: options?.isReady ?? true,
+    shouldRefresh: options?.shouldRefresh ?? false,
+  });
+}
+
 async function loadRuntimeState(forceRefresh = false) {
   if (IS_TEST_MODE) {
     return state;
   }
 
-  if (state.isReady && !forceRefresh) {
+  if (state.isReady && !state.shouldRefresh && !forceRefresh) {
     return state;
   }
 
@@ -202,11 +454,10 @@ async function loadRuntimeState(forceRefresh = false) {
 
   runtimeLoadPromise = getUniversityAdminOverview()
     .then((overview) => {
-      updateState({
-        ...overview,
-        errorMessage: null,
+      setOverview(overview, {
         isLoading: false,
         isReady: true,
+        shouldRefresh: false,
       });
 
       return state;
@@ -215,6 +466,7 @@ async function loadRuntimeState(forceRefresh = false) {
       patchState({
         errorMessage: getErrorMessage(error, 'No pudimos cargar el inicio de la universidad.'),
         isLoading: false,
+        shouldRefresh: false,
       });
 
       return state;
@@ -243,12 +495,22 @@ export function useUniversityAdminOverviewStore(
   const shouldAutoLoad = options.autoLoad ?? true;
 
   useEffect(() => {
-    if (!shouldAutoLoad || IS_TEST_MODE || snapshot.isLoading || snapshot.isReady) {
+    if (
+      !shouldAutoLoad ||
+      IS_TEST_MODE ||
+      snapshot.isLoading ||
+      (snapshot.isReady && !snapshot.shouldRefresh)
+    ) {
       return;
     }
 
     void loadRuntimeState();
-  }, [shouldAutoLoad, snapshot.isLoading, snapshot.isReady]);
+  }, [
+    shouldAutoLoad,
+    snapshot.isLoading,
+    snapshot.isReady,
+    snapshot.shouldRefresh,
+  ]);
 
   const actions: UniversityAdminOverviewActions = {
     refresh: refreshRuntimeState,
