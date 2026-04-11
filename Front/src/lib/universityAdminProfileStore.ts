@@ -450,7 +450,7 @@ async function changePassword(values: UniversityPasswordFormValues) {
     });
     return { ok: true };
   } catch (error) {
-    const passwordErrorMessage = getErrorMessage(error, 'No pudimos actualizar la contrasena.');
+    const passwordErrorMessage = getErrorMessage(error, 'No pudimos actualizar la contraseña.');
 
     patchState({
       errorMessage: passwordErrorMessage,

@@ -72,10 +72,10 @@ export const universityAdminContent = {
   },
   institutionPage: {
     actionLabels: {
-      changePassword: 'Cambiar contrasena',
+      changePassword: 'Cambiar contraseña',
       reset: 'Restablecer',
       save: 'Guardar cambios',
-      savePassword: 'Actualizar contrasena',
+      savePassword: 'Actualizar contraseña',
       uploadLogo: 'Subir logo',
     },
     description: '',
@@ -86,8 +86,8 @@ export const universityAdminContent = {
       title: 'Docqee | Información Institucional',
     },
     passwordPanelDescription: '',
-    passwordPanelTitle: 'Actualizar contrasena',
-    passwordSuccessMessage: 'La contrasena se actualizo correctamente',
+    passwordPanelTitle: 'Actualizar contraseña',
+    passwordSuccessMessage: 'La contraseña se actualizó correctamente',
     sectionDescriptions: {
       administrator: '',
       institution: '',

@@ -229,11 +229,11 @@ function validatePasswordField(
   if (!value) {
     switch (field) {
       case 'confirmPassword':
-        return 'Confirma la nueva contrasena';
+        return 'Confirma la nueva contraseña';
       case 'currentPassword':
-        return 'Ingresa la contrasena actual';
+        return 'Ingresa la contraseña actual';
       case 'newPassword':
-        return 'Ingresa la nueva contrasena';
+        return 'Ingresa la nueva contraseña';
       default:
         return undefined;
     }
@@ -248,7 +248,7 @@ function validatePasswordField(
     values.confirmPassword.trim() &&
     values.confirmPassword !== values.newPassword
   ) {
-    return 'La confirmacion no coincide con la nueva contrasena';
+    return 'La confirmación no coincide con la nueva contraseña';
   }
 
   return undefined;
@@ -1049,7 +1049,7 @@ export function UniversityInstitutionPage({
 
       if (!result.ok) {
         setPasswordWarningMessage(
-          result.errorMessage ?? 'No pudimos actualizar la contrasena.',
+          result.errorMessage ?? 'No pudimos actualizar la contraseña.',
         );
         return;
       }
@@ -1057,7 +1057,14 @@ export function UniversityInstitutionPage({
       setPasswordValues(passwordInitialValues);
       setPasswordErrors({});
       setPasswordWarningMessage(null);
-      setPasswordMessage(universityAdminContent.institutionPage.passwordSuccessMessage);
+      setPasswordMessage(null);
+      setShowPasswords({
+        confirmPassword: false,
+        currentPassword: false,
+        newPassword: false,
+      });
+      setIsPasswordPanelOpen(false);
+      setSaveMessage(universityAdminContent.institutionPage.passwordSuccessMessage);
     })();
   };
 
@@ -1568,7 +1575,7 @@ export function UniversityInstitutionPage({
                   ) : null}
                 </div>
                 <button
-                  aria-label="Cerrar dialogo de cambio de contrasena"
+                  aria-label="Cerrar diálogo de cambio de contraseña"
                   className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-ink-muted transition duration-300 hover:border-primary/20 hover:text-primary"
                   type="button"
                   onClick={closePasswordPanel}
@@ -1596,9 +1603,9 @@ export function UniversityInstitutionPage({
                 hidePasswordLabel={authContent.register.password.hidePasswordLabel}
                 id="university-password-current"
                 inputRef={currentPasswordRef}
-                label="Contrasena actual"
+                label="Contraseña actual"
                 name="currentPassword"
-                placeholder="Ingresa la contrasena actual"
+                placeholder="Ingresa la contraseña actual"
                 showPassword={showPasswords.currentPassword}
                 showPasswordLabel={authContent.register.password.showPasswordLabel}
                 value={passwordValues.currentPassword}
@@ -1612,9 +1619,9 @@ export function UniversityInstitutionPage({
                   hidePasswordLabel={authContent.register.password.hidePasswordLabel}
                   id="university-password-new"
                   inputRef={newPasswordRef}
-                  label="Nueva contrasena"
+                  label="Nueva contraseña"
                   name="newPassword"
-                  placeholder="Crea una contrasena segura"
+                  placeholder="Crea una contraseña segura"
                   showPassword={showPasswords.newPassword}
                   showPasswordLabel={authContent.register.password.showPasswordLabel}
                   value={passwordValues.newPassword}
@@ -1627,9 +1634,9 @@ export function UniversityInstitutionPage({
                   hidePasswordLabel={authContent.register.password.hidePasswordLabel}
                   id="university-password-confirm"
                   inputRef={confirmPasswordRef}
-                  label="Confirmar contrasena"
+                  label="Confirmar contraseña"
                   name="confirmPassword"
-                  placeholder="Repite la nueva contrasena"
+                  placeholder="Repite la nueva contraseña"
                   showPassword={showPasswords.confirmPassword}
                   showPasswordLabel={authContent.register.password.showPasswordLabel}
                   value={passwordValues.confirmPassword}
@@ -1640,7 +1647,7 @@ export function UniversityInstitutionPage({
               </div>
               <div className="rounded-[1.45rem] border border-slate-200/80 bg-slate-50/85 p-4">
                 <p className="text-[0.7rem] font-black uppercase tracking-[0.24em] text-primary/80">
-                  Requisitos de la nueva contrasena
+                  Requisitos de la nueva contraseña
                 </p>
                 <ul className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
                   {authContent.register.password.requirements.map((requirement) => {

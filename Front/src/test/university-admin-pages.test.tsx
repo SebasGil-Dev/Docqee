@@ -120,7 +120,7 @@ describe('University admin pages', () => {
     expect(screen.getByText(/equipo y sedes/i)).toBeInTheDocument();
   });
 
-  it('permite guardar, restablecer y abrir el dialogo de contrasena en informacion institucional', async () => {
+  it('permite guardar, restablecer y actualizar la contraseña en informacion institucional', async () => {
     const user = userEvent.setup();
 
     renderUniversityApp([ROUTES.universityInstitution]);
@@ -166,13 +166,23 @@ describe('University admin pages', () => {
     expect(institutionName).toHaveValue('Universidad Clinica del Centro');
     expect(screen.getByText(/Sede Centro/i)).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /cambiar contrasena/i }));
+    await user.click(screen.getByRole('button', { name: /cambiar contraseña/i }));
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /actualizar contrasena/i })).toBeInTheDocument();
-    expect(screen.getByLabelText(/contrasena actual/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/^nueva contrasena$/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/confirmar contrasena/i)).toBeInTheDocument();
-    expect(screen.getByText(/requisitos de la nueva contrasena/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /actualizar contraseña/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/contraseña actual/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^nueva contraseña$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/confirmar contraseña/i)).toBeInTheDocument();
+    expect(screen.getByText(/requisitos de la nueva contraseña/i)).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText(/contraseña actual/i), 'Actual123!');
+    await user.type(screen.getByLabelText(/^nueva contraseña$/i), 'ClaveNueva123!');
+    await user.type(screen.getByLabelText(/confirmar contraseña/i), 'ClaveNueva123!');
+    await user.click(screen.getByRole('button', { name: /actualizar contraseña/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+    expect(await screen.findByText(/La contraseña se actualizó correctamente/i)).toBeInTheDocument();
   });
 
   it('registra estudiantes activos y genera su credencial inicial', async () => {

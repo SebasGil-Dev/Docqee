@@ -1170,7 +1170,7 @@ async function changePassword(values: UniversityPasswordFormValues) {
     return true;
   } catch (error) {
     patchState({
-      errorMessage: getErrorMessage(error, 'No pudimos actualizar la contrasena.'),
+      errorMessage: getErrorMessage(error, 'No pudimos actualizar la contraseña.'),
       isLoading: false,
     });
     return false;
