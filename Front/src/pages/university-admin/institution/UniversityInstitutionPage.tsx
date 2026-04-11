@@ -385,6 +385,20 @@ export function UniversityInstitutionPage({
   );
 
   useEffect(() => {
+    if (!saveMessage) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setSaveMessage(null);
+    }, 1800);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [saveMessage]);
+
+  useEffect(() => {
     if (!isPasswordPanelOpen) {
       return undefined;
     }
@@ -1112,7 +1126,7 @@ export function UniversityInstitutionPage({
                 <div className="space-y-4">
                   <div className="space-y-4 rounded-[1.6rem] border border-slate-200/80 bg-slate-50/80 p-4 sm:p-5">
                     <div>
-                      <h2 className="font-headline text-[1.15rem] font-extrabold tracking-tight text-ink">
+                      <h2 className="text-center font-headline text-[1.15rem] font-extrabold tracking-tight text-ink">
                         {universityAdminContent.institutionPage.sectionTitles.institution}
                       </h2>
                     </div>
@@ -1234,9 +1248,9 @@ export function UniversityInstitutionPage({
                   </div>
 
                   <div className="space-y-3 rounded-[1.6rem] border border-slate-200/80 bg-slate-50/80 p-4 sm:p-5">
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                          <div>
-                            <h3 className="font-headline text-[1rem] font-extrabold tracking-tight text-ink">
+                        <div className="text-center">
+                          <div className="w-full">
+                            <h3 className="text-center font-headline text-[1rem] font-extrabold tracking-tight text-ink">
                               Sedes de la universidad
                             </h3>
                           </div>
@@ -1364,7 +1378,7 @@ export function UniversityInstitutionPage({
                         </div>
                         <div className="mt-6 grid gap-2.5">
                           {values.campuses.length > 0 ? (
-                            <div className="hidden gap-2.5 px-3 text-[0.66rem] font-extrabold uppercase tracking-[0.14em] text-ink md:grid md:grid-cols-[minmax(7rem,1fr)_minmax(8rem,1.15fr)_minmax(7rem,0.85fr)_minmax(7rem,0.85fr)_minmax(5.5rem,0.55fr)_minmax(6.5rem,0.55fr)] md:items-center">
+                            <div className="hidden gap-2.5 px-[30px] text-[0.66rem] font-extrabold uppercase tracking-[0.14em] text-ink md:grid md:grid-cols-[minmax(7rem,1fr)_minmax(8rem,1.15fr)_minmax(7rem,0.85fr)_minmax(7rem,0.85fr)_minmax(5.5rem,0.55fr)_minmax(6.5rem,0.55fr)] md:items-center">
                               <span>Nombre</span>
                               <span>Dirección</span>
                               <span>Ciudad</span>
@@ -1376,7 +1390,7 @@ export function UniversityInstitutionPage({
                           {values.campuses.map((campus) => (
                             <div
                               key={campus.id}
-                              className="grid gap-2.5 rounded-[1.15rem] border border-slate-200/80 bg-white p-3 md:grid-cols-[minmax(7rem,1fr)_minmax(8rem,1.15fr)_minmax(7rem,0.85fr)_minmax(7rem,0.85fr)_minmax(5.5rem,0.55fr)_minmax(6.5rem,0.55fr)] md:items-center"
+                              className="grid gap-2.5 rounded-[1.15rem] border border-slate-200/80 bg-white p-[30px] md:grid-cols-[minmax(7rem,1fr)_minmax(8rem,1.15fr)_minmax(7rem,0.85fr)_minmax(7rem,0.85fr)_minmax(5.5rem,0.55fr)_minmax(6.5rem,0.55fr)] md:items-center"
                             >
                               <h4 className="min-w-0 truncate text-[0.83rem] font-semibold text-ink">
                                 {campus.name}
@@ -1414,7 +1428,7 @@ export function UniversityInstitutionPage({
 
                   <div className="space-y-4 rounded-[1.6rem] border border-slate-200/80 bg-slate-50/80 p-4 sm:p-5">
                     <div>
-                      <h2 className="font-headline text-[1.15rem] font-extrabold tracking-tight text-ink">
+                      <h2 className="text-center font-headline text-[1.15rem] font-extrabold tracking-tight text-ink">
                         {universityAdminContent.institutionPage.sectionTitles.administrator}
                       </h2>
                     </div>
@@ -1554,9 +1568,9 @@ export function UniversityInstitutionPage({
             </div>
             <form className="space-y-5 px-5 py-5 sm:px-6 sm:py-6" noValidate onSubmit={handlePasswordSubmit}>
               {passwordMessage ? (
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+                <p className="text-sm font-medium text-ink" role="status">
                   {passwordMessage}
-                </div>
+                </p>
               ) : null}
               <AdminPasswordField
                 error={passwordErrors.currentPassword}

@@ -82,13 +82,12 @@ export const universityAdminContent = {
     logoHelper: '',
     meta: {
       description:
-        'Edita la informacion institucional del modulo universitario de Docqee.',
-      title: 'Docqee | Informacion Institucional',
+        'Edita la información institucional del módulo universitario de Docqee.',
+      title: 'Docqee | Información Institucional',
     },
     passwordPanelDescription: '',
     passwordPanelTitle: 'Actualizar contrasena',
-    passwordSuccessMessage:
-      'La contrasena se actualizo correctamente en esta demo frontend.',
+    passwordSuccessMessage: 'La contrasena se actualizo correctamente',
     sectionDescriptions: {
       administrator: '',
       institution: '',
@@ -98,7 +97,7 @@ export const universityAdminContent = {
       institution: 'Datos de la universidad',
     },
     successMessage: 'Los cambios institucionales se guardaron correctamente.',
-    title: 'Informacion institucional',
+    title: 'Información institucional',
   },
   registerStudentPage: {
     backLabel: 'Volver a estudiantes',
@@ -147,7 +146,7 @@ export const universityAdminContent = {
       },
       {
         icon: 'building2',
-        label: 'Informacion institucional',
+        label: 'Información institucional',
         matchPrefix: ROUTES.universityInstitution,
         to: ROUTES.universityInstitution,
       },
