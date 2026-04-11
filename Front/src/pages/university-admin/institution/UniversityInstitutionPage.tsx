@@ -655,9 +655,7 @@ export function UniversityInstitutionPage({
     logoUploadPromiseRef.current = uploadPromise;
   };
 
-  const handleInstitutionSubmit = (event?: FormEvent<HTMLFormElement>) => {
-    event?.preventDefault();
-
+  const validateInstitutionValues = (nextValues: UniversityInstitutionFormValues) => {
     const nextErrors: UniversityInstitutionFormErrors = {};
     const fieldOrder: UniversityInstitutionFormField[] = [
       'name',
@@ -670,7 +668,7 @@ export function UniversityInstitutionPage({
     ];
 
     fieldOrder.forEach((field) => {
-      const rawValue = values[field];
+      const rawValue = nextValues[field];
       const nextFieldError = validateInstitutionField(
         field,
         typeof rawValue === 'string' || rawValue === null ? rawValue : null,
@@ -687,40 +685,55 @@ export function UniversityInstitutionPage({
 
     if (firstErrorField) {
       institutionFieldRefs[firstErrorField].current?.focus();
-      return;
+      return false;
+    }
+
+    return true;
+  };
+
+  const persistInstitutionValues = async (
+    nextValues: UniversityInstitutionFormValues,
+    successMessage: string = universityAdminContent.institutionPage.successMessage,
+  ) => {
+    if (!validateInstitutionValues(nextValues)) {
+      return false;
     }
 
     if (logoUploadStatus === 'error') {
       setSaveMessage(null);
-      return;
+      return false;
     }
 
-    void (async () => {
-      let submissionValues = values;
+    let submissionValues = nextValues;
 
-      if (logoUploadPromiseRef.current) {
-        setLogoUploadMessage('Terminando de subir el logo...');
-        const uploadedLogoSrc = await logoUploadPromiseRef.current;
+    if (logoUploadPromiseRef.current) {
+      setLogoUploadMessage('Terminando de subir el logo...');
+      const uploadedLogoSrc = await logoUploadPromiseRef.current;
 
-        if (!uploadedLogoSrc) {
-          setSaveMessage(null);
-          return;
-        }
-
-        submissionValues = {
-          ...values,
-          logoSrc: uploadedLogoSrc,
-        };
+      if (!uploadedLogoSrc) {
+        setSaveMessage(null);
+        return false;
       }
 
-      const updated = await updateInstitutionProfile(submissionValues);
+      submissionValues = {
+        ...nextValues,
+        logoSrc: uploadedLogoSrc,
+      };
+    }
 
-      if (!updated) {
-        return;
-      }
+    const updated = await updateInstitutionProfile(submissionValues);
 
-      setSaveMessage(universityAdminContent.institutionPage.successMessage);
-    })();
+    if (!updated) {
+      return false;
+    }
+
+    setSaveMessage(successMessage);
+    return true;
+  };
+
+  const handleInstitutionSubmit = (event?: FormEvent<HTMLFormElement>) => {
+    event?.preventDefault();
+    void persistInstitutionValues(values);
   };
 
   const handleReset = () => {
@@ -836,6 +849,10 @@ export function UniversityInstitutionPage({
   };
 
   const handleCampusSubmit = () => {
+    if (isLoading) {
+      return;
+    }
+
     const nextErrors: CampusFormErrors = {};
     const fieldOrder: CampusFormField[] = ['name', 'cityId', 'localityId', 'address'];
 
@@ -868,17 +885,44 @@ export function UniversityInstitutionPage({
       name: campusDraft.name.trim(),
       status: editingCampusId ? campusDraft.status : 'active',
     };
-
-    setValues((currentValues) => ({
-      ...currentValues,
+    const nextValues: UniversityInstitutionFormValues = {
+      ...values,
       campuses: editingCampusId
-        ? currentValues.campuses.map((campus) =>
+        ? values.campuses.map((campus) =>
             campus.id === editingCampusId ? nextCampus : campus,
           )
-        : [nextCampus, ...currentValues.campuses],
-    }));
+        : [nextCampus, ...values.campuses],
+    };
+
+    if (!validateInstitutionValues(nextValues)) {
+      return;
+    }
+
+    if (logoUploadStatus === 'error') {
+      setSaveMessage(null);
+      return;
+    }
+
+    const previousValues = values;
+
+    setValues(nextValues);
     setSaveMessage(null);
-    handleCampusReset();
+
+    void (async () => {
+      const updated = await persistInstitutionValues(
+        nextValues,
+        editingCampusId
+          ? 'La sede se actualizo correctamente.'
+          : 'La sede se registro correctamente.',
+      );
+
+      if (!updated) {
+        setValues(previousValues);
+        return;
+      }
+
+      handleCampusReset();
+    })();
   };
 
   const handlePasswordFieldChange = (
@@ -1304,6 +1348,7 @@ export function UniversityInstitutionPage({
                           ) : null}
                           <button
                             className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-gradient px-3.5 py-2.5 text-[0.82rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
+                            disabled={isLoading || isLogoUploadBlocked}
                             type="button"
                             onClick={handleCampusSubmit}
                           >
@@ -1312,7 +1357,13 @@ export function UniversityInstitutionPage({
                             ) : (
                               <Plus aria-hidden="true" className="h-4 w-4" />
                             )}
-                            <span>{editingCampusId ? 'Guardar sede' : 'Agregar sede'}</span>
+                            <span>
+                              {isLoading
+                                ? 'Guardando...'
+                                : editingCampusId
+                                  ? 'Guardar sede'
+                                  : 'Agregar sede'}
+                            </span>
                           </button>
                         </div>
                         <div className="grid gap-2.5">
