@@ -1038,7 +1038,7 @@ export function UniversityInstitutionPage({
                               <span>{universityAdminContent.institutionPage.actionLabels.uploadLogo}</span>
                             </label>
                             <input
-                              accept=".jpg,.jpeg,.png"
+                              accept=".jpg,.jpeg,.png,.webp"
                               className="sr-only"
                               id="institution-logo-input"
                               type="file"

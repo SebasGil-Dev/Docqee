@@ -9,6 +9,7 @@ import { estado_simple_enum } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 import { PrismaService } from '@/shared/database/prisma.service';
+import { CloudinaryService } from '@/shared/storage/cloudinary.service';
 import type { RequestUser } from '@/shared/types/request-user.type';
 import {
   buildCityFrontId,
@@ -23,7 +24,10 @@ import { UpdateInstitutionProfileDto } from './dto/update-institution-profile.dt
 
 @Injectable()
 export class UniversityAdminService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   async getProfile(user: RequestUser) {
     const universityAdmin = await this.findCurrentUniversityAdmin(user);
@@ -44,13 +48,18 @@ export class UniversityAdminService {
       throw new ConflictException('Ya existe una cuenta registrada con este correo.');
     }
 
+    const logoUrl = await this.resolveInstitutionLogoUrl(
+      input.logoSrc,
+      universityAdmin.id_universidad,
+    );
+
     await this.prisma.$transaction([
       this.prisma.universidad.update({
         where: { id_universidad: universityAdmin.id_universidad },
         data: {
           nombre: normalizeText(input.universityName),
           id_localidad_principal: locality.id_localidad,
-          logo_url: input.logoSrc ? input.logoSrc : undefined,
+          logo_url: logoUrl,
         },
       }),
       this.prisma.cuenta_acceso.update({
@@ -108,6 +117,27 @@ export class UniversityAdminService {
     ]);
 
     return { ok: true };
+  }
+
+  private async resolveInstitutionLogoUrl(logoSrc: string | null | undefined, universityId: number) {
+    if (!logoSrc) {
+      return undefined;
+    }
+
+    if (this.cloudinaryService.isImageDataUri(logoSrc)) {
+      const uploadedLogo = await this.cloudinaryService.uploadImageDataUri(logoSrc, {
+        folder: `docqee/universidades/${universityId}`,
+        publicId: 'logo',
+      });
+
+      return uploadedLogo.secureUrl;
+    }
+
+    if (/^https?:\/\//i.test(logoSrc)) {
+      return logoSrc;
+    }
+
+    throw new BadRequestException('El logo institucional no tiene un formato valido.');
   }
 
   private async syncCampuses(
