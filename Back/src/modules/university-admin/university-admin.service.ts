@@ -65,6 +65,43 @@ type InstitutionProfile = {
   name: string;
 };
 
+type UniversityAdminOverviewInstitution = {
+  adminFirstName: string;
+  adminLastName: string;
+  logoAlt: string;
+  logoSrc: string | null;
+  mainCity: string;
+  mainLocality: string;
+  name: string;
+};
+
+type UniversityAdminOverviewCampus = {
+  city: string;
+  id: string;
+  locality: string;
+  name: string;
+  status: 'active' | 'inactive';
+};
+
+type UniversityAdminOverviewStudent = {
+  createdAt: string;
+  displayStatus: 'active' | 'inactive' | 'pending';
+  firstName: string;
+  id: string;
+  lastName: string;
+  semester: string;
+};
+
+type UniversityAdminOverviewTeacher = {
+  createdAt: string;
+  documentNumber: string;
+  documentTypeCode: string;
+  firstName: string;
+  id: string;
+  lastName: string;
+  status: 'active' | 'inactive';
+};
+
 @Injectable()
 export class UniversityAdminService {
   constructor(
@@ -75,6 +112,189 @@ export class UniversityAdminService {
   async getProfile(user: RequestUser) {
     const universityAdmin = await this.findCurrentUniversityAdmin(user);
     return this.toInstitutionProfile(universityAdmin);
+  }
+
+  async getOverview(user: RequestUser) {
+    const universityAdmin = await this.findCurrentUniversityAdminOverview(user);
+    const universityId = universityAdmin.id_universidad;
+    const pendingCredentialFilter = {
+      is: {
+        anulada_at: null,
+        envio_credencial: {
+          none: {},
+        },
+      },
+    };
+
+    const [
+      activeStudentsCount,
+      pendingStudentsCount,
+      inactiveStudentsCount,
+      activeTeachersCount,
+      inactiveTeachersCount,
+      activeCampusesCount,
+      recentStudents,
+      recentTeachers,
+      recentCampuses,
+    ] = await Promise.all([
+      this.prisma.cuenta_estudiante.count({
+        where: {
+          id_universidad: universityId,
+          cuenta_acceso: {
+            estado: estado_simple_enum.ACTIVO,
+          },
+          NOT: {
+            cuenta_acceso: {
+              credencial_inicial: pendingCredentialFilter,
+            },
+          },
+        },
+      }),
+      this.prisma.cuenta_estudiante.count({
+        where: {
+          id_universidad: universityId,
+          cuenta_acceso: {
+            credencial_inicial: pendingCredentialFilter,
+          },
+        },
+      }),
+      this.prisma.cuenta_estudiante.count({
+        where: {
+          id_universidad: universityId,
+          cuenta_acceso: {
+            estado: estado_simple_enum.INACTIVO,
+          },
+          NOT: {
+            cuenta_acceso: {
+              credencial_inicial: pendingCredentialFilter,
+            },
+          },
+        },
+      }),
+      this.prisma.docente_universidad.count({
+        where: {
+          id_universidad: universityId,
+          estado: estado_simple_enum.ACTIVO,
+        },
+      }),
+      this.prisma.docente_universidad.count({
+        where: {
+          id_universidad: universityId,
+          estado: estado_simple_enum.INACTIVO,
+        },
+      }),
+      this.prisma.sede.count({
+        where: {
+          id_universidad: universityId,
+          estado: estado_simple_enum.ACTIVO,
+        },
+      }),
+      this.prisma.cuenta_estudiante.findMany({
+        where: {
+          id_universidad: universityId,
+        },
+        orderBy: {
+          fecha_creacion: 'desc',
+        },
+        select: {
+          id_cuenta: true,
+          fecha_creacion: true,
+          semestre: true,
+          persona: {
+            select: {
+              nombres: true,
+              apellidos: true,
+            },
+          },
+          cuenta_acceso: {
+            select: {
+              estado: true,
+              credencial_inicial: {
+                select: {
+                  anulada_at: true,
+                  _count: {
+                    select: {
+                      envio_credencial: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        take: 3,
+      }),
+      this.prisma.docente_universidad.findMany({
+        where: {
+          id_universidad: universityId,
+        },
+        orderBy: {
+          fecha_creacion: 'desc',
+        },
+        select: {
+          id_docente_universidad: true,
+          fecha_creacion: true,
+          estado: true,
+          docente: {
+            select: {
+              nombres: true,
+              apellidos: true,
+              numero_documento: true,
+              tipo_documento: {
+                select: {
+                  codigo: true,
+                },
+              },
+            },
+          },
+        },
+        take: 3,
+      }),
+      this.prisma.sede.findMany({
+        where: {
+          id_universidad: universityId,
+          estado: estado_simple_enum.ACTIVO,
+        },
+        orderBy: {
+          fecha_creacion: 'desc',
+        },
+        select: {
+          id_sede: true,
+          nombre: true,
+          estado: true,
+          localidad: {
+            select: {
+              nombre: true,
+              ciudad: {
+                select: {
+                  nombre: true,
+                },
+              },
+            },
+          },
+        },
+        take: 3,
+      }),
+    ]);
+
+    return {
+      activeCampusesCount,
+      institution: this.toUniversityAdminOverviewInstitution(universityAdmin),
+      recentCampuses: recentCampuses.map((campus) => this.toUniversityAdminOverviewCampus(campus)),
+      recentStudents: recentStudents.map((student) => this.toUniversityAdminOverviewStudent(student)),
+      recentTeachers: recentTeachers.map((teacher) => this.toUniversityAdminOverviewTeacher(teacher)),
+      studentSummary: {
+        active: activeStudentsCount,
+        inactive: inactiveStudentsCount,
+        pending: pendingStudentsCount,
+        total: activeStudentsCount + inactiveStudentsCount + pendingStudentsCount,
+      },
+      teacherSummary: {
+        active: activeTeachersCount,
+        inactive: inactiveTeachersCount,
+        total: activeTeachersCount + inactiveTeachersCount,
+      },
+    };
   }
 
   async updateProfile(user: RequestUser, input: UpdateInstitutionProfileDto) {
@@ -474,6 +694,42 @@ export class UniversityAdminService {
     return universityAdmin;
   }
 
+  private async findCurrentUniversityAdminOverview(user: RequestUser) {
+    this.assertUniversityAdmin(user);
+
+    const universityAdmin = await this.prisma.cuenta_admin_universidad.findUnique({
+      where: { id_cuenta: user.id },
+      select: {
+        id_cuenta: true,
+        id_universidad: true,
+        nombres: true,
+        apellidos: true,
+        universidad: {
+          select: {
+            nombre: true,
+            logo_url: true,
+            localidad: {
+              select: {
+                nombre: true,
+                ciudad: {
+                  select: {
+                    nombre: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!universityAdmin) {
+      throw new NotFoundException('No encontramos la cuenta administradora de esta universidad.');
+    }
+
+    return universityAdmin;
+  }
+
   private async resolveLocality(localityIdentifier: string, cityIdentifier: string) {
     const numericLocalityId = this.extractStrictNumericId(localityIdentifier);
 
@@ -529,6 +785,113 @@ export class UniversityAdminService {
     }
 
     return city;
+  }
+
+  private toUniversityAdminOverviewInstitution(universityAdmin: {
+    nombres: string;
+    apellidos: string;
+    universidad: {
+      nombre: string;
+      logo_url: string | null;
+      localidad: {
+        nombre: string;
+        ciudad: {
+          nombre: string;
+        };
+      };
+    };
+  }): UniversityAdminOverviewInstitution {
+    return {
+      adminFirstName: universityAdmin.nombres,
+      adminLastName: universityAdmin.apellidos,
+      logoAlt: `Logo institucional de ${universityAdmin.universidad.nombre}`,
+      logoSrc: universityAdmin.universidad.logo_url,
+      mainCity: universityAdmin.universidad.localidad.ciudad.nombre,
+      mainLocality: universityAdmin.universidad.localidad.nombre,
+      name: universityAdmin.universidad.nombre,
+    };
+  }
+
+  private toUniversityAdminOverviewCampus(campus: {
+    id_sede: number;
+    nombre: string;
+    estado: estado_simple_enum;
+    localidad: {
+      nombre: string;
+      ciudad: {
+        nombre: string;
+      };
+    };
+  }): UniversityAdminOverviewCampus {
+    return {
+      city: campus.localidad.ciudad.nombre,
+      id: String(campus.id_sede),
+      locality: campus.localidad.nombre,
+      name: campus.nombre,
+      status: campus.estado === estado_simple_enum.ACTIVO ? 'active' : 'inactive',
+    };
+  }
+
+  private toUniversityAdminOverviewStudent(student: {
+    id_cuenta: number;
+    fecha_creacion: Date;
+    semestre: number;
+    persona: {
+      nombres: string;
+      apellidos: string;
+    };
+    cuenta_acceso: {
+      estado: estado_simple_enum;
+      credencial_inicial: {
+        anulada_at: Date | null;
+        _count: {
+          envio_credencial: number;
+        };
+      } | null;
+    };
+  }): UniversityAdminOverviewStudent {
+    const credential = student.cuenta_acceso.credencial_inicial;
+    const isPending =
+      credential !== null &&
+      credential.anulada_at === null &&
+      credential._count.envio_credencial === 0;
+
+    return {
+      createdAt: student.fecha_creacion.toISOString(),
+      displayStatus: isPending
+        ? 'pending'
+        : student.cuenta_acceso.estado === estado_simple_enum.ACTIVO
+          ? 'active'
+          : 'inactive',
+      firstName: student.persona.nombres,
+      id: String(student.id_cuenta),
+      lastName: student.persona.apellidos,
+      semester: String(student.semestre),
+    };
+  }
+
+  private toUniversityAdminOverviewTeacher(teacher: {
+    id_docente_universidad: number;
+    fecha_creacion: Date;
+    estado: estado_simple_enum;
+    docente: {
+      nombres: string;
+      apellidos: string;
+      numero_documento: string;
+      tipo_documento: {
+        codigo: string;
+      };
+    };
+  }): UniversityAdminOverviewTeacher {
+    return {
+      createdAt: teacher.fecha_creacion.toISOString(),
+      documentNumber: teacher.docente.numero_documento,
+      documentTypeCode: teacher.docente.tipo_documento.codigo,
+      firstName: teacher.docente.nombres,
+      id: String(teacher.id_docente_universidad),
+      lastName: teacher.docente.apellidos,
+      status: teacher.estado === estado_simple_enum.ACTIVO ? 'active' : 'inactive',
+    };
   }
 
   private toInstitutionProfile(universityAdmin: {

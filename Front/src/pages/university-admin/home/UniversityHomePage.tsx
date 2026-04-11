@@ -16,10 +16,9 @@ import { Seo } from '@/components/ui/Seo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { ROUTES } from '@/constants/routes';
 import { universityAdminContent } from '@/content/universityAdminContent';
-import type { PersonOperationalStatus } from '@/content/types';
 import { classNames } from '@/lib/classNames';
 import { getOptimizedLogoUrl } from '@/lib/imageOptimization';
-import { useUniversityAdminModuleStore } from '@/lib/universityAdminModuleStore';
+import { useUniversityAdminOverviewStore } from '@/lib/universityAdminOverviewStore';
 
 const createdAtFormatter = new Intl.DateTimeFormat('es-CO', {
   day: 'numeric',
@@ -55,73 +54,38 @@ function formatDisplayName(value: string) {
 
 export function UniversityHomePage() {
   const { session } = useAuth();
-  const { credentials, errorMessage, institutionProfile, students, teachers } =
-    useUniversityAdminModuleStore();
-  const credentialByStudentId = useMemo(
-    () => new Map(credentials.map((credential) => [credential.studentId, credential])),
-    [credentials],
+  const {
+    activeCampusesCount,
+    errorMessage,
+    institution,
+    recentCampuses,
+    recentStudents,
+    recentTeachers,
+    studentSummary,
+    teacherSummary,
+  } = useUniversityAdminOverviewStore();
+  const institutionProfile = useMemo(
+    () => ({
+      ...institution,
+      campuses: recentCampuses,
+    }),
+    [institution, recentCampuses],
   );
-  const activeStudentsCount = useMemo(
-    () =>
-      students.filter((student) => {
-        const credential = credentialByStudentId.get(student.id);
-        return credential?.deliveryStatus !== 'generated' && student.status === 'active';
-      }).length,
-    [credentialByStudentId, students],
+  const students = useMemo(
+    () => ({ length: studentSummary.total }),
+    [studentSummary.total],
   );
-  const pendingStudentsCount = useMemo(
-    () =>
-      students.filter((student) => credentialByStudentId.get(student.id)?.deliveryStatus === 'generated')
-        .length,
-    [credentialByStudentId, students],
+  const teachers = useMemo(
+    () => ({ length: teacherSummary.total }),
+    [teacherSummary.total],
   );
-  const inactiveStudentsCount = useMemo(
-    () =>
-      students.filter((student) => {
-        const credential = credentialByStudentId.get(student.id);
-        return credential?.deliveryStatus !== 'generated' && student.status === 'inactive';
-      }).length,
-    [credentialByStudentId, students],
-  );
-  const activeTeachersCount = useMemo(
-    () => teachers.filter((teacher) => teacher.status === 'active').length,
-    [teachers],
-  );
-  const inactiveTeachersCount = useMemo(
-    () => teachers.filter((teacher) => teacher.status === 'inactive').length,
-    [teachers],
-  );
-  const activeCampusesCount = useMemo(
-    () => institutionProfile.campuses.filter((campus) => campus.status === 'active').length,
-    [institutionProfile.campuses],
-  );
-  const recentStudents = useMemo(
-    () =>
-      [...students]
-        .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())
-        .slice(0, 3)
-        .map((student) => {
-          const credential = credentialByStudentId.get(student.id);
-          const status: PersonOperationalStatus | 'pending' =
-            credential?.deliveryStatus === 'generated' ? 'pending' : student.status;
-
-          return {
-            ...student,
-            displayStatus: status,
-          };
-        }),
-    [credentialByStudentId, students],
-  );
-  const recentTeachers = useMemo(
-    () =>
-      [...teachers]
-        .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())
-        .slice(0, 3),
-    [teachers],
-  );
+  const activeStudentsCount = studentSummary.active;
+  const pendingStudentsCount = studentSummary.pending;
+  const inactiveStudentsCount = studentSummary.inactive;
+  const activeTeachersCount = teacherSummary.active;
+  const inactiveTeachersCount = teacherSummary.inactive;
   const adminFullName = useMemo(() => {
-    const profileFullName =
-      `${institutionProfile.adminFirstName} ${institutionProfile.adminLastName}`.trim();
+    const profileFullName = `${institution.adminFirstName} ${institution.adminLastName}`.trim();
 
     if (profileFullName) {
       return formatDisplayName(profileFullName);
@@ -138,14 +102,14 @@ export function UniversityHomePage() {
       `${universityAdminContent.shell.adminUser.firstName} ${universityAdminContent.shell.adminUser.lastName}`,
     );
   }, [
-    institutionProfile.adminFirstName,
-    institutionProfile.adminLastName,
+    institution.adminFirstName,
+    institution.adminLastName,
     session?.user.firstName,
     session?.user.lastName,
   ]);
   const institutionName = useMemo(
-    () => formatDisplayName(institutionProfile.name || 'Universidad'),
-    [institutionProfile.name],
+    () => formatDisplayName(institution.name || 'Universidad'),
+    [institution.name],
   );
   const dashboardErrorMessage = useMemo(() => {
     if (!errorMessage) {
@@ -175,12 +139,12 @@ export function UniversityHomePage() {
       <SurfaceCard className="overflow-hidden bg-brand-gradient text-white" paddingClassName="p-0">
         <div className="flex flex-col gap-3 px-4 py-3.5 sm:px-5 sm:py-4 lg:flex-row lg:items-center lg:justify-between lg:gap-3 2xl:px-6">
           <div className="flex min-w-0 flex-1 items-center gap-3">
-            {institutionProfile.logoSrc ? (
+            {institution.logoSrc ? (
               <img
-                alt={institutionProfile.logoAlt}
+                alt={institution.logoAlt}
                 className="h-14 w-14 rounded-[1.2rem] bg-white object-contain ring-4 ring-white/20 sm:h-16 sm:w-16"
                 decoding="async"
-                src={getOptimizedLogoUrl(institutionProfile.logoSrc, 480, 480)}
+                src={getOptimizedLogoUrl(institution.logoSrc, 480, 480)}
               />
             ) : (
               <span className="inline-flex h-12 w-12 items-center justify-center rounded-[1.2rem] bg-white/14 text-white ring-4 ring-white/15 sm:h-14 sm:w-14">
