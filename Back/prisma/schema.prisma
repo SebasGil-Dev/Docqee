@@ -103,6 +103,8 @@ model cuenta_acceso {
   valoracion_valoracion_id_cuenta_emisorTocuenta_acceso                       valoracion[]              @relation("valoracion_id_cuenta_emisorTocuenta_acceso")
   valoracion_valoracion_id_cuenta_receptorTocuenta_acceso                     valoracion[]              @relation("valoracion_id_cuenta_receptorTocuenta_acceso")
   verificacion_correo                                                         verificacion_correo[]
+
+  @@index([tipo_cuenta, primer_ingreso_pendiente, ultimo_login_at], map: "idx_cuenta_acceso_credenciales_pendientes")
 }
 
 model cuenta_admin_plataforma {

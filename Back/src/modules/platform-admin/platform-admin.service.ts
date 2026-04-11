@@ -224,6 +224,7 @@ export class PlatformAdminService {
         cuenta_acceso: {
           tipo_cuenta: tipo_cuenta_enum.ADMIN_UNIVERSIDAD,
           primer_ingreso_pendiente: true,
+          ultimo_login_at: null,
         },
       },
       include: {
@@ -512,6 +513,7 @@ export class PlatformAdminService {
         cuenta_acceso: {
           tipo_cuenta: tipo_cuenta_enum.ADMIN_UNIVERSIDAD,
           primer_ingreso_pendiente: true,
+          ultimo_login_at: null,
         },
       },
       include: {
