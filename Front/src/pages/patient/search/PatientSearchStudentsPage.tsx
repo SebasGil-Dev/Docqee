@@ -7,6 +7,7 @@ import {
   SlidersHorizontal,
   Stethoscope,
   UserRound,
+  X,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
@@ -19,10 +20,24 @@ import type { PatientStudentDirectoryItem } from '@/content/types';
 import { classNames } from '@/lib/classNames';
 import { usePatientModuleStore } from '@/lib/patientModuleStore';
 
-type TreatmentFilter = string | 'all';
+type TreatmentFilter = string;
 
 function getStudentFullName(student: PatientStudentDirectoryItem) {
   return `${student.firstName} ${student.lastName}`;
+}
+
+function getStudentLocation(student: PatientStudentDirectoryItem) {
+  const locationParts = [student.city, student.locality].filter(Boolean);
+
+  return locationParts.length ? locationParts.join(' - ') : 'Ubicacion por confirmar';
+}
+
+function getStudentPracticeSite(student: PatientStudentDirectoryItem) {
+  return student.practiceSite || 'Sede por confirmar';
+}
+
+function getStudentAvailability(student: PatientStudentDirectoryItem) {
+  return student.availabilityGeneral || 'Disponibilidad por confirmar';
 }
 
 export function PatientSearchStudentsPage() {
@@ -33,9 +48,7 @@ export function PatientSearchStudentsPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const [treatmentFilter, setTreatmentFilter] = useState<TreatmentFilter>('all');
-  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
-    students[0]?.id ?? null,
-  );
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const filterMenuRef = useRef<HTMLDivElement | null>(null);
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const treatmentOptions = useMemo(
@@ -67,10 +80,9 @@ export function PatientSearchStudentsPage() {
       }),
     [normalizedSearch, students, treatmentFilter],
   );
-  const selectedStudent =
-    filteredStudents.find((student) => student.id === selectedStudentId) ??
-    filteredStudents[0] ??
-    null;
+  const selectedStudent = selectedStudentId
+    ? filteredStudents.find((student) => student.id === selectedStudentId) ?? null
+    : null;
   const currentRequestForSelectedStudent = selectedStudent
     ? requests.find(
         (request) =>
@@ -106,24 +118,45 @@ export function PatientSearchStudentsPage() {
   }, [isFilterMenuOpen]);
 
   useEffect(() => {
-    if (!filteredStudents.length) {
-      setSelectedStudentId(null);
-      return;
-    }
-
     if (
-      !selectedStudentId ||
+      selectedStudentId &&
       !filteredStudents.some((student) => student.id === selectedStudentId)
     ) {
-      setSelectedStudentId(filteredStudents[0]?.id ?? null);
+      setSelectedStudentId(null);
     }
   }, [filteredStudents, selectedStudentId]);
 
   useEffect(() => {
     setReason('');
     setReasonError(null);
-    setSuccessMessage(null);
   }, [selectedStudentId]);
+
+  useEffect(() => {
+    if (!selectedStudentId) {
+      return undefined;
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setSelectedStudentId(null);
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedStudentId]);
+
+  const handleOpenStudentModal = (studentId: string) => {
+    setSelectedStudentId(studentId);
+    setSuccessMessage(null);
+  };
+
+  const handleCloseStudentModal = () => {
+    setSelectedStudentId(null);
+  };
 
   const handleSendRequest = () => {
     if (!selectedStudent) {
@@ -152,6 +185,7 @@ export function PatientSearchStudentsPage() {
       setSuccessMessage(
         `Tu solicitud fue enviada a ${getStudentFullName(selectedStudent)} y quedo en estado pendiente.`,
       );
+      setSelectedStudentId(null);
     })();
   };
 
@@ -187,7 +221,7 @@ export function PatientSearchStudentsPage() {
           <p role="alert">{errorMessage}</p>
         </SurfaceCard>
       ) : null}
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid gap-3 sm:max-w-sm">
         <SurfaceCard
           className="min-w-0 overflow-hidden bg-brand-gradient text-white"
           paddingClassName="p-0"
@@ -201,22 +235,6 @@ export function PatientSearchStudentsPage() {
                 {filteredStudents.length}
               </p>
               <p className="text-sm font-semibold text-white/90">Estudiantes visibles</p>
-            </div>
-          </div>
-        </SurfaceCard>
-        <SurfaceCard
-          className="border border-slate-200/80 bg-white shadow-none"
-          paddingClassName="p-0"
-        >
-          <div className="flex items-center gap-3 px-4 py-3">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-primary/10 text-primary ring-1 ring-primary/10">
-              <ShieldCheck aria-hidden="true" className="h-4.5 w-4.5" />
-            </span>
-            <div>
-              <p className="font-headline text-[1.55rem] font-extrabold tracking-tight text-ink">
-                {requests.filter((request) => request.status === 'PENDIENTE').length}
-              </p>
-              <p className="text-sm font-semibold text-ink-muted">Solicitudes pendientes</p>
             </div>
           </div>
         </SurfaceCard>
@@ -313,8 +331,8 @@ export function PatientSearchStudentsPage() {
             </div>
           </div>
         </div>
-        <div className="grid min-h-0 flex-1 gap-4 px-4 py-4 sm:px-5 sm:py-5 xl:grid-cols-[minmax(0,21rem)_minmax(0,1fr)] 2xl:grid-cols-[minmax(0,23rem)_minmax(0,1fr)]">
-          <SurfaceCard className="min-h-0 border border-slate-200/80 bg-white shadow-none" paddingClassName="p-0">
+        <div className="min-h-0 flex-1 px-4 py-4 sm:px-5 sm:py-5">
+          <SurfaceCard className="h-full min-h-0 border border-slate-200/80 bg-white shadow-none" paddingClassName="p-0">
             <div className="flex h-full min-h-[18rem] flex-col">
               <div className="border-b border-slate-200/80 px-4 py-4">
                 <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
@@ -326,7 +344,7 @@ export function PatientSearchStudentsPage() {
               </div>
               <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto p-3">
                 {filteredStudents.length > 0 ? (
-                  <div className="space-y-2.5">
+                  <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
                     {filteredStudents.map((student) => {
                       const isSelected = selectedStudent?.id === student.id;
 
@@ -334,14 +352,14 @@ export function PatientSearchStudentsPage() {
                         <button
                           key={student.id}
                           className={classNames(
-                            'w-full rounded-[1.35rem] border px-4 py-3 text-left transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                            'h-full w-full rounded-[1.35rem] border px-4 py-3 text-left transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
                             isSelected
                               ? 'border-primary/35 bg-primary/[0.08] shadow-[0_18px_40px_-28px_rgba(22,78,99,0.65)]'
                               : 'border-slate-200/80 bg-slate-50 hover:border-primary/20 hover:bg-slate-100/70',
                           )}
                           data-testid={`patient-student-card-${student.id}`}
                           type="button"
-                          onClick={() => setSelectedStudentId(student.id)}
+                          onClick={() => handleOpenStudentModal(student.id)}
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
@@ -365,7 +383,7 @@ export function PatientSearchStudentsPage() {
                           </div>
                           <p className="mt-2 text-sm leading-6 text-ink-muted">{student.biography}</p>
                           <p className="mt-2 text-xs font-medium uppercase tracking-[0.18em] text-primary/70">
-                            {student.city} - {student.locality}
+                            {getStudentLocation(student)}
                           </p>
                         </button>
                       );
@@ -379,138 +397,163 @@ export function PatientSearchStudentsPage() {
               </div>
             </div>
           </SurfaceCard>
-          <SurfaceCard className="min-h-0 border border-slate-200/80 bg-white shadow-none" paddingClassName="p-5">
-            {selectedStudent ? (
-              <div className="flex h-full min-h-[24rem] flex-col gap-5">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <h2 className="font-headline text-2xl font-extrabold tracking-tight text-ink">
-                      {getStudentFullName(selectedStudent)}
-                    </h2>
-                    <p className="mt-1 text-sm leading-6 text-ink-muted">
-                      {selectedStudent.universityName} · Semestre {selectedStudent.semester}
-                    </p>
-                  </div>
-                  <span
-                    className={classNames(
-                      'inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset',
-                      selectedStudent.availabilityStatus === 'available'
-                        ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
-                        : 'bg-amber-50 text-amber-700 ring-amber-200',
-                    )}
-                  >
-                    {selectedStudent.availabilityStatus === 'available'
-                      ? 'Recibiendo solicitudes'
-                      : 'Disponibilidad limitada'}
-                  </span>
+        </div>
+      </AdminPanelCard>
+      {selectedStudent ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
+          <button
+            aria-label="Cerrar informacion del estudiante"
+            className="absolute inset-0 h-full w-full cursor-default bg-slate-950/40 backdrop-blur-[2px]"
+            type="button"
+            onClick={handleCloseStudentModal}
+          />
+          <div
+            aria-labelledby="patient-student-modal-title"
+            aria-modal="true"
+            className="admin-scrollbar relative z-10 max-h-[calc(100vh-2rem)] w-full max-w-3xl overflow-y-auto rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_28px_90px_-30px_rgba(15,23,42,0.55)] sm:p-6"
+            role="dialog"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2
+                  className="font-headline text-2xl font-extrabold tracking-tight text-ink"
+                  id="patient-student-modal-title"
+                >
+                  {getStudentFullName(selectedStudent)}
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-ink-muted">
+                  {selectedStudent.universityName} - Semestre {selectedStudent.semester}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span
+                  className={classNames(
+                    'inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset',
+                    selectedStudent.availabilityStatus === 'available'
+                      ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+                      : 'bg-amber-50 text-amber-700 ring-amber-200',
+                  )}
+                >
+                  {selectedStudent.availabilityStatus === 'available'
+                    ? 'Recibiendo solicitudes'
+                    : 'Disponibilidad limitada'}
+                </span>
+                <button
+                  aria-label="Cerrar informacion del estudiante"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-ink-muted transition duration-200 hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                  type="button"
+                  onClick={handleCloseStudentModal}
+                >
+                  <X aria-hidden="true" className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <div className="rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-4 py-4">
+                <div className="flex items-center gap-2">
+                  <MapPin aria-hidden="true" className="h-4.5 w-4.5 text-primary" />
+                  <p className="text-sm font-semibold text-ink">Sede y ubicacion</p>
                 </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-4 py-4">
-                    <div className="flex items-center gap-2">
-                      <MapPin aria-hidden="true" className="h-4.5 w-4.5 text-primary" />
-                      <p className="text-sm font-semibold text-ink">Sede y ubicacion</p>
-                    </div>
-                    <p className="mt-2 text-sm leading-6 text-ink-muted">
-                      {selectedStudent.practiceSite}
-                    </p>
-                    <p className="text-sm leading-6 text-ink-muted">
-                      {selectedStudent.city} - {selectedStudent.locality}
-                    </p>
-                  </div>
-                  <div className="rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-4 py-4">
-                    <div className="flex items-center gap-2">
-                      <UserRound aria-hidden="true" className="h-4.5 w-4.5 text-primary" />
-                      <p className="text-sm font-semibold text-ink">Disponibilidad general</p>
-                    </div>
-                    <p className="mt-2 text-sm leading-6 text-ink-muted">
-                      {selectedStudent.availabilityGeneral}
-                    </p>
-                  </div>
+                <p className="mt-2 text-sm leading-6 text-ink-muted">
+                  {getStudentPracticeSite(selectedStudent)}
+                </p>
+                <p className="text-sm leading-6 text-ink-muted">
+                  {getStudentLocation(selectedStudent)}
+                </p>
+              </div>
+              <div className="rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-4 py-4">
+                <div className="flex items-center gap-2">
+                  <UserRound aria-hidden="true" className="h-4.5 w-4.5 text-primary" />
+                  <p className="text-sm font-semibold text-ink">Disponibilidad general</p>
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-ink">Tratamientos visibles</p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {selectedStudent.treatments.map((treatment) => (
-                      <span
-                        key={treatment}
-                        className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary"
-                      >
-                        {treatment}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                {currentRequestForSelectedStudent ? (
-                  <div className="rounded-[1.35rem] border border-amber-200/80 bg-amber-50/75 px-4 py-4 text-sm text-amber-800">
-                    <div className="flex items-center gap-2">
-                      <ShieldCheck aria-hidden="true" className="h-4.5 w-4.5" />
-                      <p className="font-medium">
-                        Ya tienes una solicitud {currentRequestForSelectedStudent.status.toLowerCase()} con este estudiante.
-                      </p>
-                    </div>
-                  </div>
+                <p className="mt-2 text-sm leading-6 text-ink-muted">
+                  {getStudentAvailability(selectedStudent)}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5">
+              <p className="text-sm font-semibold text-ink">Tratamientos visibles</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {selectedStudent.treatments.length > 0 ? (
+                  selectedStudent.treatments.map((treatment) => (
+                    <span
+                      key={treatment}
+                      className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary"
+                    >
+                      {treatment}
+                    </span>
+                  ))
                 ) : (
-                  <div className="space-y-3">
-                    <div className="space-y-1.5">
-                      <label className="block text-sm font-semibold text-ink" htmlFor="patient-request-reason">
-                        Motivo de la solicitud
-                      </label>
-                      <textarea
-                        aria-describedby={reasonError ? 'patient-request-reason-error' : undefined}
-                        aria-invalid={Boolean(reasonError)}
-                        className={classNames(
-                          'min-h-[7.5rem] w-full rounded-[1.35rem] border bg-surface px-4 py-3 text-sm text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
-                          reasonError
-                            ? 'border-rose-300 focus-visible:border-rose-400 focus-visible:ring-rose-200/70'
-                            : 'border-slate-200 focus-visible:border-primary',
-                        )}
-                        id="patient-request-reason"
-                        placeholder="Explica brevemente el motivo por el cual deseas solicitar atencion."
-                        value={reason}
-                        onChange={(event) => {
-                          setReason(event.target.value);
-                          setReasonError(null);
-                          setSuccessMessage(null);
-                        }}
-                      />
-                      {reasonError ? (
-                        <p className="text-sm text-rose-600" id="patient-request-reason-error">
-                          {reasonError}
-                        </p>
-                      ) : null}
-                    </div>
-                    <div className="flex justify-end">
-                      <button
-                        className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-4 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
-                        disabled={isLoading}
-                        type="button"
-                        onClick={handleSendRequest}
-                      >
-                        <SendHorizontal aria-hidden="true" className="h-4 w-4" />
-                        <span>{patientContent.searchPage.actionLabels.sendRequest}</span>
-                      </button>
-                    </div>
-                  </div>
+                  <span className="text-sm text-ink-muted">Sin tratamientos publicados.</span>
                 )}
               </div>
-            ) : (
-              <div className="flex h-full min-h-[24rem] items-center justify-center px-5 py-8 text-center">
-                <div className="max-w-md space-y-3">
-                  <span className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-[1.4rem] bg-primary/10 text-primary">
-                    <Search aria-hidden="true" className="h-6 w-6" />
-                  </span>
-                  <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
-                    Sin estudiante seleccionado
-                  </h2>
-                  <p className="text-sm leading-6 text-ink-muted">
-                    {patientContent.searchPage.emptyState}
+            </div>
+
+            {currentRequestForSelectedStudent ? (
+              <div className="mt-5 rounded-[1.35rem] border border-amber-200/80 bg-amber-50/75 px-4 py-4 text-sm text-amber-800">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck aria-hidden="true" className="h-4.5 w-4.5" />
+                  <p className="font-medium">
+                    Ya tienes una solicitud{' '}
+                    {currentRequestForSelectedStudent.status.toLowerCase()} con este estudiante.
                   </p>
                 </div>
               </div>
+            ) : (
+              <div className="mt-5 space-y-3">
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-semibold text-ink" htmlFor="patient-request-reason">
+                    Motivo de la solicitud
+                  </label>
+                  <textarea
+                    aria-describedby={reasonError ? 'patient-request-reason-error' : undefined}
+                    aria-invalid={Boolean(reasonError)}
+                    className={classNames(
+                      'min-h-[7.5rem] w-full rounded-[1.35rem] border bg-surface px-4 py-3 text-sm text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                      reasonError
+                        ? 'border-rose-300 focus-visible:border-rose-400 focus-visible:ring-rose-200/70'
+                        : 'border-slate-200 focus-visible:border-primary',
+                    )}
+                    id="patient-request-reason"
+                    placeholder="Explica brevemente el motivo por el cual deseas solicitar atencion."
+                    value={reason}
+                    onChange={(event) => {
+                      setReason(event.target.value);
+                      setReasonError(null);
+                      setSuccessMessage(null);
+                    }}
+                  />
+                  {reasonError ? (
+                    <p className="text-sm text-rose-600" id="patient-request-reason-error">
+                      {reasonError}
+                    </p>
+                  ) : null}
+                </div>
+                <div className="flex flex-wrap justify-end gap-2">
+                  <button
+                    className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-ink-muted transition duration-300 hover:border-primary/30 hover:text-primary"
+                    type="button"
+                    onClick={handleCloseStudentModal}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-4 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-65"
+                    disabled={isLoading}
+                    type="button"
+                    onClick={handleSendRequest}
+                  >
+                    <SendHorizontal aria-hidden="true" className="h-4 w-4" />
+                    <span>{patientContent.searchPage.actionLabels.sendRequest}</span>
+                  </button>
+                </div>
+              </div>
             )}
-          </SurfaceCard>
+          </div>
         </div>
-      </AdminPanelCard>
+      ) : null}
     </div>
   );
 }
