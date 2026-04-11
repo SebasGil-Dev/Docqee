@@ -118,9 +118,12 @@ export class PlatformAdminService {
 
     const universityName = normalizeText(input.name);
     const adminEmail = normalizeEmail(input.adminEmail);
-    const locality = await this.resolveLocality(input.mainLocalityId, input.cityId);
+    const adminFirstName = normalizeText(input.adminFirstName);
+    const adminLastName = normalizeText(input.adminLastName);
+    const adminPhone = input.adminPhone ? normalizeText(input.adminPhone) : null;
 
-    const [existingUniversity, existingAccount] = await Promise.all([
+    const [locality, existingUniversity, existingAccount, randomPasswordHash] = await Promise.all([
+      this.resolveLocality(input.mainLocalityId, input.cityId),
       this.prisma.universidad.findUnique({
         where: { nombre: universityName },
         select: { id_universidad: true },
@@ -129,6 +132,7 @@ export class PlatformAdminService {
         where: { correo: adminEmail },
         select: { id_cuenta: true },
       }),
+      bcrypt.hash(generateTemporaryPassword(), 8),
     ]);
 
     if (existingUniversity) {
@@ -139,91 +143,88 @@ export class PlatformAdminService {
       throw new ConflictException('Ya existe una cuenta registrada con este correo.');
     }
 
-    const randomPasswordHash = await bcrypt.hash(generateTemporaryPassword(), 10);
-
     const university = await this.prisma.$transaction(async (transaction) => {
-      const createdUniversity = await transaction.universidad.create({
-        data: {
-          id_localidad_principal: locality.id_localidad,
-          nombre: universityName,
-          estado: estado_simple_enum.ACTIVO,
-        },
-        include: {
-          localidad: {
-            include: {
-              ciudad: true,
-            },
+      const [createdUniversity, account] = await Promise.all([
+        transaction.universidad.create({
+          data: {
+            id_localidad_principal: locality.id_localidad,
+            nombre: universityName,
+            estado: estado_simple_enum.ACTIVO,
           },
-        },
-      });
-
-      const account = await transaction.cuenta_acceso.create({
-        data: {
-          tipo_cuenta: tipo_cuenta_enum.ADMIN_UNIVERSIDAD,
-          correo: adminEmail,
-          password_hash: randomPasswordHash,
-          correo_verificado: true,
-          correo_verificado_at: new Date(),
-          primer_ingreso_pendiente: true,
-          estado: estado_simple_enum.ACTIVO,
-        },
-      });
-
-      await transaction.cuenta_admin_universidad.create({
-        data: {
-          id_cuenta: account.id_cuenta,
-          id_universidad: createdUniversity.id_universidad,
-          nombres: normalizeText(input.adminFirstName),
-          apellidos: normalizeText(input.adminLastName),
-          celular: input.adminPhone ? normalizeText(input.adminPhone) : null,
-        },
-      });
-
-      await transaction.credencial_inicial.create({
-        data: {
-          id_cuenta_acceso: account.id_cuenta,
-        },
-      });
-
-      return transaction.universidad.findUniqueOrThrow({
-        where: { id_universidad: createdUniversity.id_universidad },
-        select: {
-          id_universidad: true,
-          nombre: true,
-          estado: true,
-          fecha_creacion: true,
-          localidad: {
-            select: {
-              nombre: true,
-              ciudad: {
-                select: { nombre: true },
-              },
-            },
-          },
-          cuenta_admin_universidad: {
-            select: {
-              nombres: true,
-              apellidos: true,
-              celular: true,
-              cuenta_acceso: {
-                select: {
-                  correo: true,
-                  primer_ingreso_pendiente: true,
-                  credencial_inicial: {
-                    select: {
-                      id_credencial_inicial: true,
-                      anulada_at: true,
-                      _count: {
-                        select: { envio_credencial: true },
-                      },
-                    },
-                  },
+          select: {
+            id_universidad: true,
+            nombre: true,
+            estado: true,
+            fecha_creacion: true,
+            localidad: {
+              select: {
+                nombre: true,
+                ciudad: {
+                  select: { nombre: true },
                 },
               },
             },
           },
+        }),
+        transaction.cuenta_acceso.create({
+          data: {
+            tipo_cuenta: tipo_cuenta_enum.ADMIN_UNIVERSIDAD,
+            correo: adminEmail,
+            password_hash: randomPasswordHash,
+            correo_verificado: true,
+            correo_verificado_at: new Date(),
+            primer_ingreso_pendiente: true,
+            estado: estado_simple_enum.ACTIVO,
+          },
+          select: {
+            id_cuenta: true,
+            correo: true,
+            primer_ingreso_pendiente: true,
+          },
+        }),
+      ]);
+
+      const [createdAdmin, createdCredential] = await Promise.all([
+        transaction.cuenta_admin_universidad.create({
+          data: {
+            id_cuenta: account.id_cuenta,
+            id_universidad: createdUniversity.id_universidad,
+            nombres: adminFirstName,
+            apellidos: adminLastName,
+            celular: adminPhone,
+          },
+          select: {
+            nombres: true,
+            apellidos: true,
+            celular: true,
+          },
+        }),
+        transaction.credencial_inicial.create({
+          data: {
+            id_cuenta_acceso: account.id_cuenta,
+          },
+          select: {
+            id_credencial_inicial: true,
+            anulada_at: true,
+          },
+        }),
+      ]);
+
+      return {
+        ...createdUniversity,
+        cuenta_admin_universidad: {
+          ...createdAdmin,
+          cuenta_acceso: {
+            ...account,
+            credencial_inicial: {
+              ...createdCredential,
+              _count: {
+                envio_credencial: 0,
+              },
+            },
+          },
         },
-      });
+      } satisfies PlatformAdminUniversityRecord;
     });
 
     return this.toUniversityDto(university);
