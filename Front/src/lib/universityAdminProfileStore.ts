@@ -29,8 +29,13 @@ type UniversityAdminProfileStoreState = {
   shouldRefresh: boolean;
 };
 
+type ChangePasswordResult = {
+  errorMessage?: string;
+  ok: boolean;
+};
+
 type UniversityAdminProfileActions = {
-  changePassword: (values: UniversityPasswordFormValues) => Promise<boolean>;
+  changePassword: (values: UniversityPasswordFormValues) => Promise<ChangePasswordResult>;
   refresh: () => Promise<void>;
   updateInstitutionProfile: (
     values: UniversityInstitutionFormValues,
@@ -427,7 +432,7 @@ async function updateInstitutionProfile(values: UniversityInstitutionFormValues)
 
 async function changePassword(values: UniversityPasswordFormValues) {
   if (IS_TEST_MODE) {
-    return true;
+    return { ok: true };
   }
 
   patchState({
@@ -443,13 +448,19 @@ async function changePassword(values: UniversityPasswordFormValues) {
       isReady: true,
       shouldRefresh: false,
     });
-    return true;
+    return { ok: true };
   } catch (error) {
+    const passwordErrorMessage = getErrorMessage(error, 'No pudimos actualizar la contrasena.');
+
     patchState({
-      errorMessage: getErrorMessage(error, 'No pudimos actualizar la contrasena.'),
+      errorMessage: passwordErrorMessage,
       isLoading: false,
     });
-    return false;
+
+    return {
+      errorMessage: passwordErrorMessage,
+      ok: false,
+    };
   }
 }
 
