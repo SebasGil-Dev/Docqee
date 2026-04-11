@@ -5,7 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { estado_simple_enum } from '@prisma/client';
+import { estado_simple_enum, Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'node:crypto';
 
@@ -18,13 +18,52 @@ import type { RequestUser } from '@/shared/types/request-user.type';
 import {
   buildCityFrontId,
   buildLocalityFrontId,
-  extractNumericId,
   normalizeEmail,
   normalizeText,
 } from '@/shared/utils/front-format.util';
 import { slugify } from '@/shared/utils/text.util';
 import { ChangePasswordDto } from './dto/change-password.dto';
-import { UpdateInstitutionProfileDto } from './dto/update-institution-profile.dto';
+import {
+  UpdateCampusDto,
+  UpdateInstitutionProfileDto,
+} from './dto/update-institution-profile.dto';
+
+type ResolvedLocality = {
+  id_localidad: number;
+  nombre: string;
+  ciudad: {
+    id_ciudad?: number;
+    nombre: string;
+  };
+};
+
+type InstitutionProfileCampus = {
+  address: string;
+  city: string;
+  cityId: string;
+  id: string;
+  locality: string;
+  localityId: string;
+  name: string;
+  status: 'active' | 'inactive';
+};
+
+type InstitutionProfile = {
+  adminEmail: string;
+  adminFirstName: string;
+  adminLastName: string;
+  adminPhone: string;
+  campuses: InstitutionProfileCampus[];
+  id: string;
+  logoAlt: string;
+  logoFileName: string | null;
+  logoSrc: string | null;
+  mainCity: string;
+  mainCityId: string;
+  mainLocality: string;
+  mainLocalityId: string;
+  name: string;
+};
 
 @Injectable()
 export class UniversityAdminService {
@@ -40,52 +79,127 @@ export class UniversityAdminService {
 
   async updateProfile(user: RequestUser, input: UpdateInstitutionProfileDto) {
     const universityAdmin = await this.findCurrentUniversityAdmin(user);
-    const locality = await this.resolveLocality(input.mainLocalityId, input.cityId);
+    const currentProfile = this.toInstitutionProfile(universityAdmin);
     const adminEmail = normalizeEmail(input.adminEmail);
+    const adminFirstName = normalizeText(input.adminFirstName);
+    const adminLastName = normalizeText(input.adminLastName);
+    const adminPhone = input.adminPhone ? normalizeText(input.adminPhone) : null;
+    const universityName = normalizeText(input.universityName);
+    const hasLocalityChanged =
+      input.cityId !== currentProfile.mainCityId ||
+      input.mainLocalityId !== currentProfile.mainLocalityId;
+    const locality = hasLocalityChanged
+      ? await this.resolveLocality(input.mainLocalityId, input.cityId)
+      : {
+          id_localidad: universityAdmin.universidad.localidad.id_localidad,
+          nombre: universityAdmin.universidad.localidad.nombre,
+          ciudad: {
+            nombre: universityAdmin.universidad.localidad.ciudad.nombre,
+          },
+        };
 
-    const existingEmailOwner = await this.prisma.cuenta_acceso.findUnique({
-      where: { correo: adminEmail },
-      select: { id_cuenta: true },
-    });
+    if (adminEmail !== universityAdmin.cuenta_acceso.correo) {
+      const existingEmailOwner = await this.prisma.cuenta_acceso.findUnique({
+        where: { correo: adminEmail },
+        select: { id_cuenta: true },
+      });
 
-    if (existingEmailOwner && existingEmailOwner.id_cuenta !== universityAdmin.id_cuenta) {
-      throw new ConflictException('Ya existe una cuenta registrada con este correo.');
+      if (existingEmailOwner && existingEmailOwner.id_cuenta !== universityAdmin.id_cuenta) {
+        throw new ConflictException('Ya existe una cuenta registrada con este correo.');
+      }
     }
 
-    const logoUrl = await this.resolveInstitutionLogoUrl(
+    const logoUrl = await this.resolveNextInstitutionLogoUrl(
       input.logoSrc,
+      universityAdmin.universidad.logo_url,
       universityAdmin.id_universidad,
     );
+    const transactionOperations: Prisma.PrismaPromise<unknown>[] = [];
+    const universityData: {
+      id_localidad_principal?: number;
+      logo_url?: string | null;
+      nombre?: string;
+    } = {};
+    const adminData: {
+      apellidos?: string;
+      celular?: string | null;
+      nombres?: string;
+    } = {};
 
-    await this.prisma.$transaction([
-      this.prisma.universidad.update({
-        where: { id_universidad: universityAdmin.id_universidad },
-        data: {
-          nombre: normalizeText(input.universityName),
-          id_localidad_principal: locality.id_localidad,
-          logo_url: logoUrl,
-        },
-      }),
-      this.prisma.cuenta_acceso.update({
-        where: { id_cuenta: universityAdmin.id_cuenta },
-        data: { correo: adminEmail },
-      }),
-      this.prisma.cuenta_admin_universidad.update({
-        where: { id_cuenta: universityAdmin.id_cuenta },
-        data: {
-          nombres: normalizeText(input.adminFirstName),
-          apellidos: normalizeText(input.adminLastName),
-          celular: input.adminPhone ? normalizeText(input.adminPhone) : null,
-        },
-      }),
-    ]);
-
-    if (input.campuses && input.campuses.length > 0) {
-      await this.syncCampuses(universityAdmin.id_universidad, input.campuses);
+    if (universityName !== universityAdmin.universidad.nombre) {
+      universityData.nombre = universityName;
     }
 
-    const updatedUniversityAdmin = await this.findCurrentUniversityAdmin(user);
-    return this.toInstitutionProfile(updatedUniversityAdmin);
+    if (hasLocalityChanged) {
+      universityData.id_localidad_principal = locality.id_localidad;
+    }
+
+    if (logoUrl !== universityAdmin.universidad.logo_url) {
+      universityData.logo_url = logoUrl;
+    }
+
+    if (Object.keys(universityData).length > 0) {
+      transactionOperations.push(
+        this.prisma.universidad.update({
+          where: { id_universidad: universityAdmin.id_universidad },
+          data: universityData,
+        }),
+      );
+    }
+
+    if (adminEmail !== universityAdmin.cuenta_acceso.correo) {
+      transactionOperations.push(
+        this.prisma.cuenta_acceso.update({
+          where: { id_cuenta: universityAdmin.id_cuenta },
+          data: { correo: adminEmail },
+        }),
+      );
+    }
+
+    if (adminFirstName !== universityAdmin.nombres) {
+      adminData.nombres = adminFirstName;
+    }
+
+    if (adminLastName !== universityAdmin.apellidos) {
+      adminData.apellidos = adminLastName;
+    }
+
+    if (adminPhone !== universityAdmin.celular) {
+      adminData.celular = adminPhone;
+    }
+
+    if (Object.keys(adminData).length > 0) {
+      transactionOperations.push(
+        this.prisma.cuenta_admin_universidad.update({
+          where: { id_cuenta: universityAdmin.id_cuenta },
+          data: adminData,
+        }),
+      );
+    }
+
+    if (transactionOperations.length > 0) {
+      await this.prisma.$transaction(transactionOperations);
+    }
+
+    let campuses: InstitutionProfileCampus[] = currentProfile.campuses;
+
+    if (this.haveCampusesChanged(currentProfile.campuses, input.campuses)) {
+      campuses = await this.syncCampuses(
+        universityAdmin.id_universidad,
+        input.campuses ?? [],
+      );
+    }
+
+    return this.buildUpdatedInstitutionProfile(currentProfile, {
+      adminEmail,
+      adminFirstName,
+      adminLastName,
+      adminPhone,
+      campuses,
+      locality,
+      logoUrl,
+      universityName,
+    });
   }
 
   async changePassword(user: RequestUser, input: ChangePasswordDto) {
@@ -163,69 +277,169 @@ export class UniversityAdminService {
     throw new BadRequestException('El logo institucional no tiene un formato valido.');
   }
 
+  private async resolveNextInstitutionLogoUrl(
+    logoSrc: string | null | undefined,
+    currentLogoUrl: string | null,
+    universityId: number,
+  ): Promise<string | null> {
+    const normalizedLogoSrc = logoSrc?.trim();
+
+    if (!normalizedLogoSrc || normalizedLogoSrc === currentLogoUrl) {
+      return currentLogoUrl;
+    }
+
+    return (await this.resolveInstitutionLogoUrl(normalizedLogoSrc, universityId)) ?? currentLogoUrl;
+  }
+
   private async syncCampuses(
     universityId: number,
-    campuses: UpdateInstitutionProfileDto['campuses'] & object[],
+    campuses: UpdateCampusDto[],
   ) {
-    const localities = await this.prisma.localidad.findMany({ include: { ciudad: true } });
-    const savedIds: number[] = [];
+    const resolvedCampuses = await Promise.all(
+      campuses.map(async (campus) => ({
+        campus,
+        locality: await this.resolveLocality(campus.localityId, campus.cityId),
+      })),
+    );
 
-    for (const campus of campuses) {
-      // Only treat as existing DB record if the entire id is a pure integer string ("1", "42")
-      // Frontend temp ids like "campus-1" must create new records
-      const numericId = /^\d+$/.test(campus.id) ? parseInt(campus.id, 10) : null;
-      const estado = campus.status === 'active' ? estado_simple_enum.ACTIVO : estado_simple_enum.INACTIVO;
+    const savedCampuses = await this.prisma.$transaction(async (transaction) => {
+      const saved: InstitutionProfileCampus[] = [];
+      const savedIds: number[] = [];
 
-      const locality =
-        localities.find((l) => l.id_localidad === extractNumericId(campus.localityId)) ??
-        localities.find(
-          (l) =>
-            buildLocalityFrontId(l.ciudad.nombre, l.nombre) === campus.localityId &&
-            buildCityFrontId(l.ciudad.nombre) === campus.cityId,
-        ) ??
-        localities.find(
-          (l) =>
-            buildCityFrontId(l.ciudad.nombre) === campus.cityId &&
-            slugify(l.nombre) === slugify(campus.localityId),
-        );
+      for (const { campus, locality } of resolvedCampuses) {
+        const numericId = this.extractStrictNumericId(campus.id);
+        const estado =
+          campus.status === 'active' ? estado_simple_enum.ACTIVO : estado_simple_enum.INACTIVO;
+        const data = {
+          direccion: normalizeText(campus.address),
+          estado,
+          id_localidad: locality.id_localidad,
+          nombre: normalizeText(campus.name),
+        };
 
-      if (!locality) continue;
+        if (numericId) {
+          await transaction.sede.updateMany({
+            where: { id_sede: numericId, id_universidad: universityId },
+            data,
+          });
+          savedIds.push(numericId);
+          saved.push(this.toInstitutionProfileCampus(campus, locality, numericId));
+          continue;
+        }
 
-      if (numericId) {
-        await this.prisma.sede.updateMany({
-          where: { id_sede: numericId, id_universidad: universityId },
+        const createdCampus = await transaction.sede.create({
           data: {
-            nombre: normalizeText(campus.name),
-            direccion: normalizeText(campus.address),
-            id_localidad: locality.id_localidad,
-            estado,
-          },
-        });
-        savedIds.push(numericId);
-      } else {
-        const newSede = await this.prisma.sede.create({
-          data: {
+            ...data,
             id_universidad: universityId,
-            id_localidad: locality.id_localidad,
-            nombre: normalizeText(campus.name),
-            direccion: normalizeText(campus.address),
-            estado,
           },
+          select: { id_sede: true },
         });
-        savedIds.push(newSede.id_sede);
+
+        savedIds.push(createdCampus.id_sede);
+        saved.push(this.toInstitutionProfileCampus(campus, locality, createdCampus.id_sede));
       }
+
+      if (savedIds.length > 0) {
+        await transaction.sede.updateMany({
+          where: {
+            id_universidad: universityId,
+            id_sede: { notIn: savedIds },
+          },
+          data: { estado: estado_simple_enum.INACTIVO },
+        });
+      }
+
+      return saved;
+    });
+
+    return savedCampuses.filter((campus) => campus.status === 'active');
+  }
+
+  private haveCampusesChanged(
+    currentCampuses: InstitutionProfileCampus[],
+    nextCampuses: UpdateCampusDto[] | undefined,
+  ) {
+    if (!nextCampuses) {
+      return false;
     }
 
-    // Mark any sede of this university not in savedIds as inactive
-    if (savedIds.length > 0) {
-      await this.prisma.sede.updateMany({
-        where: {
-          id_universidad: universityId,
-          id_sede: { notIn: savedIds },
-        },
-        data: { estado: estado_simple_enum.INACTIVO },
-      });
+    if (currentCampuses.length !== nextCampuses.length) {
+      return true;
     }
+
+    const currentSignature = currentCampuses
+      .map((campus) => this.getCampusSignature(campus))
+      .sort()
+      .join('\n');
+    const nextSignature = nextCampuses
+      .map((campus) => this.getCampusSignature(campus))
+      .sort()
+      .join('\n');
+
+    return currentSignature !== nextSignature;
+  }
+
+  private getCampusSignature(campus: InstitutionProfileCampus | UpdateCampusDto) {
+    return [
+      campus.id,
+      normalizeText(campus.name),
+      normalizeText(campus.address),
+      campus.cityId,
+      campus.localityId,
+      campus.status,
+    ].join('|');
+  }
+
+  private toInstitutionProfileCampus(
+    campus: UpdateCampusDto,
+    locality: ResolvedLocality,
+    campusId: number,
+  ): InstitutionProfileCampus {
+    return {
+      address: normalizeText(campus.address),
+      city: locality.ciudad.nombre,
+      cityId: buildCityFrontId(locality.ciudad.nombre),
+      id: String(campusId),
+      locality: locality.nombre,
+      localityId: buildLocalityFrontId(locality.ciudad.nombre, locality.nombre),
+      name: normalizeText(campus.name),
+      status: campus.status,
+    };
+  }
+
+  private buildUpdatedInstitutionProfile(
+    currentProfile: InstitutionProfile,
+    values: {
+      adminEmail: string;
+      adminFirstName: string;
+      adminLastName: string;
+      adminPhone: string | null;
+      campuses: InstitutionProfileCampus[];
+      locality: ResolvedLocality;
+      logoUrl: string | null;
+      universityName: string;
+    },
+  ): InstitutionProfile {
+    return {
+      ...currentProfile,
+      adminEmail: values.adminEmail,
+      adminFirstName: values.adminFirstName,
+      adminLastName: values.adminLastName,
+      adminPhone: values.adminPhone ?? '',
+      campuses: values.campuses,
+      logoAlt: `Logo institucional de ${values.universityName}`,
+      logoFileName: values.logoUrl ? 'Logo guardado' : null,
+      logoSrc: values.logoUrl,
+      mainCity: values.locality.ciudad.nombre,
+      mainCityId: buildCityFrontId(values.locality.ciudad.nombre),
+      mainLocality: values.locality.nombre,
+      mainLocalityId: buildLocalityFrontId(values.locality.ciudad.nombre, values.locality.nombre),
+      name: values.universityName,
+    };
+  }
+
+  private extractStrictNumericId(value: string) {
+    return /^\d+$/.test(value) ? Number(value) : null;
   }
 
   private assertUniversityAdmin(user: RequestUser) {
@@ -261,31 +475,60 @@ export class UniversityAdminService {
   }
 
   private async resolveLocality(localityIdentifier: string, cityIdentifier: string) {
-    const numericLocalityId = extractNumericId(localityIdentifier);
+    const numericLocalityId = this.extractStrictNumericId(localityIdentifier);
+
+    if (numericLocalityId) {
+      const localityById = await this.prisma.localidad.findUnique({
+        where: { id_localidad: numericLocalityId },
+        include: { ciudad: true },
+      });
+
+      if (localityById) {
+        return localityById;
+      }
+    }
+
+    const city = await this.resolveCity(cityIdentifier);
     const localities = await this.prisma.localidad.findMany({
+      where: { id_ciudad: city.id_ciudad },
       include: { ciudad: true },
     });
 
-    const locality =
-      localities.find((item) => item.id_localidad === numericLocalityId) ??
-      localities.find((item) => {
-        return (
-          buildLocalityFrontId(item.ciudad.nombre, item.nombre) === localityIdentifier &&
-          buildCityFrontId(item.ciudad.nombre) === cityIdentifier
-        );
-      }) ??
-      localities.find((item) => {
-        return (
-          buildCityFrontId(item.ciudad.nombre) === cityIdentifier &&
-          slugify(item.nombre) === slugify(localityIdentifier)
-        );
-      });
+    const locality = localities.find((item) => {
+      return (
+        buildLocalityFrontId(item.ciudad.nombre, item.nombre) === localityIdentifier ||
+        slugify(item.nombre) === slugify(localityIdentifier)
+      );
+    });
 
     if (!locality) {
       throw new NotFoundException('La localidad seleccionada no existe.');
     }
 
     return locality;
+  }
+
+  private async resolveCity(cityIdentifier: string) {
+    const numericCityId = this.extractStrictNumericId(cityIdentifier);
+
+    if (numericCityId) {
+      const cityById = await this.prisma.ciudad.findUnique({
+        where: { id_ciudad: numericCityId },
+      });
+
+      if (cityById) {
+        return cityById;
+      }
+    }
+
+    const cities = await this.prisma.ciudad.findMany();
+    const city = cities.find((item) => buildCityFrontId(item.nombre) === cityIdentifier);
+
+    if (!city) {
+      throw new NotFoundException('La ciudad seleccionada no existe.');
+    }
+
+    return city;
   }
 
   private toInstitutionProfile(universityAdmin: {
