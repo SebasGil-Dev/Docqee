@@ -23,6 +23,16 @@ import { useUniversityAdminOverviewStore } from '@/lib/universityAdminOverviewSt
 const MAX_RECENT_STUDENTS = 4;
 const MAX_RECENT_TEACHERS = 4;
 const MAX_RECENT_CAMPUSES = 3;
+const recentStudentDateFormatter = new Intl.DateTimeFormat('en-US', {
+  day: '2-digit',
+  month: '2-digit',
+  timeZone: 'UTC',
+  year: 'numeric',
+});
+
+function formatRecentStudentDate(value: string) {
+  return recentStudentDateFormatter.format(new Date(value));
+}
 
 type SummaryMetricProps = {
   label: string;
@@ -211,13 +221,13 @@ export function UniversityHomePage() {
                         <div className="min-w-0 flex-1">
                           <p
                             className="truncate text-[0.83rem] text-ink"
-                            title={`${formatDisplayName(`${student.firstName} ${student.lastName}`)} \u00b7 Semestre ${student.semester} \u00b7 ${student.documentTypeCode.toLocaleUpperCase('es-CO')} ${student.documentNumber}`}
+                            title={`${formatDisplayName(`${student.firstName} ${student.lastName}`)} \u00b7 Semestre ${student.semester} \u00b7 ${formatRecentStudentDate(student.createdAt)}`}
                           >
                             <span className="font-semibold text-ink">
                               {formatDisplayName(`${student.firstName} ${student.lastName}`)}
                             </span>
                             <span className="text-ink-muted">
-                              {` \u00b7 Semestre ${student.semester} \u00b7 ${student.documentTypeCode.toLocaleUpperCase('es-CO')} ${student.documentNumber}`}
+                              {` \u00b7 Semestre ${student.semester} \u00b7 ${formatRecentStudentDate(student.createdAt)}`}
                             </span>
                           </p>
                         </div>
