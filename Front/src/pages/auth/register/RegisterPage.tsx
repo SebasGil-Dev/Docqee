@@ -1258,7 +1258,7 @@ export function RegisterPage({
         placeholder={content.patientFields.documentNumber.placeholder}
         value={formState.values.documentNumber}
         onBlur={() => handleFieldBlur('documentNumber')}
-        onChange={(value) => updateFieldValue('documentNumber', value)}
+        onChange={(value) => updateFieldValue('documentNumber', value.replace(/\D/g, ''))}
       />
     </div>
   );
@@ -1346,14 +1346,14 @@ export function RegisterPage({
         autoComplete="tel"
         error={getVisibleFieldError('phone')}
         id={fieldIds.phone}
-        inputMode="tel"
+        inputMode="numeric"
         label={content.patientFields.phone.label}
         name="phone"
         placeholder={content.patientFields.phone.placeholder}
         type="tel"
         value={formState.values.phone}
         onBlur={() => handleFieldBlur('phone')}
-        onChange={(value) => updateFieldValue('phone', value)}
+        onChange={(value) => updateFieldValue('phone', value.replace(/\D/g, ''))}
       />
       <div className="space-y-4 md:col-span-2">
         <PasswordField
@@ -1462,7 +1462,7 @@ export function RegisterPage({
         autoComplete="tel"
         error={formState.errors.tutorPhone}
         id={fieldIds.tutorPhone}
-        inputMode="tel"
+        inputMode="numeric"
         label={content.tutorFields.phone.label}
         name="tutorPhone"
         placeholder={content.tutorFields.phone.placeholder}
@@ -1832,7 +1832,7 @@ export function RegisterPage({
                   placeholder={content.patientFields.documentNumber.placeholder}
                   value={formState.values.documentNumber}
                   onBlur={() => handleFieldBlur('documentNumber')}
-                  onChange={(value) => updateFieldValue('documentNumber', value)}
+                  onChange={(value) => updateFieldValue('documentNumber', value.replace(/\D/g, ''))}
                 />
                 <SelectField
                   error={formState.errors.sex}
@@ -1923,14 +1923,14 @@ export function RegisterPage({
                   autoComplete="tel"
                   error={formState.errors.phone}
                   id={fieldIds.phone}
-                  inputMode="tel"
+                  inputMode="numeric"
                   label={content.patientFields.phone.label}
                   name="phone"
                   placeholder={content.patientFields.phone.placeholder}
                   type="tel"
                   value={formState.values.phone}
                   onBlur={() => handleFieldBlur('phone')}
-                  onChange={(value) => updateFieldValue('phone', value)}
+                  onChange={(value) => updateFieldValue('phone', value.replace(/\D/g, ''))}
                 />
                 <div className="space-y-4 md:col-span-2">
                   <PasswordField
@@ -2028,7 +2028,7 @@ export function RegisterPage({
                     placeholder={content.tutorFields.documentNumber.placeholder}
                     value={formState.values.tutorDocumentNumber}
                     onBlur={() => handleFieldBlur('tutorDocumentNumber')}
-                    onChange={(value) => updateFieldValue('tutorDocumentNumber', value)}
+                    onChange={(value) => updateFieldValue('tutorDocumentNumber', value.replace(/\D/g, ''))}
                   />
                   <TextField
                     autoComplete="email"
@@ -2046,14 +2046,14 @@ export function RegisterPage({
                     autoComplete="tel"
                     error={formState.errors.tutorPhone}
                     id={fieldIds.tutorPhone}
-                    inputMode="tel"
+                    inputMode="numeric"
                     label={content.tutorFields.phone.label}
                     name="tutorPhone"
                     placeholder={content.tutorFields.phone.placeholder}
                     type="tel"
                     value={formState.values.tutorPhone}
                     onBlur={() => handleFieldBlur('tutorPhone')}
-                    onChange={(value) => updateFieldValue('tutorPhone', value)}
+                    onChange={(value) => updateFieldValue('tutorPhone', value.replace(/\D/g, ''))}
                   />
                 </div>
               </section>
