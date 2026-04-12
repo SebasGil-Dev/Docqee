@@ -467,8 +467,13 @@ export class StudentsService {
         id_cuenta: studentId,
         id_universidad: universityId,
       },
-      include: {
-        cuenta_acceso: true,
+      select: {
+        id_cuenta: true,
+        cuenta_acceso: {
+          select: {
+            estado: true,
+          },
+        },
       },
     });
 

@@ -38,6 +38,7 @@ export function UniversityStudentsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<StudentStatusFilter>('all');
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
+  const [pendingStatusStudentIds, setPendingStatusStudentIds] = useState<string[]>([]);
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -105,6 +106,20 @@ export function UniversityStudentsPage() {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isStatusMenuOpen]);
+
+  function handleToggleStudentStatus(studentId: string) {
+    if (pendingStatusStudentIds.includes(studentId)) {
+      return;
+    }
+
+    setPendingStatusStudentIds((currentIds) => [...currentIds, studentId]);
+
+    void toggleStudentStatus(studentId).finally(() => {
+      setPendingStatusStudentIds((currentIds) =>
+        currentIds.filter((currentId) => currentId !== studentId),
+      );
+    });
+  }
 
   return (
     <div className="mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-3 overflow-hidden 2xl:max-w-[96rem]">
@@ -285,6 +300,7 @@ export function UniversityStudentsPage() {
                   const displayStatus: PersonOperationalStatus | 'pending' =
                     credential?.deliveryStatus === 'generated' ? 'pending' : student.status;
                   const isLast = index === filteredStudents.length - 1;
+                  const isUpdatingStatus = pendingStatusStudentIds.includes(student.id);
 
                   return (
                     <tr key={student.id} className="align-top">
@@ -366,14 +382,15 @@ export function UniversityStudentsPage() {
                           ) : (
                             <button
                               className={classNames(
-                                 'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                                 'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-65',
                                 student.status === 'active'
                                   ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
                                   : 'bg-primary/10 text-primary hover:bg-primary/15',
                               )}
+                              disabled={isUpdatingStatus}
                               type="button"
                               onClick={() => {
-                                void toggleStudentStatus(student.id);
+                                handleToggleStudentStatus(student.id);
                               }}
                             >
                               {student.status === 'active' ? (
@@ -382,9 +399,11 @@ export function UniversityStudentsPage() {
                                 <Power aria-hidden="true" className="h-3.5 w-3.5" />
                               )}
                               <span>
-                                {student.status === 'active'
-                                  ? universityAdminContent.studentsPage.actionLabels.deactivate
-                                  : universityAdminContent.studentsPage.actionLabels.activate}
+                                {isUpdatingStatus
+                                  ? 'Actualizando...'
+                                  : student.status === 'active'
+                                    ? universityAdminContent.studentsPage.actionLabels.deactivate
+                                    : universityAdminContent.studentsPage.actionLabels.activate}
                               </span>
                             </button>
                           )}
