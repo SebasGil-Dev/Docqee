@@ -244,6 +244,23 @@ describe('University admin pages', () => {
     );
   });
 
+  it('evita revertir el estado del estudiante cuando se hace doble clic en activar o inactivar', async () => {
+    const user = userEvent.setup();
+
+    renderUniversityApp([ROUTES.universityStudents]);
+
+    const studentRow = screen.getByText(/Tomas Herrera/i).closest('tr');
+    expect(studentRow).not.toBeNull();
+
+    const deactivateButton = within(studentRow!).getByRole('button', { name: /^inactivar$/i });
+    await user.dblClick(deactivateButton);
+
+    await waitFor(() => {
+      expect(within(studentRow!).getByRole('button', { name: /^activar$/i })).toBeInTheDocument();
+    });
+    expect(within(studentRow!).queryByRole('button', { name: /^inactivar$/i })).not.toBeInTheDocument();
+  });
+
   it('centra y muestra los textos corregidos en registrar estudiante', async () => {
     const user = userEvent.setup();
 

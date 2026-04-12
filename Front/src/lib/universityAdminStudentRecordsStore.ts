@@ -56,7 +56,10 @@ type UseUniversityAdminStudentRecordsStoreOptions = {
 const STUDENT_RECORDS_CACHE_STORAGE_KEY =
   'docqee.university-admin.student-records-cache';
 const STUDENT_RECORDS_CACHE_MAX_AGE_MS = 30 * 60 * 1000;
+const STUDENT_STATUS_TOGGLE_MIN_LOCK_MS = 650;
 const listeners = new Set<() => void>();
+const pendingStudentStatusUpdates = new Set<string>();
+let studentStatusMutationVersion = 0;
 
 function createMockState(): UniversityAdminStudentRecordsStoreState {
   return {
@@ -365,6 +368,34 @@ function setStudentRecords(
   });
 }
 
+function preserveCurrentStudentStatuses(
+  students: UniversityStudent[],
+  currentStudents: UniversityStudent[],
+) {
+  const currentStatusByStudentId = new Map(
+    currentStudents.map((student) => [student.id, student.status]),
+  );
+
+  return students.map((student) => {
+    const currentStatus = currentStatusByStudentId.get(student.id);
+
+    return currentStatus ? { ...student, status: currentStatus } : student;
+  });
+}
+
+async function waitForMinimumToggleLock(startedAt: number) {
+  const elapsedMs = Date.now() - startedAt;
+  const remainingMs = STUDENT_STATUS_TOGGLE_MIN_LOCK_MS - elapsedMs;
+
+  if (remainingMs <= 0) {
+    return;
+  }
+
+  await new Promise<void>((resolve) => {
+    window.setTimeout(resolve, remainingMs);
+  });
+}
+
 function markCredentialAsSent(credentialId: string) {
   const credential = state.credentials.find((item) => item.id === credentialId);
 
@@ -463,13 +494,19 @@ async function loadRuntimeState(forceRefresh = false) {
     errorMessage: null,
     isLoading: true,
   });
+  const requestStudentStatusMutationVersion = studentStatusMutationVersion;
 
   runtimeLoadPromise = Promise.all([
     listUniversityStudents(),
     listUniversityStudentCredentials(),
   ])
     .then(([students, credentials]) => {
-      setStudentRecords(students, credentials, {
+      const syncedStudents =
+        requestStudentStatusMutationVersion === studentStatusMutationVersion
+          ? students
+          : preserveCurrentStudentStatuses(students, state.students);
+
+      setStudentRecords(syncedStudents, credentials, {
         isLoading: false,
         isReady: true,
         shouldRefresh: false,
@@ -539,6 +576,12 @@ export function prependUniversityAdminStudentRecord(student: UniversityStudent) 
 }
 
 async function toggleStudentStatus(studentId: string) {
+  const startedAt = Date.now();
+
+  if (pendingStudentStatusUpdates.has(studentId)) {
+    return null;
+  }
+
   if (IS_TEST_MODE) {
     const currentStudent = state.students.find((student) => student.id === studentId);
     const currentCredential = state.credentials.find(
@@ -556,6 +599,7 @@ async function toggleStudentStatus(studentId: string) {
     );
 
     setStudentRecords(nextStudents, state.credentials);
+    await waitForMinimumToggleLock(startedAt);
     return nextStatus;
   }
 
@@ -567,6 +611,9 @@ async function toggleStudentStatus(studentId: string) {
   if (!currentStudent || currentCredential?.deliveryStatus === 'generated') {
     return null;
   }
+
+  pendingStudentStatusUpdates.add(studentId);
+  studentStatusMutationVersion += 1;
 
   const previousStatus = currentStudent.status;
   const optimisticStatus: UniversityStudent['status'] =
@@ -617,6 +664,9 @@ async function toggleStudentStatus(studentId: string) {
       shouldRefresh: false,
     });
     return null;
+  } finally {
+    await waitForMinimumToggleLock(startedAt);
+    pendingStudentStatusUpdates.delete(studentId);
   }
 }
 

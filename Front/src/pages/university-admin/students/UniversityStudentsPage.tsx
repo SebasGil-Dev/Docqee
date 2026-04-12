@@ -39,6 +39,7 @@ export function UniversityStudentsPage() {
   const [statusFilter, setStatusFilter] = useState<StudentStatusFilter>('all');
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const [pendingStatusStudentIds, setPendingStatusStudentIds] = useState<string[]>([]);
+  const pendingStatusStudentIdsRef = useRef(new Set<string>());
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -108,13 +109,15 @@ export function UniversityStudentsPage() {
   }, [isStatusMenuOpen]);
 
   function handleToggleStudentStatus(studentId: string) {
-    if (pendingStatusStudentIds.includes(studentId)) {
+    if (pendingStatusStudentIdsRef.current.has(studentId)) {
       return;
     }
 
+    pendingStatusStudentIdsRef.current.add(studentId);
     setPendingStatusStudentIds((currentIds) => [...currentIds, studentId]);
 
     void toggleStudentStatus(studentId).finally(() => {
+      pendingStatusStudentIdsRef.current.delete(studentId);
       setPendingStatusStudentIds((currentIds) =>
         currentIds.filter((currentId) => currentId !== studentId),
       );
