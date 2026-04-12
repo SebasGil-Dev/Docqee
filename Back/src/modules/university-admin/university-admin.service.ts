@@ -86,6 +86,8 @@ type UniversityAdminOverviewCampus = {
 type UniversityAdminOverviewStudent = {
   createdAt: string;
   displayStatus: 'active' | 'inactive' | 'pending';
+  documentNumber: string;
+  documentTypeName: string;
   firstName: string;
   id: string;
   lastName: string;
@@ -206,8 +208,14 @@ export class UniversityAdminService {
           semestre: true,
           persona: {
             select: {
-              nombres: true,
               apellidos: true,
+              nombres: true,
+              numero_documento: true,
+              tipo_documento: {
+                select: {
+                  nombre: true,
+                },
+              },
             },
           },
           cuenta_acceso: {
@@ -897,8 +905,12 @@ export class UniversityAdminService {
     fecha_creacion: Date;
     semestre: number;
     persona: {
-      nombres: string;
       apellidos: string;
+      nombres: string;
+      numero_documento: string;
+      tipo_documento: {
+        nombre: string;
+      };
     };
     cuenta_acceso: {
       estado: estado_simple_enum;
@@ -923,6 +935,8 @@ export class UniversityAdminService {
         : student.cuenta_acceso.estado === estado_simple_enum.ACTIVO
           ? 'active'
           : 'inactive',
+      documentNumber: student.persona.numero_documento,
+      documentTypeName: student.persona.tipo_documento.nombre,
       firstName: student.persona.nombres,
       id: String(student.id_cuenta),
       lastName: student.persona.apellidos,

@@ -16,34 +16,13 @@ import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { ROUTES } from '@/constants/routes';
 import { universityAdminContent } from '@/content/universityAdminContent';
 import { classNames } from '@/lib/classNames';
+import { formatDisplayName } from '@/lib/formatDisplayName';
 import { getOptimizedLogoUrl } from '@/lib/imageOptimization';
 import { useUniversityAdminOverviewStore } from '@/lib/universityAdminOverviewStore';
 
 const MAX_RECENT_STUDENTS = 4;
 const MAX_RECENT_TEACHERS = 4;
 const MAX_RECENT_CAMPUSES = 3;
-
-function formatNamePart(value: string) {
-  return value
-    .trim()
-    .toLocaleLowerCase('es-CO')
-    .split('-')
-    .map((part) =>
-      part.length > 0
-        ? `${part.charAt(0).toLocaleUpperCase('es-CO')}${part.slice(1)}`
-        : part,
-    )
-    .join('-');
-}
-
-function formatDisplayName(value: string) {
-  return value
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .map(formatNamePart)
-    .join(' ');
-}
 
 type SummaryMetricProps = {
   label: string;
@@ -229,13 +208,17 @@ export function UniversityHomePage() {
                         key={student.id}
                         className="flex items-center justify-between gap-2.5 rounded-[1rem] border border-slate-200/80 bg-slate-50 px-3 py-2.5"
                       >
-                        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                          <p className="truncate text-[0.83rem] font-semibold text-ink">
-                            {formatDisplayName(`${student.firstName} ${student.lastName}`)}
-                          </p>
-                          <span className="text-[0.72rem] text-ink-muted">-</span>
-                          <p className="text-[0.72rem] text-ink-muted">
-                            Semestre {student.semester}
+                        <div className="min-w-0 flex-1">
+                          <p
+                            className="truncate text-[0.83rem] text-ink"
+                            title={`${formatDisplayName(`${student.firstName} ${student.lastName}`)} - Semestre ${student.semester} - ${formatDisplayName(student.documentTypeName)} ${student.documentNumber}`}
+                          >
+                            <span className="font-semibold text-ink">
+                              {formatDisplayName(`${student.firstName} ${student.lastName}`)}
+                            </span>
+                            <span className="text-ink-muted">
+                              {` - Semestre ${student.semester} - ${formatDisplayName(student.documentTypeName)} ${student.documentNumber}`}
+                            </span>
                           </p>
                         </div>
                         <AdminStatusBadge entity="student" status={student.displayStatus} />
