@@ -19,18 +19,9 @@ import { classNames } from '@/lib/classNames';
 import { getOptimizedLogoUrl } from '@/lib/imageOptimization';
 import { useUniversityAdminOverviewStore } from '@/lib/universityAdminOverviewStore';
 
-const createdAtFormatter = new Intl.DateTimeFormat('es-CO', {
-  day: 'numeric',
-  month: 'short',
-  year: 'numeric',
-});
 const MAX_RECENT_STUDENTS = 4;
 const MAX_RECENT_TEACHERS = 4;
 const MAX_RECENT_CAMPUSES = 3;
-
-function formatCreatedAt(value: string) {
-  return createdAtFormatter.format(new Date(value));
-}
 
 function formatNamePart(value: string) {
   return value
@@ -243,7 +234,7 @@ export function UniversityHomePage() {
                             {formatDisplayName(`${student.firstName} ${student.lastName}`)}
                           </p>
                           <p className="text-[0.72rem] text-ink-muted">
-                            Semestre {student.semester} · {formatCreatedAt(student.createdAt)}
+                            Semestre {student.semester}
                           </p>
                         </div>
                         <AdminStatusBadge entity="student" status={student.displayStatus} />
