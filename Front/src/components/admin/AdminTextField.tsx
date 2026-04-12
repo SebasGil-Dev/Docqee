@@ -11,6 +11,7 @@ type AdminTextFieldProps = {
   icon: LucideIcon;
   id: string;
   inputClassName?: string;
+  inputMode?: 'none' | 'text' | 'tel' | 'url' | 'email' | 'numeric' | 'decimal' | 'search';
   inputRef?: Ref<HTMLInputElement> | undefined;
   label: string;
   labelClassName?: string;
@@ -30,6 +31,7 @@ export function AdminTextField({
   icon: Icon,
   id,
   inputClassName,
+  inputMode,
   inputRef,
   label,
   labelClassName,
@@ -67,6 +69,7 @@ export function AdminTextField({
           )}
           disabled={disabled}
           id={id}
+          inputMode={inputMode}
           name={name}
           placeholder={placeholder}
           type={type}

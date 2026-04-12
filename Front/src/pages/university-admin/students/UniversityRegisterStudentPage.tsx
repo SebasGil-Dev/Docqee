@@ -316,13 +316,14 @@ export function UniversityRegisterStudentPage({
                   icon={IdCard}
                   id="register-student-document-number"
                   inputClassName="py-2.5 sm:py-3"
+                  inputMode="numeric"
                   inputRef={documentNumberRef}
                   label="Número de documento"
                   name="documentNumber"
                   placeholder="Ingresa el número de documento"
                   value={values.documentNumber}
                   onBlur={() => handleFieldBlur('documentNumber')}
-                  onChange={(value) => updateFieldValue('documentNumber', value)}
+                  onChange={(value) => updateFieldValue('documentNumber', value.replace(/\D/g, ''))}
                 />
                 <AdminTextField
                   containerClassName="space-y-1"
@@ -345,6 +346,7 @@ export function UniversityRegisterStudentPage({
                   icon={Phone}
                   id="register-student-phone"
                   inputClassName="py-2.5 sm:py-3"
+                  inputMode="numeric"
                   inputRef={phoneRef}
                   label="Celular"
                   name="phone"
@@ -352,7 +354,7 @@ export function UniversityRegisterStudentPage({
                   type="tel"
                   value={values.phone}
                   onBlur={() => handleFieldBlur('phone')}
-                  onChange={(value) => updateFieldValue('phone', value)}
+                  onChange={(value) => updateFieldValue('phone', value.replace(/\D/g, ''))}
                 />
                 <div className="lg:col-span-2">
                   <AdminDropdownField

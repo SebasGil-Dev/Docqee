@@ -169,7 +169,6 @@ export function AdminDropdownField({
                     onClick={() => {
                       onChange(option.id);
                       setIsOpen(false);
-                      onBlur?.();
                     }}
                   >
                     <span>{option.label}</span>
