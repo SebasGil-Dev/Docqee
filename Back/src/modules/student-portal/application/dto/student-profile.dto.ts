@@ -4,6 +4,8 @@ export class StudentProfileDto {
   lastName!: string;
   email!: string;
   universityName!: string;
+  universityLogoAlt!: string;
+  universityLogoSrc!: string | null;
   semester!: string;
   biography!: string;
   availabilityGeneral!: string;

@@ -14,7 +14,7 @@ import {
   UserRound,
 } from 'lucide-react';
 import type { ChangeEvent, FormEvent } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { AdminDropdownField } from '@/components/admin/AdminDropdownField';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
@@ -30,18 +30,22 @@ import type {
   StudentProfileFormErrors,
   StudentProfileFormValues,
 } from '@/content/types';
+import { IS_TEST_MODE } from '@/lib/apiClient';
 import { classNames } from '@/lib/classNames';
 import {
   getOptimizedAvatarUrl,
   getOptimizedLogoUrl,
   readOptimizedImageFileAsDataUrl,
 } from '@/lib/imageOptimization';
+import { uploadStudentPortalAvatar } from '@/lib/studentApi';
 import { useStudentModuleStore } from '@/lib/studentModuleStore';
 
 type StudentLinkDraft = {
   type: StudentProfessionalLinkType;
   url: string;
 };
+
+type AvatarUploadStatus = 'idle' | 'uploading' | 'ready' | 'error';
 
 const initialLinkDraft: StudentLinkDraft = {
   type: 'RED_PROFESIONAL',
@@ -77,6 +81,12 @@ function getLinkTypeLabel(type: StudentProfessionalLinkType) {
   return option?.label ?? 'Otro';
 }
 
+function getUploadErrorMessage(error: unknown) {
+  return error instanceof Error
+    ? error.message
+    : 'No pudimos subir la foto de perfil. Intenta nuevamente.';
+}
+
 export function StudentProfilePage() {
   const {
     errorMessage,
@@ -94,18 +104,42 @@ export function StudentProfilePage() {
   const [linkDraft, setLinkDraft] = useState<StudentLinkDraft>(initialLinkDraft);
   const [linkError, setLinkError] = useState<string | null>(null);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [avatarUploadStatus, setAvatarUploadStatus] =
+    useState<AvatarUploadStatus>('idle');
+  const [avatarUploadMessage, setAvatarUploadMessage] = useState<string | null>(null);
+  const avatarPreviewUrlRef = useRef<string | null>(null);
+  const avatarUploadPromiseRef = useRef<Promise<string | null> | null>(null);
+  const avatarUploadSequenceRef = useRef(0);
   const studentInitials = useMemo(
     () => `${profile.firstName.charAt(0)}${profile.lastName.charAt(0)}`.toUpperCase(),
     [profile.firstName, profile.lastName],
   );
 
   useEffect(() => {
+    if (avatarPreviewUrlRef.current) {
+      URL.revokeObjectURL(avatarPreviewUrlRef.current);
+      avatarPreviewUrlRef.current = null;
+    }
+
+    avatarUploadSequenceRef.current += 1;
+    avatarUploadPromiseRef.current = null;
     setValues(getInitialValues(profile));
     setErrors({});
     setLinkDraft(initialLinkDraft);
     setLinkError(null);
+    setAvatarUploadStatus('idle');
+    setAvatarUploadMessage(null);
     setSaveMessage(null);
   }, [profile]);
+
+  useEffect(
+    () => () => {
+      if (avatarPreviewUrlRef.current) {
+        URL.revokeObjectURL(avatarPreviewUrlRef.current);
+      }
+    },
+    [],
+  );
 
   const handleFieldChange = <K extends keyof StudentProfileFormValues>(
     field: K,
@@ -130,15 +164,70 @@ export function StudentProfilePage() {
       return;
     }
 
-    void (async () => {
-      const avatarSrc = await readOptimizedImageFileAsDataUrl(file, {
-        fit: 'cover',
-        maxHeight: 800,
-        maxWidth: 800,
+    if (IS_TEST_MODE) {
+      event.target.value = '';
+
+      void (async () => {
+        const avatarSrc = await readOptimizedImageFileAsDataUrl(file, {
+          fit: 'cover',
+          maxHeight: 800,
+          maxWidth: 800,
+        });
+        handleFieldChange('avatarFileName', file.name);
+        handleFieldChange('avatarSrc', avatarSrc);
+      })();
+
+      return;
+    }
+
+    const uploadSequence = avatarUploadSequenceRef.current + 1;
+    avatarUploadSequenceRef.current = uploadSequence;
+
+    if (avatarPreviewUrlRef.current) {
+      URL.revokeObjectURL(avatarPreviewUrlRef.current);
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    avatarPreviewUrlRef.current = previewUrl;
+    handleFieldChange('avatarFileName', file.name);
+    handleFieldChange('avatarSrc', previewUrl);
+    setAvatarUploadStatus('uploading');
+    setAvatarUploadMessage('Subiendo foto...');
+    event.target.value = '';
+
+    const uploadPromise = uploadStudentPortalAvatar(file)
+      .then((result) => {
+        if (avatarUploadSequenceRef.current !== uploadSequence) {
+          return null;
+        }
+
+        if (avatarPreviewUrlRef.current) {
+          URL.revokeObjectURL(avatarPreviewUrlRef.current);
+          avatarPreviewUrlRef.current = null;
+        }
+
+        handleFieldChange('avatarFileName', result.avatarFileName || file.name);
+        handleFieldChange('avatarSrc', result.avatarSrc);
+        setAvatarUploadStatus('ready');
+        setAvatarUploadMessage('Foto cargada. Ya puedes guardar los cambios.');
+        return result.avatarSrc;
+      })
+      .catch((error: unknown) => {
+        if (avatarUploadSequenceRef.current !== uploadSequence) {
+          return null;
+        }
+
+        setAvatarUploadStatus('error');
+        setAvatarUploadMessage(getUploadErrorMessage(error));
+        return null;
+      })
+      .finally(() => {
+        if (avatarUploadSequenceRef.current === uploadSequence) {
+          avatarUploadPromiseRef.current = null;
+        }
       });
-      handleFieldChange('avatarFileName', file.name);
-      handleFieldChange('avatarSrc', avatarSrc);
-    })();
+
+    avatarUploadPromiseRef.current = uploadPromise;
   };
 
   const handleAddLink = () => {
@@ -172,7 +261,27 @@ export function StudentProfilePage() {
     }
 
     void (async () => {
-      const updated = await updateProfile(values);
+      if (avatarUploadStatus === 'error') {
+        return;
+      }
+
+      let submissionValues = values;
+
+      if (avatarUploadPromiseRef.current) {
+        setAvatarUploadMessage('Terminando de subir la foto...');
+        const uploadedAvatarSrc = await avatarUploadPromiseRef.current;
+
+        if (!uploadedAvatarSrc) {
+          return;
+        }
+
+        submissionValues = {
+          ...values,
+          avatarSrc: uploadedAvatarSrc,
+        };
+      }
+
+      const updated = await updateProfile(submissionValues);
 
       if (!updated) {
         return;
@@ -181,6 +290,14 @@ export function StudentProfilePage() {
       setSaveMessage(studentContent.profilePage.successMessage);
     })();
   };
+
+  const isAvatarUploading = avatarUploadStatus === 'uploading';
+  const avatarUploadMessageClassName =
+    avatarUploadStatus === 'error'
+      ? 'text-sm font-medium text-rose-600'
+      : avatarUploadStatus === 'ready'
+        ? 'text-sm font-medium text-emerald-700'
+        : 'text-sm font-medium text-primary';
 
   return (
     <div className="student-page-compact mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-3 overflow-hidden 2xl:max-w-[96rem]">
@@ -223,18 +340,28 @@ export function StudentProfilePage() {
               >
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center 2xl:gap-5">
                   <div className="flex flex-col items-center gap-3">
-                    {values.avatarSrc ? (
-                      <img
-                        alt={profile.avatarAlt}
-                        className="h-20 w-20 rounded-[1.7rem] object-cover ring-4 ring-primary/10"
-                        decoding="async"
-                        src={getOptimizedAvatarUrl(values.avatarSrc, 240)}
-                      />
-                    ) : (
-                      <span className="inline-flex h-20 w-20 items-center justify-center rounded-[1.7rem] bg-primary/10 text-2xl font-extrabold uppercase text-primary ring-4 ring-primary/10">
-                        {studentInitials}
-                      </span>
-                    )}
+                    <div
+                      aria-busy={isAvatarUploading}
+                      className="relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-[1.7rem] ring-4 ring-primary/10"
+                    >
+                      {values.avatarSrc ? (
+                        <img
+                          alt={profile.avatarAlt}
+                          className="h-full w-full object-cover"
+                          decoding="async"
+                          src={getOptimizedAvatarUrl(values.avatarSrc, 240)}
+                        />
+                      ) : (
+                        <span className="inline-flex h-full w-full items-center justify-center bg-primary/10 text-2xl font-extrabold uppercase text-primary">
+                          {studentInitials}
+                        </span>
+                      )}
+                      {isAvatarUploading ? (
+                        <span className="absolute inset-x-0 bottom-0 bg-primary/90 px-2 py-1 text-center text-[0.62rem] font-semibold text-white">
+                          Subiendo
+                        </span>
+                      ) : null}
+                    </div>
                     <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-primary transition duration-300 hover:bg-slate-100">
                       <ImagePlus aria-hidden="true" className="h-4 w-4" />
                       <span>{studentContent.profilePage.actionLabels.uploadPhoto}</span>
@@ -245,6 +372,14 @@ export function StudentProfilePage() {
                         onChange={handleAvatarSelection}
                       />
                     </label>
+                    {avatarUploadMessage ? (
+                      <p
+                        className={avatarUploadMessageClassName}
+                        role={avatarUploadStatus === 'error' ? 'alert' : 'status'}
+                      >
+                        {avatarUploadMessage}
+                      </p>
+                    ) : null}
                   </div>
                   <div className="grid min-w-0 flex-1 gap-3 sm:grid-cols-2 2xl:grid-cols-4">
                     <div className="rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-3.5 py-3">

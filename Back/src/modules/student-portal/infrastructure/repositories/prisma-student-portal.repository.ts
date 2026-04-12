@@ -1,6 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { PrismaService } from '@/shared/database/prisma.service';
+import { normalizeText } from '@/shared/utils/front-format.util';
+import { UpdateStudentProfileDto } from '../../application/dto/update-student-profile.dto';
 import { StudentAgendaAppointmentDto } from '../../application/dto/student-agenda-appointment.dto';
 import { StudentAppointmentReviewDto } from '../../application/dto/student-appointment-review.dto';
 import { StudentConversationDto } from '../../application/dto/student-conversation.dto';
@@ -22,10 +24,76 @@ function calcAge(birthDate: Date): number {
   );
 }
 
+function normalizeOptionalText(value: string | null | undefined) {
+  const normalizedValue = typeof value === 'string' ? normalizeText(value) : '';
+  return normalizedValue.length > 0 ? normalizedValue : null;
+}
+
 @Injectable()
 export class PrismaStudentPortalRepository extends StudentPortalRepository {
   constructor(private readonly prisma: PrismaService) {
     super();
+  }
+
+  private async findStudentProfileRecord(studentAccountId: number) {
+    return this.prisma.cuenta_estudiante.findUnique({
+      where: { id_cuenta: studentAccountId },
+      include: {
+        persona: true,
+        universidad: true,
+        cuenta_acceso: { select: { correo: true } },
+        perfil_estudiante: true,
+        enlace_profesional: {
+          orderBy: { id_enlace_profesional: 'asc' },
+        },
+      },
+    });
+  }
+
+  private toStudentProfileDto(
+    student:
+      | Awaited<ReturnType<PrismaStudentPortalRepository['findStudentProfileRecord']>>
+      | null,
+  ): StudentProfileDto {
+    if (!student) {
+      return {
+        availabilityGeneral: '',
+        avatarAlt: 'Foto del estudiante',
+        avatarFileName: null,
+        avatarSrc: null,
+        biography: '',
+        email: '',
+        firstName: '',
+        id: '',
+        lastName: '',
+        links: [],
+        semester: '',
+        universityLogoAlt: 'Logo de la universidad',
+        universityLogoSrc: null,
+        universityName: '',
+      };
+    }
+
+    return {
+      availabilityGeneral: student.perfil_estudiante?.disponibilidad_general ?? '',
+      avatarAlt: `Foto de perfil de ${student.persona.nombres}`,
+      avatarFileName: null,
+      avatarSrc: student.perfil_estudiante?.foto_url ?? null,
+      biography: student.perfil_estudiante?.descripcion ?? '',
+      email: student.cuenta_acceso.correo,
+      firstName: student.persona.nombres,
+      id: String(student.id_cuenta),
+      lastName: student.persona.apellidos,
+      links: student.enlace_profesional.map((link) => ({
+        id: String(link.id_enlace_profesional),
+        type: link.tipo_enlace,
+        url: link.url,
+      })),
+      semester: String(student.semestre),
+      universityLogoAlt: `Logo de ${student.universidad.nombre}`,
+      universityLogoSrc: student.universidad.logo_url ?? null,
+      universityName: student.universidad.nombre,
+    };
   }
 
   async getDashboard(studentAccountId: number): Promise<StudentPortalDashboardDto> {
@@ -97,39 +165,7 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       ? `${student.persona.nombres} ${student.persona.apellidos}`
       : 'Estudiante';
 
-    const profile: StudentProfileDto = student
-      ? {
-          availabilityGeneral: student.perfil_estudiante?.disponibilidad_general ?? '',
-          avatarAlt: `Foto de perfil de ${student.persona.nombres}`,
-          avatarFileName: null,
-          avatarSrc: student.perfil_estudiante?.foto_url ?? null,
-          biography: student.perfil_estudiante?.descripcion ?? '',
-          email: student.cuenta_acceso.correo,
-          firstName: student.persona.nombres,
-          id: String(student.id_cuenta),
-          lastName: student.persona.apellidos,
-          links: student.enlace_profesional.map((l) => ({
-            id: String(l.id_enlace_profesional),
-            type: l.tipo_enlace,
-            url: l.url,
-          })),
-          semester: String(student.semestre),
-          universityName: student.universidad.nombre,
-        }
-      : {
-          availabilityGeneral: '',
-          avatarAlt: '',
-          avatarFileName: null,
-          avatarSrc: null,
-          biography: '',
-          email: '',
-          firstName: '',
-          id: '',
-          lastName: '',
-          links: [],
-          semester: '',
-          universityName: '',
-        };
+    const profile = this.toStudentProfileDto(student);
 
     const treatments: StudentTreatmentDto[] = (student?.estudiante_tratamiento ?? []).map((t) => ({
       description: t.tipo_tratamiento.descripcion ?? '',
@@ -256,8 +292,72 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     };
   }
 
-  updateProfile(): never {
-    throw new Error('PrismaStudentPortalRepository.updateProfile is pending implementation.');
+  async updateProfile(
+    studentAccountId: number,
+    payload: UpdateStudentProfileDto,
+  ): Promise<StudentProfileDto> {
+    const student = await this.findStudentProfileRecord(studentAccountId);
+
+    if (!student) {
+      throw new NotFoundException('No encontramos el perfil del estudiante.');
+    }
+
+    const availabilityGeneral = normalizeText(payload.availabilityGeneral ?? '');
+    const biography = normalizeText(payload.biography ?? '');
+    const nextAvatarSrc =
+      payload.avatarSrc === undefined
+        ? student.perfil_estudiante?.foto_url ?? null
+        : normalizeOptionalText(payload.avatarSrc);
+    const nextLinks = Array.isArray(payload.links)
+      ? payload.links
+          .map((link) => ({
+            type: link.type,
+            url: normalizeText(link.url),
+          }))
+          .filter((link) => link.url.length > 0)
+      : [];
+
+    const transactionOperations = [
+      this.prisma.perfil_estudiante.upsert({
+        where: {
+          id_cuenta_estudiante: studentAccountId,
+        },
+        create: {
+          disponibilidad_general: availabilityGeneral,
+          descripcion: biography,
+          foto_url: nextAvatarSrc,
+          id_cuenta_estudiante: studentAccountId,
+        },
+        update: {
+          disponibilidad_general: availabilityGeneral,
+          descripcion: biography,
+          foto_url: nextAvatarSrc,
+        },
+      }),
+      this.prisma.enlace_profesional.deleteMany({
+        where: {
+          id_cuenta_estudiante: studentAccountId,
+        },
+      }),
+    ];
+
+    if (nextLinks.length > 0) {
+      transactionOperations.push(
+        this.prisma.enlace_profesional.createMany({
+          data: nextLinks.map((link) => ({
+            id_cuenta_estudiante: studentAccountId,
+            tipo_enlace: link.type,
+            url: link.url,
+          })),
+        }),
+      );
+    }
+
+    await this.prisma.$transaction(transactionOperations);
+
+    const refreshedStudent = await this.findStudentProfileRecord(studentAccountId);
+
+    return this.toStudentProfileDto(refreshedStudent);
   }
 
   createScheduleBlock(): never {
