@@ -29,6 +29,20 @@ export function updateStudentPortalProfile(values: StudentProfileFormValues) {
   });
 }
 
+export function uploadStudentPortalAvatar(file: File) {
+  const body = new FormData();
+  body.append('avatar', file);
+
+  return apiRequest<{
+    avatarFileName: string;
+    avatarSrc: string;
+    publicId: string;
+  }>('/student-portal/profile/avatar', {
+    body,
+    method: 'POST',
+  });
+}
+
 export function toggleStudentPortalTreatmentStatus(treatmentId: string) {
   return apiRequest<{ status: PersonOperationalStatus; treatmentId: string }>(
     `/student-portal/treatments/${treatmentId}/status`,
