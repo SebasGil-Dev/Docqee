@@ -47,6 +47,8 @@ export function AdminUniversitiesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<UniversityStatusFilter>('all');
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
+  const [pendingStatusUniversityIds, setPendingStatusUniversityIds] = useState<string[]>([]);
+  const pendingStatusUniversityIdsRef = useRef(new Set<string>());
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -101,6 +103,22 @@ export function AdminUniversitiesPage() {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isStatusMenuOpen]);
+
+  function handleToggleUniversityStatus(universityId: string) {
+    if (pendingStatusUniversityIdsRef.current.has(universityId)) {
+      return;
+    }
+
+    pendingStatusUniversityIdsRef.current.add(universityId);
+    setPendingStatusUniversityIds((currentIds) => [...currentIds, universityId]);
+
+    void toggleUniversityStatus(universityId).finally(() => {
+      pendingStatusUniversityIdsRef.current.delete(universityId);
+      setPendingStatusUniversityIds((currentIds) =>
+        currentIds.filter((currentId) => currentId !== universityId),
+      );
+    });
+  }
 
   return (
     <div className="mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-4 overflow-hidden 2xl:max-w-[96rem]">
@@ -279,6 +297,9 @@ export function AdminUniversitiesPage() {
                   {filteredUniversities.map((university, index) => {
                     const isPending = university.status === 'pending';
                     const isLast = index === filteredUniversities.length - 1;
+                    const isUpdatingStatus = pendingStatusUniversityIds.includes(
+                      university.id,
+                    );
 
                     return (
                       <tr key={university.id} className="align-top">
@@ -344,14 +365,15 @@ export function AdminUniversitiesPage() {
                           ) : (
                             <button
                               className={classNames(
-                                'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[0.72rem] font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                                'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[0.72rem] font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-65',
                                 university.status === 'active'
                                   ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
                                   : 'bg-primary/10 text-primary hover:bg-primary/15',
                               )}
+                              disabled={isUpdatingStatus}
                               type="button"
                               onClick={() => {
-                                void toggleUniversityStatus(university.id);
+                                handleToggleUniversityStatus(university.id);
                               }}
                             >
                               {university.status === 'active' ? (
