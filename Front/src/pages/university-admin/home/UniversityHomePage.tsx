@@ -51,6 +51,32 @@ function formatDisplayName(value: string) {
     .join(' ');
 }
 
+type SummaryMetricProps = {
+  label: string;
+  toneClassName: string;
+  value: number;
+};
+
+function SummaryMetric({ label, toneClassName, value }: SummaryMetricProps) {
+  return (
+    <div className="rounded-[1rem] border border-slate-200/80 bg-slate-50 px-3 py-2.5">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-ink-muted">
+          {label}
+        </p>
+        <p
+          className={classNames(
+            'font-headline text-[1.1rem] font-extrabold leading-none tracking-tight',
+            toneClassName,
+          )}
+        >
+          {value}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export function UniversityHomePage() {
   const { session } = useAuth();
   const {
@@ -184,17 +210,12 @@ export function UniversityHomePage() {
                     { label: 'Pendientes', tone: 'text-amber-700', value: pendingStudentsCount },
                     { label: 'Inactivos', tone: 'text-slate-700', value: inactiveStudentsCount },
                   ].map((item) => (
-                    <div
+                    <SummaryMetric
+                      label={item.label}
                       key={item.label}
-                      className="rounded-[1rem] border border-slate-200/80 bg-slate-50 px-3 py-2.5"
-                    >
-                      <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-ink-muted">
-                        {item.label}
-                      </p>
-                      <p className={classNames('mt-0.5 font-headline text-[1.25rem] font-extrabold tracking-tight', item.tone)}>
-                        {item.value}
-                      </p>
-                    </div>
+                      toneClassName={item.tone}
+                      value={item.value}
+                    />
                   ))}
                 </div>
                 <div className="space-y-2">
@@ -317,22 +338,16 @@ export function UniversityHomePage() {
                   </div>
                 </div>
                 <div className="grid gap-1.5 sm:grid-cols-2">
-                  <div className="rounded-[1rem] border border-slate-200/80 bg-slate-50 px-3 py-2.5">
-                    <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-ink-muted">
-                      Docentes activos
-                    </p>
-                    <p className="mt-0.5 font-headline text-[1.25rem] font-extrabold tracking-tight text-emerald-700">
-                      {activeTeachersCount}
-                    </p>
-                  </div>
-                  <div className="rounded-[1rem] border border-slate-200/80 bg-slate-50 px-3 py-2.5">
-                    <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-ink-muted">
-                      Sedes activas
-                    </p>
-                    <p className="mt-0.5 font-headline text-[1.25rem] font-extrabold tracking-tight text-emerald-700">
-                      {activeCampusesCount}
-                    </p>
-                  </div>
+                  <SummaryMetric
+                    label="Docentes activos"
+                    toneClassName="text-emerald-700"
+                    value={activeTeachersCount}
+                  />
+                  <SummaryMetric
+                    label="Sedes activas"
+                    toneClassName="text-emerald-700"
+                    value={activeCampusesCount}
+                  />
                 </div>
                 <div className="grid gap-1.5 lg:grid-cols-2">
                   <div className="space-y-1.5">
