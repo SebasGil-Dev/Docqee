@@ -16,12 +16,17 @@ import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { patientContent } from '@/content/patientContent';
 import type { PatientStudentDirectoryItem } from '@/content/types';
 import { classNames } from '@/lib/classNames';
+import { getOptimizedAvatarUrl } from '@/lib/imageOptimization';
 import { usePatientModuleStore } from '@/lib/patientModuleStore';
 
 type TreatmentFilter = string;
 
 function getStudentFullName(student: PatientStudentDirectoryItem) {
   return `${student.firstName} ${student.lastName}`;
+}
+
+function getStudentInitials(student: PatientStudentDirectoryItem) {
+  return `${student.firstName.charAt(0)}${student.lastName.charAt(0)}`.toUpperCase();
 }
 
 function getStudentLocation(student: PatientStudentDirectoryItem) {
@@ -466,16 +471,32 @@ export function PatientSearchStudentsPage() {
             role="dialog"
           >
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h2
-                  className="font-headline text-2xl font-extrabold tracking-tight text-ink"
-                  id="patient-student-modal-title"
-                >
-                  {getStudentFullName(selectedStudent)}
-                </h2>
-                <p className="mt-1 text-sm leading-6 text-ink-muted">
-                  {selectedStudent.universityName} - Semestre {selectedStudent.semester}
-                </p>
+              <div className="flex items-start gap-3">
+                <div className="flex h-[4.5rem] w-[4.5rem] shrink-0 items-center justify-center overflow-hidden rounded-[1.4rem] bg-primary/10 ring-4 ring-primary/10">
+                  {selectedStudent.avatarSrc ? (
+                    <img
+                      alt={selectedStudent.avatarAlt}
+                      className="h-full w-full object-cover"
+                      decoding="async"
+                      src={getOptimizedAvatarUrl(selectedStudent.avatarSrc, 220)}
+                    />
+                  ) : (
+                    <span className="text-xl font-extrabold uppercase text-primary">
+                      {getStudentInitials(selectedStudent)}
+                    </span>
+                  )}
+                </div>
+                <div>
+                  <h2
+                    className="font-headline text-2xl font-extrabold tracking-tight text-ink"
+                    id="patient-student-modal-title"
+                  >
+                    {getStudentFullName(selectedStudent)}
+                  </h2>
+                  <p className="mt-1 text-sm leading-6 text-ink-muted">
+                    {selectedStudent.universityName} - Semestre {selectedStudent.semester}
+                  </p>
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <span

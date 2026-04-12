@@ -1113,6 +1113,8 @@ export type PatientProfile = {
 };
 
 export type PatientStudentDirectoryItem = {
+  avatarAlt: string;
+  avatarSrc: string | null;
   availabilityGeneral: string;
   availabilityStatus: PatientDiscoveryAvailability;
   biography: string;

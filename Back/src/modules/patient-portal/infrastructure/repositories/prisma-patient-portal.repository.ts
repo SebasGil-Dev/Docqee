@@ -148,6 +148,8 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     const studentDirectory: PatientStudentDirectoryItemDto[] = students.map((s) => {
       const sede = s.estudiante_sede_practica[0]?.sede;
       return {
+        avatarAlt: `Foto de perfil de ${s.persona.nombres}`,
+        avatarSrc: s.perfil_estudiante?.foto_url ?? null,
         availabilityGeneral: s.perfil_estudiante?.disponibilidad_general ?? '',
         availabilityStatus: 'available',
         biography: s.perfil_estudiante?.descripcion ?? '',
