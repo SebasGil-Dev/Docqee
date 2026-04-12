@@ -37,7 +37,10 @@ type UseUniversityAdminTeacherRecordsStoreOptions = {
 const TEACHER_RECORDS_CACHE_STORAGE_KEY =
   'docqee.university-admin.teacher-records-cache';
 const TEACHER_RECORDS_CACHE_MAX_AGE_MS = 30 * 60 * 1000;
+const TEACHER_STATUS_TOGGLE_MIN_LOCK_MS = 650;
 const listeners = new Set<() => void>();
+const pendingTeacherStatusUpdates = new Set<string>();
+let teacherStatusMutationVersion = 0;
 
 function createMockState(): UniversityAdminTeacherRecordsStoreState {
   return {
@@ -262,6 +265,34 @@ function setTeachers(
   });
 }
 
+function preserveCurrentTeacherStatuses(
+  teachers: UniversityTeacher[],
+  currentTeachers: UniversityTeacher[],
+) {
+  const currentStatusByTeacherId = new Map(
+    currentTeachers.map((teacher) => [teacher.id, teacher.status]),
+  );
+
+  return teachers.map((teacher) => {
+    const currentStatus = currentStatusByTeacherId.get(teacher.id);
+
+    return currentStatus ? { ...teacher, status: currentStatus } : teacher;
+  });
+}
+
+async function waitForMinimumToggleLock(startedAt: number) {
+  const elapsedMs = Date.now() - startedAt;
+  const remainingMs = TEACHER_STATUS_TOGGLE_MIN_LOCK_MS - elapsedMs;
+
+  if (remainingMs <= 0) {
+    return;
+  }
+
+  await new Promise<void>((resolve) => {
+    window.setTimeout(resolve, remainingMs);
+  });
+}
+
 async function loadRuntimeState(forceRefresh = false) {
   if (IS_TEST_MODE) {
     return state;
@@ -279,10 +310,16 @@ async function loadRuntimeState(forceRefresh = false) {
     errorMessage: null,
     isLoading: true,
   });
+  const requestTeacherStatusMutationVersion = teacherStatusMutationVersion;
 
   runtimeLoadPromise = listUniversityTeachers()
     .then((teachers) => {
-      setTeachers(teachers, {
+      const syncedTeachers =
+        requestTeacherStatusMutationVersion === teacherStatusMutationVersion
+          ? teachers
+          : preserveCurrentTeacherStatuses(teachers, state.teachers);
+
+      setTeachers(syncedTeachers, {
         isLoading: false,
         isReady: true,
         shouldRefresh: false,
@@ -337,6 +374,12 @@ export function prependUniversityAdminTeacherRecord(teacher: UniversityTeacher) 
 }
 
 async function toggleTeacherStatus(teacherId: string) {
+  const startedAt = Date.now();
+
+  if (pendingTeacherStatusUpdates.has(teacherId)) {
+    return null;
+  }
+
   if (IS_TEST_MODE) {
     const currentTeacher = state.teachers.find((teacher) => teacher.id === teacherId);
 
@@ -351,39 +394,71 @@ async function toggleTeacherStatus(teacherId: string) {
     );
 
     setTeachers(nextTeachers);
+    await waitForMinimumToggleLock(startedAt);
     return nextStatus;
   }
 
-  patchState({
+  const currentTeacher = state.teachers.find((teacher) => teacher.id === teacherId);
+
+  if (!currentTeacher) {
+    return null;
+  }
+
+  pendingTeacherStatusUpdates.add(teacherId);
+  teacherStatusMutationVersion += 1;
+
+  const previousStatus = currentTeacher.status;
+  const optimisticStatus: UniversityTeacher['status'] =
+    previousStatus === 'active' ? 'inactive' : 'active';
+  const optimisticTeachers = state.teachers.map((teacher) =>
+    teacher.id === teacherId ? { ...teacher, status: optimisticStatus } : teacher,
+  );
+
+  setTeachers(optimisticTeachers, {
     errorMessage: null,
-    isLoading: true,
+    isLoading: false,
+    isReady: true,
+    shouldRefresh: false,
   });
 
   try {
     const result = await toggleUniversityTeacherStatus(teacherId);
-    const nextTeachers = state.teachers.map((teacher) =>
-      teacher.id === result.teacherId
-        ? { ...teacher, status: result.status }
-        : teacher,
-    );
 
     resetUniversityAdminOverviewState();
-    setTeachers(nextTeachers, {
-      isLoading: false,
-      isReady: true,
-      shouldRefresh: false,
-    });
+
+    if (result.status !== optimisticStatus) {
+      const syncedTeachers = state.teachers.map((teacher) =>
+        teacher.id === result.teacherId
+          ? { ...teacher, status: result.status }
+          : teacher,
+      );
+
+      setTeachers(syncedTeachers, {
+        isLoading: false,
+        isReady: true,
+        shouldRefresh: false,
+      });
+    }
 
     return result.status;
   } catch (error) {
-    patchState({
+    const revertedTeachers = state.teachers.map((teacher) =>
+      teacher.id === teacherId ? { ...teacher, status: previousStatus } : teacher,
+    );
+
+    setTeachers(revertedTeachers, {
       errorMessage: getErrorMessage(
         error,
         'No pudimos actualizar el estado del docente.',
       ),
       isLoading: false,
+      isReady: true,
+      shouldRefresh: false,
     });
     return null;
+  } finally {
+    await waitForMinimumToggleLock(startedAt);
+    pendingTeacherStatusUpdates.delete(teacherId);
   }
 }
 

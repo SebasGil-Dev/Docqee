@@ -364,6 +364,10 @@ export class TeachersService {
         id_docente_universidad: teacherId,
         id_universidad: universityId,
       },
+      select: {
+        estado: true,
+        id_docente_universidad: true,
+      },
     });
 
     if (!teacherLink) {

@@ -325,6 +325,23 @@ describe('University admin pages', () => {
     });
   });
 
+  it('evita revertir el estado del docente cuando se hace doble clic en activar o inactivar', async () => {
+    const user = userEvent.setup();
+
+    renderUniversityApp([ROUTES.universityTeachers]);
+
+    const teacherRow = screen.getByText(/Andres Villamizar/i).closest('tr');
+    expect(teacherRow).not.toBeNull();
+
+    const deactivateButton = within(teacherRow!).getByRole('button', { name: /^inactivar$/i });
+    await user.dblClick(deactivateButton);
+
+    await waitFor(() => {
+      expect(within(teacherRow!).getByRole('button', { name: /^activar$/i })).toBeInTheDocument();
+    });
+    expect(within(teacherRow!).queryByRole('button', { name: /^inactivar$/i })).not.toBeInTheDocument();
+  });
+
   it('muestra el formulario de registrar docente con textos corregidos', async () => {
     const user = userEvent.setup();
 

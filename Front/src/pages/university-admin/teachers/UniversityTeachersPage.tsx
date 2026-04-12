@@ -38,6 +38,8 @@ export function UniversityTeachersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<TeacherStatusFilter>('all');
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
+  const [pendingStatusTeacherIds, setPendingStatusTeacherIds] = useState<string[]>([]);
+  const pendingStatusTeacherIdsRef = useRef(new Set<string>());
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -96,6 +98,22 @@ export function UniversityTeachersPage() {
       window.clearTimeout(timeoutId);
     };
   }, [location.pathname, navigate, successNotice]);
+
+  function handleToggleTeacherStatus(teacherId: string) {
+    if (pendingStatusTeacherIdsRef.current.has(teacherId)) {
+      return;
+    }
+
+    pendingStatusTeacherIdsRef.current.add(teacherId);
+    setPendingStatusTeacherIds((currentIds) => [...currentIds, teacherId]);
+
+    void toggleTeacherStatus(teacherId).finally(() => {
+      pendingStatusTeacherIdsRef.current.delete(teacherId);
+      setPendingStatusTeacherIds((currentIds) =>
+        currentIds.filter((currentId) => currentId !== teacherId),
+      );
+    });
+  }
 
   return (
     <div className="mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-3 overflow-hidden 2xl:max-w-[96rem]">
@@ -271,6 +289,7 @@ export function UniversityTeachersPage() {
               <tbody className="divide-y divide-slate-200/80">
                 {filteredTeachers.map((teacher, index) => {
                   const isLast = index === filteredTeachers.length - 1;
+                  const isUpdatingStatus = pendingStatusTeacherIds.includes(teacher.id);
 
                   return (
                     <tr key={teacher.id} className="align-top">
@@ -318,14 +337,15 @@ export function UniversityTeachersPage() {
                         <div className="mt-0.5 flex items-center justify-center">
                           <button
                             className={classNames(
-                              'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                              'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-65',
                               teacher.status === 'active'
                                 ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
                                 : 'bg-primary/10 text-primary hover:bg-primary/15',
-                          )}
+                            )}
+                            disabled={isUpdatingStatus}
                             type="button"
                             onClick={() => {
-                              void toggleTeacherStatus(teacher.id);
+                              handleToggleTeacherStatus(teacher.id);
                             }}
                           >
                             {teacher.status === 'active' ? (
