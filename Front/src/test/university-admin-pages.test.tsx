@@ -55,9 +55,9 @@ async function fillStudentForm(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText(/^Nombres$/i), 'Juliana');
   await user.type(screen.getByLabelText(/^Apellidos$/i), 'Marin');
   await user.selectOptions(screen.getByLabelText(/tipo de documento/i), 'document-cc');
-  await user.type(screen.getByLabelText(/numero de documento/i), '1032456789');
+  await user.type(screen.getByLabelText(/n[uú]mero de documento/i), '1032456789');
   await user.type(
-    screen.getByLabelText(/correo electronico/i),
+    screen.getByLabelText(/correo electr[oó]nico/i),
     'juliana.marin@clinicadelnorte.edu.co',
   );
   await user.type(screen.getByLabelText(/^Celular$/i), '3002223344');
@@ -212,6 +212,10 @@ describe('University admin pages', () => {
 
     renderUniversityApp([ROUTES.universityStudents]);
 
+    expect(screen.getByRole('heading', { name: /gestión de estudiantes/i })).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText(/buscar por nombre o número de identificación/i),
+    ).toBeInTheDocument();
     expect(screen.getByText(/Valentina Rios/i)).toBeInTheDocument();
     expect(screen.getByText(/Tomas Herrera/i)).toBeInTheDocument();
     expect(screen.getByText(/Camila Vega/i)).toBeInTheDocument();
@@ -233,6 +237,24 @@ describe('University admin pages', () => {
       'title',
       'Envia la credencial primero',
     );
+  });
+
+  it('centra y muestra los textos corregidos en registrar estudiante', async () => {
+    const user = userEvent.setup();
+
+    renderUniversityApp([ROUTES.universityRegisterStudent]);
+
+    expect(screen.getByRole('heading', { name: /registrar estudiante/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/n[uú]mero de documento/i)).toHaveAttribute(
+      'placeholder',
+      'Ingresa el número de documento',
+    );
+    expect(screen.getByLabelText(/correo electr[oó]nico/i)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /registrar estudiante/i }));
+
+    expect(await screen.findByText(/el número de documento es obligatorio/i)).toBeInTheDocument();
+    expect(screen.getByText(/el correo electrónico es obligatorio/i)).toBeInTheDocument();
   });
 
   it('registra docentes sin crear credenciales', async () => {

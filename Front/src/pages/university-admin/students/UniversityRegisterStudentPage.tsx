@@ -58,11 +58,11 @@ function validateField(
   if (!normalizedValue) {
     switch (field) {
       case 'documentNumber':
-        return 'El numero de documento es obligatorio';
+        return 'El número de documento es obligatorio';
       case 'documentTypeId':
         return 'El tipo de documento es obligatorio';
       case 'email':
-        return 'El correo electronico es obligatorio';
+        return 'El correo electrónico es obligatorio';
       case 'firstName':
         return 'Los nombres son obligatorios';
       case 'lastName':
@@ -77,7 +77,7 @@ function validateField(
   }
 
   if (field === 'email' && !isValidEmail(normalizedValue)) {
-    return 'Ingresa un correo electronico valido';
+    return 'Ingresa un correo electrónico válido';
   }
 
   return undefined;
@@ -246,6 +246,7 @@ export function UniversityRegisterStudentPage({
         actionClassName="sm:absolute sm:right-0 sm:top-1/2 sm:-translate-y-1/2"
         className="relative gap-2.5 sm:min-h-[4rem] sm:justify-center"
         description=""
+        headingAlign="center"
         titleClassName="text-center sm:-mt-1"
         title={universityAdminContent.registerStudentPage.title}
       />
@@ -316,9 +317,9 @@ export function UniversityRegisterStudentPage({
                   id="register-student-document-number"
                   inputClassName="py-2.5 sm:py-3"
                   inputRef={documentNumberRef}
-                  label="Numero de documento"
+                  label="Número de documento"
                   name="documentNumber"
-                  placeholder="Ingresa el numero de documento"
+                  placeholder="Ingresa el número de documento"
                   value={values.documentNumber}
                   onBlur={() => handleFieldBlur('documentNumber')}
                   onChange={(value) => updateFieldValue('documentNumber', value)}
@@ -330,7 +331,7 @@ export function UniversityRegisterStudentPage({
                   id="register-student-email"
                   inputClassName="py-2.5 sm:py-3"
                   inputRef={emailRef}
-                  label="Correo electronico"
+                  label="Correo electrónico"
                   name="email"
                   placeholder="estudiante@universidad.edu.co"
                   type="email"

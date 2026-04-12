@@ -188,15 +188,15 @@ export const universityAdminContent = {
     meta: {
       description:
         'Gestiona los estudiantes del modulo universitario de Docqee.',
-      title: 'Docqee | Gestion de Estudiantes',
+      title: 'Docqee | Gestión de Estudiantes',
     },
     searchLabel: 'Buscar estudiante',
-    searchPlaceholder: 'Buscar por nombre o cedula...',
+    searchPlaceholder: 'Buscar por nombre o número de identificación',
     successNoticePrefix: 'Actualizacion completada:',
     subtitle: '',
     summaryLabel: 'Estudiantes registrados',
     tableTitle: 'Estudiantes registrados',
-    title: 'Gestion de estudiantes',
+    title: 'Gestión de estudiantes',
   },
   teachersPage: {
     actionLabels: {
