@@ -69,7 +69,7 @@ async function fillTeacherForm(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText(/^Nombres$/i), 'Patricia');
   await user.type(screen.getByLabelText(/^Apellidos$/i), 'Mendoza');
   await user.selectOptions(screen.getByLabelText(/tipo de documento/i), 'document-cc');
-  await user.type(screen.getByLabelText(/numero de documento/i), '80111222');
+  await user.type(screen.getByLabelText(/n[uú]mero de documento/i), '80111222');
 }
 
 function createWorkbookFile(
@@ -277,6 +277,10 @@ describe('University admin pages', () => {
 
     renderUniversityApp([ROUTES.universityTeachers]);
 
+    expect(screen.getByRole('heading', { name: /gestión de docentes/i })).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText(/buscar por nombre o número de identificación/i),
+    ).toBeInTheDocument();
     expect(screen.queryByText(/Administra el listado de docentes vinculados/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/El modulo permite registrar docentes/i)).not.toBeInTheDocument();
 
@@ -297,6 +301,25 @@ describe('University admin pages', () => {
     await waitFor(() => {
       expect(screen.queryByText(/Andres Villamizar/i)).not.toBeInTheDocument();
     });
+  });
+
+  it('muestra el formulario de registrar docente con textos corregidos', async () => {
+    const user = userEvent.setup();
+
+    renderUniversityApp([ROUTES.universityRegisterTeacher]);
+
+    expect(screen.getByRole('heading', { name: /registrar docente/i })).toBeInTheDocument();
+    expect(
+      screen.queryByText(/completa el formulario para registrar un nuevo docente dentro de la universidad/i),
+    ).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/n[uú]mero de documento/i)).toHaveAttribute(
+      'placeholder',
+      'Ingresa el número de documento',
+    );
+
+    await user.click(screen.getByRole('button', { name: /registrar docente/i }));
+
+    expect(await screen.findByText(/el número de documento es obligatorio/i)).toBeInTheDocument();
   });
 
   it('la carga masiva de estudiantes y docentes crea los registros mock esperados', async () => {
