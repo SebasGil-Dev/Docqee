@@ -51,8 +51,11 @@ type PersistedAdminModuleCache = {
 
 const ADMIN_MODULE_CACHE_STORAGE_KEY = 'docqee.platform-admin.module-cache';
 const ADMIN_MODULE_CACHE_MAX_AGE_MS = 30 * 60 * 1000;
+const UNIVERSITY_STATUS_TOGGLE_MIN_LOCK_MS = 650;
 
 const listeners = new Set<() => void>();
+const pendingUniversityStatusUpdates = new Set<string>();
+let universityStatusMutationVersion = 0;
 
 function createMockState(): AdminModuleStoreState {
   const universities: AdminUniversity[] = [
@@ -373,6 +376,34 @@ function setAdminModuleRecords(
   });
 }
 
+function preserveCurrentUniversityStatuses(
+  universities: AdminUniversity[],
+  currentUniversities: AdminUniversity[],
+) {
+  const currentStatusByUniversityId = new Map(
+    currentUniversities.map((university) => [university.id, university.status]),
+  );
+
+  return universities.map((university) => {
+    const currentStatus = currentStatusByUniversityId.get(university.id);
+
+    return currentStatus ? { ...university, status: currentStatus } : university;
+  });
+}
+
+async function waitForMinimumToggleLock(startedAt: number) {
+  const elapsedMs = Date.now() - startedAt;
+  const remainingMs = UNIVERSITY_STATUS_TOGGLE_MIN_LOCK_MS - elapsedMs;
+
+  if (remainingMs <= 0) {
+    return;
+  }
+
+  await new Promise<void>((resolve) => {
+    window.setTimeout(resolve, remainingMs);
+  });
+}
+
 function normalizeText(value: string) {
   return value.trim();
 }
@@ -570,10 +601,16 @@ async function loadRuntimeState(forceRefresh = false) {
     errorMessage: null,
     isLoading: true,
   });
+  const requestUniversityStatusMutationVersion = universityStatusMutationVersion;
 
   runtimeLoadPromise = getPlatformAdminOverview()
     .then(({ universities, credentials }) => {
-      setAdminModuleRecords(universities, credentials, {
+      const syncedUniversities =
+        requestUniversityStatusMutationVersion === universityStatusMutationVersion
+          ? universities
+          : preserveCurrentUniversityStatuses(universities, state.universities);
+
+      setAdminModuleRecords(syncedUniversities, credentials, {
         isLoading: false,
         isReady: true,
         shouldRefresh: false,
@@ -652,37 +689,78 @@ async function registerUniversity(values: RegisterUniversityFormValues) {
 }
 
 async function toggleUniversityStatus(universityId: string) {
-  if (IS_TEST_MODE) {
-    return toggleUniversityStatusMock(universityId);
+  const startedAt = Date.now();
+
+  if (pendingUniversityStatusUpdates.has(universityId)) {
+    return null;
   }
 
-  patchState({
+  if (IS_TEST_MODE) {
+    const nextStatus = toggleUniversityStatusMock(universityId);
+    await waitForMinimumToggleLock(startedAt);
+    return nextStatus;
+  }
+
+  const currentUniversity = state.universities.find(
+    (university) => university.id === universityId,
+  );
+
+  if (!currentUniversity || currentUniversity.status === 'pending') {
+    return null;
+  }
+
+  pendingUniversityStatusUpdates.add(universityId);
+  universityStatusMutationVersion += 1;
+
+  const previousStatus = currentUniversity.status;
+  const optimisticStatus: UniversityStatus =
+    previousStatus === 'active' ? 'inactive' : 'active';
+  const optimisticUniversities = state.universities.map((university) =>
+    university.id === universityId
+      ? { ...university, status: optimisticStatus }
+      : university,
+  );
+
+  setAdminModuleRecords(optimisticUniversities, state.credentials, {
     errorMessage: null,
-    isLoading: true,
+    isLoading: false,
+    isReady: true,
+    shouldRefresh: false,
   });
 
   try {
     const updatedUniversity = await togglePlatformAdminUniversityStatus(universityId);
 
-    setAdminModuleRecords(
-      state.universities.map((university) =>
+    if (updatedUniversity.status !== optimisticStatus) {
+      const syncedUniversities = state.universities.map((university) =>
         university.id === updatedUniversity.id ? updatedUniversity : university,
-      ),
-      state.credentials,
-      {
+      );
+
+      setAdminModuleRecords(syncedUniversities, state.credentials, {
         isLoading: false,
         isReady: true,
         shouldRefresh: false,
-      },
-    );
+      });
+    }
 
     return updatedUniversity.status;
   } catch (error) {
-    patchState({
+    const revertedUniversities = state.universities.map((university) =>
+      university.id === universityId
+        ? { ...university, status: previousStatus }
+        : university,
+    );
+
+    setAdminModuleRecords(revertedUniversities, state.credentials, {
       errorMessage: getErrorMessage(error, 'No pudimos actualizar el estado de la universidad.'),
       isLoading: false,
+      isReady: true,
+      shouldRefresh: false,
     });
     return null;
+  } finally {
+    await waitForMinimumToggleLock(startedAt);
+    pendingUniversityStatusUpdates.delete(universityId);
   }
 }
 

@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { MemoryRouterProps } from 'react-router-dom';
 import { MemoryRouter, Navigate, Route, Routes } from 'react-router-dom';
@@ -277,6 +277,31 @@ describe('Admin pages', () => {
     expect(
       within(activeRow!).getByRole('button', { name: /activar/i }),
     ).toBeInTheDocument();
+  });
+
+  it('evita revertir el estado de la universidad cuando se hace doble clic en activar o inactivar', async () => {
+    const user = userEvent.setup();
+
+    renderAdminApp([ROUTES.adminUniversities]);
+
+    const activeRow = screen
+      .getByText(/Universidad Clinica del Norte/i)
+      .closest('tr');
+    expect(activeRow).not.toBeNull();
+
+    const deactivateButton = within(activeRow!).getByRole('button', {
+      name: /^inactivar$/i,
+    });
+    await user.dblClick(deactivateButton);
+
+    await waitFor(() => {
+      expect(
+        within(activeRow!).getByRole('button', { name: /^activar$/i }),
+      ).toBeInTheDocument();
+    });
+    expect(
+      within(activeRow!).queryByRole('button', { name: /^inactivar$/i }),
+    ).not.toBeInTheDocument();
   });
 
   it('enviar solo cambia la credencial y mantiene la universidad en pending', async () => {
