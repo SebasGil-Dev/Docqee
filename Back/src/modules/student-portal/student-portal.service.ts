@@ -5,6 +5,7 @@ import type { UploadImageFile } from '@/shared/storage/cloudinary.service';
 import { CloudinaryService } from '@/shared/storage/cloudinary.service';
 import type { RequestUser } from '@/shared/types/request-user.type';
 import { UpdateStudentProfileDto } from './application/dto/update-student-profile.dto';
+import { UpdateStudentRequestStatusDto } from './application/dto/update-student-request-status.dto';
 import { StudentPortalRepository } from './domain/repositories/student-portal.repository';
 
 @Injectable()
@@ -16,6 +17,10 @@ export class StudentPortalService {
 
   getDashboard(user: RequestUser) {
     return this.studentPortalRepository.getDashboard(user.id);
+  }
+
+  updateRequestStatus(user: RequestUser, requestId: number, payload: UpdateStudentRequestStatusDto) {
+    return this.studentPortalRepository.updateRequestStatus(user.id, requestId, payload);
   }
 
   async updateProfile(user: RequestUser, payload: UpdateStudentProfileDto) {
