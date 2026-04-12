@@ -209,14 +209,14 @@ export const universityAdminContent = {
     meta: {
       description:
         'Gestiona los docentes del modulo universitario de Docqee.',
-      title: 'Docqee | Gestion de Docentes',
+      title: 'Docqee | Gestión de Docentes',
     },
     searchLabel: 'Buscar docente',
-    searchPlaceholder: 'Buscar por nombre o cedula...',
+    searchPlaceholder: 'Buscar por nombre o número de identificación',
     successNoticePrefix: 'Actualizacion completada:',
     subtitle: '',
     summaryLabel: 'Docentes registrados',
     tableTitle: 'Docentes registrados',
-    title: 'Gestion de docentes',
+    title: 'Gestión de docentes',
   },
 } as const;

@@ -1,4 +1,4 @@
-import { ArrowLeft, Badge, IdCard, UserRound } from 'lucide-react';
+import { ArrowLeft, IdCard, UserRound } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -42,7 +42,7 @@ function validateField(
   if (!value.trim()) {
     switch (field) {
       case 'documentNumber':
-        return 'El numero de documento es obligatorio';
+        return 'El número de documento es obligatorio';
       case 'documentTypeId':
         return 'El tipo de documento es obligatorio';
       case 'firstName':
@@ -208,8 +208,12 @@ export function UniversityRegisterTeacherPage({
             <span>{universityAdminContent.registerTeacherPage.backLabel}</span>
           </Link>
         }
-        description={universityAdminContent.registerTeacherPage.description}
+        actionClassName="sm:absolute sm:right-0 sm:top-1/2 sm:-translate-y-1/2"
+        className="relative gap-2.5 sm:min-h-[4rem] sm:justify-center"
+        description=""
+        headingAlign="center"
         title={universityAdminContent.registerTeacherPage.title}
+        titleClassName="text-center sm:-mt-1"
       />
       {errorMessage ? (
         <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700" role="alert">
@@ -217,18 +221,6 @@ export function UniversityRegisterTeacherPage({
         </div>
       ) : null}
       <AdminPanelCard className="flex-1" panelClassName="bg-slate-50">
-        <div className="border-b border-slate-200/80 bg-white px-6 py-5 sm:px-7">
-          <div className="flex items-start gap-4">
-            <span className="inline-flex h-12 w-12 items-center justify-center rounded-[1.5rem] bg-primary/12 text-primary">
-              <Badge aria-hidden="true" className="h-5 w-5" />
-            </span>
-            <div>
-              <h2 className="font-headline text-2xl font-extrabold tracking-tight text-ink">
-                {universityAdminContent.registerTeacherPage.title}
-              </h2>
-            </div>
-          </div>
-        </div>
         <form className="flex min-h-0 flex-1 flex-col overflow-hidden" noValidate onSubmit={handleSubmit}>
           <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-7">
             <div className="grid gap-5 pb-6 lg:grid-cols-2">
@@ -274,9 +266,9 @@ export function UniversityRegisterTeacherPage({
                 icon={IdCard}
                 id="register-teacher-document-number"
                 inputRef={documentNumberRef}
-                label="Numero de documento"
+                label="Número de documento"
                 name="documentNumber"
-                placeholder="Ingresa el numero de documento"
+                placeholder="Ingresa el número de documento"
                 value={values.documentNumber}
                 onBlur={() => handleFieldBlur('documentNumber')}
                 onChange={(value) => updateFieldValue('documentNumber', value)}

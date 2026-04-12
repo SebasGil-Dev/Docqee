@@ -11,6 +11,7 @@ import { ROUTES } from '@/constants/routes';
 import { universityAdminContent } from '@/content/universityAdminContent';
 import type { PersonOperationalStatus } from '@/content/types';
 import { classNames } from '@/lib/classNames';
+import { formatDisplayName } from '@/lib/formatDisplayName';
 import { useUniversityAdminTeacherRecordsStore } from '@/lib/universityAdminTeacherRecordsStore';
 
 type TeachersLocationState = {
@@ -281,7 +282,7 @@ export function UniversityTeachersPage() {
                       >
                         <div className="space-y-1">
                           <p className="text-[0.83rem] font-semibold text-ink">
-                            {teacher.firstName} {teacher.lastName}
+                            {formatDisplayName(`${teacher.firstName} ${teacher.lastName}`)}
                           </p>
                           <p className="text-[0.72rem] text-ink-muted sm:text-[0.76rem]">
                             Registrado {new Date(teacher.createdAt).toLocaleDateString('es-CO')}
