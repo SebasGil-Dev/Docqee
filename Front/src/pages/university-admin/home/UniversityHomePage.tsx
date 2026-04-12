@@ -203,7 +203,7 @@ export function UniversityHomePage() {
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between gap-3">
-                    <p className="text-[0.83rem] font-semibold text-ink">Ultimos registros</p>
+                    <p className="text-[0.83rem] font-semibold text-ink">Últimos registros</p>
                     <Link
                       className="inline-flex items-center gap-1 text-[0.72rem] font-semibold text-primary transition duration-200 hover:text-primary/80"
                       to={ROUTES.universityStudents}

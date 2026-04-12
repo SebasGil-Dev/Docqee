@@ -101,6 +101,10 @@ describe('University admin pages', () => {
     const firstRender = renderUniversityApp([ROUTES.universityStudents]);
 
     await user.click(screen.getByRole('button', { name: /cerrar menu lateral/i }));
+    expect(screen.getByRole('link', { name: /cerrar sesión/i })).toHaveAttribute(
+      'title',
+      'Cerrar sesión',
+    );
 
     expect(window.localStorage.getItem('docqee-admin-sidebar-collapsed')).toBe('true');
 
@@ -122,6 +126,7 @@ describe('University admin pages', () => {
     expect(screen.getAllByText(/^Estudiantes$/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/estado de estudiantes/i)).toBeInTheDocument();
     expect(screen.getByText(/equipo y sedes/i)).toBeInTheDocument();
+    expect(screen.getByText(/últimos registros/i)).toBeInTheDocument();
   });
 
   it('permite guardar, restablecer y actualizar la contraseña en informacion institucional', async () => {
@@ -335,6 +340,9 @@ describe('University admin pages', () => {
 
     renderUniversityApp([ROUTES.universityBulkUpload]);
 
+    expect(screen.getByRole('heading', { name: /plantilla base/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /subir archivo/i })).toBeInTheDocument();
+
     const input = document.getElementById('bulk-upload-input') as HTMLInputElement;
     await user.upload(input, studentWorkbook);
     await screen.findByText(/lote-estudiantes\.xlsx/i);
@@ -345,10 +353,11 @@ describe('University admin pages', () => {
     });
     await user.click(screen.getByRole('button', { name: /validar archivo/i }));
     expect(
-      await screen.findAllByText(/la validacion mock fue exitosa/i, undefined, {
+      await screen.findByText(/la validación fue exitosa\./i, undefined, {
         timeout: 5000,
       }),
-    ).not.toHaveLength(0);
+    ).toBeInTheDocument();
+    expect(screen.getByText(/\(1 filas listas para procesar\)/i)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /procesar carga/i }));
 
     expect(
@@ -370,10 +379,11 @@ describe('University admin pages', () => {
     });
     await user.click(screen.getByRole('button', { name: /validar archivo/i }));
     expect(
-      await screen.findAllByText(/la validacion mock fue exitosa/i, undefined, {
+      await screen.findByText(/la validación fue exitosa\./i, undefined, {
         timeout: 5000,
       }),
-    ).not.toHaveLength(0);
+    ).toBeInTheDocument();
+    expect(screen.getByText(/\(1 filas listas para procesar\)/i)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /procesar carga/i }));
 
     expect(await screen.findAllByText(/se agregaron 2 docentes/i)).not.toHaveLength(0);
