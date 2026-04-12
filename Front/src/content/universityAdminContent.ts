@@ -36,7 +36,7 @@ export const universityAdminContent = {
     title: 'Carga masiva',
     uploadCardTitle: 'Subir archivo',
     validatedMessage:
-      'La validacion mock fue exitosa. Ya puedes continuar con el procesamiento.',
+      'La validación fue exitosa. Ya puedes continuar con el procesamiento, presiona el botón PROCESAR CARGA.',
   },
   credentialsPage: {
     actionLabels: {
@@ -134,7 +134,7 @@ export const universityAdminContent = {
     homePath: ROUTES.home,
     mobileTitle: 'Admin Universidad',
     logoutCta: {
-      label: 'Cerrar sesion',
+      label: 'Cerrar sesión',
       to: ROUTES.login,
     },
     navigation: [

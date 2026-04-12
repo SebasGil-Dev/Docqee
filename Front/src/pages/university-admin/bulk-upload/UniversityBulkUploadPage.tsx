@@ -434,7 +434,7 @@ export function UniversityBulkUploadPage() {
             {/* Plantilla */}
             <SurfaceCard className="h-full border border-slate-200/80 bg-white shadow-none" paddingClassName="p-4 lg:p-4.5 xl:p-5">
               <div className="space-y-3.5 lg:space-y-3">
-                <div className="space-y-1">
+                <div className="space-y-1 text-center">
                   <h2 className="font-headline text-[1.1rem] font-extrabold tracking-tight text-ink">Plantilla base</h2>
                   <p className="text-[0.82rem] leading-5 text-ink-muted">
                     {universityAdminContent.bulkUploadPage.templateDescription}
@@ -491,7 +491,7 @@ export function UniversityBulkUploadPage() {
             {/* Subida */}
             <SurfaceCard className="h-full border border-slate-200/80 bg-white shadow-none" paddingClassName="p-4 lg:p-4.5 xl:p-5">
               <div className="space-y-4">
-                <div className="space-y-1">
+                <div className="space-y-1 text-center">
                   <h2 className="font-headline text-[1.1rem] font-extrabold tracking-tight text-ink">
                     {universityAdminContent.bulkUploadPage.uploadCardTitle}
                   </h2>
@@ -569,7 +569,7 @@ export function UniversityBulkUploadPage() {
                     <SurfaceCard className="border border-emerald-200 bg-emerald-50/90 text-[0.82rem] text-emerald-800 shadow-none" paddingClassName="p-3.5">
                       <div className="flex items-center gap-2.5">
                         <CheckCircle2 aria-hidden="true" className="h-4.5 w-4.5 shrink-0" />
-                        <p>{universityAdminContent.bulkUploadPage.validatedMessage} ({parsedRowsRef.current.length} filas listas para procesar)</p>
+                        <p>({parsedRowsRef.current.length} filas listas para procesar)</p>
                       </div>
                     </SurfaceCard>
                   ) : null}
