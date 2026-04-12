@@ -399,11 +399,9 @@ export function UniversityStudentsPage() {
                                 <Power aria-hidden="true" className="h-3.5 w-3.5" />
                               )}
                               <span>
-                                {isUpdatingStatus
-                                  ? 'Actualizando...'
-                                  : student.status === 'active'
-                                    ? universityAdminContent.studentsPage.actionLabels.deactivate
-                                    : universityAdminContent.studentsPage.actionLabels.activate}
+                                {student.status === 'active'
+                                  ? universityAdminContent.studentsPage.actionLabels.deactivate
+                                  : universityAdminContent.studentsPage.actionLabels.activate}
                               </span>
                             </button>
                           )}
