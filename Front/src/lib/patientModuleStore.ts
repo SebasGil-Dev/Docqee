@@ -72,6 +72,8 @@ function createMockState(): PatientStoreState {
 
   const students: PatientStudentDirectoryItem[] = [
     {
+      avatarAlt: 'Foto de perfil de Daniel Pardo',
+      avatarSrc: null,
       availabilityGeneral: 'Lunes, miercoles y viernes en jornada de manana.',
       availabilityStatus: 'available',
       biography:
@@ -87,6 +89,8 @@ function createMockState(): PatientStoreState {
       universityName: 'Universidad Clinica del Norte',
     },
     {
+      avatarAlt: 'Foto de perfil de Valentina Rios',
+      avatarSrc: null,
       availabilityGeneral: 'Martes y jueves en jornada de tarde.',
       availabilityStatus: 'available',
       biography:
@@ -102,6 +106,8 @@ function createMockState(): PatientStoreState {
       universityName: 'Universidad Clinica del Norte',
     },
     {
+      avatarAlt: 'Foto de perfil de Camila Perez',
+      avatarSrc: null,
       availabilityGeneral: 'Jueves en sede central y sabados alternos.',
       availabilityStatus: 'limited',
       biography:
@@ -117,6 +123,8 @@ function createMockState(): PatientStoreState {
       universityName: 'Universidad Metropolitana',
     },
     {
+      avatarAlt: 'Foto de perfil de Mateo Diaz',
+      avatarSrc: null,
       availabilityGeneral: 'Lunes a jueves en jornada combinada.',
       availabilityStatus: 'available',
       biography:
