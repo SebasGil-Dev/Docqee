@@ -198,7 +198,7 @@ export function UniversityHomePage() {
             <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-3 sm:p-3.5">
               <div className="space-y-3">
                 <div className="flex items-center gap-2.5">
-                  <span className="inline-flex h-8.5 w-8.5 items-center justify-center rounded-[0.9rem] bg-primary/10 text-primary">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-[0.9rem] bg-primary/10 text-primary">
                     <GraduationCap aria-hidden="true" className="h-4 w-4" />
                   </span>
                   <div>
@@ -331,7 +331,7 @@ export function UniversityHomePage() {
             <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-3 sm:p-3.5">
               <div className="space-y-3">
                 <div className="flex items-center gap-2.5">
-                  <span className="inline-flex h-8.5 w-8.5 items-center justify-center rounded-[0.9rem] bg-primary/10 text-primary">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-[0.9rem] bg-primary/10 text-primary">
                     <Users aria-hidden="true" className="h-4 w-4" />
                   </span>
                   <div>
