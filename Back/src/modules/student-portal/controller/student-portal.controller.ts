@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  Param,
+  ParseIntPipe,
   Patch,
   Post,
   UploadedFile,
@@ -15,6 +17,7 @@ import { JwtAuthGuard } from '@/shared/guards/jwt-auth.guard';
 import type { UploadImageFile } from '@/shared/storage/cloudinary.service';
 import type { RequestUser } from '@/shared/types/request-user.type';
 import { UpdateStudentProfileDto } from '../application/dto/update-student-profile.dto';
+import { UpdateStudentRequestStatusDto } from '../application/dto/update-student-request-status.dto';
 import { StudentPortalService } from '../student-portal.service';
 
 @Controller('student-portal')
@@ -25,6 +28,15 @@ export class StudentPortalController {
   @Get('dashboard')
   getDashboard(@CurrentUser() user: RequestUser) {
     return this.studentPortalService.getDashboard(user);
+  }
+
+  @Patch('requests/:requestId/status')
+  updateRequestStatus(
+    @CurrentUser() user: RequestUser,
+    @Param('requestId', ParseIntPipe) requestId: number,
+    @Body() body: UpdateStudentRequestStatusDto,
+  ) {
+    return this.studentPortalService.updateRequestStatus(user, requestId, body);
   }
 
   @Patch('profile')

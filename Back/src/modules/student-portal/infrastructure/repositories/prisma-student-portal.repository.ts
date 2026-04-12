@@ -368,7 +368,53 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     throw new Error('PrismaStudentPortalRepository.updateScheduleBlock is pending implementation.');
   }
 
-  updateRequestStatus(): never {
-    throw new Error('PrismaStudentPortalRepository.updateRequestStatus is pending implementation.');
+  async updateRequestStatus(
+    studentAccountId: number,
+    requestId: number,
+    payload: { status: 'ACEPTADA' | 'RECHAZADA' },
+  ): Promise<StudentRequestDto> {
+    const solicitud = await this.prisma.solicitud.findFirst({
+      where: { id_solicitud: requestId, id_cuenta_estudiante: studentAccountId },
+    });
+
+    if (!solicitud) {
+      throw new NotFoundException('La solicitud no existe o no te pertenece.');
+    }
+
+    if (solicitud.estado !== 'PENDIENTE') {
+      throw new NotFoundException('Solo se pueden responder solicitudes pendientes.');
+    }
+
+    const updated = await this.prisma.solicitud.update({
+      where: { id_solicitud: requestId },
+      data: {
+        estado: payload.status,
+        fecha_respuesta: new Date(),
+      },
+      include: {
+        cuenta_paciente: {
+          include: {
+            persona: true,
+            localidad: { include: { ciudad: true } },
+          },
+        },
+        conversacion: true,
+        cita: true,
+      },
+    });
+
+    return {
+      appointmentsCount: updated.cita.length,
+      conversationEnabled: updated.conversacion?.estado === 'ACTIVA',
+      conversationId: updated.conversacion ? String(updated.conversacion.id_conversacion) : null,
+      id: String(updated.id_solicitud),
+      patientAge: calcAge(updated.cuenta_paciente.fecha_nacimiento),
+      patientCity: updated.cuenta_paciente.localidad.ciudad.nombre,
+      patientName: `${updated.cuenta_paciente.persona.nombres} ${updated.cuenta_paciente.persona.apellidos}`,
+      reason: updated.motivo_consulta ?? null,
+      responseAt: updated.fecha_respuesta?.toISOString() ?? null,
+      sentAt: updated.fecha_envio.toISOString(),
+      status: updated.estado,
+    };
   }
 }
