@@ -562,39 +562,59 @@ async function toggleStudentStatus(studentId: string) {
   const currentCredential = state.credentials.find(
     (credential) => credential.studentId === studentId,
   );
+  const currentStudent = state.students.find((student) => student.id === studentId);
 
-  if (currentCredential?.deliveryStatus === 'generated') {
+  if (!currentStudent || currentCredential?.deliveryStatus === 'generated') {
     return null;
   }
 
-  patchState({
+  const previousStatus = currentStudent.status;
+  const optimisticStatus: UniversityStudent['status'] =
+    previousStatus === 'active' ? 'inactive' : 'active';
+  const optimisticStudents = state.students.map((student) =>
+    student.id === studentId ? { ...student, status: optimisticStatus } : student,
+  );
+
+  setStudentRecords(optimisticStudents, state.credentials, {
     errorMessage: null,
-    isLoading: true,
+    isLoading: false,
+    isReady: true,
+    shouldRefresh: false,
   });
 
   try {
     const result = await toggleUniversityStudentStatus(studentId);
-    const nextStudents = state.students.map((student) =>
-      student.id === result.studentId
-        ? { ...student, status: result.status }
-        : student,
-    );
 
     resetUniversityAdminOverviewState();
-    setStudentRecords(nextStudents, state.credentials, {
-      isLoading: false,
-      isReady: true,
-      shouldRefresh: false,
-    });
+
+    if (result.status !== optimisticStatus) {
+      const syncedStudents = state.students.map((student) =>
+        student.id === result.studentId
+          ? { ...student, status: result.status }
+          : student,
+      );
+
+      setStudentRecords(syncedStudents, state.credentials, {
+        isLoading: false,
+        isReady: true,
+        shouldRefresh: false,
+      });
+    }
 
     return result.status;
   } catch (error) {
-    patchState({
+    const revertedStudents = state.students.map((student) =>
+      student.id === studentId ? { ...student, status: previousStatus } : student,
+    );
+
+    setStudentRecords(revertedStudents, state.credentials, {
       errorMessage: getErrorMessage(
         error,
         'No pudimos actualizar el estado del estudiante.',
       ),
       isLoading: false,
+      isReady: true,
+      shouldRefresh: false,
     });
     return null;
   }
