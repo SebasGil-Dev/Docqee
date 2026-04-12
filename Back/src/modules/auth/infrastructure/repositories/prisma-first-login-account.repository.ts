@@ -39,12 +39,16 @@ export class PrismaFirstLoginAccountRepository
   }
 
   async markFirstLoginCompleted(accountId: number): Promise<void> {
-    await this.prisma.cuenta_acceso.update({
-      where: { id_cuenta: accountId },
-      data: {
-        primer_ingreso_pendiente: false,
-      },
-    });
+    await this.prisma.$transaction([
+      this.prisma.cuenta_acceso.update({
+        where: { id_cuenta: accountId },
+        data: { primer_ingreso_pendiente: false },
+      }),
+      this.prisma.credencial_inicial.updateMany({
+        where: { id_cuenta_acceso: accountId, anulada_at: null },
+        data: { anulada_at: new Date() },
+      }),
+    ]);
   }
 
   async updatePasswordHash(
