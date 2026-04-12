@@ -24,6 +24,11 @@ const DEFAULT_DOCUMENT_TYPES = [
   { codigo: 'PASSPORT', nombre: 'Pasaporte' },
 ] as const;
 
+type ResolvedDocumentType = {
+  codigo: string;
+  id_tipo_documento: number;
+};
+
 @Injectable()
 export class TeachersService {
   constructor(private readonly prisma: PrismaService) {}
@@ -106,6 +111,7 @@ export class TeachersService {
   }
 
   async bulkCreateTeachers(user: RequestUser, input: BulkCreateTeachersDto) {
+    return this.bulkCreateTeachersOptimized(this.getUniversityId(user), input.rows);
     const universityId = this.getUniversityId(user);
     const errors: { row: number; column: string; message: string }[] = [];
     let created = 0;
@@ -152,6 +158,198 @@ export class TeachersService {
         created++;
       } catch {
         errors.push({ row: rowNum, column: 'general', message: 'Error inesperado al procesar esta fila.' });
+      }
+    }
+
+    return { created, createdCredentials: 0, errors };
+  }
+
+  private async bulkCreateTeachersOptimized(
+    universityId: number,
+    rows: BulkCreateTeachersDto['rows'],
+  ) {
+    const errors: { row: number; column: string; message: string }[] = [];
+    let created = 0;
+    const preparedRows = rows
+      .map((row, index) => {
+        if (!row) {
+          return null;
+        }
+
+        return {
+          documentNumber: normalizeText(row.numero_documento),
+          firstName: normalizeText(row.nombres),
+          lastName: normalizeText(row.apellidos),
+          originalDocumentNumber: row.numero_documento,
+          rowNum: index + 2,
+          tipoDocumento: row.tipo_documento,
+        };
+      })
+      .filter(
+        (
+          row,
+        ): row is {
+          documentNumber: string;
+          firstName: string;
+          lastName: string;
+          originalDocumentNumber: string;
+          rowNum: number;
+          tipoDocumento: string;
+        } => row !== null,
+      );
+    const documentTypesByIdentifier = await this.getDocumentTypeMap(
+      preparedRows.map((row) => row.tipoDocumento),
+    );
+    const documentCounts = new Map<string, number>();
+    const preparedRowsWithDocumentType = preparedRows.map((row) => {
+      const documentType = this.getDocumentTypeFromMap(
+        documentTypesByIdentifier,
+        row.tipoDocumento,
+      );
+
+      if (documentType) {
+        const documentKey = this.buildDocumentKey(
+          documentType.id_tipo_documento,
+          row.documentNumber,
+        );
+
+        documentCounts.set(documentKey, (documentCounts.get(documentKey) ?? 0) + 1);
+      }
+
+      return {
+        ...row,
+        documentType,
+      };
+    });
+    const rowsWithResolvedDocumentType = preparedRowsWithDocumentType.filter(
+      (
+        row,
+      ): row is typeof row & {
+        documentType: ResolvedDocumentType;
+      } => row.documentType !== null,
+    );
+    const existingTeachers =
+      rowsWithResolvedDocumentType.length > 0
+        ? await this.prisma.docente.findMany({
+            where: {
+              OR: rowsWithResolvedDocumentType.map((row) => ({
+                id_tipo_documento: row.documentType.id_tipo_documento,
+                numero_documento: row.documentNumber,
+              })),
+            },
+            select: {
+              id_docente: true,
+              id_tipo_documento: true,
+              numero_documento: true,
+            },
+          })
+        : [];
+    const existingTeachersByDocumentKey = new Map(
+      existingTeachers.map((teacher) => [
+        this.buildDocumentKey(teacher.id_tipo_documento, teacher.numero_documento),
+        teacher,
+      ]),
+    );
+    const existingLinks =
+      existingTeachers.length > 0
+        ? new Set(
+            (
+              await this.prisma.docente_universidad.findMany({
+                where: {
+                  id_universidad: universityId,
+                  id_docente: {
+                    in: existingTeachers.map((teacher) => teacher.id_docente),
+                  },
+                },
+                select: {
+                  id_docente: true,
+                },
+              })
+            ).map((teacherLink) => teacherLink.id_docente),
+          )
+        : new Set<number>();
+
+    for (const row of preparedRowsWithDocumentType) {
+      if (!row.documentType) {
+        errors.push({
+          row: row.rowNum,
+          column: 'tipo_documento',
+          message: `El tipo de documento "${row.tipoDocumento}" no existe.`,
+        });
+        continue;
+      }
+
+      const documentKey = this.buildDocumentKey(
+        row.documentType.id_tipo_documento,
+        row.documentNumber,
+      );
+
+      if ((documentCounts.get(documentKey) ?? 0) > 1) {
+        errors.push({
+          row: row.rowNum,
+          column: 'numero_documento',
+          message: `El documento "${row.originalDocumentNumber}" esta duplicado dentro del archivo.`,
+        });
+        continue;
+      }
+
+      const existingTeacher = existingTeachersByDocumentKey.get(documentKey);
+
+      if (existingTeacher && existingLinks.has(existingTeacher.id_docente)) {
+        errors.push({
+          row: row.rowNum,
+          column: 'numero_documento',
+          message: `El docente con documento "${row.originalDocumentNumber}" ya esta vinculado a esta universidad.`,
+        });
+        continue;
+      }
+
+      try {
+        if (existingTeacher) {
+          await this.prisma.docente_universidad.create({
+            data: {
+              id_docente: existingTeacher.id_docente,
+              id_universidad: universityId,
+              estado: estado_simple_enum.ACTIVO,
+            },
+          });
+
+          existingLinks.add(existingTeacher.id_docente);
+          created++;
+          continue;
+        }
+
+        const teacher = await this.prisma.docente.create({
+          data: {
+            id_tipo_documento: row.documentType.id_tipo_documento,
+            numero_documento: row.documentNumber,
+            nombres: row.firstName,
+            apellidos: row.lastName,
+          },
+          select: {
+            id_docente: true,
+            id_tipo_documento: true,
+            numero_documento: true,
+          },
+        });
+
+        await this.prisma.docente_universidad.create({
+          data: {
+            id_docente: teacher.id_docente,
+            id_universidad: universityId,
+            estado: estado_simple_enum.ACTIVO,
+          },
+        });
+
+        existingTeachersByDocumentKey.set(documentKey, teacher);
+        existingLinks.add(teacher.id_docente);
+        created++;
+      } catch {
+        errors.push({
+          row: row.rowNum,
+          column: 'general',
+          message: 'Error inesperado al procesar esta fila.',
+        });
       }
     }
 
@@ -208,24 +406,92 @@ export class TeachersService {
     return entityId;
   }
 
-  private async resolveDocumentType(identifier: string) {
-    for (const documentType of DEFAULT_DOCUMENT_TYPES) {
-      await this.prisma.tipo_documento.upsert({
-        where: { codigo: documentType.codigo },
-        create: {
-          codigo: documentType.codigo,
-          nombre: documentType.nombre,
-        },
-        update: {
-          nombre: documentType.nombre,
-        },
-      });
+  private async ensureDefaultDocumentTypes() {
+    await this.prisma.tipo_documento.createMany({
+      data: DEFAULT_DOCUMENT_TYPES.map((documentType) => ({
+        codigo: documentType.codigo,
+        nombre: documentType.nombre,
+      })),
+      skipDuplicates: true,
+    });
+  }
+
+  private async getDocumentTypeMap(identifiers: string[]) {
+    await this.ensureDefaultDocumentTypes();
+
+    const normalizedCodes = [
+      ...new Set(
+        identifiers.map((identifier) => this.normalizeDocumentTypeIdentifier(identifier)),
+      ),
+    ];
+    const numericIds = [
+      ...new Set(
+        identifiers
+          .map((identifier) => extractNumericId(identifier))
+          .filter((identifier): identifier is number => identifier !== null),
+      ),
+    ];
+    const whereClauses: Array<Record<string, unknown>> = [];
+
+    if (normalizedCodes.length > 0) {
+      whereClauses.push({ codigo: { in: normalizedCodes } });
     }
+
+    if (numericIds.length > 0) {
+      whereClauses.push({ id_tipo_documento: { in: numericIds } });
+    }
+
+    const documentTypes =
+      whereClauses.length > 0
+        ? await this.prisma.tipo_documento.findMany({
+            where: {
+              OR: whereClauses,
+            },
+            select: {
+              codigo: true,
+              id_tipo_documento: true,
+            },
+          })
+        : [];
+    const documentTypeMap = new Map<string, ResolvedDocumentType>();
+
+    documentTypes.forEach((documentType) => {
+      documentTypeMap.set(documentType.codigo.toUpperCase(), documentType);
+      documentTypeMap.set(String(documentType.id_tipo_documento), documentType);
+      documentTypeMap.set(buildDocumentTypeFrontId(documentType.codigo), documentType);
+    });
+
+    return documentTypeMap;
+  }
+
+  private getDocumentTypeFromMap(
+    documentTypesByIdentifier: Map<string, ResolvedDocumentType>,
+    identifier: string,
+  ) {
+    const numericId = extractNumericId(identifier);
+
+    return (
+      documentTypesByIdentifier.get(this.normalizeDocumentTypeIdentifier(identifier)) ??
+      (numericId ? documentTypesByIdentifier.get(String(numericId)) : undefined) ??
+      null
+    );
+  }
+
+  private normalizeDocumentTypeIdentifier(identifier: string) {
+    return normalizeText(identifier).replace(/^document-/i, '').toUpperCase();
+  }
+
+  private buildDocumentKey(documentTypeId: number, documentNumber: string) {
+    return `${documentTypeId}:${documentNumber}`;
+  }
+
+  private async resolveDocumentType(identifier: string) {
+    await this.ensureDefaultDocumentTypes();
 
     const documentType = await this.prisma.tipo_documento.findFirst({
       where: {
         OR: [
-          { codigo: normalizeText(identifier).replace('document-', '').toUpperCase() },
+          { codigo: this.normalizeDocumentTypeIdentifier(identifier) },
           { id_tipo_documento: extractNumericId(identifier) ?? -1 },
         ],
       },

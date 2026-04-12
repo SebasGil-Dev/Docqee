@@ -28,13 +28,11 @@ import {
 } from '@/lib/universityAdminProfileStore';
 import {
   prependUniversityAdminStudentRecord,
-  refreshUniversityAdminStudentRecordsState,
   resetUniversityAdminStudentRecordsState,
   syncUniversityAdminStudentRecordsState,
 } from '@/lib/universityAdminStudentRecordsStore';
 import {
   prependUniversityAdminTeacherRecord,
-  refreshUniversityAdminTeacherRecordsState,
   resetUniversityAdminTeacherRecordsState,
   syncUniversityAdminTeacherRecordsState,
 } from '@/lib/universityAdminTeacherRecordsStore';
@@ -1198,7 +1196,7 @@ async function processBulkUpload(
   try {
     if (templateType === 'students') {
       const result = await bulkCreateStudents(rows as BulkStudentRow[]);
-      await refreshUniversityAdminStudentRecordsState();
+      resetUniversityAdminStudentRecordsState();
       resetUniversityAdminOverviewState();
       patchState({
         errorMessage: null,
@@ -1215,7 +1213,7 @@ async function processBulkUpload(
     }
 
     const result = await bulkCreateTeachers(rows as BulkTeacherRow[]);
-    await refreshUniversityAdminTeacherRecordsState();
+    resetUniversityAdminTeacherRecordsState();
     resetUniversityAdminOverviewState();
     patchState({
       errorMessage: null,

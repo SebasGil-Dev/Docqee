@@ -7,7 +7,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import type { ChangeEvent } from 'react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
@@ -247,6 +247,51 @@ function getInitialUploadState(templateType: UniversityBulkTemplateType): Univer
   return { errors: [], fileName: null, status: 'idle', templateType };
 }
 
+function getProcessingLabel(
+  progress: number,
+  rowCount: number,
+  templateType: UniversityBulkTemplateType,
+) {
+  const entityLabel =
+    templateType === 'students'
+      ? rowCount === 1
+        ? 'estudiante'
+        : 'estudiantes'
+      : rowCount === 1
+        ? 'docente'
+        : 'docentes';
+
+  if (progress < 22) {
+    return `Preparando ${rowCount} ${entityLabel} para procesar...`;
+  }
+
+  if (progress < 52) {
+    return 'Enviando la informacion al servidor...';
+  }
+
+  if (progress < 82) {
+    return 'Guardando registros en la base de datos...';
+  }
+
+  return 'Actualizando el resultado final de la carga...';
+}
+
+function getNextProcessingProgress(current: number) {
+  if (current < 18) {
+    return Math.min(18, current + 8);
+  }
+
+  if (current < 42) {
+    return Math.min(42, current + 6);
+  }
+
+  if (current < 68) {
+    return Math.min(68, current + 4);
+  }
+
+  return Math.min(92, current + 2);
+}
+
 export function UniversityBulkUploadPage() {
   const { errorMessage, isLoading, processBulkUpload } =
     useUniversityAdminModuleStore({
@@ -255,10 +300,34 @@ export function UniversityBulkUploadPage() {
   const [uploadState, setUploadState] = useState<UniversityBulkUploadState>(getInitialUploadState('students'));
   const [processedSummary, setProcessedSummary] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [processingProgress, setProcessingProgress] = useState(0);
   const [isValidating, setIsValidating] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const parsedRowsRef = useRef<BulkStudentRow[] | BulkTeacherRow[]>([]);
   const fileRef = useRef<File | null>(null);
+  const processingRowCount = parsedRowsRef.current.length;
+  const processingLabel = getProcessingLabel(
+    processingProgress,
+    processingRowCount,
+    uploadState.templateType,
+  );
+
+  useEffect(() => {
+    if (!isProcessing) {
+      setProcessingProgress(0);
+      return undefined;
+    }
+
+    setProcessingProgress((current) => (current > 0 ? current : 10));
+
+    const intervalId = window.setInterval(() => {
+      setProcessingProgress((current) => getNextProcessingProgress(current));
+    }, 260);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [isProcessing]);
 
   const handleTemplateChange = (templateType: UniversityBulkTemplateType) => {
     parsedRowsRef.current = [];
@@ -377,14 +446,17 @@ export function UniversityBulkUploadPage() {
 
     void (async () => {
       setIsProcessing(true);
+      setProcessingProgress(10);
       const result = await processBulkUpload(uploadState.templateType, parsedRowsRef.current);
 
       if (!result) {
+        setProcessingProgress(0);
         setIsProcessing(false);
         return;
       }
 
       const serverErrors = formatServerErrors(result.errors);
+      setProcessingProgress(100);
 
       if (serverErrors.length > 0) {
         setUploadState((s) => ({ ...s, errors: serverErrors, status: 'invalid' }));
@@ -570,6 +642,31 @@ export function UniversityBulkUploadPage() {
                       <div className="flex items-center gap-2.5">
                         <CheckCircle2 aria-hidden="true" className="h-4.5 w-4.5 shrink-0" />
                         <p>({parsedRowsRef.current.length} filas listas para procesar)</p>
+                      </div>
+                    </SurfaceCard>
+                  ) : null}
+
+                  {isProcessing ? (
+                    <SurfaceCard className="border border-primary/20 bg-primary/5 text-[0.82rem] text-ink shadow-none" paddingClassName="p-3.5">
+                      <div className="space-y-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2.5">
+                          <div className="space-y-1">
+                            <p className="font-semibold text-primary">Procesando carga</p>
+                            <p className="text-[0.76rem] text-ink-muted">{processingLabel}</p>
+                          </div>
+                          <span className="inline-flex min-w-[3.5rem] items-center justify-center rounded-full bg-white px-2.5 py-1 text-[0.74rem] font-semibold text-primary ring-1 ring-primary/10">
+                            {processingProgress}%
+                          </span>
+                        </div>
+                        <div className="h-2 overflow-hidden rounded-full bg-white ring-1 ring-primary/10">
+                          <div
+                            className="h-full rounded-full bg-brand-gradient transition-[width] duration-300 ease-out"
+                            style={{ width: `${processingProgress}%` }}
+                          />
+                        </div>
+                        <p className="text-[0.74rem] text-ink-muted">
+                          {processingRowCount} fila{processingRowCount === 1 ? '' : 's'} en proceso.
+                        </p>
                       </div>
                     </SurfaceCard>
                   ) : null}
