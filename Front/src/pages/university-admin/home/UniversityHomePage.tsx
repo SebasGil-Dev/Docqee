@@ -24,6 +24,9 @@ const createdAtFormatter = new Intl.DateTimeFormat('es-CO', {
   month: 'short',
   year: 'numeric',
 });
+const MAX_RECENT_STUDENTS = 4;
+const MAX_RECENT_TEACHERS = 4;
+const MAX_RECENT_CAMPUSES = 3;
 
 function formatCreatedAt(value: string) {
   return createdAtFormatter.format(new Date(value));
@@ -230,7 +233,7 @@ export function UniversityHomePage() {
                     </Link>
                   </div>
                   <div className="space-y-1.5">
-                    {recentStudents.map((student) => (
+                    {recentStudents.slice(0, MAX_RECENT_STUDENTS).map((student) => (
                       <div
                         key={student.id}
                         className="flex items-center justify-between gap-2.5 rounded-[1rem] border border-slate-200/80 bg-slate-50 px-3 py-2.5"
@@ -352,7 +355,7 @@ export function UniversityHomePage() {
                 <div className="grid gap-1.5 lg:grid-cols-2">
                   <div className="space-y-1.5">
                     <p className="text-[0.83rem] font-semibold text-ink">Docentes recientes</p>
-                    {recentTeachers.map((teacher) => (
+                    {recentTeachers.slice(0, MAX_RECENT_TEACHERS).map((teacher) => (
                       <div
                         key={teacher.id}
                         className="flex items-center justify-between gap-2.5 rounded-[1rem] border border-slate-200/80 bg-slate-50 px-3 py-2.5"
@@ -371,7 +374,7 @@ export function UniversityHomePage() {
                   </div>
                   <div className="space-y-1.5">
                     <p className="text-[0.83rem] font-semibold text-ink">Sedes registradas</p>
-                    {institutionProfile.campuses.slice(0, 3).map((campus) => (
+                    {institutionProfile.campuses.slice(0, MAX_RECENT_CAMPUSES).map((campus) => (
                       <div
                         key={campus.id}
                         className="flex items-center justify-between gap-2.5 rounded-[1rem] border border-slate-200/80 bg-slate-50 px-3 py-2.5"

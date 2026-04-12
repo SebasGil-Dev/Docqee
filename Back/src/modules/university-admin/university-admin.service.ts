@@ -102,6 +102,10 @@ type UniversityAdminOverviewTeacher = {
   status: 'active' | 'inactive';
 };
 
+const RECENT_OVERVIEW_STUDENTS_LIMIT = 4;
+const RECENT_OVERVIEW_TEACHERS_LIMIT = 4;
+const RECENT_OVERVIEW_CAMPUSES_LIMIT = 3;
+
 @Injectable()
 export class UniversityAdminService {
   constructor(
@@ -222,7 +226,7 @@ export class UniversityAdminService {
             },
           },
         },
-        take: 3,
+        take: RECENT_OVERVIEW_STUDENTS_LIMIT,
       }),
       this.prisma.docente_universidad.findMany({
         where: {
@@ -248,7 +252,7 @@ export class UniversityAdminService {
             },
           },
         },
-        take: 3,
+        take: RECENT_OVERVIEW_TEACHERS_LIMIT,
       }),
       this.prisma.sede.findMany({
         where: {
@@ -273,7 +277,7 @@ export class UniversityAdminService {
             },
           },
         },
-        take: 3,
+        take: RECENT_OVERVIEW_CAMPUSES_LIMIT,
       }),
     ]);
 

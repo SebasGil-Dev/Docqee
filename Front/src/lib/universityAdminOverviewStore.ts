@@ -88,6 +88,14 @@ function createMockState(): UniversityAdminOverviewStoreState {
         lastName: 'Vega',
         semester: '10',
       },
+      {
+        createdAt: '2026-03-25T08:20:00.000Z',
+        displayStatus: 'active',
+        firstName: 'Sara',
+        id: 'student-4',
+        lastName: 'Montoya',
+        semester: '7',
+      },
     ],
     recentTeachers: [
       {
@@ -117,6 +125,15 @@ function createMockState(): UniversityAdminOverviewStoreState {
         lastName: 'Martinez',
         status: 'inactive',
       },
+      {
+        createdAt: '2026-03-05T09:25:00.000Z',
+        documentNumber: '90123456',
+        documentTypeCode: 'CC',
+        firstName: 'Patricia',
+        id: 'teacher-4',
+        lastName: 'Mendoza',
+        status: 'active',
+      },
     ],
     studentSummary: {
       active: 2,
@@ -125,9 +142,9 @@ function createMockState(): UniversityAdminOverviewStoreState {
       total: 4,
     },
     teacherSummary: {
-      active: 2,
+      active: 3,
       inactive: 1,
-      total: 3,
+      total: 4,
     },
   };
 }
