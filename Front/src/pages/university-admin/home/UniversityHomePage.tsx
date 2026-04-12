@@ -154,14 +154,14 @@ export function UniversityHomePage() {
               <h2 className="max-w-[18rem] truncate font-headline text-[1.08rem] font-extrabold tracking-tight text-white sm:max-w-[24rem] sm:text-[1.2rem] xl:max-w-[28rem]">
                 Bienvenido, {adminFullName}
               </h2>
-              <div className="flex min-w-0 flex-wrap items-center gap-2">
-                <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-[0.75rem] font-semibold text-white/88">
+              <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-white/12 px-2 py-1 text-[0.75rem] font-semibold text-white/88">
                   <Building2 aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
                   <span className="max-w-[11rem] truncate sm:max-w-[14rem] xl:max-w-[18rem]">
                     {institutionName}
                   </span>
                 </span>
-                <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-[0.75rem] font-semibold text-white/88">
+                <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-white/12 px-2 py-1 text-[0.75rem] font-semibold text-white/88">
                   <MapPin aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
                   <span className="max-w-[10rem] truncate sm:max-w-[12rem] xl:max-w-[14rem]">
                     {[institutionProfile.mainCity, institutionProfile.mainLocality].filter(Boolean).join(' · ') || 'Sin ubicacion principal'}

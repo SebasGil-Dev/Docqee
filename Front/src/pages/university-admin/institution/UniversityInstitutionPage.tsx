@@ -1394,7 +1394,10 @@ export function UniversityInstitutionPage({
                             </span>
                           </button>
                         </div>
-                        <div className="mt-[30px] grid gap-2.5">
+                        <div
+                          className="mt-[30px] grid gap-2.5"
+                          style={{ marginTop: 30 }}
+                        >
                           {values.campuses.length > 0 ? (
                             <div className="hidden gap-2.5 px-3 text-[0.66rem] font-extrabold uppercase tracking-[0.14em] text-ink md:grid md:grid-cols-[minmax(7rem,1fr)_minmax(8rem,1.15fr)_minmax(7rem,0.85fr)_minmax(7rem,0.85fr)_minmax(5.5rem,0.55fr)_minmax(6.5rem,0.55fr)] md:items-center">
                               <span>Nombre</span>
