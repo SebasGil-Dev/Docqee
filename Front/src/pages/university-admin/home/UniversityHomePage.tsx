@@ -20,7 +20,7 @@ import { formatDisplayName } from '@/lib/formatDisplayName';
 import { getOptimizedLogoUrl } from '@/lib/imageOptimization';
 import { useUniversityAdminOverviewStore } from '@/lib/universityAdminOverviewStore';
 
-const MAX_RECENT_STUDENTS = 4;
+const MAX_RECENT_STUDENTS = 5;
 const MAX_RECENT_TEACHERS = 4;
 const MAX_RECENT_CAMPUSES = 3;
 const recentStudentDateFormatter = new Intl.DateTimeFormat('en-US', {

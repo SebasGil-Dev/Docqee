@@ -118,6 +118,7 @@ describe('University admin pages', () => {
     expect(
       screen.getByText(/semestre 8 \u00b7 04\/01\/2026/i),
     ).toBeInTheDocument();
+    expect(screen.getByText(/Nicolas Pardo/i)).toBeInTheDocument();
     expect(screen.getAllByText(/^Estudiantes$/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/estado de estudiantes/i)).toBeInTheDocument();
     expect(screen.getByText(/equipo y sedes/i)).toBeInTheDocument();
