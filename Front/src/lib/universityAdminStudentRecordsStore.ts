@@ -723,8 +723,7 @@ async function sendAllStudentCredentials() {
 
   try {
     const result = await sendAllUniversityStudentCredentials();
-
-    await loadRuntimeState(true);
+    markAllCredentialsAsSent();
     resetUniversityAdminOverviewState();
     return result.sentCount;
   } catch (error) {

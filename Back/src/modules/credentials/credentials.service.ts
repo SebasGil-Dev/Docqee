@@ -153,40 +153,58 @@ export class CredentialsService {
       },
     });
 
-    for (const credential of generatedCredentials) {
-      const temporaryPassword = generateTemporaryPassword();
-      const passwordHash = await bcrypt.hash(temporaryPassword, 10);
+    if (generatedCredentials.length === 0) {
+      return {
+        sentCount: 0,
+      };
+    }
 
-      await this.prisma.$transaction(async (transaction) => {
-        await transaction.cuenta_acceso.update({
-          where: { id_cuenta: credential.id_cuenta_acceso },
+    const preparedDeliveries = await Promise.all(
+      generatedCredentials.map(async (credential) => {
+        const temporaryPassword = generateTemporaryPassword();
+        const student = credential.cuenta_acceso.cuenta_estudiante;
+
+        return {
+          accountId: credential.id_cuenta_acceso,
+          credentialId: credential.id_credencial_inicial,
+          email: credential.cuenta_acceso.correo,
+          passwordHash: await bcrypt.hash(temporaryPassword, 10),
+          studentName: student
+            ? `${student.persona.nombres} ${student.persona.apellidos}`
+            : 'Estudiante',
+          temporaryPassword,
+        };
+      }),
+    );
+
+    await this.prisma.$transaction([
+      ...preparedDeliveries.map((delivery) =>
+        this.prisma.cuenta_acceso.update({
+          where: { id_cuenta: delivery.accountId },
           data: {
-            password_hash: passwordHash,
+            password_hash: delivery.passwordHash,
             primer_ingreso_pendiente: true,
           },
-        });
+        }),
+      ),
+      this.prisma.envio_credencial.createMany({
+        data: preparedDeliveries.map((delivery) => ({
+          id_credencial_inicial: delivery.credentialId,
+          tipo_envio: tipo_envio_credencial_enum.ENVIO,
+        })),
+      }),
+    ]);
 
-        await transaction.envio_credencial.create({
-          data: {
-            id_credencial_inicial: credential.id_credencial_inicial,
-            tipo_envio: tipo_envio_credencial_enum.ENVIO,
-          },
-        });
-      });
-
-      const student = credential.cuenta_acceso.cuenta_estudiante;
-      const studentName = student
-        ? `${student.persona.nombres} ${student.persona.apellidos}`
-        : 'Estudiante';
+    for (const delivery of preparedDeliveries) {
       void this.mailService.sendStudentCredentials(
-        credential.cuenta_acceso.correo,
-        studentName,
-        temporaryPassword,
+        delivery.email,
+        delivery.studentName,
+        delivery.temporaryPassword,
       );
     }
 
     return {
-      sentCount: generatedCredentials.length,
+      sentCount: preparedDeliveries.length,
     };
   }
 
