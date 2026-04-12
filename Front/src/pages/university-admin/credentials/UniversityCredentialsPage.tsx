@@ -19,6 +19,7 @@ import { Seo } from '@/components/ui/Seo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { universityAdminContent } from '@/content/universityAdminContent';
 import { classNames } from '@/lib/classNames';
+import { formatDisplayName } from '@/lib/formatDisplayName';
 import { useUniversityAdminStudentRecordsStore } from '@/lib/universityAdminStudentRecordsStore';
 
 type StudentRecordsStore = ReturnType<typeof useUniversityAdminStudentRecordsStore>;
@@ -66,7 +67,7 @@ function buildCredentialRows(
         ...credential,
         studentDocument: `${student.documentTypeCode} ${student.documentNumber}`,
         studentEmail: student.email,
-        studentName: `${student.firstName} ${student.lastName}`,
+        studentName: formatDisplayName(`${student.firstName} ${student.lastName}`),
       };
     })
     .filter((row): row is NonNullable<typeof row> => row !== null);
@@ -335,15 +336,15 @@ export function UniversityCredentialsPage() {
               ) : null}
             </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
-              <label className="relative min-w-0 sm:w-[17rem] lg:w-[19rem]">
-                <span className="sr-only">Buscar credenciales por estudiante, documento o correo</span>
+              <label className="relative min-w-0 sm:w-[22rem] lg:w-[26rem] xl:w-[30rem]">
+                <span className="sr-only">Buscar por nombres, documento o correo</span>
                 <Search
                   aria-hidden="true"
                   className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ghost"
                 />
                 <input
                   className="h-10 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-10 pr-4 text-[0.82rem] text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
-                  placeholder="Buscar estudiante, documento o correo..."
+                  placeholder="Buscar por nombres, documento o correo"
                   type="search"
                   value={searchTerm}
                   onChange={(event) => setSearchTerm(event.target.value)}
@@ -474,7 +475,7 @@ export function UniversityCredentialsPage() {
                             {credential.studentDocument}
                           </p>
                           <p className="text-[0.72rem] text-ink-muted sm:text-[0.76rem]">
-                            Ultimo movimiento: {formatLastSentAt(credential.lastSentAt)}
+                            {formatLastSentAt(credential.lastSentAt)}
                           </p>
                         </div>
                       </td>
