@@ -9,10 +9,12 @@ import {
   getDefaultRouteForRole,
   shouldRequireFirstLoginPasswordChange,
 } from '@/lib/authRouting';
+import { useStudentModuleStore } from '@/lib/studentModuleStore';
 
 export function StudentLayout() {
   const { session } = useAuth();
   const location = useLocation();
+  const { profile } = useStudentModuleStore();
 
   if (!IS_TEST_MODE) {
     if (!session) {
@@ -28,8 +30,17 @@ export function StudentLayout() {
     }
   }
 
+  const overrideName =
+    profile.firstName || profile.lastName
+      ? { firstName: profile.firstName, lastName: profile.lastName }
+      : undefined;
+
   return (
-    <AdminShell content={studentContent.shell}>
+    <AdminShell
+      avatarSrc={profile.avatarSrc}
+      content={studentContent.shell}
+      {...(overrideName ? { overrideName } : {})}
+    >
       <Outlet />
     </AdminShell>
   );
