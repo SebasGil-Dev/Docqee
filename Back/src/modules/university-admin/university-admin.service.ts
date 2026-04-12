@@ -104,7 +104,7 @@ type UniversityAdminOverviewTeacher = {
   status: 'active' | 'inactive';
 };
 
-const RECENT_OVERVIEW_STUDENTS_LIMIT = 4;
+const RECENT_OVERVIEW_STUDENTS_LIMIT = 5;
 const RECENT_OVERVIEW_TEACHERS_LIMIT = 4;
 const RECENT_OVERVIEW_CAMPUSES_LIMIT = 3;
 

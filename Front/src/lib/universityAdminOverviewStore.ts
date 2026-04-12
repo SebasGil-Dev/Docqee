@@ -104,6 +104,16 @@ function createMockState(): UniversityAdminOverviewStoreState {
         lastName: 'Montoya',
         semester: '7',
       },
+      {
+        createdAt: '2026-03-21T16:10:00.000Z',
+        displayStatus: 'active',
+        documentNumber: '91543210',
+        documentTypeCode: 'CC',
+        firstName: 'Nicolas',
+        id: 'student-5',
+        lastName: 'Pardo',
+        semester: '5',
+      },
     ],
     recentTeachers: [
       {
@@ -144,10 +154,10 @@ function createMockState(): UniversityAdminOverviewStoreState {
       },
     ],
     studentSummary: {
-      active: 2,
+      active: 3,
       inactive: 0,
       pending: 2,
-      total: 4,
+      total: 5,
     },
     teacherSummary: {
       active: 3,
