@@ -33,6 +33,7 @@ import type {
 import { IS_TEST_MODE } from '@/lib/apiClient';
 import { classNames } from '@/lib/classNames';
 import {
+  readOptimizedImageFile,
   getOptimizedAvatarUrl,
   getOptimizedLogoUrl,
   readOptimizedImageFileAsDataUrl,
@@ -195,7 +196,13 @@ export function StudentProfilePage() {
     setAvatarUploadMessage('Subiendo foto...');
     event.target.value = '';
 
-    const uploadPromise = uploadStudentPortalAvatar(file)
+    const uploadPromise = readOptimizedImageFile(file, {
+      fit: 'cover',
+      maxHeight: 800,
+      maxWidth: 800,
+      quality: 0.82,
+    })
+      .then((optimizedAvatarFile) => uploadStudentPortalAvatar(optimizedAvatarFile))
       .then((result) => {
         if (avatarUploadSequenceRef.current !== uploadSequence) {
           return null;

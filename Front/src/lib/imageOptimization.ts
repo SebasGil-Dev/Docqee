@@ -70,6 +70,54 @@ function readFileAsDataUrl(file: Blob) {
   });
 }
 
+function dataUrlToBlob(dataUrl: string) {
+  const [metadata, base64Payload] = dataUrl.split(',', 2);
+
+  if (!metadata || !base64Payload) {
+    throw new Error('No pudimos preparar la imagen optimizada.');
+  }
+
+  const mimeTypeMatch = metadata.match(/^data:([^;]+);base64$/i);
+
+  if (!mimeTypeMatch) {
+    throw new Error('No pudimos preparar la imagen optimizada.');
+  }
+
+  const mimeType = mimeTypeMatch[1] ?? DEFAULT_OUTPUT_TYPE;
+  const binary = atob(base64Payload);
+  const bytes = new Uint8Array(binary.length);
+
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+
+  return new Blob([bytes], { type: mimeType });
+}
+
+function getFileExtensionForMimeType(mimeType: string) {
+  switch (mimeType) {
+    case 'image/jpeg':
+    case 'image/jpg':
+      return 'jpg';
+    case 'image/png':
+      return 'png';
+    case 'image/webp':
+      return 'webp';
+    default:
+      return 'img';
+  }
+}
+
+function buildOptimizedFileName(originalName: string, mimeType: string) {
+  const normalizedName = originalName.trim();
+  const baseName =
+    normalizedName.length > 0
+      ? normalizedName.replace(/\.[^.]+$/, '')
+      : 'imagen-optimizada';
+
+  return `${baseName}.${getFileExtensionForMimeType(mimeType)}`;
+}
+
 function loadImage(src: string) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
     const image = new Image();
@@ -187,4 +235,17 @@ export async function readOptimizedImageFileAsDataUrl(
   } finally {
     URL.revokeObjectURL(objectUrl);
   }
+}
+
+export async function readOptimizedImageFile(
+  file: File,
+  options: OptimizedImageFileOptions,
+) {
+  const dataUrl = await readOptimizedImageFileAsDataUrl(file, options);
+  const optimizedBlob = dataUrlToBlob(dataUrl);
+
+  return new File([optimizedBlob], buildOptimizedFileName(file.name, optimizedBlob.type), {
+    lastModified: Date.now(),
+    type: optimizedBlob.type,
+  });
 }
