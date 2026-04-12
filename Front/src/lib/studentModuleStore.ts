@@ -20,6 +20,7 @@ import type {
   StudentTreatment,
 } from '@/content/types';
 import { IS_TEST_MODE } from '@/lib/apiClient';
+import { readAuthSession } from '@/lib/authSession';
 import {
   createStudentPortalAppointment,
   createStudentPortalScheduleBlock,
@@ -75,8 +76,21 @@ type StudentStoreState = StudentModuleState & {
   errorMessage: string | null;
   isLoading: boolean;
   isReady: boolean;
+  shouldRefresh: boolean;
 };
 
+type PersistedStudentModuleCache = {
+  dashboard: StudentModuleState;
+  updatedAt: number;
+  userId: number;
+};
+
+type UseStudentModuleStoreOptions = {
+  autoLoad?: boolean;
+};
+
+const STUDENT_MODULE_CACHE_STORAGE_KEY = 'docqee.student.module-cache';
+const STUDENT_MODULE_CACHE_MAX_AGE_MS = 30 * 60 * 1000;
 const listeners = new Set<() => void>();
 
 function createMockState(): StudentStoreState {
@@ -464,16 +478,14 @@ function createMockState(): StudentStoreState {
     reviews,
     requests,
     scheduleBlocks,
+    shouldRefresh: false,
     supervisors,
     treatments,
   };
 }
 
-function createRuntimeInitialState(): StudentStoreState {
+function createEmptyRuntimeModuleState(): StudentModuleState {
   return {
-    errorMessage: null,
-    isLoading: false,
-    isReady: false,
     appointments: [],
     conversations: [],
     practiceSites: [],
@@ -501,6 +513,423 @@ function createRuntimeInitialState(): StudentStoreState {
   };
 }
 
+function createEmptyRuntimeState(): StudentStoreState {
+  return {
+    ...createEmptyRuntimeModuleState(),
+    errorMessage: null,
+    isLoading: false,
+    isReady: false,
+    shouldRefresh: false,
+  };
+}
+
+function readSessionStorage() {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    return window.sessionStorage;
+  } catch {
+    return null;
+  }
+}
+
+function isStudentLinkType(value: unknown) {
+  return (
+    value === 'RED_PROFESIONAL' ||
+    value === 'PORTAFOLIO' ||
+    value === 'HOJA_DE_VIDA' ||
+    value === 'OTRO'
+  );
+}
+
+function isStudentAgendaStatus(value: unknown): value is StudentAgendaAppointmentStatus {
+  return (
+    value === 'PROPUESTA' ||
+    value === 'ACEPTADA' ||
+    value === 'CANCELADA' ||
+    value === 'FINALIZADA' ||
+    value === 'REPROGRAMACION_PENDIENTE'
+  );
+}
+
+function isStudentRequestStatusValue(value: unknown): value is StudentRequestStatus {
+  return (
+    value === 'PENDIENTE' ||
+    value === 'ACEPTADA' ||
+    value === 'RECHAZADA' ||
+    value === 'CERRADA' ||
+    value === 'CANCELADA'
+  );
+}
+
+function isStudentConversationStatusValue(value: unknown) {
+  return value === 'ACTIVA' || value === 'SOLO_LECTURA' || value === 'CERRADA';
+}
+
+function isStudentScheduleBlockTypeValue(value: unknown) {
+  return value === 'ESPECIFICO' || value === 'RECURRENTE';
+}
+
+function isStudentProfile(value: unknown): value is StudentProfile {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<StudentProfile>;
+
+  return (
+    typeof candidate.avatarAlt === 'string' &&
+    (candidate.avatarFileName === null || typeof candidate.avatarFileName === 'string') &&
+    (candidate.avatarSrc === null || typeof candidate.avatarSrc === 'string') &&
+    typeof candidate.availabilityGeneral === 'string' &&
+    typeof candidate.biography === 'string' &&
+    typeof candidate.email === 'string' &&
+    typeof candidate.firstName === 'string' &&
+    typeof candidate.id === 'string' &&
+    typeof candidate.lastName === 'string' &&
+    Array.isArray(candidate.links) &&
+    candidate.links.every(
+      (link) =>
+        typeof link === 'object' &&
+        link !== null &&
+        typeof link.id === 'string' &&
+        isStudentLinkType(link.type) &&
+        typeof link.url === 'string',
+    ) &&
+    typeof candidate.semester === 'string' &&
+    typeof candidate.universityLogoAlt === 'string' &&
+    (candidate.universityLogoSrc === null ||
+      typeof candidate.universityLogoSrc === 'string') &&
+    typeof candidate.universityName === 'string'
+  );
+}
+
+function isStudentTreatment(value: unknown): value is StudentTreatment {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<StudentTreatment>;
+
+  return (
+    typeof candidate.description === 'string' &&
+    typeof candidate.id === 'string' &&
+    typeof candidate.name === 'string' &&
+    (candidate.status === 'active' || candidate.status === 'inactive')
+  );
+}
+
+function isStudentPracticeSite(value: unknown): value is StudentPracticeSite {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<StudentPracticeSite>;
+
+  return (
+    typeof candidate.address === 'string' &&
+    typeof candidate.city === 'string' &&
+    typeof candidate.id === 'string' &&
+    typeof candidate.locality === 'string' &&
+    typeof candidate.name === 'string' &&
+    (candidate.status === 'active' || candidate.status === 'inactive')
+  );
+}
+
+function isStudentSupervisor(value: unknown): value is StudentSupervisor {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<StudentSupervisor>;
+
+  return (
+    typeof candidate.id === 'string' &&
+    typeof candidate.name === 'string' &&
+    (candidate.status === 'active' || candidate.status === 'inactive')
+  );
+}
+
+function isStudentAppointmentReview(value: unknown): value is StudentAppointmentReview {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<StudentAppointmentReview>;
+
+  return (
+    typeof candidate.appointmentLabel === 'string' &&
+    (candidate.comment === null || typeof candidate.comment === 'string') &&
+    typeof candidate.createdAt === 'string' &&
+    typeof candidate.id === 'string' &&
+    typeof candidate.patientName === 'string' &&
+    typeof candidate.rating === 'number' &&
+    typeof candidate.siteName === 'string'
+  );
+}
+
+function isStudentAgendaAppointment(
+  value: unknown,
+): value is StudentAgendaAppointment {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<StudentAgendaAppointment>;
+
+  return (
+    (candidate.additionalInfo === null ||
+      typeof candidate.additionalInfo === 'string') &&
+    typeof candidate.appointmentType === 'string' &&
+    typeof candidate.city === 'string' &&
+    typeof candidate.endAt === 'string' &&
+    typeof candidate.id === 'string' &&
+    typeof candidate.patientName === 'string' &&
+    typeof candidate.requestId === 'string' &&
+    typeof candidate.siteId === 'string' &&
+    typeof candidate.siteName === 'string' &&
+    typeof candidate.startAt === 'string' &&
+    isStudentAgendaStatus(candidate.status) &&
+    typeof candidate.supervisorId === 'string' &&
+    typeof candidate.supervisorName === 'string' &&
+    Array.isArray(candidate.treatmentIds) &&
+    candidate.treatmentIds.every((item) => typeof item === 'string') &&
+    Array.isArray(candidate.treatmentNames) &&
+    candidate.treatmentNames.every((item) => typeof item === 'string')
+  );
+}
+
+function isStudentRequest(value: unknown): value is StudentRequest {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<StudentRequest>;
+
+  return (
+    typeof candidate.appointmentsCount === 'number' &&
+    (candidate.conversationId === null || typeof candidate.conversationId === 'string') &&
+    typeof candidate.conversationEnabled === 'boolean' &&
+    typeof candidate.id === 'string' &&
+    typeof candidate.patientAge === 'number' &&
+    typeof candidate.patientCity === 'string' &&
+    typeof candidate.patientName === 'string' &&
+    (candidate.reason === null || typeof candidate.reason === 'string') &&
+    (candidate.responseAt === null || typeof candidate.responseAt === 'string') &&
+    typeof candidate.sentAt === 'string' &&
+    isStudentRequestStatusValue(candidate.status)
+  );
+}
+
+function isStudentConversationMessage(
+  value: unknown,
+): value is StudentConversationMessage {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<StudentConversationMessage>;
+
+  return (
+    (candidate.author === 'ESTUDIANTE' || candidate.author === 'PACIENTE') &&
+    typeof candidate.authorName === 'string' &&
+    typeof candidate.content === 'string' &&
+    typeof candidate.id === 'string' &&
+    typeof candidate.sentAt === 'string'
+  );
+}
+
+function isStudentConversation(value: unknown): value is StudentConversation {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<StudentConversation>;
+
+  return (
+    typeof candidate.id === 'string' &&
+    Array.isArray(candidate.messages) &&
+    candidate.messages.every(isStudentConversationMessage) &&
+    typeof candidate.patientAge === 'number' &&
+    typeof candidate.patientCity === 'string' &&
+    typeof candidate.patientName === 'string' &&
+    (candidate.reason === null || typeof candidate.reason === 'string') &&
+    typeof candidate.requestId === 'string' &&
+    isStudentConversationStatusValue(candidate.status) &&
+    typeof candidate.unreadCount === 'number'
+  );
+}
+
+function isStudentScheduleBlock(value: unknown): value is StudentScheduleBlock {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<StudentScheduleBlock>;
+
+  return (
+    (candidate.dayOfWeek === null || typeof candidate.dayOfWeek === 'number') &&
+    typeof candidate.endTime === 'string' &&
+    typeof candidate.id === 'string' &&
+    (candidate.reason === null || typeof candidate.reason === 'string') &&
+    (candidate.recurrenceEndDate === null ||
+      typeof candidate.recurrenceEndDate === 'string') &&
+    (candidate.recurrenceStartDate === null ||
+      typeof candidate.recurrenceStartDate === 'string') &&
+    (candidate.specificDate === null || typeof candidate.specificDate === 'string') &&
+    typeof candidate.startTime === 'string' &&
+    (candidate.status === 'active' || candidate.status === 'inactive') &&
+    isStudentScheduleBlockTypeValue(candidate.type)
+  );
+}
+
+function isStudentModuleData(value: unknown): value is StudentModuleState {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<StudentModuleState>;
+
+  return (
+    Array.isArray(candidate.appointments) &&
+    candidate.appointments.every(isStudentAgendaAppointment) &&
+    Array.isArray(candidate.conversations) &&
+    candidate.conversations.every(isStudentConversation) &&
+    Array.isArray(candidate.practiceSites) &&
+    candidate.practiceSites.every(isStudentPracticeSite) &&
+    isStudentProfile(candidate.profile) &&
+    Array.isArray(candidate.reviews) &&
+    candidate.reviews.every(isStudentAppointmentReview) &&
+    Array.isArray(candidate.requests) &&
+    candidate.requests.every(isStudentRequest) &&
+    Array.isArray(candidate.scheduleBlocks) &&
+    candidate.scheduleBlocks.every(isStudentScheduleBlock) &&
+    Array.isArray(candidate.supervisors) &&
+    candidate.supervisors.every(isStudentSupervisor) &&
+    Array.isArray(candidate.treatments) &&
+    candidate.treatments.every(isStudentTreatment)
+  );
+}
+
+function normalizeStudentModuleData(
+  value: Partial<StudentModuleState>,
+): StudentModuleState {
+  const emptyState = createEmptyRuntimeModuleState();
+
+  return {
+    appointments: value.appointments ?? emptyState.appointments,
+    conversations: value.conversations ?? emptyState.conversations,
+    practiceSites: value.practiceSites ?? emptyState.practiceSites,
+    profile: value.profile
+      ? {
+          ...emptyState.profile,
+          ...value.profile,
+          links: value.profile.links ?? emptyState.profile.links,
+        }
+      : emptyState.profile,
+    reviews: value.reviews ?? emptyState.reviews,
+    requests: value.requests ?? emptyState.requests,
+    scheduleBlocks: value.scheduleBlocks ?? emptyState.scheduleBlocks,
+    supervisors: value.supervisors ?? emptyState.supervisors,
+    treatments: value.treatments ?? emptyState.treatments,
+  };
+}
+
+function getPersistableStudentModuleState(
+  currentState: StudentStoreState,
+): StudentModuleState {
+  return {
+    appointments: currentState.appointments,
+    conversations: currentState.conversations,
+    practiceSites: currentState.practiceSites,
+    profile: currentState.profile,
+    reviews: currentState.reviews,
+    requests: currentState.requests,
+    scheduleBlocks: currentState.scheduleBlocks,
+    supervisors: currentState.supervisors,
+    treatments: currentState.treatments,
+  };
+}
+
+function persistStudentModuleCache(dashboard: StudentModuleState) {
+  const storage = readSessionStorage();
+  const session = readAuthSession();
+
+  if (!storage || !session || session.user.role !== 'STUDENT') {
+    return;
+  }
+
+  const payload: PersistedStudentModuleCache = {
+    dashboard,
+    updatedAt: Date.now(),
+    userId: session.user.id,
+  };
+
+  storage.setItem(STUDENT_MODULE_CACHE_STORAGE_KEY, JSON.stringify(payload));
+}
+
+function clearPersistedStudentModuleCache() {
+  const storage = readSessionStorage();
+
+  if (!storage) {
+    return;
+  }
+
+  storage.removeItem(STUDENT_MODULE_CACHE_STORAGE_KEY);
+}
+
+function readPersistedStudentModuleCache() {
+  const storage = readSessionStorage();
+  const session = readAuthSession();
+
+  if (!storage || !session || session.user.role !== 'STUDENT') {
+    return null;
+  }
+
+  const rawCache = storage.getItem(STUDENT_MODULE_CACHE_STORAGE_KEY);
+
+  if (!rawCache) {
+    return null;
+  }
+
+  try {
+    const parsedCache = JSON.parse(rawCache) as Partial<PersistedStudentModuleCache>;
+
+    if (
+      typeof parsedCache.updatedAt !== 'number' ||
+      Date.now() - parsedCache.updatedAt > STUDENT_MODULE_CACHE_MAX_AGE_MS ||
+      parsedCache.userId !== session.user.id ||
+      !isStudentModuleData(parsedCache.dashboard)
+    ) {
+      storage.removeItem(STUDENT_MODULE_CACHE_STORAGE_KEY);
+      return null;
+    }
+
+    return parsedCache.dashboard;
+  } catch {
+    storage.removeItem(STUDENT_MODULE_CACHE_STORAGE_KEY);
+    return null;
+  }
+}
+
+function createRuntimeInitialState(): StudentStoreState {
+  const cachedDashboard = readPersistedStudentModuleCache();
+
+  if (!cachedDashboard) {
+    return createEmptyRuntimeState();
+  }
+
+  return {
+    ...cachedDashboard,
+    errorMessage: null,
+    isLoading: false,
+    isReady: true,
+    shouldRefresh: true,
+  };
+}
+
 const initialMockState = createMockState();
 
 let state = IS_TEST_MODE ? createMockState() : createRuntimeInitialState();
@@ -514,6 +943,22 @@ let nextConversationMessageSequence =
     0,
   ) + 1;
 let runtimeLoadPromise: Promise<StudentStoreState> | null = null;
+
+function syncStudentRuntimeSequences(moduleState: StudentModuleState) {
+  nextLinkSequence = moduleState.profile.links.length + 1;
+  nextAppointmentSequence = moduleState.appointments.length + 1;
+  nextScheduleBlockSequence = moduleState.scheduleBlocks.length + 1;
+  nextConversationSequence = moduleState.conversations.length + 1;
+  nextConversationMessageSequence =
+    moduleState.conversations.reduce(
+      (total, conversation) => total + conversation.messages.length,
+      0,
+    ) + 1;
+}
+
+if (!IS_TEST_MODE && state.isReady) {
+  syncStudentRuntimeSequences(state);
+}
 
 function emitChange() {
   listeners.forEach((listener) => {
@@ -535,6 +980,11 @@ function getSnapshot() {
 
 function updateState(nextState: StudentStoreState) {
   state = nextState;
+
+  if (!IS_TEST_MODE && nextState.isReady) {
+    persistStudentModuleCache(getPersistableStudentModuleState(nextState));
+  }
+
   emitChange();
 }
 
@@ -1109,7 +1559,7 @@ async function loadRuntimeState(forceRefresh = false) {
     return state;
   }
 
-  if (state.isReady && !forceRefresh) {
+  if (state.isReady && !state.shouldRefresh && !forceRefresh) {
     return state;
   }
 
@@ -1124,25 +1574,16 @@ async function loadRuntimeState(forceRefresh = false) {
 
   runtimeLoadPromise = getStudentPortalDashboard()
     .then((payload) => {
+      const nextDashboard = normalizeStudentModuleData(payload);
+      syncStudentRuntimeSequences(nextDashboard);
+
       updateState({
-        ...createRuntimeInitialState(),
-        ...payload,
-        appointments: payload.appointments ?? [],
+        ...nextDashboard,
         errorMessage: null,
         isLoading: false,
         isReady: true,
-        supervisors: payload.supervisors ?? [],
+        shouldRefresh: false,
       });
-
-      nextLinkSequence = payload.profile.links.length + 1;
-      nextAppointmentSequence = (payload.appointments ?? []).length + 1;
-      nextScheduleBlockSequence = payload.scheduleBlocks.length + 1;
-      nextConversationSequence = payload.conversations.length + 1;
-      nextConversationMessageSequence =
-        payload.conversations.reduce(
-          (total, conversation) => total + conversation.messages.length,
-          0,
-        ) + 1;
 
       return state;
     })
@@ -1150,6 +1591,7 @@ async function loadRuntimeState(forceRefresh = false) {
       patchState({
         errorMessage: getErrorMessage(error, 'No pudimos cargar el portal del estudiante.'),
         isLoading: false,
+        shouldRefresh: false,
       });
 
       return state;
@@ -1525,30 +1967,39 @@ async function sendConversationMessage(
 }
 
 export function resetStudentModuleState() {
-  state = IS_TEST_MODE ? createMockState() : createRuntimeInitialState();
-  nextLinkSequence = initialMockState.profile.links.length + 1;
-  nextAppointmentSequence = initialMockState.appointments.length + 1;
-  nextScheduleBlockSequence = initialMockState.scheduleBlocks.length + 1;
-  nextConversationSequence = initialMockState.conversations.length + 1;
-  nextConversationMessageSequence =
-    initialMockState.conversations.reduce(
-      (total, conversation) => total + conversation.messages.length,
-      0,
-    ) + 1;
+  if (!IS_TEST_MODE) {
+    clearPersistedStudentModuleCache();
+  }
+
+  state = IS_TEST_MODE ? createMockState() : createEmptyRuntimeState();
+  syncStudentRuntimeSequences(
+    IS_TEST_MODE ? initialMockState : createEmptyRuntimeModuleState(),
+  );
   runtimeLoadPromise = null;
   emitChange();
 }
 
-export function useStudentModuleStore() {
+export function useStudentModuleStore(options: UseStudentModuleStoreOptions = {}) {
   const snapshot = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  const shouldAutoLoad = options.autoLoad ?? true;
 
   useEffect(() => {
-    if (IS_TEST_MODE || snapshot.isLoading || snapshot.isReady) {
+    if (
+      IS_TEST_MODE ||
+      !shouldAutoLoad ||
+      snapshot.isLoading ||
+      (snapshot.isReady && !snapshot.shouldRefresh)
+    ) {
       return;
     }
 
     void loadRuntimeState();
-  }, [snapshot.isLoading, snapshot.isReady]);
+  }, [
+    shouldAutoLoad,
+    snapshot.isLoading,
+    snapshot.isReady,
+    snapshot.shouldRefresh,
+  ]);
 
   const actions: StudentModuleActions = {
     deleteScheduleBlock,
