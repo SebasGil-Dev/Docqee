@@ -68,7 +68,7 @@ function createMockState(): UniversityAdminOverviewStoreState {
         createdAt: '2026-04-01T09:30:00.000Z',
         displayStatus: 'pending',
         documentNumber: '1032456789',
-        documentTypeName: 'cedula de ciudadania',
+        documentTypeCode: 'CC',
         firstName: 'Valentina',
         id: 'student-1',
         lastName: 'Rios',
@@ -78,7 +78,7 @@ function createMockState(): UniversityAdminOverviewStoreState {
         createdAt: '2026-03-29T14:45:00.000Z',
         displayStatus: 'active',
         documentNumber: '80124567',
-        documentTypeName: 'cedula de ciudadania',
+        documentTypeCode: 'CC',
         firstName: 'Tomas',
         id: 'student-2',
         lastName: 'Herrera',
@@ -88,7 +88,7 @@ function createMockState(): UniversityAdminOverviewStoreState {
         createdAt: '2026-03-27T10:15:00.000Z',
         displayStatus: 'pending',
         documentNumber: '1029988776',
-        documentTypeName: 'tarjeta de identidad',
+        documentTypeCode: 'TI',
         firstName: 'Camila',
         id: 'student-3',
         lastName: 'Vega',
@@ -98,7 +98,7 @@ function createMockState(): UniversityAdminOverviewStoreState {
         createdAt: '2026-03-25T08:20:00.000Z',
         displayStatus: 'active',
         documentNumber: '52789123',
-        documentTypeName: 'cedula de ciudadania',
+        documentTypeCode: 'CC',
         firstName: 'Sara',
         id: 'student-4',
         lastName: 'Montoya',
@@ -257,7 +257,7 @@ function isUniversityHomeStudent(
       candidate.displayStatus === 'inactive' ||
       candidate.displayStatus === 'pending') &&
     typeof candidate.documentNumber === 'string' &&
-    typeof candidate.documentTypeName === 'string' &&
+    typeof candidate.documentTypeCode === 'string' &&
     typeof candidate.firstName === 'string' &&
     typeof candidate.id === 'string' &&
     typeof candidate.lastName === 'string' &&

@@ -87,7 +87,7 @@ type UniversityAdminOverviewStudent = {
   createdAt: string;
   displayStatus: 'active' | 'inactive' | 'pending';
   documentNumber: string;
-  documentTypeName: string;
+  documentTypeCode: string;
   firstName: string;
   id: string;
   lastName: string;
@@ -213,7 +213,7 @@ export class UniversityAdminService {
               numero_documento: true,
               tipo_documento: {
                 select: {
-                  nombre: true,
+                  codigo: true,
                 },
               },
             },
@@ -909,7 +909,7 @@ export class UniversityAdminService {
       nombres: string;
       numero_documento: string;
       tipo_documento: {
-        nombre: string;
+        codigo: string;
       };
     };
     cuenta_acceso: {
@@ -936,7 +936,7 @@ export class UniversityAdminService {
           ? 'active'
           : 'inactive',
       documentNumber: student.persona.numero_documento,
-      documentTypeName: student.persona.tipo_documento.nombre,
+      documentTypeCode: student.persona.tipo_documento.codigo,
       firstName: student.persona.nombres,
       id: String(student.id_cuenta),
       lastName: student.persona.apellidos,

@@ -211,13 +211,13 @@ export function UniversityHomePage() {
                         <div className="min-w-0 flex-1">
                           <p
                             className="truncate text-[0.83rem] text-ink"
-                            title={`${formatDisplayName(`${student.firstName} ${student.lastName}`)} - Semestre ${student.semester} - ${formatDisplayName(student.documentTypeName)} ${student.documentNumber}`}
+                            title={`${formatDisplayName(`${student.firstName} ${student.lastName}`)} - Semestre ${student.semester} - ${student.documentTypeCode.toLocaleUpperCase('es-CO')} ${student.documentNumber}`}
                           >
                             <span className="font-semibold text-ink">
                               {formatDisplayName(`${student.firstName} ${student.lastName}`)}
                             </span>
                             <span className="text-ink-muted">
-                              {` - Semestre ${student.semester} - ${formatDisplayName(student.documentTypeName)} ${student.documentNumber}`}
+                              {` - Semestre ${student.semester} - ${student.documentTypeCode.toLocaleUpperCase('es-CO')} ${student.documentNumber}`}
                             </span>
                           </p>
                         </div>
