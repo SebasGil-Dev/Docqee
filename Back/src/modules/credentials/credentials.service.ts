@@ -32,6 +32,7 @@ export class CredentialsService {
         anulada_at: null,
         cuenta_acceso: {
           tipo_cuenta: tipo_cuenta_enum.ESTUDIANTE,
+          primer_ingreso_pendiente: true,
           cuenta_estudiante: {
             id_universidad: universityId,
           },
