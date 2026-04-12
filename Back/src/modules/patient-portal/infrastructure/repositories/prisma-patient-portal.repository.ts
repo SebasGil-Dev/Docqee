@@ -1,6 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 
 import { PrismaService } from '@/shared/database/prisma.service';
+import { normalizeText } from '@/shared/utils/front-format.util';
+import { CreatePatientRequestDto } from '../../application/dto/create-patient-request.dto';
 import { PatientAppointmentDto } from '../../application/dto/patient-appointment.dto';
 import { PatientConversationDto } from '../../application/dto/patient-conversation.dto';
 import { PatientPortalDashboardDto } from '../../application/dto/patient-portal-dashboard.dto';
@@ -13,6 +15,34 @@ import { PatientPortalRepository } from '../../domain/repositories/patient-porta
 export class PrismaPatientPortalRepository extends PatientPortalRepository {
   constructor(private readonly prisma: PrismaService) {
     super();
+  }
+
+  private toRequestDto(request: {
+    id_solicitud: number;
+    id_cuenta_estudiante: number;
+    motivo_consulta: string | null;
+    fecha_respuesta: Date | null;
+    fecha_envio: Date;
+    estado: 'PENDIENTE' | 'ACEPTADA' | 'RECHAZADA' | 'CERRADA' | 'CANCELADA';
+    conversacion?: { id_conversacion: number } | null;
+    cita?: { id_cita: number }[];
+    cuenta_estudiante: {
+      persona: { nombres: string; apellidos: string };
+      universidad: { nombre: string };
+    };
+  }): PatientRequestDto {
+    return {
+      appointmentsCount: request.cita?.length ?? 0,
+      conversationId: request.conversacion ? String(request.conversacion.id_conversacion) : null,
+      id: String(request.id_solicitud),
+      reason: request.motivo_consulta ?? null,
+      responseAt: request.fecha_respuesta?.toISOString() ?? null,
+      sentAt: request.fecha_envio.toISOString(),
+      status: request.estado,
+      studentId: String(request.id_cuenta_estudiante),
+      studentName: `${request.cuenta_estudiante.persona.nombres} ${request.cuenta_estudiante.persona.apellidos}`,
+      universityName: request.cuenta_estudiante.universidad.nombre,
+    };
   }
 
   async getDashboard(patientAccountId: number): Promise<PatientPortalDashboardDto> {
@@ -73,18 +103,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
 
     const profile = patient ? this.toProfileDto(patient) : this.emptyProfile();
 
-    const requests: PatientRequestDto[] = solicitudes.map((s) => ({
-      appointmentsCount: s.cita.length,
-      conversationId: s.conversacion ? String(s.conversacion.id_conversacion) : null,
-      id: String(s.id_solicitud),
-      reason: s.motivo_consulta ?? null,
-      responseAt: s.fecha_respuesta?.toISOString() ?? null,
-      sentAt: s.fecha_envio.toISOString(),
-      status: s.estado,
-      studentId: String(s.id_cuenta_estudiante),
-      studentName: `${s.cuenta_estudiante.persona.nombres} ${s.cuenta_estudiante.persona.apellidos}`,
-      universityName: s.cuenta_estudiante.universidad.nombre,
-    }));
+    const requests: PatientRequestDto[] = solicitudes.map((s) => this.toRequestDto(s));
 
     const appointments: PatientAppointmentDto[] = solicitudes.flatMap((s) =>
       s.cita.map((c) => ({
@@ -157,8 +176,83 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     throw new Error('PrismaPatientPortalRepository.updateProfile is pending implementation.');
   }
 
-  createRequest(): never {
-    throw new Error('PrismaPatientPortalRepository.createRequest is pending implementation.');
+  async createRequest(
+    patientAccountId: number,
+    payload: CreatePatientRequestDto,
+  ): Promise<PatientRequestDto> {
+    const studentAccountId = Number(payload.studentId);
+    const normalizedReason = normalizeText(payload.reason ?? '');
+
+    if (!Number.isInteger(studentAccountId) || studentAccountId <= 0) {
+      throw new BadRequestException('El estudiante seleccionado no es valido.');
+    }
+
+    if (!normalizedReason) {
+      throw new BadRequestException('Debes ingresar el motivo de la solicitud.');
+    }
+
+    const [patient, student, existingRequest] = await Promise.all([
+      this.prisma.cuenta_paciente.findUnique({
+        where: { id_cuenta: patientAccountId },
+        select: { id_cuenta: true },
+      }),
+      this.prisma.cuenta_estudiante.findFirst({
+        where: {
+          id_cuenta: studentAccountId,
+          cuenta_acceso: { estado: 'ACTIVO' },
+        },
+        include: {
+          persona: true,
+          universidad: true,
+        },
+      }),
+      this.prisma.solicitud.findFirst({
+        where: {
+          id_cuenta_estudiante: studentAccountId,
+          id_cuenta_paciente: patientAccountId,
+          estado: {
+            in: ['PENDIENTE', 'ACEPTADA'],
+          },
+        },
+        select: { id_solicitud: true },
+      }),
+    ]);
+
+    if (!patient) {
+      throw new NotFoundException('No encontramos el perfil del paciente.');
+    }
+
+    if (!student) {
+      throw new NotFoundException('No encontramos el estudiante seleccionado.');
+    }
+
+    if (existingRequest) {
+      throw new ConflictException('Ya tienes una solicitud activa con este estudiante.');
+    }
+
+    const request = await this.prisma.solicitud.create({
+      data: {
+        id_cuenta_estudiante: studentAccountId,
+        id_cuenta_paciente: patientAccountId,
+        motivo_consulta: normalizedReason,
+      },
+      include: {
+        cita: {
+          select: { id_cita: true },
+        },
+        conversacion: {
+          select: { id_conversacion: true },
+        },
+        cuenta_estudiante: {
+          include: {
+            persona: true,
+            universidad: true,
+          },
+        },
+      },
+    });
+
+    return this.toRequestDto(request);
   }
 
   updateRequestStatus(): never {
