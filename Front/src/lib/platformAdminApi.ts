@@ -51,6 +51,12 @@ export function resendPlatformAdminCredential(credentialId: string) {
   );
 }
 
+export function sendAllPlatformAdminCredentials() {
+  return apiRequest<{ sentCount: number }>('/platform-admin/credentials/send-all', {
+    method: 'POST',
+  });
+}
+
 export function deletePlatformAdminCredential(credentialId: string) {
   return apiRequest<{ ok: boolean }>(`/platform-admin/credentials/${credentialId}`, {
     method: 'DELETE',

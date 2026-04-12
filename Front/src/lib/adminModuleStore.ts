@@ -15,6 +15,7 @@ import {
   deletePlatformAdminCredential,
   getPlatformAdminOverview,
   resendPlatformAdminCredential,
+  sendAllPlatformAdminCredentials,
   sendPlatformAdminCredential,
   togglePlatformAdminUniversityStatus,
 } from '@/lib/platformAdminApi';
@@ -34,6 +35,7 @@ type AdminModuleActions = {
     values: RegisterUniversityFormValues,
   ) => Promise<{ credentialId: string; universityId: string } | null>;
   resendCredential: (credentialId: string) => Promise<string | null>;
+  sendAllCredentials: () => Promise<number>;
   sendCredential: (credentialId: string) => Promise<string | null>;
   toggleUniversityStatus: (universityId: string) => Promise<UniversityStatus | null>;
 };
@@ -438,19 +440,80 @@ function getLocalityById(cityId: string, localityId: string) {
 }
 
 function markCredentialAsSentMock(credentialId: string) {
-  updateState({
-    ...state,
-    credentials: state.credentials.map((credential) =>
-      credential.id === credentialId
-        ? {
-            ...credential,
-            deliveryStatus: 'sent',
-            lastSentAt: new Date().toISOString(),
-            sentCount: credential.sentCount + 1,
-            universityStatus: 'active',
-          }
-        : credential,
-    ),
+  const nextCredentials: PendingCredential[] = state.credentials.map((credential) =>
+    credential.id === credentialId
+      ? {
+          ...credential,
+          deliveryStatus: 'sent' as const,
+          lastSentAt: new Date().toISOString(),
+          sentCount: credential.sentCount + 1,
+          universityStatus: 'pending' as const,
+        }
+      : credential,
+  );
+
+  setAdminModuleRecords(state.universities, nextCredentials, {
+    isLoading: false,
+    isReady: true,
+    shouldRefresh: false,
+  });
+}
+
+function markAllGeneratedCredentialsAsSent() {
+  let sentCount = 0;
+  const nextTimestamp = new Date().toISOString();
+  const nextCredentials: PendingCredential[] = state.credentials.map((credential) => {
+    if (credential.deliveryStatus !== 'generated') {
+      return credential;
+    }
+
+    sentCount += 1;
+
+    return {
+      ...credential,
+      deliveryStatus: 'sent' as const,
+      lastSentAt: nextTimestamp,
+      sentCount: credential.sentCount + 1,
+      universityStatus: 'pending' as const,
+    };
+  });
+
+  if (sentCount === 0) {
+    return 0;
+  }
+
+  setAdminModuleRecords(state.universities, nextCredentials, {
+    isLoading: false,
+    isReady: true,
+    shouldRefresh: false,
+  });
+
+  return sentCount;
+}
+
+function syncCredentialAsSent(
+  credentialId: string,
+  options?: {
+    lastSentAt?: string | null;
+    sentCount?: number;
+  },
+) {
+  const nextCredentials: PendingCredential[] = state.credentials.map((credential) =>
+    credential.id === credentialId
+      ? {
+          ...credential,
+          deliveryStatus: 'sent' as const,
+          lastSentAt: options?.lastSentAt ?? credential.lastSentAt ?? new Date().toISOString(),
+          sentCount: options?.sentCount ?? credential.sentCount + 1,
+          universityStatus: 'pending' as const,
+        }
+      : credential,
+  );
+
+  setAdminModuleRecords(state.universities, nextCredentials, {
+    isLoading: false,
+    isReady: true,
+    shouldRefresh: false,
   });
 }
 
@@ -776,23 +839,10 @@ async function sendCredential(credentialId: string) {
 
   try {
     const result = await sendPlatformAdminCredential(credentialId);
-    const updatedCredential = result.credential;
-
-    setAdminModuleRecords(
-      state.universities.map((university) =>
-        university.credentialId === credentialId
-          ? { ...university, status: 'active' }
-          : university,
-      ),
-      state.credentials.map((credential) =>
-        credential.id === credentialId ? updatedCredential : credential,
-      ),
-      {
-        isLoading: false,
-        isReady: true,
-        shouldRefresh: false,
-      },
-    );
+    syncCredentialAsSent(credentialId, {
+      lastSentAt: result.credential?.lastSentAt ?? null,
+      sentCount: result.credential?.sentCount,
+    });
 
     return result.temporaryPassword;
   } catch (error) {
@@ -816,19 +866,10 @@ async function resendCredential(credentialId: string) {
 
   try {
     const result = await resendPlatformAdminCredential(credentialId);
-    const updatedCredential = result.credential;
-
-    setAdminModuleRecords(
-      state.universities,
-      state.credentials.map((credential) =>
-        credential.id === credentialId ? updatedCredential : credential,
-      ),
-      {
-        isLoading: false,
-        isReady: true,
-        shouldRefresh: false,
-      },
-    );
+    syncCredentialAsSent(credentialId, {
+      lastSentAt: result.credential?.lastSentAt ?? null,
+      sentCount: result.credential?.sentCount,
+    });
 
     return result.temporaryPassword;
   } catch (error) {
@@ -837,6 +878,29 @@ async function resendCredential(credentialId: string) {
       isLoading: false,
     });
     return null;
+  }
+}
+
+async function sendAllCredentials() {
+  if (IS_TEST_MODE) {
+    return markAllGeneratedCredentialsAsSent();
+  }
+
+  patchState({
+    errorMessage: null,
+    isLoading: true,
+  });
+
+  try {
+    const result = await sendAllPlatformAdminCredentials();
+    markAllGeneratedCredentialsAsSent();
+    return result.sentCount;
+  } catch (error) {
+    patchState({
+      errorMessage: getErrorMessage(error, 'No pudimos enviar las credenciales pendientes.'),
+      isLoading: false,
+    });
+    return 0;
   }
 }
 
@@ -959,6 +1023,7 @@ export function useAdminModuleStore(options: UseAdminModuleStoreOptions = {}) {
     refresh: refreshAdminModuleState,
     registerUniversity,
     resendCredential,
+    sendAllCredentials,
     sendCredential,
     toggleUniversityStatus,
   };

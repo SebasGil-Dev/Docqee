@@ -60,6 +60,11 @@ export class PlatformAdminController {
     return this.platformAdminService.sendCredential(user, credentialId, true);
   }
 
+  @Post('credentials/send-all')
+  sendAllCredentials(@CurrentUser() user: RequestUser) {
+    return this.platformAdminService.sendAllCredentials(user);
+  }
+
   @Delete('credentials/:credentialId')
   deleteCredential(@CurrentUser() user: RequestUser, @Param('credentialId') credentialId: string) {
     return this.platformAdminService.deleteCredential(user, credentialId);

@@ -336,6 +336,26 @@ describe('Admin pages', () => {
     );
   });
 
+  it('enviar todas procesa solo las credenciales generadas', async () => {
+    const user = userEvent.setup();
+
+    renderAdminApp([ROUTES.adminCredentials]);
+
+    await user.click(screen.getByRole('button', { name: /enviar todas/i }));
+
+    expect(
+      await screen.findByText(/se envio 1 credencial pendiente\./i),
+    ).toBeInTheDocument();
+
+    const pacificoRow = screen
+      .getByText(/Universidad del Pacifico Dental/i)
+      .closest('tr');
+    expect(pacificoRow).not.toBeNull();
+    expect(within(pacificoRow!).getByText(/^Enviada$/i)).toBeInTheDocument();
+
+    expect(screen.queryByText(/^Generada$/i)).not.toBeInTheDocument();
+  });
+
   it('permite editar el correo del administrador antes de enviar la credencial', async () => {
     const user = userEvent.setup();
 

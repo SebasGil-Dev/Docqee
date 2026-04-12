@@ -73,6 +73,7 @@ export function AdminCredentialsPage() {
     isLoading,
     resendCredential,
     refresh,
+    sendAllCredentials,
     sendCredential,
   } = useAdminModuleStore();
   const [searchTerm, setSearchTerm] = useState('');
@@ -87,6 +88,9 @@ export function AdminCredentialsPage() {
   const filterMenuRef = useRef<HTMLDivElement | null>(null);
   const lastAutoRefreshAtRef = useRef(0);
   const credentialRows = useMemo<CredentialRow[]>(() => credentials, [credentials]);
+  const generatedCredentialCount = credentialRows.filter(
+    (credential) => credential.deliveryStatus === 'generated',
+  ).length;
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const filteredCredentialRows = credentialRows.filter((credential) => {
     const matchesSearch =
@@ -194,6 +198,23 @@ export function AdminCredentialsPage() {
 
       setIsConfirmationSubmitting(false);
       setPendingConfirmation(null);
+    })();
+  };
+
+  const handleSendAll = () => {
+    void (async () => {
+      const sentCount = await sendAllCredentials();
+
+      if (sentCount === 0) {
+        setFeedbackMessage('No hay credenciales generadas por enviar en este momento.');
+        return;
+      }
+
+      setFeedbackMessage(
+        sentCount === 1
+          ? 'Se envio 1 credencial pendiente.'
+          : `Se enviaron ${sentCount} credenciales pendientes.`,
+      );
     })();
   };
 
@@ -416,6 +437,15 @@ export function AdminCredentialsPage() {
                   </div>
                 ) : null}
               </div>
+              <button
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-gradient px-3.5 py-2.5 text-[0.82rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+                disabled={isLoading || generatedCredentialCount === 0}
+                type="button"
+                onClick={handleSendAll}
+              >
+                <Send aria-hidden="true" className="h-4 w-4" />
+                <span>{adminContent.credentialsPage.actionLabels.sendAll}</span>
+              </button>
             </div>
           </div>
         </div>
