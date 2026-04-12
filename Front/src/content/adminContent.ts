@@ -8,6 +8,7 @@ export const adminContent = {
       resend: 'Reenviar',
       saveEmail: 'Guardar correo',
       send: 'Enviar',
+      sendAll: 'Enviar todas',
     },
     description:
       'Gestiona las credenciales iniciales de las universidades registradas y aun no consolidadas operativamente.',
