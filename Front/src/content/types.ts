@@ -707,9 +707,10 @@ export type UniversityHomeStudentStatus = PersonOperationalStatus | 'pending';
 
 export type UniversityHomeStudent = Pick<
   UniversityStudent,
-  'createdAt' | 'firstName' | 'id' | 'lastName' | 'semester'
+  'createdAt' | 'documentNumber' | 'firstName' | 'id' | 'lastName' | 'semester'
 > & {
   displayStatus: UniversityHomeStudentStatus;
+  documentTypeName: string;
 };
 
 export type UniversityTeacher = {

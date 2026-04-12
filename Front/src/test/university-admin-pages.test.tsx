@@ -115,6 +115,9 @@ describe('University admin pages', () => {
 
     expect(screen.getByText(/bienvenido, jonathan acevedo/i)).toBeInTheDocument();
     expect(screen.getByText(/universidad clinica del norte/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/semestre 8 - cedula de ciudadania 1032456789/i),
+    ).toBeInTheDocument();
     expect(screen.getAllByText(/^Estudiantes$/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/estado de estudiantes/i)).toBeInTheDocument();
     expect(screen.getByText(/equipo y sedes/i)).toBeInTheDocument();
