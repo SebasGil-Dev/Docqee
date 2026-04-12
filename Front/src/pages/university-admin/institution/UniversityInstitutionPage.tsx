@@ -41,6 +41,7 @@ import type {
   UniversityPasswordFormField,
   UniversityPasswordFormValues,
 } from '@/content/types';
+import { formatDisplayName } from '@/lib/formatDisplayName';
 import { getOptimizedLogoUrl } from '@/lib/imageOptimization';
 import { patientRegisterCatalogDataSource } from '@/lib/patientRegisterCatalogDataSource';
 import { uploadUniversityAdminLogo } from '@/lib/universityAdminApi';
@@ -171,7 +172,7 @@ function validateInstitutionField(
   }
 
   if (field === 'adminEmail' && !isValidEmail(normalizedValue)) {
-    return 'Ingresa un correo electronico valido';
+    return 'Ingresa un correo electrónico válido';
   }
 
   return undefined;
@@ -190,7 +191,7 @@ function validateCampusField(
   if (!normalizedValue) {
     switch (field) {
       case 'address':
-        return 'La direccion de la sede es obligatoria';
+        return 'La dirección de la sede es obligatoria';
       case 'cityId':
         return 'La ciudad de la sede es obligatoria';
       case 'localityId':
@@ -1289,9 +1290,9 @@ export function UniversityInstitutionPage({
                             error={campusErrors.address}
                             icon={MapPin}
                             id="university-campus-address"
-                            label="Direccion"
+                            label="Dirección"
                             name="campusAddress"
-                            placeholder="Ingresa la direccion"
+                            placeholder="Ingresa la dirección"
                             value={campusDraft.address}
                             onBlur={() => handleCampusFieldBlur('address')}
                             onChange={(value) => handleCampusFieldChange('address', value)}
@@ -1363,7 +1364,10 @@ export function UniversityInstitutionPage({
                             )}
                           </div>
                         </div>
-                        <div className="flex flex-wrap items-center justify-center gap-3">
+                        <div
+                          className="flex flex-wrap items-center justify-center gap-3"
+                          style={{ marginTop: 30 }}
+                        >
                           {editingCampusId ? (
                             <button
                               className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-[0.82rem] font-semibold text-ink transition duration-300 hover:bg-slate-100"
@@ -1414,7 +1418,7 @@ export function UniversityInstitutionPage({
                               className="grid gap-2.5 rounded-[1.15rem] border border-slate-200/80 bg-white p-3 md:grid-cols-[minmax(7rem,1fr)_minmax(8rem,1.15fr)_minmax(7rem,0.85fr)_minmax(7rem,0.85fr)_minmax(5.5rem,0.55fr)_minmax(6.5rem,0.55fr)] md:items-center"
                             >
                               <h4 className="min-w-0 truncate text-[0.83rem] font-semibold text-ink">
-                                {campus.name}
+                                {formatDisplayName(campus.name)}
                               </h4>
                               <p className="min-w-0 truncate text-[0.82rem] text-ink-muted">
                                 {campus.address}
@@ -1484,7 +1488,7 @@ export function UniversityInstitutionPage({
                           icon={Mail}
                           id="university-institution-admin-email"
                           inputRef={emailRef}
-                          label="Correo electronico"
+                          label="Correo electrónico"
                           name="adminEmail"
                           placeholder="admin@universidad.edu.co"
                           type="email"

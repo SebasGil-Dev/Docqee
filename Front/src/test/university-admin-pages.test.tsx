@@ -154,7 +154,7 @@ describe('University admin pages', () => {
     await user.clear(screen.getByLabelText(/^Apellidos$/i));
     await user.type(screen.getByLabelText(/^Apellidos$/i), 'Acevedo');
     await user.type(screen.getByLabelText(/nombre de la sede/i), 'Sede Centro');
-    await user.type(screen.getByLabelText(/direccion/i), 'Cra. 45 # 10-22');
+    await user.type(screen.getByLabelText(/dirección/i), 'Cra. 45 # 10-22');
     await user.selectOptions(screen.getByLabelText(/^Ciudad$/i), 'city-cali');
     await screen.findByRole('option', { name: /Comuna 17/i });
     await user.selectOptions(screen.getByLabelText(/^Localidad$/i), 'locality-cali-comuna-17');
