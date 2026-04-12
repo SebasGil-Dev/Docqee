@@ -1,3 +1,6 @@
+import { IsIn } from 'class-validator';
+
 export class UpdateStudentRequestStatusDto {
-  status!: 'PENDIENTE' | 'ACEPTADA' | 'RECHAZADA' | 'CERRADA' | 'CANCELADA';
+  @IsIn(['ACEPTADA', 'RECHAZADA'])
+  status!: 'ACEPTADA' | 'RECHAZADA';
 }
