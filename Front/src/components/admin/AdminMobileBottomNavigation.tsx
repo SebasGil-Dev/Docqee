@@ -27,6 +27,7 @@ import { classNames } from '@/lib/classNames';
 
 type AdminMobileBottomNavigationProps = {
   activePathname: string;
+  density?: 'regular' | 'compact';
   items: readonly AdminShellNavigationItem[];
   logoutLabel: string;
   logoutTo: `/${string}`;
@@ -85,6 +86,7 @@ function ActionContent({
 
 export function AdminMobileBottomNavigation({
   activePathname,
+  density = 'regular',
   items,
   logoutLabel,
   logoutTo,
@@ -93,12 +95,23 @@ export function AdminMobileBottomNavigation({
   const navigate = useNavigate();
   const totalActions = items.length + 1;
   const isCompact = totalActions > 4;
+  const isCompactHeight = density === 'compact';
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-30 px-2 pb-2 [padding-bottom:calc(env(safe-area-inset-bottom)+0.5rem)] lg:hidden">
+    <div
+      className={classNames(
+        'fixed inset-x-0 bottom-0 z-30 px-2 lg:hidden',
+        isCompactHeight
+          ? 'pb-1 [padding-bottom:calc(env(safe-area-inset-bottom)+0.25rem)]'
+          : 'pb-2 [padding-bottom:calc(env(safe-area-inset-bottom)+0.5rem)]',
+      )}
+    >
       <nav
         aria-label="Navegacion inferior administrativa"
-        className="w-full rounded-[1.35rem] bg-primary p-1.5 shadow-[0_-10px_28px_rgba(0,100,124,0.2)]"
+        className={classNames(
+          'w-full rounded-[1.35rem] bg-primary shadow-[0_-10px_28px_rgba(0,100,124,0.2)]',
+          isCompactHeight ? 'p-1' : 'p-1.5',
+        )}
       >
         <div
           className="grid gap-1"
@@ -118,7 +131,8 @@ export function AdminMobileBottomNavigation({
                 aria-current={isActive ? 'page' : undefined}
                 key={item.to}
                 className={classNames(
-                  'flex min-w-0 items-center justify-center rounded-[1rem] px-1.5 py-2 text-center transition-all duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/25',
+                  'flex min-w-0 items-center justify-center rounded-[1rem] px-1.5 text-center transition-all duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/25',
+                  isCompactHeight ? 'py-1' : 'py-2',
                   isActive
                     ? 'bg-white text-primary shadow-[0_10px_24px_rgba(255,255,255,0.16)]'
                     : 'text-white/86 hover:bg-white/10 hover:text-white',
@@ -131,7 +145,10 @@ export function AdminMobileBottomNavigation({
           })}
           <button
             aria-label={logoutLabel}
-            className="flex min-w-0 items-center justify-center rounded-[1rem] px-1.5 py-2 text-center text-white/86 transition-all duration-200 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/25"
+            className={classNames(
+              'flex min-w-0 items-center justify-center rounded-[1rem] px-1.5 text-center text-white/86 transition-all duration-200 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/25',
+              isCompactHeight ? 'py-1' : 'py-2',
+            )}
             type="button"
             onClick={() => {
               onLogout();

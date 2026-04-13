@@ -45,6 +45,7 @@ type AdminShellProps = PropsWithChildren<{
   content?: AdminShellContent;
   headerNotifications?: AdminShellNotification[];
   notificationsPageTo?: `/${string}`;
+  mobileNavigationDensity?: 'regular' | 'compact';
   onMarkAllNotificationsRead?: () => void;
   onOpenNotification?: (notificationId: string) => void;
   overrideName?: { firstName: string; lastName: string };
@@ -170,6 +171,7 @@ export function AdminShell({
   children,
   content = adminContent.shell,
   headerNotifications,
+  mobileNavigationDensity = 'regular',
   notificationsPageTo,
   onMarkAllNotificationsRead,
   onOpenNotification,
@@ -199,6 +201,7 @@ export function AdminShell({
       : getOptimizedAvatarUrl(avatarSrc, 96);
   const showHeaderNotifications =
     Array.isArray(headerNotifications) || Boolean(notificationsPageTo);
+  const isCompactMobileNavigation = mobileNavigationDensity === 'compact';
   const visibleNotifications = useMemo(
     () =>
       [...(headerNotifications ?? [])]
@@ -588,7 +591,8 @@ export function AdminShell({
               <main
                 className={classNames(
                   'h-full overflow-y-auto pt-1 lg:pt-0',
-                  showMobileBottomNavigation && 'pb-[7.75rem]',
+                  showMobileBottomNavigation &&
+                    (isCompactMobileNavigation ? 'pb-[6.25rem]' : 'pb-[7.75rem]'),
                 )}
                 id="admin-main-content"
                 tabIndex={-1}
@@ -602,6 +606,7 @@ export function AdminShell({
       {showMobileBottomNavigation ? (
         <AdminMobileBottomNavigation
           activePathname={location.pathname}
+          density={mobileNavigationDensity}
           items={content.navigation}
           logoutLabel={content.logoutCta.label}
           logoutTo={content.logoutCta.to}

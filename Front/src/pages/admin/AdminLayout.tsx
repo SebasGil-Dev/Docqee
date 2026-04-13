@@ -28,7 +28,7 @@ export function AdminLayout() {
   }
 
   return (
-    <AdminShell>
+    <AdminShell mobileNavigationDensity="compact">
       <Outlet />
     </AdminShell>
   );
