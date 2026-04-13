@@ -6,11 +6,8 @@ import {
   Link2,
   Mail,
   MapPin,
-  Power,
-  PowerOff,
   RotateCcw,
   Save,
-  Stethoscope,
   Trash2,
   UserRound,
 } from 'lucide-react';
@@ -20,7 +17,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { AdminDropdownField } from '@/components/admin/AdminDropdownField';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
-import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
 import { AdminTextField } from '@/components/admin/AdminTextField';
 import { Seo } from '@/components/ui/Seo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
@@ -31,6 +27,7 @@ import type {
   StudentProfile,
   StudentProfileFormErrors,
   StudentProfileFormValues,
+  StudentTreatmentType,
 } from '@/content/types';
 import { IS_TEST_MODE } from '@/lib/apiClient';
 import { classNames } from '@/lib/classNames';
@@ -98,10 +95,10 @@ export function StudentProfilePage() {
     practiceSites,
     profile,
     getUniversitySites,
-    togglePracticeSiteStatus,
-    toggleTreatmentStatus,
+    getTreatmentTypes,
     treatments,
     updatePracticeSites,
+    updateTreatments,
     updateProfile,
   } = useStudentModuleStore();
   const [values, setValues] = useState<StudentProfileFormValues>(() => getInitialValues(profile));
@@ -118,6 +115,12 @@ export function StudentProfilePage() {
   );
   const [sedesSaveMessage, setSedesSaveMessage] = useState<string | null>(null);
   const [isSedeSaving, setIsSedeSaving] = useState(false);
+  const [treatmentTypes, setTreatmentTypes] = useState<StudentTreatmentType[]>([]);
+  const [selectedTreatmentTypeIds, setSelectedTreatmentTypeIds] = useState<Set<string>>(() =>
+    new Set(treatments.map((t) => t.treatmentTypeId)),
+  );
+  const [treatmentSaveMessage, setTreatmentSaveMessage] = useState<string | null>(null);
+  const [isTreatmentSaving, setIsTreatmentSaving] = useState(false);
   const avatarPreviewUrlRef = useRef<string | null>(null);
   const avatarUploadPromiseRef = useRef<Promise<string | null> | null>(null);
   const avatarUploadSequenceRef = useRef(0);
@@ -178,6 +181,35 @@ export function StudentProfilePage() {
     void updatePracticeSites([...selectedSiteIds]).then((ok) => {
       setIsSedeSaving(false);
       if (ok) setSedesSaveMessage('Sedes de practica actualizadas correctamente.');
+    });
+  };
+
+  useEffect(() => {
+    void getTreatmentTypes().then(setTreatmentTypes);
+  }, []);
+
+  useEffect(() => {
+    setSelectedTreatmentTypeIds(new Set(treatments.map((t) => t.treatmentTypeId)));
+  }, [treatments]);
+
+  const handleToggleTreatment = (typeId: string) => {
+    setSelectedTreatmentTypeIds((current) => {
+      const next = new Set(current);
+      if (next.has(typeId)) {
+        next.delete(typeId);
+      } else {
+        next.add(typeId);
+      }
+      return next;
+    });
+    setTreatmentSaveMessage(null);
+  };
+
+  const handleSaveTreatments = () => {
+    setIsTreatmentSaving(true);
+    void updateTreatments([...selectedTreatmentTypeIds]).then((ok) => {
+      setIsTreatmentSaving(false);
+      if (ok) setTreatmentSaveMessage('Tratamientos actualizados correctamente.');
     });
   };
 
@@ -586,65 +618,71 @@ export function StudentProfilePage() {
                 paddingClassName="p-4 sm:p-5"
               >
                 <div className="space-y-3.5">
-                  <div>
-                    <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
-                      Tratamientos que realizas
-                    </h2>
-                    <p className="mt-1 text-sm leading-6 text-ink-muted">
-                      Selecciona que tratamientos quieres mantener activos dentro de tu perfil.
-                    </p>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
+                        Tratamientos que realizas
+                      </h2>
+                      <p className="mt-1 text-sm leading-6 text-ink-muted">
+                        Selecciona los tratamientos que ofreces en tu practica clinica.
+                      </p>
+                    </div>
+                    <button
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-4 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 disabled:opacity-60"
+                      disabled={isTreatmentSaving}
+                      type="button"
+                      onClick={handleSaveTreatments}
+                    >
+                      <Save aria-hidden="true" className="h-4 w-4" />
+                      <span>Guardar tratamientos</span>
+                    </button>
                   </div>
-                  {treatments.length > 0 ? (
-                    <div className="grid gap-3 xl:grid-cols-2 2xl:grid-cols-3">
-                      {treatments.map((treatment) => (
-                        <div
-                          key={treatment.id}
-                          className="flex flex-col gap-3 rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-3.5 py-3"
-                          data-testid={`student-profile-treatment-card-${treatment.id}`}
-                        >
-                          <div className="flex flex-wrap items-start justify-between gap-3">
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-2">
-                                <Stethoscope aria-hidden="true" className="h-4 w-4 text-primary" />
-                                <p className="text-sm font-semibold text-ink">{treatment.name}</p>
-                              </div>
-                              <p className="text-sm leading-6 text-ink-muted">
-                                {treatment.description}
-                              </p>
-                            </div>
-                            <AdminStatusBadge entity="teacher" status={treatment.status} />
-                          </div>
-                          <div className="flex justify-end">
-                            <button
-                              className={classNames(
-                                'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
-                                treatment.status === 'active'
-                                  ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
-                                  : 'bg-primary/10 text-primary hover:bg-primary/15',
-                              )}
-                              type="button"
-                              onClick={() => {
-                                void toggleTreatmentStatus(treatment.id);
-                              }}
-                            >
-                              {treatment.status === 'active' ? (
-                                <PowerOff aria-hidden="true" className="h-3.5 w-3.5" />
-                              ) : (
-                                <Power aria-hidden="true" className="h-3.5 w-3.5" />
-                              )}
-                              <span>
-                                {treatment.status === 'active'
-                                  ? studentContent.treatmentsPage.actionLabels.deactivate
-                                  : studentContent.treatmentsPage.actionLabels.activate}
-                              </span>
-                            </button>
-                          </div>
-                        </div>
-                      ))}
+                  {treatmentSaveMessage ? (
+                    <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+                      {treatmentSaveMessage}
+                    </p>
+                  ) : null}
+                  {treatmentTypes.length === 0 ? (
+                    <div className="rounded-[1.35rem] border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-ink-muted">
+                      No hay tipos de tratamiento disponibles.
                     </div>
                   ) : (
-                    <div className="rounded-[1.35rem] border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-ink-muted">
-                      No hay tratamientos asociados a tu perfil en este momento.
+                    <div className="grid gap-2 xl:grid-cols-2 2xl:grid-cols-3">
+                      {treatmentTypes.map((type) => {
+                        const isSelected = selectedTreatmentTypeIds.has(type.id);
+                        return (
+                          <button
+                            key={type.id}
+                            className={classNames(
+                              'flex items-start gap-3 rounded-[1.35rem] border px-4 py-3 text-left text-sm transition duration-200',
+                              isSelected
+                                ? 'border-primary/30 bg-primary/8 text-primary'
+                                : 'border-slate-200 bg-slate-50 text-ink hover:bg-slate-100',
+                            )}
+                            type="button"
+                            onClick={() => handleToggleTreatment(type.id)}
+                          >
+                            <span
+                              className={classNames(
+                                'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition duration-200',
+                                isSelected
+                                  ? 'border-primary bg-primary text-white'
+                                  : 'border-slate-300 bg-white',
+                              )}
+                            >
+                              {isSelected ? <Check aria-hidden="true" className="h-3 w-3" /> : null}
+                            </span>
+                            <div className="min-w-0">
+                              <p className="font-semibold">{type.name}</p>
+                              {type.description ? (
+                                <p className={classNames('mt-0.5 text-xs leading-5', isSelected ? 'text-primary/70' : 'text-ink-muted')}>
+                                  {type.description}
+                                </p>
+                              ) : null}
+                            </div>
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
