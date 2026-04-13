@@ -342,12 +342,12 @@ export function AdminCredentialsPage() {
         </SurfaceCard>
       ) : null}
       <AdminPanelCard className="flex-1" panelClassName="bg-white">
-        <div className="border-b border-slate-200/80 px-4 py-4 sm:px-5 sm:py-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-            <h2 className="whitespace-nowrap text-center font-headline text-[1rem] font-extrabold leading-none tracking-tight text-ink sm:text-left sm:text-[1.45rem]">
+        <div className="border-b border-slate-200/80 px-4 py-3.5 sm:px-5 sm:py-4">
+          <div className="flex items-center gap-2 sm:justify-between sm:gap-4">
+            <h2 className="hidden whitespace-nowrap font-headline font-extrabold leading-none tracking-tight text-ink sm:block sm:text-left sm:text-[1.45rem]">
               Credenciales pendientes
             </h2>
-            <div className="flex min-w-0 items-center gap-2 sm:w-full sm:max-w-[26rem] sm:justify-end sm:gap-2.5 xl:max-w-[30rem]">
+            <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:w-full sm:max-w-[26rem] sm:flex-none sm:justify-end sm:gap-2.5 xl:max-w-[30rem]">
               <label className="relative min-w-0 flex-1" htmlFor="admin-credential-search">
                 <span className="sr-only">Buscar universidad</span>
                 <Search
@@ -355,7 +355,7 @@ export function AdminCredentialsPage() {
                   className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ghost sm:left-4 sm:h-4 sm:w-4"
                 />
                 <input
-                  className="h-10 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-8 pr-4 text-[0.77rem] text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-11 sm:pl-11 sm:text-sm"
+                  className="h-9 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-8 pr-3 text-[0.72rem] text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-11 sm:pl-11 sm:pr-4 sm:text-sm"
                   id="admin-credential-search"
                   placeholder="Buscar universidad..."
                   type="search"
@@ -376,7 +376,7 @@ export function AdminCredentialsPage() {
                         }`
                   }
                   className={classNames(
-                    'relative inline-flex h-10 w-10 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-11 sm:w-11',
+                    'relative inline-flex h-9 w-9 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-11 sm:w-11',
                     statusFilter === 'all'
                       ? 'border-slate-200/90 hover:border-primary/30 hover:bg-white'
                       : 'border-primary/25 bg-primary/[0.08] text-primary hover:bg-primary/[0.12]',
@@ -438,13 +438,13 @@ export function AdminCredentialsPage() {
                 ) : null}
               </div>
               <button
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-gradient px-3.5 py-2.5 text-[0.82rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+                className="inline-flex h-9 shrink-0 items-center justify-center gap-1 rounded-xl bg-brand-gradient px-2.5 text-[0.7rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 sm:h-auto sm:gap-2 sm:px-3.5 sm:py-2.5 sm:text-[0.82rem]"
                 disabled={isLoading || generatedCredentialCount === 0}
                 type="button"
                 onClick={handleSendAll}
               >
-                <Send aria-hidden="true" className="h-4 w-4" />
-                <span>{adminContent.credentialsPage.actionLabels.sendAll}</span>
+                <Send aria-hidden="true" className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="whitespace-nowrap">{adminContent.credentialsPage.actionLabels.sendAll}</span>
               </button>
             </div>
           </div>
