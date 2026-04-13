@@ -77,6 +77,20 @@ describe('Student pages', () => {
     expect(screen.getByText(/https:\/\/drive.google.com\/file\/d\/demo-cv/i)).toBeInTheDocument();
   });
 
+  it('muestra notificaciones del estudiante en el header', async () => {
+    const user = userEvent.setup();
+
+    renderStudentApp([ROUTES.studentProfile]);
+
+    await user.click(screen.getByRole('button', { name: /notificaciones/i }));
+
+    expect(screen.getByRole('dialog', { name: /panel de notificaciones/i })).toBeInTheDocument();
+    expect(screen.getByText(/nueva solicitud de ana maria perez/i)).toBeInTheDocument();
+    expect(screen.getByText(/julian torres acepto la cita/i)).toBeInTheDocument();
+    expect(screen.getByText(/solicitud de reprogramacion/i)).toBeInTheDocument();
+    expect(screen.getByText(/ricardo suarez cancelo la cita/i)).toBeInTheDocument();
+  });
+
   it('muestra el resumen de valoraciones y comentarios del estudiante', async () => {
     const user = userEvent.setup();
 

@@ -1,7 +1,8 @@
 import type { PropsWithChildren } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Badge,
+  Bell,
   Building2,
   CalendarCheck2,
   CalendarDays,
@@ -41,8 +42,18 @@ type AdminShellProps = PropsWithChildren<{
   avatarKind?: 'logo' | 'photo';
   avatarSrc?: string | null;
   content?: AdminShellContent;
+  headerNotifications?: AdminShellNotification[];
   overrideName?: { firstName: string; lastName: string };
 }>;
+
+export type AdminShellNotification = {
+  createdAt: string;
+  description: string;
+  id: string;
+  title: string;
+  tone?: 'danger' | 'info' | 'success' | 'warning';
+  to?: string;
+};
 
 const SIDEBAR_STATE_STORAGE_KEY = 'docqee-admin-sidebar-collapsed';
 const MOBILE_ADMIN_MEDIA_QUERY = '(max-width: 1023px)';
@@ -125,11 +136,42 @@ function useIsMobileViewport() {
   return isMobileViewport;
 }
 
+function getNotificationToneClasses(
+  tone: AdminShellNotification['tone'] = 'info',
+) {
+  switch (tone) {
+    case 'danger':
+      return 'bg-rose-100 text-rose-700';
+    case 'success':
+      return 'bg-emerald-100 text-emerald-700';
+    case 'warning':
+      return 'bg-amber-100 text-amber-700';
+    default:
+      return 'bg-primary/10 text-primary';
+  }
+}
+
+function formatNotificationTimestamp(value: string) {
+  const parsedValue = new Date(value);
+
+  if (Number.isNaN(parsedValue.getTime())) {
+    return '';
+  }
+
+  return new Intl.DateTimeFormat('es-CO', {
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    month: 'short',
+  }).format(parsedValue);
+}
+
 export function AdminShell({
   avatarKind = 'photo',
   avatarSrc,
   children,
   content = adminContent.shell,
+  headerNotifications = [],
   overrideName,
 }: AdminShellProps) {
   const { logout, session } = useAuth();
@@ -137,7 +179,9 @@ export function AdminShell({
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(
     getStoredSidebarState,
   );
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const isMobileViewport = useIsMobileViewport();
+  const notificationsRef = useRef<HTMLDivElement | null>(null);
   const adminFirstName = overrideName?.firstName || session?.user.firstName || content.adminUser.firstName;
   const adminLastName = overrideName?.lastName || session?.user.lastName || content.adminUser.lastName;
   const adminInitials =
@@ -152,6 +196,20 @@ export function AdminShell({
     avatarKind === 'logo'
       ? getOptimizedLogoUrl(avatarSrc, 320, 320)
       : getOptimizedAvatarUrl(avatarSrc, 96);
+  const visibleNotifications = useMemo(
+    () =>
+      [...headerNotifications]
+        .sort(
+          (firstNotification, secondNotification) =>
+            new Date(secondNotification.createdAt).getTime() -
+            new Date(firstNotification.createdAt).getTime(),
+        )
+        .slice(0, 8),
+    [headerNotifications],
+  );
+  const notificationButtonLabel = headerNotifications.length
+    ? `Notificaciones (${headerNotifications.length})`
+    : 'Notificaciones';
 
   useEffect(() => {
     try {
@@ -163,6 +221,32 @@ export function AdminShell({
       // Ignore storage write failures and keep the UI interactive.
     }
   }, [isSidebarCollapsed]);
+
+  useEffect(() => {
+    if (!isNotificationsOpen) {
+      return undefined;
+    }
+
+    function handlePointerDown(event: MouseEvent) {
+      if (!notificationsRef.current?.contains(event.target as Node)) {
+        setIsNotificationsOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsNotificationsOpen(false);
+      }
+    }
+
+    window.addEventListener('mousedown', handlePointerDown);
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('mousedown', handlePointerDown);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isNotificationsOpen]);
 
   return (
     <div className="admin-shell-density relative h-screen overflow-hidden bg-[#f4f8ff]">
@@ -192,6 +276,85 @@ export function AdminShell({
                 </Link>
               </div>
               <div className="inline-flex max-w-full items-center gap-2 self-start sm:self-center">
+                <div className="relative" ref={notificationsRef}>
+                  <button
+                    aria-controls="admin-header-notifications"
+                    aria-expanded={isNotificationsOpen}
+                    aria-haspopup="dialog"
+                    aria-label={notificationButtonLabel}
+                    className="relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-ink-muted transition-colors duration-200 hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/12 sm:h-8 sm:w-8"
+                    type="button"
+                    onClick={() => setIsNotificationsOpen((currentValue) => !currentValue)}
+                  >
+                    <Bell aria-hidden="true" className="h-4.5 w-4.5" />
+                    {headerNotifications.length > 0 ? (
+                      <span className="absolute -right-1 -top-1 inline-flex min-h-[1.1rem] min-w-[1.1rem] items-center justify-center rounded-full bg-rose-500 px-1 text-[0.62rem] font-bold leading-none text-white">
+                        {headerNotifications.length > 9 ? '9+' : headerNotifications.length}
+                      </span>
+                    ) : null}
+                  </button>
+                  {isNotificationsOpen ? (
+                    <div
+                      aria-label="Panel de notificaciones"
+                      className="absolute right-0 top-[calc(100%+0.65rem)] z-30 w-[20rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-[1.4rem] border border-slate-200/80 bg-white shadow-[0_24px_60px_-28px_rgba(15,23,42,0.45)]"
+                      id="admin-header-notifications"
+                      role="dialog"
+                    >
+                      <div className="border-b border-slate-200/80 px-4 py-3">
+                        <p className="text-sm font-extrabold tracking-tight text-ink">
+                          Notificaciones
+                        </p>
+                      </div>
+                      {visibleNotifications.length > 0 ? (
+                        <div className="max-h-[22rem] overflow-y-auto">
+                          {visibleNotifications.map((notification) => {
+                            const itemContent = (
+                              <div className="flex items-start gap-3 px-4 py-3 transition-colors duration-200 hover:bg-slate-50">
+                                <span
+                                  className={classNames(
+                                    'mt-0.5 inline-flex h-2.5 w-2.5 shrink-0 rounded-full',
+                                    getNotificationToneClasses(notification.tone),
+                                  )}
+                                />
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <p className="text-sm font-semibold text-ink">
+                                      {notification.title}
+                                    </p>
+                                    <span className="shrink-0 text-[0.68rem] font-medium text-ink-muted">
+                                      {formatNotificationTimestamp(notification.createdAt)}
+                                    </span>
+                                  </div>
+                                  <p className="mt-1 text-[0.78rem] leading-5 text-ink-muted">
+                                    {notification.description}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+
+                            if (notification.to) {
+                              return (
+                                <Link
+                                  key={notification.id}
+                                  to={notification.to}
+                                  onClick={() => setIsNotificationsOpen(false)}
+                                >
+                                  {itemContent}
+                                </Link>
+                              );
+                            }
+
+                            return <div key={notification.id}>{itemContent}</div>;
+                          })}
+                        </div>
+                      ) : (
+                        <div className="px-4 py-5 text-sm text-ink-muted">
+                          No tienes notificaciones por ahora.
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
+                </div>
                 {optimizedAvatarSrc ? (
                   <img
                     alt={adminFullName}
