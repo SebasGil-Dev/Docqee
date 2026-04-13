@@ -276,17 +276,17 @@ export function AdminShell({
                 </Link>
               </div>
               <div className="inline-flex max-w-full items-center gap-2 self-start sm:self-center">
-                <div className="relative" ref={notificationsRef}>
+                <div className="relative -translate-x-1 sm:-translate-x-0.5" ref={notificationsRef}>
                   <button
                     aria-controls="admin-header-notifications"
                     aria-expanded={isNotificationsOpen}
                     aria-haspopup="dialog"
                     aria-label={notificationButtonLabel}
-                    className="relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-ink-muted transition-colors duration-200 hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/12 sm:h-8 sm:w-8"
+                    className="relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-ink-muted transition-colors duration-200 hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/12 sm:h-7 sm:w-7"
                     type="button"
                     onClick={() => setIsNotificationsOpen((currentValue) => !currentValue)}
                   >
-                    <Bell aria-hidden="true" className="h-4.5 w-4.5" />
+                    <Bell aria-hidden="true" className="h-4 w-4 sm:h-[0.95rem] sm:w-[0.95rem]" />
                     {headerNotifications.length > 0 ? (
                       <span className="absolute -right-1 -top-1 inline-flex min-h-[1.1rem] min-w-[1.1rem] items-center justify-center rounded-full bg-rose-500 px-1 text-[0.62rem] font-bold leading-none text-white">
                         {headerNotifications.length > 9 ? '9+' : headerNotifications.length}
