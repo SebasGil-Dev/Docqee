@@ -158,7 +158,7 @@ export function AdminUniversitiesPage() {
       ) : null}
       <div className="flex items-stretch gap-2 md:gap-2.5">
         <SurfaceCard
-          className="w-[8.75rem] flex-none overflow-hidden bg-brand-gradient text-white sm:w-auto sm:min-w-0 sm:flex-1 md:flex-[1.75]"
+          className="w-[9.25rem] flex-none overflow-hidden bg-brand-gradient text-white sm:w-auto sm:min-w-0 sm:flex-1 md:flex-[1.75]"
           paddingClassName="p-0"
         >
           <div className="flex items-center gap-1.5 px-2.5 py-1.75 sm:gap-2.5 sm:px-3.5 sm:py-2">
@@ -168,14 +168,14 @@ export function AdminUniversitiesPage() {
             <span className="font-headline text-[0.95rem] font-extrabold tracking-tight text-white sm:text-[1.25rem]">
               {universities.length}
             </span>
-            <p className="min-w-0 text-[0.58rem] font-semibold leading-tight text-white/90 sm:text-[0.78rem]">
+            <p className="min-w-0 text-[0.7rem] font-semibold leading-none text-white/90 sm:text-[0.78rem]">
               <span className="sm:hidden">Universidades</span>
               <span className="hidden sm:inline">{adminContent.universitiesPage.summaryLabel}</span>
             </p>
           </div>
         </SurfaceCard>
         <Link
-          className="inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-[1.2rem] bg-brand-gradient px-2.75 py-1.75 text-[0.74rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 sm:gap-2 sm:px-3.5 sm:py-2 sm:text-[0.82rem] md:min-w-[12.25rem] md:flex-none"
+          className="inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-[1.2rem] bg-brand-gradient px-2.75 py-1.75 text-[0.7rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 sm:gap-2 sm:px-3.5 sm:py-2 sm:text-[0.82rem] md:min-w-[12.25rem] md:flex-none"
           to={ROUTES.adminRegisterUniversity}
         >
           <Plus aria-hidden="true" className="h-3.5 w-3.5" />
