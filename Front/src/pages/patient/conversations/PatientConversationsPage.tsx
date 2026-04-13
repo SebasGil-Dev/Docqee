@@ -71,7 +71,7 @@ function formatTimestamp(value: string) {
 }
 
 export function PatientConversationsPage() {
-  const { conversations, errorMessage, isLoading, sendConversationMessage } = usePatientModuleStore();
+  const { conversations, errorMessage, isLoading, sendConversationMessage, refreshConversation } = usePatientModuleStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<ConversationStatusFilter>('all');
   const [composerValue, setComposerValue] = useState('');
@@ -80,6 +80,7 @@ export function PatientConversationsPage() {
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const selectedConversationId = searchParams.get('conversation');
   const filteredConversations = useMemo(
@@ -158,6 +159,22 @@ export function PatientConversationsPage() {
     setComposerError(null);
     setSuccessMessage(null);
   }, [selectedConversation?.id]);
+
+  useEffect(() => {
+    if (!selectedConversation || selectedConversation.status !== 'ACTIVA') {
+      return undefined;
+    }
+    const interval = setInterval(() => {
+      void refreshConversation(selectedConversation.id);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [selectedConversation?.id, selectedConversation?.status, refreshConversation]);
+
+  const lastMessageId = selectedConversation?.messages[selectedConversation.messages.length - 1]?.id;
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [lastMessageId]);
 
   const handleSendMessage = () => {
     if (!selectedConversation || selectedConversation.status !== 'ACTIVA') {
@@ -485,6 +502,7 @@ export function PatientConversationsPage() {
                       </div>
                     );
                   })}
+                  <div ref={messagesEndRef} />
                 </div>
                 <div className="border-t border-slate-200/80 px-4 py-3.5 sm:px-5">
                   {selectedConversation.status === 'ACTIVA' ? (
@@ -518,6 +536,12 @@ export function PatientConversationsPage() {
                               setComposerValue(event.target.value);
                               setComposerError(null);
                               setSuccessMessage(null);
+                            }}
+                            onKeyDown={(event) => {
+                              if (event.key === 'Enter' && !event.shiftKey) {
+                                event.preventDefault();
+                                handleSendMessage();
+                              }
                             }}
                           />
                           {composerError ? (

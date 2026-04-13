@@ -1,6 +1,7 @@
 import type {
   PatientAppointment,
   PatientAppointmentStatus,
+  PatientConversation,
   PatientConversationMessage,
   PatientModuleState,
   PatientProfile,
@@ -36,6 +37,10 @@ export function updatePatientPortalRequestStatus(
     body: { status },
     method: 'PATCH',
   });
+}
+
+export function getPatientPortalConversation(conversationId: string) {
+  return apiRequest<PatientConversation>(`/patient-portal/conversations/${conversationId}`);
 }
 
 export function sendPatientPortalConversationMessage(

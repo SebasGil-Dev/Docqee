@@ -16,6 +16,7 @@ import type {
 import { IS_TEST_MODE } from '@/lib/apiClient';
 import {
   createPatientPortalRequest,
+  getPatientPortalConversation,
   getPatientPortalDashboard,
   sendPatientPortalConversationMessage,
   updatePatientPortalAppointmentStatus,
@@ -26,6 +27,7 @@ import {
 type PatientModuleActions = {
   createRequest: (studentId: string, reason: string) => Promise<PatientRequest | null>;
   refresh: () => Promise<void>;
+  refreshConversation: (conversationId: string) => Promise<void>;
   sendConversationMessage: (
     conversationId: string,
     content: string,
@@ -752,6 +754,23 @@ async function updateRequestStatus(requestId: string, status: PatientRequestStat
   }
 }
 
+async function refreshConversation(conversationId: string) {
+  if (IS_TEST_MODE) return;
+  try {
+    const conversation = await getPatientPortalConversation(conversationId);
+    updateState({
+      ...state,
+      conversations: state.conversations.map((c) =>
+        c.id === conversationId
+          ? { ...c, messages: conversation.messages, status: conversation.status }
+          : c,
+      ),
+    });
+  } catch {
+    // silently ignore - background poll
+  }
+}
+
 async function sendConversationMessage(conversationId: string, content: string) {
   if (IS_TEST_MODE) {
     return sendConversationMessageMock(conversationId, content);
@@ -861,6 +880,7 @@ export function usePatientModuleStore(
   const actions: PatientModuleActions = {
     createRequest,
     refresh: refreshPatientModuleState,
+    refreshConversation,
     sendConversationMessage,
     updateAppointmentStatus,
     updateProfile,

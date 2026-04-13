@@ -26,6 +26,7 @@ import {
   createStudentPortalAppointment,
   createStudentPortalScheduleBlock,
   deleteStudentPortalScheduleBlock,
+  getStudentPortalConversation,
   getStudentPortalDashboard,
   sendStudentPortalConversationMessage,
   toggleStudentPortalPracticeSiteStatus,
@@ -45,6 +46,7 @@ import {
 type StudentModuleActions = {
   deleteScheduleBlock: (blockId: string) => Promise<boolean>;
   refresh: () => Promise<void>;
+  refreshConversation: (conversationId: string) => Promise<void>;
   updateAppointmentStatus: (
     appointmentId: string,
     status: StudentAgendaAppointmentStatus,
@@ -1940,6 +1942,23 @@ async function respondToRequest(
   }
 }
 
+async function refreshConversation(conversationId: string) {
+  if (IS_TEST_MODE) return;
+  try {
+    const conversation = await getStudentPortalConversation(conversationId);
+    updateState({
+      ...state,
+      conversations: state.conversations.map((c) =>
+        c.id === conversationId
+          ? { ...c, messages: conversation.messages, status: conversation.status }
+          : c,
+      ),
+    });
+  } catch {
+    // silently ignore - background poll
+  }
+}
+
 async function sendConversationMessage(
   conversationId: string,
   content: string,
@@ -2067,6 +2086,7 @@ export function useStudentModuleStore(options: UseStudentModuleStoreOptions = {}
   const actions: StudentModuleActions = {
     deleteScheduleBlock,
     refresh: refreshStudentModuleState,
+    refreshConversation,
     updateAppointmentStatus,
     respondToRequest,
     sendConversationMessage,

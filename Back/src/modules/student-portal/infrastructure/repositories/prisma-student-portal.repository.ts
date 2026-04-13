@@ -592,6 +592,65 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       });
   }
 
+  async getConversation(studentAccountId: number, conversationId: number): Promise<StudentConversationDto | null> {
+    const student = await this.prisma.cuenta_estudiante.findUnique({
+      where: { id_cuenta: studentAccountId },
+      include: { persona: true },
+    });
+
+    const studentName = student
+      ? `${student.persona.nombres} ${student.persona.apellidos}`
+      : 'Estudiante';
+
+    const solicitud = await this.prisma.solicitud.findFirst({
+      where: {
+        id_cuenta_estudiante: studentAccountId,
+        conversacion: { id_conversacion: conversationId },
+      },
+      include: {
+        cuenta_paciente: {
+          include: {
+            persona: true,
+            localidad: { include: { ciudad: true } },
+          },
+        },
+        conversacion: {
+          include: {
+            mensaje: {
+              orderBy: { enviado_at: 'asc' },
+              include: { cuenta_acceso: { select: { tipo_cuenta: true } } },
+            },
+          },
+        },
+      },
+    });
+
+    if (!solicitud || !solicitud.conversacion) {
+      return null;
+    }
+
+    const conv = solicitud.conversacion;
+    const patientName = `${solicitud.cuenta_paciente.persona.nombres} ${solicitud.cuenta_paciente.persona.apellidos}`;
+
+    return {
+      id: String(conv.id_conversacion),
+      messages: conv.mensaje.map((m) => ({
+        author: m.cuenta_acceso.tipo_cuenta === 'PACIENTE' ? ('PACIENTE' as const) : ('ESTUDIANTE' as const),
+        authorName: m.cuenta_acceso.tipo_cuenta === 'PACIENTE' ? patientName : studentName,
+        content: m.contenido,
+        id: String(m.id_mensaje),
+        sentAt: m.enviado_at.toISOString(),
+      })),
+      patientAge: calcAge(solicitud.cuenta_paciente.fecha_nacimiento),
+      patientCity: solicitud.cuenta_paciente.localidad.ciudad.nombre,
+      patientName,
+      reason: solicitud.motivo_consulta ?? null,
+      requestId: String(solicitud.id_solicitud),
+      status: conv.estado,
+      unreadCount: 0,
+    };
+  }
+
   async sendConversationMessage(
     studentAccountId: number,
     conversationId: number,

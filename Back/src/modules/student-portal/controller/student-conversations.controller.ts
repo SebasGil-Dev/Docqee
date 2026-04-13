@@ -23,6 +23,18 @@ export class StudentConversationsController {
     return this.studentPortalService.getConversations(user);
   }
 
+  @Get(':id')
+  async getConversation(
+    @CurrentUser() user: RequestUser,
+    @Param('id', ParseIntPipe) conversationId: number,
+  ) {
+    const conversation = await this.studentPortalService.getConversation(user, conversationId);
+    if (!conversation) {
+      throw new NotFoundException('La conversacion no existe o no te pertenece.');
+    }
+    return conversation;
+  }
+
   @Post(':id/messages')
   async sendMessage(
     @CurrentUser() user: RequestUser,

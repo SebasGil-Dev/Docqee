@@ -1,4 +1,4 @@
-import { Body, Controller, NotFoundException, Param, ParseIntPipe, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, NotFoundException, Param, ParseIntPipe, Post, UseGuards } from '@nestjs/common';
 import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
 
 import { CurrentUser } from '@/shared/decorators/current-user.decorator';
@@ -17,6 +17,18 @@ class SendMessageDto {
 @UseGuards(JwtAuthGuard)
 export class PatientConversationsController {
   constructor(private readonly patientPortalService: PatientPortalService) {}
+
+  @Get(':id')
+  async getConversation(
+    @CurrentUser() user: RequestUser,
+    @Param('id', ParseIntPipe) conversationId: number,
+  ) {
+    const conversation = await this.patientPortalService.getConversation(user, conversationId);
+    if (!conversation) {
+      throw new NotFoundException('La conversacion no existe o no te pertenece.');
+    }
+    return conversation;
+  }
 
   @Post(':id/messages')
   async sendMessage(

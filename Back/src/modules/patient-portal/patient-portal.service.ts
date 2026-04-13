@@ -55,6 +55,10 @@ export class PatientPortalService {
     return this.patientPortalRepository.updateAppointmentStatus(user.id, appointmentId, payload);
   }
 
+  getConversation(user: RequestUser, conversationId: number) {
+    return this.patientPortalRepository.getConversation(user.id, conversationId);
+  }
+
   sendConversationMessage(user: RequestUser, conversationId: number, content: string) {
     return this.patientPortalRepository.sendConversationMessage(user.id, conversationId, content);
   }

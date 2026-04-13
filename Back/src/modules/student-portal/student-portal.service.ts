@@ -44,6 +44,10 @@ export class StudentPortalService {
     return this.studentPortalRepository.getConversations(user.id);
   }
 
+  getConversation(user: RequestUser, conversationId: number) {
+    return this.studentPortalRepository.getConversation(user.id, conversationId);
+  }
+
   sendConversationMessage(user: RequestUser, conversationId: number, content: string) {
     return this.studentPortalRepository.sendConversationMessage(user.id, conversationId, content);
   }

@@ -428,6 +428,53 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     };
   }
 
+  async getConversation(patientAccountId: number, conversationId: number): Promise<PatientConversationDto | null> {
+    const solicitud = await this.prisma.solicitud.findFirst({
+      where: {
+        id_cuenta_paciente: patientAccountId,
+        conversacion: { id_conversacion: conversationId },
+      },
+      include: {
+        cuenta_estudiante: { include: { persona: true, universidad: true } },
+        cuenta_paciente: { include: { persona: true } },
+        conversacion: {
+          include: {
+            mensaje: {
+              orderBy: { enviado_at: 'asc' },
+              include: { cuenta_acceso: { select: { tipo_cuenta: true } } },
+            },
+          },
+        },
+      },
+    });
+
+    if (!solicitud || !solicitud.conversacion) {
+      return null;
+    }
+
+    const conv = solicitud.conversacion;
+    const studentName = `${solicitud.cuenta_estudiante.persona.nombres} ${solicitud.cuenta_estudiante.persona.apellidos}`;
+    const patientName = `${solicitud.cuenta_paciente.persona.nombres} ${solicitud.cuenta_paciente.persona.apellidos}`;
+
+    return {
+      id: String(conv.id_conversacion),
+      messages: conv.mensaje.map((m) => ({
+        author: m.cuenta_acceso.tipo_cuenta === 'PACIENTE' ? ('PACIENTE' as const) : ('ESTUDIANTE' as const),
+        authorName: m.cuenta_acceso.tipo_cuenta === 'PACIENTE' ? patientName : studentName,
+        content: m.contenido,
+        id: String(m.id_mensaje),
+        sentAt: m.enviado_at.toISOString(),
+      })),
+      reason: solicitud.motivo_consulta ?? null,
+      requestId: String(solicitud.id_solicitud),
+      status: conv.estado,
+      studentId: String(solicitud.id_cuenta_estudiante),
+      studentName,
+      universityName: solicitud.cuenta_estudiante.universidad.nombre,
+      unreadCount: 0,
+    };
+  }
+
   async sendConversationMessage(
     patientAccountId: number,
     conversationId: number,

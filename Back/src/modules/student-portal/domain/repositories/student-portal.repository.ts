@@ -52,6 +52,11 @@ export abstract class StudentPortalRepository {
 
   abstract getConversations(studentAccountId: number): Promise<StudentConversationDto[]>;
 
+  abstract getConversation(
+    studentAccountId: number,
+    conversationId: number,
+  ): Promise<StudentConversationDto | null>;
+
   abstract sendConversationMessage(
     studentAccountId: number,
     conversationId: number,
