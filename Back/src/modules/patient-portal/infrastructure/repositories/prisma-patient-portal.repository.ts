@@ -371,7 +371,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
           locality: patient.localidad.nombre,
         }
       : { limit: 6 };
-    const [solicitudes, valoraciones, students, studentFilters] = await Promise.all([
+    const [solicitudes, valoraciones, initialStudents, studentFilters] = await Promise.all([
       this.prisma.solicitud.findMany({
         where: { id_cuenta_paciente: patientAccountId },
         include: {
@@ -421,6 +421,10 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       this.getStudentDirectory(patientAccountId, initialStudentQuery),
       this.getStudentDirectoryFilters(),
     ]);
+    const students =
+      patient && initialStudents.length === 0
+        ? await this.getStudentDirectory(patientAccountId, { limit: 6 })
+        : initialStudents;
 
     const profile = patient ? this.toProfileDto(patient) : this.emptyProfile();
 
