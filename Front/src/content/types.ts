@@ -930,8 +930,15 @@ export type StudentProfile = {
 export type StudentTreatment = {
   description: string;
   id: string;
+  treatmentTypeId: string;
   name: string;
   status: PersonOperationalStatus;
+};
+
+export type StudentTreatmentType = {
+  id: string;
+  name: string;
+  description: string;
 };
 
 export type StudentPracticeSite = {

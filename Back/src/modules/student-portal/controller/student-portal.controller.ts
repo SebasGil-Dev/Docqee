@@ -19,6 +19,7 @@ import type { RequestUser } from '@/shared/types/request-user.type';
 import { UpdatePracticeSitesDto } from '../application/dto/update-practice-sites.dto';
 import { UpdateStudentProfileDto } from '../application/dto/update-student-profile.dto';
 import { UpdateStudentRequestStatusDto } from '../application/dto/update-student-request-status.dto';
+import { UpdateStudentTreatmentsDto } from '../application/dto/update-student-treatments.dto';
 import { StudentPortalService } from '../student-portal.service';
 
 @Controller('student-portal')
@@ -34,6 +35,16 @@ export class StudentPortalController {
   @Get('university-sites')
   getUniversitySites(@CurrentUser() user: RequestUser) {
     return this.studentPortalService.getUniversitySites(user);
+  }
+
+  @Get('treatment-types')
+  getTreatmentTypes() {
+    return this.studentPortalService.getTreatmentTypes();
+  }
+
+  @Patch('treatments')
+  updateTreatments(@CurrentUser() user: RequestUser, @Body() body: UpdateStudentTreatmentsDto) {
+    return this.studentPortalService.updateTreatments(user, body);
   }
 
   @Patch('practice-sites')
