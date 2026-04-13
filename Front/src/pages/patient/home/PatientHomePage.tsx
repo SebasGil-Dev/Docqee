@@ -161,7 +161,6 @@ export function PatientHomePage() {
                     <span className="max-w-[14rem] truncate sm:max-w-[16rem] xl:max-w-[18rem]">
                       {[profile.city, profile.locality]
                         .filter(Boolean)
-                        .map((value) => formatDisplayName(value))
                         .join(' - ')}
                     </span>
                   </span>
@@ -174,11 +173,7 @@ export function PatientHomePage() {
                     <span className="max-w-[12rem] truncate text-[0.75rem] font-semibold sm:max-w-[14rem] xl:max-w-[18rem]">
                       {`${averageRating.toFixed(1)} de 5 en ${reviews.length} valoraciones`}
                     </span>
-                  ) : (
-                    <span className="text-[0.75rem] font-semibold">
-                      Aun no tienes valoraciones registradas
-                    </span>
-                  )}
+                  ) : null}
                 </span>
               </div>
             </div>
