@@ -82,6 +82,8 @@ const credentialFilterOptions: Array<{
   { label: 'Enviada', value: 'sent' },
 ];
 
+const AUTO_REFRESH_MIN_INTERVAL_MS = 5000;
+
 export function UniversityCredentialsPage() {
   const {
     credentials,
@@ -90,6 +92,7 @@ export function UniversityCredentialsPage() {
     errorMessage,
     isLoading,
     resendStudentCredential,
+    refresh,
     sendAllStudentCredentials,
     sendStudentCredential,
     students,
@@ -109,6 +112,7 @@ export function UniversityCredentialsPage() {
     useState<UniversityCredentialConfirmation | null>(null);
   const [isConfirmationSubmitting, setIsConfirmationSubmitting] = useState(false);
   const filterMenuRef = useRef<HTMLDivElement | null>(null);
+  const lastAutoRefreshAtRef = useRef(0);
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const filteredCredentialRows = credentialRows.filter((credential) => {
     const matchesSearch =
@@ -225,6 +229,37 @@ export function UniversityCredentialsPage() {
       setPendingConfirmation(null);
     })();
   };
+
+  useEffect(() => {
+    const refreshWhenVisible = () => {
+      if (isLoading || document.visibilityState === 'hidden') {
+        return;
+      }
+
+      const now = Date.now();
+
+      if (now - lastAutoRefreshAtRef.current < AUTO_REFRESH_MIN_INTERVAL_MS) {
+        return;
+      }
+
+      lastAutoRefreshAtRef.current = now;
+      void refresh();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshWhenVisible();
+      }
+    };
+
+    window.addEventListener('focus', refreshWhenVisible);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', refreshWhenVisible);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isLoading, refresh]);
 
   useEffect(() => {
     if (!feedbackMessage) {

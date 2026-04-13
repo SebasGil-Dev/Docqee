@@ -33,6 +33,7 @@ export class CredentialsService {
         cuenta_acceso: {
           tipo_cuenta: tipo_cuenta_enum.ESTUDIANTE,
           primer_ingreso_pendiente: true,
+          ultimo_login_at: null,
           cuenta_estudiante: {
             id_universidad: universityId,
           },
@@ -135,6 +136,8 @@ export class CredentialsService {
         },
         cuenta_acceso: {
           tipo_cuenta: tipo_cuenta_enum.ESTUDIANTE,
+          primer_ingreso_pendiente: true,
+          ultimo_login_at: null,
           cuenta_estudiante: {
             id_universidad: universityId,
           },
@@ -250,6 +253,8 @@ export class CredentialsService {
         anulada_at: null,
         cuenta_acceso: {
           tipo_cuenta: tipo_cuenta_enum.ESTUDIANTE,
+          primer_ingreso_pendiente: true,
+          ultimo_login_at: null,
           cuenta_estudiante: {
             id_universidad: universityId,
           },
