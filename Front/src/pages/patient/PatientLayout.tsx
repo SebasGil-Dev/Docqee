@@ -6,10 +6,12 @@ import { ROUTES } from '@/constants/routes';
 import { patientContent } from '@/content/patientContent';
 import { IS_TEST_MODE } from '@/lib/apiClient';
 import { getDefaultRouteForRole } from '@/lib/authRouting';
+import { usePatientModuleStore } from '@/lib/patientModuleStore';
 
 export function PatientLayout() {
   const { session } = useAuth();
   const location = useLocation();
+  const { profile } = usePatientModuleStore();
 
   if (!IS_TEST_MODE) {
     if (!session) {
@@ -21,8 +23,17 @@ export function PatientLayout() {
     }
   }
 
+  const overrideName =
+    profile.firstName || profile.lastName
+      ? { firstName: profile.firstName, lastName: profile.lastName }
+      : undefined;
+
   return (
-    <AdminShell content={patientContent.shell}>
+    <AdminShell
+      avatarSrc={profile.avatarSrc}
+      content={patientContent.shell}
+      {...(overrideName ? { overrideName } : {})}
+    >
       <Outlet />
     </AdminShell>
   );
