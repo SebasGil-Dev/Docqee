@@ -171,7 +171,9 @@ export function StudentConversationsPage() {
   const lastMessageId = selectedConversation?.messages[selectedConversation.messages.length - 1]?.id;
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (typeof messagesEndRef.current?.scrollIntoView === 'function') {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [lastMessageId]);
 
   const handleSendMessage = () => {

@@ -6,6 +6,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -17,6 +18,7 @@ import { JwtAuthGuard } from '@/shared/guards/jwt-auth.guard';
 import type { UploadImageFile } from '@/shared/storage/cloudinary.service';
 import type { RequestUser } from '@/shared/types/request-user.type';
 import { CreatePatientRequestDto } from '../application/dto/create-patient-request.dto';
+import { PatientStudentDirectoryQueryDto } from '../application/dto/patient-student-directory-query.dto';
 import { UpdatePatientAppointmentStatusDto } from '../application/dto/update-patient-appointment-status.dto';
 import { UpdatePatientProfileDto } from '../application/dto/update-patient-profile.dto';
 import { UpdatePatientRequestStatusDto } from '../application/dto/update-patient-request-status.dto';
@@ -30,6 +32,14 @@ export class PatientPortalController {
   @Get('dashboard')
   getDashboard(@CurrentUser() user: RequestUser) {
     return this.patientPortalService.getDashboard(user);
+  }
+
+  @Get('students')
+  getStudentDirectory(
+    @CurrentUser() user: RequestUser,
+    @Query() query: PatientStudentDirectoryQueryDto,
+  ) {
+    return this.patientPortalService.getStudentDirectory(user, query);
   }
 
   @Patch('profile')

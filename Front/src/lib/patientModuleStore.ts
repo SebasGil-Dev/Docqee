@@ -18,7 +18,9 @@ import {
   createPatientPortalRequest,
   getPatientPortalConversation,
   getPatientPortalDashboard,
+  getPatientPortalStudents,
   sendPatientPortalConversationMessage,
+  type PatientStudentDirectorySearchParams,
   updatePatientPortalAppointmentStatus,
   updatePatientPortalProfile,
   updatePatientPortalRequestStatus,
@@ -28,6 +30,9 @@ type PatientModuleActions = {
   createRequest: (studentId: string, reason: string) => Promise<PatientRequest | null>;
   refresh: () => Promise<void>;
   refreshConversation: (conversationId: string) => Promise<void>;
+  searchStudents: (
+    filters: PatientStudentDirectorySearchParams,
+  ) => Promise<PatientStudentDirectoryItem[]>;
   sendConversationMessage: (
     conversationId: string,
     content: string,
@@ -47,6 +52,7 @@ type PatientStoreState = PatientModuleState & {
   errorMessage: string | null;
   isLoading: boolean;
   isReady: boolean;
+  isSearchingStudents: boolean;
 };
 
 type UsePatientModuleStoreOptions = {
@@ -54,6 +60,68 @@ type UsePatientModuleStoreOptions = {
 };
 
 const listeners = new Set<() => void>();
+
+function createStudentFilterOptions(students: PatientStudentDirectoryItem[]) {
+  const locationMap = new Map<string, string>();
+
+  students.forEach((student) => {
+    const locationValue = [student.city, student.locality].filter(Boolean).join('||');
+
+    if (locationValue && !locationMap.has(locationValue)) {
+      locationMap.set(
+        locationValue,
+        [student.city, student.locality].filter(Boolean).join(' - '),
+      );
+    }
+  });
+
+  return {
+    locations: [...locationMap.entries()]
+      .map(([value, label]) => ({ label, value }))
+      .sort((first, second) => first.label.localeCompare(second.label, 'es-CO')),
+    treatments: [...new Set(students.flatMap((student) => student.treatments))]
+      .filter(Boolean)
+      .sort((first, second) => first.localeCompare(second, 'es-CO')),
+    universities: [...new Set(students.map((student) => student.universityName))]
+      .filter(Boolean)
+      .sort((first, second) => first.localeCompare(second, 'es-CO')),
+  };
+}
+
+function matchesMockStudentSearch(
+  student: PatientStudentDirectoryItem,
+  filters: PatientStudentDirectorySearchParams,
+) {
+  const normalizedSearch = normalizeText(filters.search ?? '').toLowerCase();
+  const normalizedTreatment =
+    filters.treatment && filters.treatment !== 'all'
+      ? normalizeText(filters.treatment)
+      : '';
+  const normalizedLocation =
+    filters.location && filters.location !== 'all'
+      ? normalizeText(filters.location)
+      : '';
+  const normalizedUniversity =
+    filters.university && filters.university !== 'all'
+      ? normalizeText(filters.university)
+      : '';
+  const normalizedRating = filters.rating && filters.rating !== 'all' ? Number(filters.rating) : null;
+  const studentFullName = `${student.firstName} ${student.lastName}`.toLowerCase();
+  const studentLocation = [student.city, student.locality].filter(Boolean).join('||');
+
+  return (
+    (!normalizedSearch || studentFullName.includes(normalizedSearch)) &&
+    (!normalizedTreatment || student.treatments.includes(normalizedTreatment)) &&
+    (!normalizedLocation || studentLocation === normalizedLocation) &&
+    (!normalizedUniversity || student.universityName === normalizedUniversity) &&
+    (!normalizedRating ||
+      Boolean(
+        student.averageRating &&
+          student.averageRating >= normalizedRating &&
+          student.reviewsCount > 0,
+      ))
+  );
+}
 
 function createMockState(): PatientStoreState {
   const profile: PatientProfile = {
@@ -328,9 +396,11 @@ function createMockState(): PatientStoreState {
     errorMessage: null,
     isLoading: false,
     isReady: true,
+    isSearchingStudents: false,
     profile,
     reviews,
     requests,
+    studentFilters: createStudentFilterOptions(students),
     students,
   };
 }
@@ -342,6 +412,7 @@ function createRuntimeInitialState(): PatientStoreState {
     errorMessage: null,
     isLoading: false,
     isReady: false,
+    isSearchingStudents: false,
     profile: {
       avatarAlt: 'Foto del paciente',
       avatarFileName: null,
@@ -359,6 +430,11 @@ function createRuntimeInitialState(): PatientStoreState {
     },
     reviews: [],
     requests: [],
+    studentFilters: {
+      locations: [],
+      treatments: [],
+      universities: [],
+    },
     students: [],
   };
 }
@@ -712,6 +788,46 @@ async function createRequest(studentId: string, reason: string) {
   }
 }
 
+async function searchStudents(filters: PatientStudentDirectorySearchParams) {
+  if (IS_TEST_MODE) {
+    const limit = filters.limit ?? 20;
+    const filteredStudents = initialMockState.students
+      .filter((student) => student.treatments.length > 0)
+      .filter((student) => matchesMockStudentSearch(student, filters))
+      .slice(0, limit);
+
+    patchState({
+      students: filteredStudents,
+    });
+
+    return filteredStudents;
+  }
+
+  patchState({
+    errorMessage: null,
+    isSearchingStudents: true,
+  });
+
+  try {
+    const students = await getPatientPortalStudents(filters);
+
+    patchState({
+      errorMessage: null,
+      isReady: true,
+      isSearchingStudents: false,
+      students,
+    });
+
+    return students;
+  } catch (error) {
+    patchState({
+      errorMessage: getErrorMessage(error, 'No pudimos buscar estudiantes.'),
+      isSearchingStudents: false,
+    });
+    return [];
+  }
+}
+
 async function updateRequestStatus(requestId: string, status: PatientRequestStatus) {
   if (IS_TEST_MODE) {
     return updateRequestStatusMock(requestId, status);
@@ -881,6 +997,7 @@ export function usePatientModuleStore(
     createRequest,
     refresh: refreshPatientModuleState,
     refreshConversation,
+    searchStudents,
     sendConversationMessage,
     updateAppointmentStatus,
     updateProfile,

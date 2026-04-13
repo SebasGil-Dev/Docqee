@@ -93,19 +93,31 @@ describe('Patient pages', () => {
 
     renderPatientApp([ROUTES.patientSearchStudents]);
 
-    expect(screen.queryByText(/daniel pardo/i)).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /estudiantes recomendados para ti/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/daniel pardo/i)).toBeInTheDocument();
 
     await user.type(
       screen.getByPlaceholderText(/buscar por nombre de estudiante/i),
       'clinica',
     );
-    expect(screen.queryByTestId('patient-student-card-patient-student-1')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('patient-student-card-patient-student-2')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        screen.queryByTestId('patient-student-card-patient-student-1'),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId('patient-student-card-patient-student-2'),
+      ).not.toBeInTheDocument();
+    });
 
     await user.clear(screen.getByPlaceholderText(/buscar por nombre de estudiante/i));
     await user.selectOptions(screen.getByLabelText(/tratamiento/i), 'Rehabilitacion oral');
 
-    expect(screen.queryByText(/daniel pardo/i)).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText(/daniel pardo/i)).not.toBeInTheDocument();
+      expect(screen.getByTestId('patient-student-card-patient-student-3')).toBeInTheDocument();
+    });
 
     await user.click(screen.getByTestId('patient-student-card-patient-student-3'));
     await user.type(

@@ -7,13 +7,14 @@ import {
   UserRound,
   X,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
 import { Seo } from '@/components/ui/Seo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { patientContent } from '@/content/patientContent';
 import type { PatientStudentDirectoryItem } from '@/content/types';
+import { IS_TEST_MODE } from '@/lib/apiClient';
 import { classNames } from '@/lib/classNames';
 import { formatDisplayName } from '@/lib/formatDisplayName';
 import { getOptimizedAvatarUrl } from '@/lib/imageOptimization';
@@ -34,10 +35,6 @@ function getStudentLocation(student: PatientStudentDirectoryItem) {
   const locationParts = [student.city, student.locality].filter(Boolean);
 
   return locationParts.length ? locationParts.join(' - ') : 'Ubicacion por confirmar';
-}
-
-function getStudentLocationValue(student: PatientStudentDirectoryItem) {
-  return [student.city, student.locality].filter(Boolean).join('||');
 }
 
 function getStudentPracticeSite(student: PatientStudentDirectoryItem) {
@@ -72,25 +69,20 @@ function renderStars(value: number | null, sizeClassName = 'h-3.5 w-3.5') {
   });
 }
 
-function createUniqueOptions(values: Array<{ label: string; value: string }>) {
-  const optionsMap = new Map<string, string>();
-
-  values.forEach((option) => {
-    const normalizedValue = option.value.trim();
-
-    if (normalizedValue && !optionsMap.has(normalizedValue)) {
-      optionsMap.set(normalizedValue, option.label);
-    }
-  });
-
-  return [...optionsMap.entries()]
-    .map(([value, label]) => ({ label, value }))
-    .sort((first, second) => first.label.localeCompare(second.label, 'es-CO'));
-}
-
 export function PatientSearchStudentsPage() {
-  const { createRequest, errorMessage, isLoading, requests, students } = usePatientModuleStore();
+  const {
+    createRequest,
+    errorMessage,
+    isLoading,
+    isReady,
+    isSearchingStudents,
+    requests,
+    searchStudents,
+    studentFilters,
+    students,
+  } = usePatientModuleStore();
   const [searchTerm, setSearchTerm] = useState('');
+  const [hasInteractedWithSearch, setHasInteractedWithSearch] = useState(false);
   const [reason, setReason] = useState('');
   const [reasonError, setReasonError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -99,76 +91,40 @@ export function PatientSearchStudentsPage() {
   const [universityFilter, setUniversityFilter] = useState<NamedFilter>('all');
   const [ratingFilter, setRatingFilter] = useState<RatingFilter>('all');
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+  const latestSearchFiltersRef = useRef({
+    location: 'all',
+    rating: 'all' as RatingFilter,
+    search: '',
+    treatment: 'all',
+    university: 'all',
+  });
   const normalizedSearch = searchTerm.trim().toLowerCase();
+  const hasSearchCriteria = Boolean(
+    normalizedSearch ||
+      treatmentFilter !== 'all' ||
+      locationFilter !== 'all' ||
+      universityFilter !== 'all' ||
+      ratingFilter !== 'all',
+  );
   const treatmentOptions = useMemo(
     () =>
-      createUniqueOptions(
-        students.flatMap((student) =>
-          student.treatments.map((treatment) => ({
-            label: treatment,
-            value: treatment,
-          })),
-        ),
-      ),
-    [students],
+      studentFilters.treatments.map((treatment) => ({
+        label: treatment,
+        value: treatment,
+      })),
+    [studentFilters.treatments],
   );
-  const locationOptions = useMemo(
-    () =>
-      createUniqueOptions(
-        students.map((student) => ({
-          label: getStudentLocation(student),
-          value: getStudentLocationValue(student),
-        })),
-      ),
-    [students],
-  );
+  const locationOptions = studentFilters.locations;
   const universityOptions = useMemo(
     () =>
-      createUniqueOptions(
-        students.map((student) => ({
-          label: student.universityName,
-          value: student.universityName,
-        })),
-      ),
-    [students],
+      studentFilters.universities.map((university) => ({
+        label: university,
+        value: university,
+      })),
+    [studentFilters.universities],
   );
-  const filteredStudents = useMemo(() => {
-    return students.filter((student) => {
-      const matchesSearch = normalizedSearch
-        ? getStudentFullName(student).toLowerCase().includes(normalizedSearch)
-        : true;
-      const matchesTreatment =
-        treatmentFilter === 'all' || student.treatments.includes(treatmentFilter);
-      const matchesLocation =
-        locationFilter === 'all' || getStudentLocationValue(student) === locationFilter;
-      const matchesUniversity =
-        universityFilter === 'all' || student.universityName === universityFilter;
-      const matchesRating =
-        ratingFilter === 'all' ||
-        Boolean(
-          student.averageRating &&
-            student.averageRating >= Number(ratingFilter) &&
-            student.reviewsCount > 0,
-        );
-
-      return (
-        matchesSearch &&
-        matchesTreatment &&
-        matchesLocation &&
-        matchesUniversity &&
-        matchesRating
-      );
-    });
-  }, [
-    locationFilter,
-    normalizedSearch,
-    ratingFilter,
-    students,
-    treatmentFilter,
-    universityFilter,
-  ]);
   const selectedStudent = selectedStudentId
-    ? filteredStudents.find((student) => student.id === selectedStudentId) ?? null
+    ? students.find((student) => student.id === selectedStudentId) ?? null
     : null;
   const currentRequestForSelectedStudent = selectedStudent
     ? requests.find(
@@ -181,11 +137,42 @@ export function PatientSearchStudentsPage() {
   useEffect(() => {
     if (
       selectedStudentId &&
-      !filteredStudents.some((student) => student.id === selectedStudentId)
+      !students.some((student) => student.id === selectedStudentId)
     ) {
       setSelectedStudentId(null);
     }
-  }, [filteredStudents, selectedStudentId]);
+  }, [selectedStudentId, students]);
+
+  useEffect(() => {
+    if (IS_TEST_MODE || !isReady || !hasInteractedWithSearch) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      void searchStudents({
+        limit: hasSearchCriteria ? 20 : 6,
+        location: locationFilter,
+        rating: ratingFilter,
+        search: searchTerm,
+        treatment: treatmentFilter,
+        university: universityFilter,
+      });
+    }, 300);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [
+    hasInteractedWithSearch,
+    hasSearchCriteria,
+    isReady,
+    locationFilter,
+    ratingFilter,
+    searchStudents,
+    searchTerm,
+    treatmentFilter,
+    universityFilter,
+  ]);
 
   useEffect(() => {
     setReason('');
@@ -250,6 +237,40 @@ export function PatientSearchStudentsPage() {
     })();
   };
 
+  const runImmediateSearchInTest = (filters: {
+    location?: NamedFilter;
+    rating?: RatingFilter;
+    search?: string;
+    treatment?: NamedFilter;
+    university?: NamedFilter;
+  }) => {
+    if (!IS_TEST_MODE) {
+      return;
+    }
+
+    const nextTreatment = filters.treatment ?? latestSearchFiltersRef.current.treatment;
+    const nextLocation = filters.location ?? latestSearchFiltersRef.current.location;
+    const nextUniversity = filters.university ?? latestSearchFiltersRef.current.university;
+    const nextRating = filters.rating ?? latestSearchFiltersRef.current.rating;
+    const resolvedSearch = filters.search ?? latestSearchFiltersRef.current.search;
+    const nextHasSearchCriteria = Boolean(
+      resolvedSearch.trim() ||
+        nextTreatment !== 'all' ||
+        nextLocation !== 'all' ||
+        nextUniversity !== 'all' ||
+        nextRating !== 'all',
+    );
+
+    void searchStudents({
+      limit: nextHasSearchCriteria ? 20 : 6,
+      location: nextLocation,
+      rating: nextRating,
+      search: resolvedSearch,
+      treatment: nextTreatment,
+      university: nextUniversity,
+    });
+  };
+
   return (
     <div className="mx-auto flex h-full max-w-[90rem] min-h-0 flex-col gap-2.5 overflow-hidden 2xl:max-w-[98rem]">
       <Seo
@@ -268,9 +289,11 @@ export function PatientSearchStudentsPage() {
         </div>
         <div className="inline-flex shrink-0 items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-primary ring-1 ring-primary/10">
           <span className="font-headline text-lg font-extrabold leading-none">
-            {filteredStudents.length}
+            {students.length}
           </span>
-          <span className="text-xs font-semibold">Resultados</span>
+          <span className="text-xs font-semibold">
+            {hasSearchCriteria ? 'Resultados' : 'Recomendados'}
+          </span>
         </div>
       </div>
       {successMessage ? (
@@ -311,7 +334,13 @@ export function PatientSearchStudentsPage() {
                 placeholder={patientContent.searchPage.searchPlaceholder}
                 type="search"
                 value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
+                onChange={(event) => {
+                  const nextSearch = event.target.value;
+                  setHasInteractedWithSearch(true);
+                  latestSearchFiltersRef.current.search = nextSearch;
+                  setSearchTerm(nextSearch);
+                  runImmediateSearchInTest({ search: nextSearch });
+                }}
               />
             </label>
             <label className="min-w-0" htmlFor="patient-student-treatment-filter">
@@ -322,7 +351,13 @@ export function PatientSearchStudentsPage() {
                 className="h-10 w-full rounded-full border border-slate-200/90 bg-white/98 px-4 text-sm font-semibold text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
                 id="patient-student-treatment-filter"
                 value={treatmentFilter}
-                onChange={(event) => setTreatmentFilter(event.target.value)}
+                onChange={(event) => {
+                  const nextTreatment = event.target.value;
+                  setHasInteractedWithSearch(true);
+                  latestSearchFiltersRef.current.treatment = nextTreatment;
+                  setTreatmentFilter(nextTreatment);
+                  runImmediateSearchInTest({ treatment: nextTreatment });
+                }}
               >
                 <option value="all">Todos</option>
                 {treatmentOptions.map((option) => (
@@ -340,7 +375,13 @@ export function PatientSearchStudentsPage() {
                 className="h-10 w-full rounded-full border border-slate-200/90 bg-white/98 px-4 text-sm font-semibold text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
                 id="patient-student-location-filter"
                 value={locationFilter}
-                onChange={(event) => setLocationFilter(event.target.value)}
+                onChange={(event) => {
+                  const nextLocation = event.target.value;
+                  setHasInteractedWithSearch(true);
+                  latestSearchFiltersRef.current.location = nextLocation;
+                  setLocationFilter(nextLocation);
+                  runImmediateSearchInTest({ location: nextLocation });
+                }}
               >
                 <option value="all">Todas</option>
                 {locationOptions.map((option) => (
@@ -358,7 +399,13 @@ export function PatientSearchStudentsPage() {
                 className="h-10 w-full rounded-full border border-slate-200/90 bg-white/98 px-4 text-sm font-semibold text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
                 id="patient-student-university-filter"
                 value={universityFilter}
-                onChange={(event) => setUniversityFilter(event.target.value)}
+                onChange={(event) => {
+                  const nextUniversity = event.target.value;
+                  setHasInteractedWithSearch(true);
+                  latestSearchFiltersRef.current.university = nextUniversity;
+                  setUniversityFilter(nextUniversity);
+                  runImmediateSearchInTest({ university: nextUniversity });
+                }}
               >
                 <option value="all">Todas</option>
                 {universityOptions.map((option) => (
@@ -376,7 +423,13 @@ export function PatientSearchStudentsPage() {
                 className="h-10 w-full rounded-full border border-slate-200/90 bg-white/98 px-4 text-sm font-semibold text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
                 id="patient-student-rating-filter"
                 value={ratingFilter}
-                onChange={(event) => setRatingFilter(event.target.value as RatingFilter)}
+                onChange={(event) => {
+                  const nextRating = event.target.value as RatingFilter;
+                  setHasInteractedWithSearch(true);
+                  latestSearchFiltersRef.current.rating = nextRating;
+                  setRatingFilter(nextRating);
+                  runImmediateSearchInTest({ rating: nextRating });
+                }}
               >
                 <option value="all">Todas</option>
                 <option value="5">5 estrellas</option>
@@ -392,18 +445,20 @@ export function PatientSearchStudentsPage() {
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 px-3 py-2.5">
                   <div className="min-w-0">
                     <h2 className="font-headline text-lg font-extrabold tracking-tight text-ink">
-                      Resultados de búsqueda
+                      {hasSearchCriteria ? 'Resultados de búsqueda' : 'Estudiantes recomendados para ti'}
                     </h2>
                     <p className="text-xs leading-5 text-ink-muted">
-                      Busca por nombre o usa los filtros para encontrar el estudiante adecuado.
+                      {hasSearchCriteria
+                        ? 'Busca por nombre o usa los filtros para encontrar el estudiante adecuado.'
+                        : 'Estos perfiles tienen tratamientos publicados y cercania con tu ubicacion.'}
                     </p>
                   </div>
                 <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-ink-muted">
-                  {filteredStudents.length} perfiles
+                  {students.length} perfiles
                 </span>
               </div>
               <div className="admin-scrollbar min-h-0 flex-1 overflow-x-auto overflow-y-auto">
-                {filteredStudents.length > 0 ? (
+                {students.length > 0 ? (
                   <table className="min-w-[64rem] w-full lg:min-w-0 lg:table-fixed">
                     <thead className="sticky top-0 z-10 bg-slate-100 text-left">
                       <tr className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-ink-muted">
@@ -417,7 +472,7 @@ export function PatientSearchStudentsPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200/80">
-                    {filteredStudents.map((student) => {
+                    {students.map((student) => {
                       const isSelected = selectedStudent?.id === student.id;
                       const visibleTreatments = student.treatments.slice(0, 2);
                       const hiddenTreatmentsCount = student.treatments.length - visibleTreatments.length;
@@ -517,7 +572,7 @@ export function PatientSearchStudentsPage() {
                   </table>
                 ) : (
                   <div className="m-4 rounded-[1.35rem] border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-ink-muted">
-                    {isLoading
+                    {isLoading || isSearchingStudents
                       ? 'Cargando estudiantes...'
                       : patientContent.searchPage.emptyState}
                   </div>

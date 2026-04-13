@@ -5,12 +5,19 @@ import { PatientConversationMessageDto } from '../../application/dto/patient-con
 import { PatientPortalDashboardDto } from '../../application/dto/patient-portal-dashboard.dto';
 import { PatientProfileDto } from '../../application/dto/patient-profile.dto';
 import { PatientRequestDto } from '../../application/dto/patient-request.dto';
+import { PatientStudentDirectoryItemDto } from '../../application/dto/patient-student-directory-item.dto';
+import { PatientStudentDirectoryQueryDto } from '../../application/dto/patient-student-directory-query.dto';
 import { UpdatePatientAppointmentStatusDto } from '../../application/dto/update-patient-appointment-status.dto';
 import { UpdatePatientProfileDto } from '../../application/dto/update-patient-profile.dto';
 import { UpdatePatientRequestStatusDto } from '../../application/dto/update-patient-request-status.dto';
 
 export abstract class PatientPortalRepository {
   abstract getDashboard(patientAccountId: number): Promise<PatientPortalDashboardDto>;
+
+  abstract getStudentDirectory(
+    patientAccountId: number,
+    query: PatientStudentDirectoryQueryDto,
+  ): Promise<PatientStudentDirectoryItemDto[]>;
 
   abstract updateProfile(
     patientAccountId: number,
