@@ -1,4 +1,6 @@
 import {
+  Building2,
+  Check,
   GraduationCap,
   ImagePlus,
   Link2,
@@ -20,6 +22,7 @@ import { Seo } from '@/components/ui/Seo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { studentContent } from '@/content/studentContent';
 import type {
+  StudentPracticeSite,
   StudentProfessionalLinkType,
   StudentProfile,
   StudentProfileFormErrors,
@@ -81,12 +84,18 @@ function getLinkTypeLabel(type: StudentProfessionalLinkType) {
 }
 
 export function StudentProfilePage() {
-  const { errorMessage, isLoading, nextLinkId, profile, updateProfile } = useStudentModuleStore();
+  const { errorMessage, isLoading, nextLinkId, practiceSites, profile, getUniversitySites, updatePracticeSites, updateProfile } = useStudentModuleStore();
   const [values, setValues] = useState<StudentProfileFormValues>(() => getInitialValues(profile));
   const [errors, setErrors] = useState<StudentProfileFormErrors>({});
   const [linkDraft, setLinkDraft] = useState<StudentLinkDraft>(initialLinkDraft);
   const [linkError, setLinkError] = useState<string | null>(null);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [universitySites, setUniversitySites] = useState<StudentPracticeSite[]>([]);
+  const [selectedSiteIds, setSelectedSiteIds] = useState<Set<string>>(() =>
+    new Set(practiceSites.map((s) => s.id)),
+  );
+  const [sedesSaveMessage, setSedesSaveMessage] = useState<string | null>(null);
+  const [isSedeSaving, setIsSedeSaving] = useState(false);
   const studentInitials = useMemo(
     () => `${profile.firstName.charAt(0)}${profile.lastName.charAt(0)}`.toUpperCase(),
     [profile.firstName, profile.lastName],
@@ -99,6 +108,33 @@ export function StudentProfilePage() {
     setLinkError(null);
     setSaveMessage(null);
   }, [profile]);
+
+  useEffect(() => {
+    void getUniversitySites().then(setUniversitySites);
+  }, []);
+
+  const handleToggleSede = (siteId: string) => {
+    setSelectedSiteIds((current) => {
+      const next = new Set(current);
+      if (next.has(siteId)) {
+        next.delete(siteId);
+      } else {
+        next.add(siteId);
+      }
+      return next;
+    });
+    setSedesSaveMessage(null);
+  };
+
+  const handleSaveSedes = () => {
+    setIsSedeSaving(true);
+    void updatePracticeSites([...selectedSiteIds]).then((ok) => {
+      setIsSedeSaving(false);
+      if (ok) {
+        setSedesSaveMessage('Sedes de practica actualizadas correctamente.');
+      }
+    });
+  };
 
   const handleFieldChange = <K extends keyof StudentProfileFormValues>(
     field: K,
@@ -433,6 +469,77 @@ export function StudentProfilePage() {
                   ) : (
                     <div className="rounded-[1.35rem] border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-ink-muted">
                       Aun no has agregado enlaces profesionales.
+                    </div>
+                  )}
+                </div>
+              </SurfaceCard>
+              <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-5">
+                <div className="space-y-5">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
+                        Sedes de practica clinica
+                      </h2>
+                      <p className="mt-1 text-sm leading-6 text-ink-muted">
+                        Selecciona las sedes de tu universidad a las que perteneces.
+                      </p>
+                    </div>
+                    <button
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-4 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 disabled:opacity-60"
+                      disabled={isSedeSaving}
+                      type="button"
+                      onClick={handleSaveSedes}
+                    >
+                      <Save aria-hidden="true" className="h-4 w-4" />
+                      <span>Guardar sedes</span>
+                    </button>
+                  </div>
+                  {sedesSaveMessage ? (
+                    <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+                      {sedesSaveMessage}
+                    </p>
+                  ) : null}
+                  {universitySites.length === 0 ? (
+                    <div className="rounded-[1.35rem] border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-ink-muted">
+                      No hay sedes disponibles para tu universidad.
+                    </div>
+                  ) : (
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {universitySites.map((site) => {
+                        const isSelected = selectedSiteIds.has(site.id);
+                        return (
+                          <button
+                            key={site.id}
+                            className={classNames(
+                              'flex items-center gap-3 rounded-[1.35rem] border px-4 py-3 text-left text-sm font-semibold transition duration-200',
+                              isSelected
+                                ? 'border-primary/30 bg-primary/8 text-primary'
+                                : 'border-slate-200 bg-slate-50 text-ink hover:bg-slate-100',
+                            )}
+                            type="button"
+                            onClick={() => handleToggleSede(site.id)}
+                          >
+                            <span
+                              className={classNames(
+                                'flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition duration-200',
+                                isSelected
+                                  ? 'border-primary bg-primary text-white'
+                                  : 'border-slate-300 bg-white',
+                              )}
+                            >
+                              {isSelected ? <Check aria-hidden="true" className="h-3 w-3" /> : null}
+                            </span>
+                            <Building2
+                              aria-hidden="true"
+                              className={classNames(
+                                'h-4 w-4 shrink-0',
+                                isSelected ? 'text-primary' : 'text-ink-muted',
+                              )}
+                            />
+                            <span className="min-w-0 truncate">{site.name}</span>
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

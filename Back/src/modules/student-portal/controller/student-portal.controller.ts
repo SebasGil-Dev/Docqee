@@ -16,6 +16,7 @@ import { CurrentUser } from '@/shared/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@/shared/guards/jwt-auth.guard';
 import type { UploadImageFile } from '@/shared/storage/cloudinary.service';
 import type { RequestUser } from '@/shared/types/request-user.type';
+import { UpdatePracticeSitesDto } from '../application/dto/update-practice-sites.dto';
 import { UpdateStudentProfileDto } from '../application/dto/update-student-profile.dto';
 import { UpdateStudentRequestStatusDto } from '../application/dto/update-student-request-status.dto';
 import { StudentPortalService } from '../student-portal.service';
@@ -28,6 +29,16 @@ export class StudentPortalController {
   @Get('dashboard')
   getDashboard(@CurrentUser() user: RequestUser) {
     return this.studentPortalService.getDashboard(user);
+  }
+
+  @Get('university-sites')
+  getUniversitySites(@CurrentUser() user: RequestUser) {
+    return this.studentPortalService.getUniversitySites(user);
+  }
+
+  @Patch('practice-sites')
+  updatePracticeSites(@CurrentUser() user: RequestUser, @Body() body: UpdatePracticeSitesDto) {
+    return this.studentPortalService.updatePracticeSites(user, body.siteIds);
   }
 
   @Patch('requests/:requestId/status')

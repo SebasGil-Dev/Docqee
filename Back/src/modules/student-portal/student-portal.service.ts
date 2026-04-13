@@ -19,6 +19,14 @@ export class StudentPortalService {
     return this.studentPortalRepository.getDashboard(user.id);
   }
 
+  getUniversitySites(user: RequestUser) {
+    return this.studentPortalRepository.getUniversitySites(user.id);
+  }
+
+  updatePracticeSites(user: RequestUser, siteIds: string[]) {
+    return this.studentPortalRepository.updatePracticeSites(user.id, siteIds.map(Number));
+  }
+
   updateRequestStatus(user: RequestUser, requestId: number, payload: UpdateStudentRequestStatusDto) {
     return this.studentPortalRepository.updateRequestStatus(user.id, requestId, payload);
   }
