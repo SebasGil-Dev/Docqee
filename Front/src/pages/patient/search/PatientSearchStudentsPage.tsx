@@ -132,17 +132,7 @@ export function PatientSearchStudentsPage() {
       ),
     [students],
   );
-  const hasActiveCriteria =
-    Boolean(normalizedSearch) ||
-    treatmentFilter !== 'all' ||
-    locationFilter !== 'all' ||
-    universityFilter !== 'all' ||
-    ratingFilter !== 'all';
   const filteredStudents = useMemo(() => {
-    if (!hasActiveCriteria) {
-      return [];
-    }
-
     return students.filter((student) => {
       const matchesSearch = normalizedSearch
         ? getStudentFullName(student).toLowerCase().includes(normalizedSearch)
@@ -170,7 +160,6 @@ export function PatientSearchStudentsPage() {
       );
     });
   }, [
-    hasActiveCriteria,
     locationFilter,
     normalizedSearch,
     ratingFilter,
@@ -528,9 +517,9 @@ export function PatientSearchStudentsPage() {
                   </table>
                 ) : (
                   <div className="m-4 rounded-[1.35rem] border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-ink-muted">
-                    {hasActiveCriteria
-                      ? patientContent.searchPage.emptyState
-                      : 'Busca por nombre o selecciona filtros para ver estudiantes disponibles.'}
+                    {isLoading
+                      ? 'Cargando estudiantes...'
+                      : patientContent.searchPage.emptyState}
                   </div>
                 )}
               </div>
