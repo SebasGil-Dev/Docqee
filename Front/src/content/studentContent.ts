@@ -134,28 +134,10 @@ export const studentContent = {
         to: ROUTES.studentTreatments,
       },
       {
-        icon: 'user-round',
-        label: 'Mi perfil',
-        matchPrefix: ROUTES.studentProfile,
-        to: ROUTES.studentProfile,
-      },
-      {
         icon: 'calendar-days',
         label: 'Agenda',
         matchPrefix: ROUTES.studentAgenda,
         to: ROUTES.studentAgenda,
-      },
-      {
-        icon: 'clipboard-list',
-        label: 'Solicitudes',
-        matchPrefix: ROUTES.studentRequests,
-        to: ROUTES.studentRequests,
-      },
-      {
-        icon: 'bell',
-        label: 'Notificaciones',
-        matchPrefix: ROUTES.studentNotifications,
-        to: ROUTES.studentNotifications,
       },
       {
         icon: 'calendar-check-2',
@@ -164,10 +146,28 @@ export const studentContent = {
         to: ROUTES.studentAppointments,
       },
       {
+        icon: 'clipboard-list',
+        label: 'Solicitudes',
+        matchPrefix: ROUTES.studentRequests,
+        to: ROUTES.studentRequests,
+      },
+      {
         icon: 'message-square-more',
         label: 'Chat',
         matchPrefix: ROUTES.studentConversations,
         to: ROUTES.studentConversations,
+      },
+      {
+        icon: 'bell',
+        label: 'Notificaciones',
+        matchPrefix: ROUTES.studentNotifications,
+        to: ROUTES.studentNotifications,
+      },
+      {
+        icon: 'user-round',
+        label: 'Perfil',
+        matchPrefix: ROUTES.studentProfile,
+        to: ROUTES.studentProfile,
       },
     ],
     title: 'Portal del estudiante',
