@@ -9,6 +9,9 @@ import { PatientPortalDashboardDto } from '../../application/dto/patient-portal-
 import { PatientProfileDto } from '../../application/dto/patient-profile.dto';
 import { PatientRequestDto } from '../../application/dto/patient-request.dto';
 import { PatientStudentDirectoryItemDto } from '../../application/dto/patient-student-directory-item.dto';
+import { UpdatePatientAppointmentStatusDto } from '../../application/dto/update-patient-appointment-status.dto';
+import { UpdatePatientProfileDto } from '../../application/dto/update-patient-profile.dto';
+import { UpdatePatientRequestStatusDto } from '../../application/dto/update-patient-request-status.dto';
 import { PatientPortalRepository } from '../../domain/repositories/patient-portal.repository';
 
 @Injectable()
@@ -174,8 +177,47 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     };
   }
 
-  updateProfile(): never {
-    throw new Error('PrismaPatientPortalRepository.updateProfile is pending implementation.');
+  async updateProfile(patientAccountId: number, payload: UpdatePatientProfileDto): Promise<PatientProfileDto> {
+    const patient = await this.prisma.cuenta_paciente.findUnique({
+      where: { id_cuenta: patientAccountId },
+      include: { localidad: { include: { ciudad: true } } },
+    });
+
+    if (!patient) {
+      throw new NotFoundException('No encontramos el perfil del paciente.');
+    }
+
+    const normalizedPhone = normalizeText(payload.phone ?? '');
+    const normalizedLocality = normalizeText(payload.locality ?? '');
+    const avatarSrc = payload.avatarSrc?.trim() || null;
+
+    let localidadId = patient.id_localidad;
+
+    if (normalizedLocality && normalizedLocality !== patient.localidad.nombre) {
+      const localidad = await this.prisma.localidad.findFirst({
+        where: { nombre: { equals: normalizedLocality, mode: 'insensitive' } },
+      });
+      if (localidad) {
+        localidadId = localidad.id_localidad;
+      }
+    }
+
+    const updated = await this.prisma.cuenta_paciente.update({
+      where: { id_cuenta: patientAccountId },
+      data: {
+        celular: normalizedPhone || patient.celular,
+        foto_url: avatarSrc,
+        id_localidad: localidadId,
+      },
+      include: {
+        persona: true,
+        localidad: { include: { ciudad: true } },
+        tutor_responsable: true,
+        cuenta_acceso: { select: { correo: true } },
+      },
+    });
+
+    return this.toProfileDto(updated);
   }
 
   async createRequest(
@@ -257,12 +299,78 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     return this.toRequestDto(request);
   }
 
-  updateRequestStatus(): never {
-    throw new Error('PrismaPatientPortalRepository.updateRequestStatus is pending implementation.');
+  async updateRequestStatus(
+    patientAccountId: number,
+    requestId: number,
+    payload: UpdatePatientRequestStatusDto,
+  ): Promise<PatientRequestDto> {
+    const solicitud = await this.prisma.solicitud.findFirst({
+      where: { id_solicitud: requestId, id_cuenta_paciente: patientAccountId },
+    });
+
+    if (!solicitud) {
+      throw new NotFoundException('La solicitud no existe o no te pertenece.');
+    }
+
+    const updated = await this.prisma.solicitud.update({
+      where: { id_solicitud: requestId },
+      data: { estado: payload.status, fecha_respuesta: new Date() },
+      include: {
+        cita: { select: { id_cita: true } },
+        conversacion: { select: { id_conversacion: true } },
+        cuenta_estudiante: { include: { persona: true, universidad: true } },
+      },
+    });
+
+    return this.toRequestDto(updated);
   }
 
-  updateAppointmentStatus(): never {
-    throw new Error('PrismaPatientPortalRepository.updateAppointmentStatus is pending implementation.');
+  async updateAppointmentStatus(
+    patientAccountId: number,
+    appointmentId: number,
+    payload: UpdatePatientAppointmentStatusDto,
+  ): Promise<PatientAppointmentDto> {
+    const cita = await this.prisma.cita.findFirst({
+      where: {
+        id_cita: appointmentId,
+        solicitud: { id_cuenta_paciente: patientAccountId },
+      },
+      include: {
+        tipo_cita: true,
+        sede: { include: { localidad: { include: { ciudad: true } } } },
+        docente_universidad: { include: { docente: true } },
+        solicitud: { include: { cuenta_estudiante: { include: { persona: true, universidad: true } } } },
+      },
+    });
+
+    if (!cita) {
+      throw new NotFoundException('La cita no existe o no te pertenece.');
+    }
+
+    const updated = await this.prisma.cita.update({
+      where: { id_cita: appointmentId },
+      data: { estado: payload.status },
+      include: {
+        tipo_cita: true,
+        sede: { include: { localidad: { include: { ciudad: true } } } },
+        docente_universidad: { include: { docente: true } },
+        solicitud: { include: { cuenta_estudiante: { include: { persona: true, universidad: true } } } },
+      },
+    });
+
+    return {
+      additionalInfo: updated.informacion_adicional ?? null,
+      appointmentType: updated.tipo_cita.nombre,
+      city: updated.sede.localidad.ciudad.nombre,
+      endAt: updated.fecha_hora_fin.toISOString(),
+      id: String(updated.id_cita),
+      siteName: updated.sede.nombre,
+      startAt: updated.fecha_hora_inicio.toISOString(),
+      status: updated.estado,
+      studentName: `${updated.solicitud.cuenta_estudiante.persona.nombres} ${updated.solicitud.cuenta_estudiante.persona.apellidos}`,
+      teacherName: `${updated.docente_universidad.docente.nombres} ${updated.docente_universidad.docente.apellidos}`,
+      universityName: updated.solicitud.cuenta_estudiante.universidad.nombre,
+    };
   }
 
   private toProfileDto(patient: {

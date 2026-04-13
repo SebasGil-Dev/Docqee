@@ -37,17 +37,20 @@ export function PatientLayout() {
     }
   }
 
+  const overrideName =
+    profile.firstName || profile.lastName
+      ? { firstName: profile.firstName, lastName: profile.lastName }
+      : undefined;
+
   return (
     <AdminShell
+      avatarSrc={profile.avatarSrc}
       content={patientContent.shell}
       headerNotifications={notifications}
       notificationsPageTo={ROUTES.patientNotifications}
       onMarkAllNotificationsRead={markAllNotificationsAsRead}
       onOpenNotification={markNotificationAsRead}
-      overrideName={{
-        firstName: profile.firstName || patientContent.shell.adminUser.firstName,
-        lastName: profile.lastName || patientContent.shell.adminUser.lastName,
-      }}
+      {...(overrideName ? { overrideName } : {})}
     >
       <Outlet />
     </AdminShell>
