@@ -81,6 +81,7 @@ function createMockState(): PatientStoreState {
       avatarSrc: null,
       availabilityGeneral: 'Lunes, miercoles y viernes en jornada de manana.',
       availabilityStatus: 'available',
+      averageRating: 4.7,
       biography:
         'Enfoque en operatoria, valoracion inicial y seguimiento preventivo con comunicacion clara.',
       city: 'Bogota',
@@ -89,6 +90,7 @@ function createMockState(): PatientStoreState {
       lastName: 'Pardo',
       locality: 'Usaquen',
       practiceSite: 'Sede Norte',
+      reviewsCount: 12,
       semester: '8',
       treatments: ['Operatoria basica', 'Promocion y prevencion'],
       universityName: 'Universidad Clinica del Norte',
@@ -98,6 +100,7 @@ function createMockState(): PatientStoreState {
       avatarSrc: null,
       availabilityGeneral: 'Martes y jueves en jornada de tarde.',
       availabilityStatus: 'available',
+      averageRating: 4.3,
       biography:
         'Perfil orientado a rehabilitacion oral y acompanamiento continuo del paciente.',
       city: 'Bogota',
@@ -106,6 +109,7 @@ function createMockState(): PatientStoreState {
       lastName: 'Rios',
       locality: 'Barrios Unidos',
       practiceSite: 'Sede Escuela Clinica',
+      reviewsCount: 9,
       semester: '8',
       treatments: ['Rehabilitacion oral', 'Promocion y prevencion'],
       universityName: 'Universidad Clinica del Norte',
@@ -115,6 +119,7 @@ function createMockState(): PatientStoreState {
       avatarSrc: null,
       availabilityGeneral: 'Jueves en sede central y sabados alternos.',
       availabilityStatus: 'limited',
+      averageRating: 4.9,
       biography:
         'Atencion centrada en seguimiento restaurativo con alto componente academico.',
       city: 'Bogota',
@@ -123,6 +128,7 @@ function createMockState(): PatientStoreState {
       lastName: 'Perez',
       locality: 'Teusaquillo',
       practiceSite: 'Sede Central',
+      reviewsCount: 15,
       semester: '9',
       treatments: ['Rehabilitacion oral', 'Valoracion integral'],
       universityName: 'Universidad Metropolitana',
@@ -132,6 +138,7 @@ function createMockState(): PatientStoreState {
       avatarSrc: null,
       availabilityGeneral: 'Lunes a jueves en jornada combinada.',
       availabilityStatus: 'available',
+      averageRating: 3.8,
       biography:
         'Interes en diagnostico inicial, educacion preventiva y procesos de remision organizada.',
       city: 'Medellin',
@@ -140,6 +147,7 @@ function createMockState(): PatientStoreState {
       lastName: 'Diaz',
       locality: 'Laureles',
       practiceSite: 'Sede Clinica Laureles',
+      reviewsCount: 6,
       semester: '7',
       treatments: ['Valoracion integral', 'Promocion y prevencion'],
       universityName: 'Universidad de Antioquia Clinica',
