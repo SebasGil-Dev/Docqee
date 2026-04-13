@@ -360,6 +360,75 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     return this.toStudentProfileDto(refreshedStudent);
   }
 
+  async getUniversitySites(studentAccountId: number): Promise<StudentPracticeSiteDto[]> {
+    const student = await this.prisma.cuenta_estudiante.findUnique({
+      where: { id_cuenta: studentAccountId },
+      select: { id_universidad: true },
+    });
+
+    if (!student) return [];
+
+    const sedes = await this.prisma.sede.findMany({
+      where: { id_universidad: student.id_universidad, estado: 'ACTIVO' },
+      include: { localidad: { include: { ciudad: true } } },
+      orderBy: { nombre: 'asc' },
+    });
+
+    return sedes.map((s) => ({
+      address: s.direccion ?? '',
+      city: s.localidad.ciudad.nombre,
+      id: String(s.id_sede),
+      locality: s.localidad.nombre,
+      name: s.nombre,
+      status: 'active' as const,
+    }));
+  }
+
+  async updatePracticeSites(studentAccountId: number, siteIds: number[]): Promise<StudentPracticeSiteDto[]> {
+    const student = await this.prisma.cuenta_estudiante.findUnique({
+      where: { id_cuenta: studentAccountId },
+      select: { id_universidad: true },
+    });
+
+    if (!student) throw new NotFoundException('No encontramos el estudiante.');
+
+    // Verify all sedes belong to the student's university
+    const validSedes = await this.prisma.sede.findMany({
+      where: { id_sede: { in: siteIds }, id_universidad: student.id_universidad, estado: 'ACTIVO' },
+      select: { id_sede: true },
+    });
+    const validIds = validSedes.map((s) => s.id_sede);
+
+    // Delete removed, upsert kept/added
+    await this.prisma.$transaction([
+      this.prisma.estudiante_sede_practica.deleteMany({
+        where: { id_cuenta_estudiante: studentAccountId, id_sede: { notIn: validIds } },
+      }),
+      ...validIds.map((id_sede) =>
+        this.prisma.estudiante_sede_practica.upsert({
+          where: { id_cuenta_estudiante_id_sede: { id_cuenta_estudiante: studentAccountId, id_sede } },
+          create: { id_cuenta_estudiante: studentAccountId, id_sede, estado: 'ACTIVO' },
+          update: { estado: 'ACTIVO' },
+        }),
+      ),
+    ]);
+
+    const updated = await this.prisma.estudiante_sede_practica.findMany({
+      where: { id_cuenta_estudiante: studentAccountId },
+      include: { sede: { include: { localidad: { include: { ciudad: true } } } } },
+      orderBy: { sede: { nombre: 'asc' } },
+    });
+
+    return updated.map((sp) => ({
+      address: sp.sede.direccion ?? '',
+      city: sp.sede.localidad.ciudad.nombre,
+      id: String(sp.id_estudiante_sede_practica),
+      locality: sp.sede.localidad.nombre,
+      name: sp.sede.nombre,
+      status: sp.estado === 'ACTIVO' ? 'active' as const : 'inactive' as const,
+    }));
+  }
+
   createScheduleBlock(): never {
     throw new Error('PrismaStudentPortalRepository.createScheduleBlock is pending implementation.');
   }

@@ -32,6 +32,8 @@ import {
   toggleStudentPortalTreatmentStatus,
   updateStudentPortalAppointment,
   updateStudentPortalAppointmentStatus,
+  getStudentPortalUniversitySites,
+  updateStudentPortalPracticeSites,
   updateStudentPortalProfile,
   updateStudentPortalRequestStatus,
   updateStudentPortalScheduleBlock,
@@ -62,6 +64,8 @@ type StudentModuleActions = {
     treatmentId: string,
   ) => Promise<PersonOperationalStatus | null>;
   updateProfile: (values: StudentProfileFormValues) => Promise<boolean>;
+  getUniversitySites: () => Promise<StudentPracticeSite[]>;
+  updatePracticeSites: (siteIds: string[]) => Promise<boolean>;
   upsertAppointment: (
     values: StudentAppointmentFormValues,
     appointmentId?: string,
@@ -1966,6 +1970,30 @@ async function sendConversationMessage(
   }
 }
 
+async function getUniversitySites(): Promise<StudentPracticeSite[]> {
+  if (IS_TEST_MODE) return state.practiceSites;
+  try {
+    return await getStudentPortalUniversitySites();
+  } catch {
+    return [];
+  }
+}
+
+async function updatePracticeSites(siteIds: string[]): Promise<boolean> {
+  if (IS_TEST_MODE) return true;
+
+  patchState({ errorMessage: null, isLoading: true });
+
+  try {
+    const practiceSites = await updateStudentPortalPracticeSites(siteIds);
+    updateState({ ...state, errorMessage: null, isLoading: false, isReady: true, practiceSites });
+    return true;
+  } catch (error) {
+    patchState({ errorMessage: getErrorMessage(error, 'No pudimos actualizar tus sedes de práctica.'), isLoading: false });
+    return false;
+  }
+}
+
 export function resetStudentModuleState() {
   if (!IS_TEST_MODE) {
     clearPersistedStudentModuleCache();
@@ -2007,9 +2035,11 @@ export function useStudentModuleStore(options: UseStudentModuleStoreOptions = {}
     updateAppointmentStatus,
     respondToRequest,
     sendConversationMessage,
+    getUniversitySites,
     togglePracticeSiteStatus,
     toggleScheduleBlockStatus,
     toggleTreatmentStatus,
+    updatePracticeSites,
     updateProfile,
     upsertAppointment,
     upsertScheduleBlock,

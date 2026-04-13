@@ -52,6 +52,17 @@ export function toggleStudentPortalTreatmentStatus(treatmentId: string) {
   );
 }
 
+export function getStudentPortalUniversitySites() {
+  return apiRequest<StudentPracticeSite[]>('/student-portal/university-sites');
+}
+
+export function updateStudentPortalPracticeSites(siteIds: string[]) {
+  return apiRequest<StudentPracticeSite[]>('/student-portal/practice-sites', {
+    body: { siteIds },
+    method: 'PATCH',
+  });
+}
+
 export function toggleStudentPortalPracticeSiteStatus(practiceSiteId: string) {
   return apiRequest<{ practiceSiteId: string; status: PersonOperationalStatus }>(
     `/student-portal/practice-sites/${practiceSiteId}/status`,
