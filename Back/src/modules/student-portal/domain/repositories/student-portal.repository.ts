@@ -1,4 +1,5 @@
 import { StudentPortalDashboardDto } from '../../application/dto/student-portal-dashboard.dto';
+import { StudentPracticeSiteDto } from '../../application/dto/student-practice-site.dto';
 import { StudentProfileDto } from '../../application/dto/student-profile.dto';
 import { StudentRequestDto } from '../../application/dto/student-request.dto';
 import { StudentScheduleBlockDto } from '../../application/dto/student-schedule-block.dto';
@@ -8,6 +9,13 @@ import { UpsertStudentScheduleBlockDto } from '../../application/dto/upsert-stud
 
 export abstract class StudentPortalRepository {
   abstract getDashboard(studentAccountId: number): Promise<StudentPortalDashboardDto>;
+
+  abstract getUniversitySites(studentAccountId: number): Promise<StudentPracticeSiteDto[]>;
+
+  abstract updatePracticeSites(
+    studentAccountId: number,
+    siteIds: number[],
+  ): Promise<StudentPracticeSiteDto[]>;
 
   abstract updateProfile(
     studentAccountId: number,
