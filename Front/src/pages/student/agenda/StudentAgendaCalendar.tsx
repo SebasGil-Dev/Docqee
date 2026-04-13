@@ -193,15 +193,21 @@ function isInactiveBlockEvent(event: AgendaEvent) {
 export function StudentAgendaCalendar({
   addBlockLabel,
   appointments,
+  emptyDayMessage = 'No hay citas ni bloqueos visibles para este dia.',
+  emptyWeekMessage = 'Sin movimientos',
   onAddBlock,
   scheduleBlocks,
   onSelectScheduleBlock,
+  showBlockLegend = true,
 }: {
   addBlockLabel?: string;
   appointments: StudentAgendaAppointment[];
+  emptyDayMessage?: string;
+  emptyWeekMessage?: string;
   onAddBlock?: () => void;
   scheduleBlocks: StudentScheduleBlock[];
   onSelectScheduleBlock?: (blockId: string) => void;
+  showBlockLegend?: boolean;
 }) {
   const [viewMode, setViewMode] = useState<CalendarViewMode>('week');
   const [selectedDateKey, setSelectedDateKey] = useState(DEFAULT_SELECTED_DATE_KEY);
@@ -347,7 +353,7 @@ export function StudentAgendaCalendar({
                 ['Aceptada', 'accepted'],
                 ['Cancelada', 'cancelled'],
                 ['Reprogramacion', 'reschedule'],
-                ['Bloqueo', 'block'],
+                ...(showBlockLegend ? [['Bloqueo', 'block']] : []),
               ].map(([label, tone]) => (
                 <span
                   key={label}
@@ -429,7 +435,7 @@ export function StudentAgendaCalendar({
                   key={dayKey}
                   className="rounded-[1.1rem] border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-[0.84rem] text-ink-muted"
                 >
-                  No hay citas ni bloqueos visibles para este dia.
+                  {emptyDayMessage}
                 </div>
               );
             }
@@ -498,7 +504,7 @@ export function StudentAgendaCalendar({
                       })
                     ) : (
                       <div className="rounded-[0.95rem] border border-dashed border-slate-200 bg-white/88 px-2.5 py-3.5 text-center text-[0.68rem] font-medium text-ink-muted">
-                        Sin movimientos
+                        {emptyWeekMessage}
                       </div>
                     )}
                   </div>
