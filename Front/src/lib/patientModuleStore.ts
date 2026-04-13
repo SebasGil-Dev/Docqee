@@ -2,6 +2,7 @@ import { useEffect, useSyncExternalStore } from 'react';
 
 import type {
   PatientAppointment,
+  PatientAppointmentReview,
   PatientAppointmentStatus,
   PatientConversation,
   PatientConversationMessage,
@@ -281,6 +282,36 @@ function createMockState(): PatientStoreState {
     },
   ];
 
+  const reviews: PatientAppointmentReview[] = [
+    {
+      appointmentLabel: 'Control restaurativo',
+      comment: 'Paciente muy puntual, atento a las indicaciones y comprometido con su seguimiento clinico.',
+      createdAt: '2026-04-10T16:20:00.000Z',
+      id: 'patient-review-1',
+      rating: 5,
+      siteName: 'Sede Norte',
+      studentName: 'Daniel Pardo',
+    },
+    {
+      appointmentLabel: 'Valoracion inicial',
+      comment: 'La comunicacion durante la cita fue clara y el proceso se pudo desarrollar sin inconvenientes.',
+      createdAt: '2026-04-07T13:40:00.000Z',
+      id: 'patient-review-2',
+      rating: 4,
+      siteName: 'Sede Escuela Clinica',
+      studentName: 'Valentina Rios',
+    },
+    {
+      appointmentLabel: 'Seguimiento final',
+      comment: 'Asistio a tiempo y mantuvo una muy buena disposicion durante toda la atencion.',
+      createdAt: '2026-03-26T09:15:00.000Z',
+      id: 'patient-review-3',
+      rating: 5,
+      siteName: 'Sede Central',
+      studentName: 'Camila Perez',
+    },
+  ];
+
   return {
     appointments,
     conversations,
@@ -288,6 +319,7 @@ function createMockState(): PatientStoreState {
     isLoading: false,
     isReady: true,
     profile,
+    reviews,
     requests,
     students,
   };
@@ -315,6 +347,7 @@ function createRuntimeInitialState(): PatientStoreState {
       sex: 'OTRO',
       tutor: null,
     },
+    reviews: [],
     requests: [],
     students: [],
   };

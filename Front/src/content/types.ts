@@ -1190,10 +1190,21 @@ export type PatientAppointment = {
   universityName: string;
 };
 
+export type PatientAppointmentReview = {
+  appointmentLabel: string;
+  comment: string | null;
+  createdAt: string;
+  id: string;
+  rating: number;
+  siteName: string;
+  studentName: string;
+};
+
 export type PatientModuleState = {
   appointments: PatientAppointment[];
   conversations: PatientConversation[];
   profile: PatientProfile;
+  reviews: PatientAppointmentReview[];
   requests: PatientRequest[];
   students: PatientStudentDirectoryItem[];
 };
