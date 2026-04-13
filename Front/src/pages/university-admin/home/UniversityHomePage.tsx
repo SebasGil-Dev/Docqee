@@ -42,14 +42,14 @@ type SummaryMetricProps = {
 
 function SummaryMetric({ label, toneClassName, value }: SummaryMetricProps) {
   return (
-    <div className="rounded-[1rem] border border-slate-200/80 bg-slate-50 px-3 py-2.5">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-ink-muted">
+    <div className="rounded-[1rem] border border-slate-200/80 bg-slate-50 px-2 py-2 sm:px-3 sm:py-2.5">
+      <div className="flex items-center justify-center gap-1.5 sm:justify-between sm:gap-3">
+        <p className="text-center text-[0.55rem] font-bold uppercase tracking-[0.08em] text-ink-muted sm:text-left sm:text-[0.62rem] sm:tracking-[0.14em]">
           {label}
         </p>
         <p
           className={classNames(
-            'font-headline text-[1.1rem] font-extrabold leading-none tracking-tight',
+            'font-headline text-[0.95rem] font-extrabold leading-none tracking-tight sm:text-[1.1rem]',
             toneClassName,
           )}
         >
@@ -136,34 +136,34 @@ export function UniversityHomePage() {
         </SurfaceCard>
       ) : null}
       <SurfaceCard className="overflow-hidden bg-brand-gradient text-white" paddingClassName="p-0">
-        <div className="flex flex-col gap-3 px-4 py-3.5 sm:px-5 sm:py-4 lg:flex-row lg:items-center lg:justify-between lg:gap-3 2xl:px-6">
-          <div className="flex min-w-0 flex-1 items-center gap-3">
+        <div className="flex flex-col gap-2 px-3 py-2.5 sm:gap-3 sm:px-5 sm:py-4 lg:flex-row lg:items-center lg:justify-between lg:gap-3 2xl:px-6">
+          <div className="flex min-w-0 flex-1 items-center gap-2.5 sm:gap-3">
             {institution.logoSrc ? (
               <img
                 alt={institution.logoAlt}
-                className="h-14 w-14 rounded-[1.2rem] bg-white object-contain ring-4 ring-white/20 sm:h-16 sm:w-16"
+                className="h-10 w-10 rounded-[0.9rem] bg-white object-contain ring-2 ring-white/20 sm:h-16 sm:w-16 sm:rounded-[1.2rem] sm:ring-4"
                 decoding="async"
                 src={getOptimizedLogoUrl(institution.logoSrc, 480, 480)}
               />
             ) : (
-              <span className="inline-flex h-12 w-12 items-center justify-center rounded-[1.2rem] bg-white/14 text-white ring-4 ring-white/15 sm:h-14 sm:w-14">
-                <Building2 aria-hidden="true" className="h-5 w-5 sm:h-6 sm:w-6" />
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-[0.9rem] bg-white/14 text-white ring-2 ring-white/15 sm:h-14 sm:w-14 sm:rounded-[1.2rem] sm:ring-4">
+                <Building2 aria-hidden="true" className="h-4.5 w-4.5 sm:h-6 sm:w-6" />
               </span>
             )}
-            <div className="flex min-w-0 flex-col gap-1.5">
-              <h2 className="max-w-[18rem] truncate font-headline text-[1.08rem] font-extrabold tracking-tight text-white sm:max-w-[24rem] sm:text-[1.2rem] xl:max-w-[28rem]">
+            <div className="flex min-w-0 flex-col gap-1 sm:gap-1.5">
+              <h2 className="max-w-[15rem] truncate font-headline text-[0.95rem] font-extrabold tracking-tight text-white sm:max-w-[24rem] sm:text-[1.2rem] xl:max-w-[28rem]">
                 Bienvenido, {adminFullName}
               </h2>
-              <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-white/12 px-2 py-1 text-[0.75rem] font-semibold text-white/88">
-                  <Building2 aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
-                  <span className="max-w-[11rem] truncate sm:max-w-[14rem] xl:max-w-[18rem]">
+              <div className="flex min-w-0 flex-wrap items-center gap-1 sm:gap-1.5">
+                <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-white/12 px-1.5 py-0.5 text-[0.65rem] font-semibold text-white/88 sm:px-2 sm:py-1 sm:text-[0.75rem]">
+                  <Building2 aria-hidden="true" className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
+                  <span className="max-w-[9rem] truncate sm:max-w-[14rem] xl:max-w-[18rem]">
                     {institutionName}
                   </span>
                 </span>
-                <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-white/12 px-2 py-1 text-[0.75rem] font-semibold text-white/88">
-                  <MapPin aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
-                  <span className="max-w-[10rem] truncate sm:max-w-[12rem] xl:max-w-[14rem]">
+                <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-white/12 px-1.5 py-0.5 text-[0.65rem] font-semibold text-white/88 sm:px-2 sm:py-1 sm:text-[0.75rem]">
+                  <MapPin aria-hidden="true" className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
+                  <span className="max-w-[8.5rem] truncate sm:max-w-[12rem] xl:max-w-[14rem]">
                     {[institutionProfile.mainCity, institutionProfile.mainLocality].filter(Boolean).join(' · ') || 'Sin ubicacion principal'}
                   </span>
                 </span>
@@ -175,19 +175,19 @@ export function UniversityHomePage() {
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
         <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-4 py-3.5 sm:px-5 sm:py-4">
           <div className="grid gap-3 xl:grid-cols-2">
-            <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-3 sm:p-3.5">
-              <div className="space-y-3">
+            <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-2.5 sm:p-3.5">
+              <div className="space-y-2.5 sm:space-y-3">
                 <div className="flex items-center gap-2.5">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-[0.9rem] bg-primary/10 text-primary">
+                  <span className="inline-flex h-[2.125rem] w-[2.125rem] items-center justify-center rounded-[0.8rem] bg-primary/10 text-primary sm:h-10 sm:w-10 sm:rounded-[0.9rem]">
                     <GraduationCap aria-hidden="true" className="h-4 w-4" />
                   </span>
                   <div>
-                    <h2 className="font-headline text-[1rem] font-extrabold tracking-tight text-ink">
+                    <h2 className="font-headline text-[0.92rem] font-extrabold tracking-tight text-ink sm:text-[1rem]">
                       Estado de estudiantes
                     </h2>
                   </div>
                 </div>
-                <div className="grid gap-1.5 sm:grid-cols-3">
+                <div className="grid grid-cols-3 gap-1.5">
                   {[
                     { label: 'Activos', tone: 'text-emerald-700', value: activeStudentsCount },
                     { label: 'Pendientes', tone: 'text-amber-700', value: pendingStudentsCount },
@@ -201,7 +201,7 @@ export function UniversityHomePage() {
                     />
                   ))}
                 </div>
-                <div className="space-y-2">
+                <div className="hidden space-y-2 sm:block">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-[0.83rem] font-semibold text-ink">Últimos registros</p>
                     <Link
@@ -313,19 +313,19 @@ export function UniversityHomePage() {
             </SurfaceCard>
             */}
 
-            <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-3 sm:p-3.5">
-              <div className="space-y-3">
+            <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-2.5 sm:p-3.5">
+              <div className="space-y-2.5 sm:space-y-3">
                 <div className="flex items-center gap-2.5">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-[0.9rem] bg-primary/10 text-primary">
+                  <span className="inline-flex h-[2.125rem] w-[2.125rem] items-center justify-center rounded-[0.8rem] bg-primary/10 text-primary sm:h-10 sm:w-10 sm:rounded-[0.9rem]">
                     <Users aria-hidden="true" className="h-4 w-4" />
                   </span>
                   <div>
-                    <h2 className="font-headline text-[1rem] font-extrabold tracking-tight text-ink">
+                    <h2 className="font-headline text-[0.92rem] font-extrabold tracking-tight text-ink sm:text-[1rem]">
                       Equipo y sedes
                     </h2>
                   </div>
                 </div>
-                <div className="grid gap-1.5 sm:grid-cols-2">
+                <div className="grid grid-cols-2 gap-1.5">
                   <SummaryMetric
                     label="Docentes activos"
                     toneClassName="text-emerald-700"
@@ -337,7 +337,7 @@ export function UniversityHomePage() {
                     value={activeCampusesCount}
                   />
                 </div>
-                <div className="grid gap-1.5 lg:grid-cols-2">
+                <div className="hidden gap-1.5 sm:grid lg:grid-cols-2">
                   <div className="space-y-1.5">
                     <p className="text-[0.83rem] font-semibold text-ink">Docentes recientes</p>
                     {recentTeachers.slice(0, MAX_RECENT_TEACHERS).map((teacher) => (
