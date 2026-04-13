@@ -269,35 +269,6 @@ export function StudentTreatmentsPage() {
               </div>
             </div>
           </div>
-          <div className="flex shrink-0 flex-wrap items-center gap-2 lg:flex-nowrap">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1.5 ring-1 ring-white/15 backdrop-blur-sm">
-              <Stethoscope aria-hidden="true" className="h-3.5 w-3.5 text-white" />
-              <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-white/75">
-                Tratamientos
-              </p>
-              <p className="font-headline text-[1.05rem] font-extrabold tracking-tight text-white">
-                {activeTreatmentsCount}
-              </p>
-            </div>
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1.5 ring-1 ring-white/15 backdrop-blur-sm">
-              <MapPin aria-hidden="true" className="h-3.5 w-3.5 text-white" />
-              <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-white/75">
-                Sedes
-              </p>
-              <p className="font-headline text-[1.05rem] font-extrabold tracking-tight text-white">
-                {activePracticeSitesCount}
-              </p>
-            </div>
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1.5 ring-1 ring-white/15 backdrop-blur-sm">
-              <CalendarDays aria-hidden="true" className="h-3.5 w-3.5 text-white" />
-              <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-white/75">
-                Citas
-              </p>
-              <p className="font-headline text-[1.05rem] font-extrabold tracking-tight text-white">
-                {totalAppointmentsCount}
-              </p>
-            </div>
-          </div>
         </div>
       </SurfaceCard>
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
