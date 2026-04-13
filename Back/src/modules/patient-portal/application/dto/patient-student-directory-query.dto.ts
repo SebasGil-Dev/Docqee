@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class PatientStudentDirectoryQueryDto {
   @IsOptional()
@@ -12,15 +12,15 @@ export class PatientStudentDirectoryQueryDto {
 
   @IsOptional()
   @IsString()
-  location?: string;
+  city?: string;
+
+  @IsOptional()
+  @IsString()
+  locality?: string;
 
   @IsOptional()
   @IsString()
   university?: string;
-
-  @IsOptional()
-  @IsIn(['3', '4', '5'])
-  rating?: '3' | '4' | '5';
 
   @IsOptional()
   @Type(() => Number)

@@ -1152,13 +1152,18 @@ export type PatientStudentDirectoryItem = {
   universityName: string;
 };
 
-export type PatientStudentDirectoryLocationFilter = {
+export type PatientStudentDirectoryFilterOption = {
   label: string;
   value: string;
 };
 
+export type PatientStudentDirectoryLocalityFilter = PatientStudentDirectoryFilterOption & {
+  cityValue: string;
+};
+
 export type PatientStudentDirectoryFilters = {
-  locations: PatientStudentDirectoryLocationFilter[];
+  cities: PatientStudentDirectoryFilterOption[];
+  localities: PatientStudentDirectoryLocalityFilter[];
   treatments: string[];
   universities: string[];
 };

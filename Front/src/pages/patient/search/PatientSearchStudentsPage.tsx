@@ -21,7 +21,6 @@ import { getOptimizedAvatarUrl } from '@/lib/imageOptimization';
 import { usePatientModuleStore } from '@/lib/patientModuleStore';
 
 type NamedFilter = string;
-type RatingFilter = '3' | '4' | '5' | 'all';
 
 function getStudentFullName(student: PatientStudentDirectoryItem) {
   return formatDisplayName(`${student.firstName} ${student.lastName}`);
@@ -87,13 +86,13 @@ export function PatientSearchStudentsPage() {
   const [reasonError, setReasonError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [treatmentFilter, setTreatmentFilter] = useState<NamedFilter>('all');
-  const [locationFilter, setLocationFilter] = useState<NamedFilter>('all');
+  const [cityFilter, setCityFilter] = useState<NamedFilter>('all');
+  const [localityFilter, setLocalityFilter] = useState<NamedFilter>('all');
   const [universityFilter, setUniversityFilter] = useState<NamedFilter>('all');
-  const [ratingFilter, setRatingFilter] = useState<RatingFilter>('all');
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const latestSearchFiltersRef = useRef({
-    location: 'all',
-    rating: 'all' as RatingFilter,
+    city: 'all',
+    locality: 'all',
     search: '',
     treatment: 'all',
     university: 'all',
@@ -102,9 +101,9 @@ export function PatientSearchStudentsPage() {
   const hasSearchCriteria = Boolean(
     normalizedSearch ||
       treatmentFilter !== 'all' ||
-      locationFilter !== 'all' ||
-      universityFilter !== 'all' ||
-      ratingFilter !== 'all',
+      cityFilter !== 'all' ||
+      localityFilter !== 'all' ||
+      universityFilter !== 'all',
   );
   const treatmentOptions = useMemo(
     () =>
@@ -114,7 +113,14 @@ export function PatientSearchStudentsPage() {
       })),
     [studentFilters.treatments],
   );
-  const locationOptions = studentFilters.locations;
+  const cityOptions = studentFilters.cities;
+  const localityOptions = useMemo(
+    () =>
+      studentFilters.localities.filter(
+        (locality) => cityFilter === 'all' || locality.cityValue === cityFilter,
+      ),
+    [cityFilter, studentFilters.localities],
+  );
   const universityOptions = useMemo(
     () =>
       studentFilters.universities.map((university) => ({
@@ -150,9 +156,9 @@ export function PatientSearchStudentsPage() {
 
     const timeoutId = window.setTimeout(() => {
       void searchStudents({
+        city: cityFilter,
         limit: hasSearchCriteria ? 20 : 6,
-        location: locationFilter,
-        rating: ratingFilter,
+        locality: localityFilter,
         search: searchTerm,
         treatment: treatmentFilter,
         university: universityFilter,
@@ -163,11 +169,11 @@ export function PatientSearchStudentsPage() {
       window.clearTimeout(timeoutId);
     };
   }, [
+    cityFilter,
     hasInteractedWithSearch,
     hasSearchCriteria,
     isReady,
-    locationFilter,
-    ratingFilter,
+    localityFilter,
     searchStudents,
     searchTerm,
     treatmentFilter,
@@ -238,8 +244,8 @@ export function PatientSearchStudentsPage() {
   };
 
   const runImmediateSearchInTest = (filters: {
-    location?: NamedFilter;
-    rating?: RatingFilter;
+    city?: NamedFilter;
+    locality?: NamedFilter;
     search?: string;
     treatment?: NamedFilter;
     university?: NamedFilter;
@@ -249,22 +255,22 @@ export function PatientSearchStudentsPage() {
     }
 
     const nextTreatment = filters.treatment ?? latestSearchFiltersRef.current.treatment;
-    const nextLocation = filters.location ?? latestSearchFiltersRef.current.location;
+    const nextCity = filters.city ?? latestSearchFiltersRef.current.city;
+    const nextLocality = filters.locality ?? latestSearchFiltersRef.current.locality;
     const nextUniversity = filters.university ?? latestSearchFiltersRef.current.university;
-    const nextRating = filters.rating ?? latestSearchFiltersRef.current.rating;
     const resolvedSearch = filters.search ?? latestSearchFiltersRef.current.search;
     const nextHasSearchCriteria = Boolean(
       resolvedSearch.trim() ||
         nextTreatment !== 'all' ||
-        nextLocation !== 'all' ||
-        nextUniversity !== 'all' ||
-        nextRating !== 'all',
+        nextCity !== 'all' ||
+        nextLocality !== 'all' ||
+        nextUniversity !== 'all',
     );
 
     void searchStudents({
+      city: nextCity,
       limit: nextHasSearchCriteria ? 20 : 6,
-      location: nextLocation,
-      rating: nextRating,
+      locality: nextLocality,
       search: resolvedSearch,
       treatment: nextTreatment,
       university: nextUniversity,
@@ -367,24 +373,53 @@ export function PatientSearchStudentsPage() {
                 ))}
               </select>
             </label>
-            <label className="min-w-0" htmlFor="patient-student-location-filter">
+            <label className="min-w-0" htmlFor="patient-student-city-filter">
               <span className="mb-1.5 block text-[0.72rem] font-bold uppercase tracking-[0.16em] text-ink-muted">
-                Ubicación
+                Ciudad
               </span>
               <select
                 className="h-10 w-full rounded-full border border-slate-200/90 bg-white/98 px-4 text-sm font-semibold text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
-                id="patient-student-location-filter"
-                value={locationFilter}
+                id="patient-student-city-filter"
+                value={cityFilter}
                 onChange={(event) => {
-                  const nextLocation = event.target.value;
+                  const nextCity = event.target.value;
                   setHasInteractedWithSearch(true);
-                  latestSearchFiltersRef.current.location = nextLocation;
-                  setLocationFilter(nextLocation);
-                  runImmediateSearchInTest({ location: nextLocation });
+                  latestSearchFiltersRef.current.city = nextCity;
+                  latestSearchFiltersRef.current.locality = 'all';
+                  setCityFilter(nextCity);
+                  setLocalityFilter('all');
+                  runImmediateSearchInTest({ city: nextCity, locality: 'all' });
                 }}
               >
                 <option value="all">Todas</option>
-                {locationOptions.map((option) => (
+                {cityOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="min-w-0" htmlFor="patient-student-locality-filter">
+              <span className="mb-1.5 block text-[0.72rem] font-bold uppercase tracking-[0.16em] text-ink-muted">
+                Localidad
+              </span>
+              <select
+                className="h-10 w-full rounded-full border border-slate-200/90 bg-white/98 px-4 text-sm font-semibold text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                disabled={cityFilter === 'all'}
+                id="patient-student-locality-filter"
+                value={localityFilter}
+                onChange={(event) => {
+                  const nextLocality = event.target.value;
+                  setHasInteractedWithSearch(true);
+                  latestSearchFiltersRef.current.locality = nextLocality;
+                  setLocalityFilter(nextLocality);
+                  runImmediateSearchInTest({ locality: nextLocality });
+                }}
+              >
+                <option value="all">
+                  {cityFilter === 'all' ? 'Selecciona una ciudad' : 'Todas'}
+                </option>
+                {localityOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
@@ -413,28 +448,6 @@ export function PatientSearchStudentsPage() {
                     {option.label}
                   </option>
                 ))}
-              </select>
-            </label>
-            <label className="min-w-0" htmlFor="patient-student-rating-filter">
-              <span className="mb-1.5 block text-[0.72rem] font-bold uppercase tracking-[0.16em] text-ink-muted">
-                Calificación
-              </span>
-              <select
-                className="h-10 w-full rounded-full border border-slate-200/90 bg-white/98 px-4 text-sm font-semibold text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
-                id="patient-student-rating-filter"
-                value={ratingFilter}
-                onChange={(event) => {
-                  const nextRating = event.target.value as RatingFilter;
-                  setHasInteractedWithSearch(true);
-                  latestSearchFiltersRef.current.rating = nextRating;
-                  setRatingFilter(nextRating);
-                  runImmediateSearchInTest({ rating: nextRating });
-                }}
-              >
-                <option value="all">Todas</option>
-                <option value="5">5 estrellas</option>
-                <option value="4">4 o más</option>
-                <option value="3">3 o más</option>
               </select>
             </label>
           </div>

@@ -62,23 +62,37 @@ type UsePatientModuleStoreOptions = {
 const listeners = new Set<() => void>();
 
 function createStudentFilterOptions(students: PatientStudentDirectoryItem[]) {
-  const locationMap = new Map<string, string>();
+  const cityMap = new Map<string, string>();
+  const localityMap = new Map<string, { cityValue: string; label: string; value: string }>();
 
   students.forEach((student) => {
-    const locationValue = [student.city, student.locality].filter(Boolean).join('||');
+    const cityValue = normalizeText(student.city);
+    const localityValue = normalizeText(student.locality);
 
-    if (locationValue && !locationMap.has(locationValue)) {
-      locationMap.set(
-        locationValue,
-        [student.city, student.locality].filter(Boolean).join(' - '),
-      );
+    if (cityValue && !cityMap.has(cityValue)) {
+      cityMap.set(cityValue, student.city);
+    }
+
+    if (cityValue && localityValue) {
+      const key = `${cityValue}||${localityValue}`;
+
+      if (!localityMap.has(key)) {
+        localityMap.set(key, {
+          cityValue,
+          label: student.locality,
+          value: localityValue,
+        });
+      }
     }
   });
 
   return {
-    locations: [...locationMap.entries()]
+    cities: [...cityMap.entries()]
       .map(([value, label]) => ({ label, value }))
       .sort((first, second) => first.label.localeCompare(second.label, 'es-CO')),
+    localities: [...localityMap.values()].sort((first, second) =>
+      first.label.localeCompare(second.label, 'es-CO'),
+    ),
     treatments: [...new Set(students.flatMap((student) => student.treatments))]
       .filter(Boolean)
       .sort((first, second) => first.localeCompare(second, 'es-CO')),
@@ -95,31 +109,34 @@ function matchesMockStudentSearch(
   const normalizedSearch = normalizeText(filters.search ?? '').toLowerCase();
   const normalizedTreatment =
     filters.treatment && filters.treatment !== 'all'
-      ? normalizeText(filters.treatment)
+      ? normalizeText(filters.treatment).toLowerCase()
       : '';
-  const normalizedLocation =
-    filters.location && filters.location !== 'all'
-      ? normalizeText(filters.location)
+  const normalizedCity =
+    filters.city && filters.city !== 'all'
+      ? normalizeText(filters.city).toLowerCase()
+      : '';
+  const normalizedLocality =
+    filters.locality && filters.locality !== 'all'
+      ? normalizeText(filters.locality).toLowerCase()
       : '';
   const normalizedUniversity =
     filters.university && filters.university !== 'all'
-      ? normalizeText(filters.university)
+      ? normalizeText(filters.university).toLowerCase()
       : '';
-  const normalizedRating = filters.rating && filters.rating !== 'all' ? Number(filters.rating) : null;
   const studentFullName = `${student.firstName} ${student.lastName}`.toLowerCase();
-  const studentLocation = [student.city, student.locality].filter(Boolean).join('||');
+  const studentTreatments = student.treatments.map((treatment) =>
+    normalizeText(treatment).toLowerCase(),
+  );
+  const studentCity = normalizeText(student.city).toLowerCase();
+  const studentLocality = normalizeText(student.locality).toLowerCase();
+  const studentUniversity = normalizeText(student.universityName).toLowerCase();
 
   return (
     (!normalizedSearch || studentFullName.includes(normalizedSearch)) &&
-    (!normalizedTreatment || student.treatments.includes(normalizedTreatment)) &&
-    (!normalizedLocation || studentLocation === normalizedLocation) &&
-    (!normalizedUniversity || student.universityName === normalizedUniversity) &&
-    (!normalizedRating ||
-      Boolean(
-        student.averageRating &&
-          student.averageRating >= normalizedRating &&
-          student.reviewsCount > 0,
-      ))
+    (!normalizedTreatment || studentTreatments.includes(normalizedTreatment)) &&
+    (!normalizedCity || studentCity === normalizedCity) &&
+    (!normalizedLocality || studentLocality === normalizedLocality) &&
+    (!normalizedUniversity || studentUniversity === normalizedUniversity)
   );
 }
 
@@ -431,7 +448,8 @@ function createRuntimeInitialState(): PatientStoreState {
     reviews: [],
     requests: [],
     studentFilters: {
-      locations: [],
+      cities: [],
+      localities: [],
       treatments: [],
       universities: [],
     },

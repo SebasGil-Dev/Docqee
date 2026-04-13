@@ -13,9 +13,9 @@ import type {
 import { apiRequest } from '@/lib/apiClient';
 
 export type PatientStudentDirectorySearchParams = {
+  city?: string;
   limit?: number;
-  location?: string;
-  rating?: '3' | '4' | '5' | 'all';
+  locality?: string;
   search?: string;
   treatment?: string;
   university?: string;
@@ -48,9 +48,9 @@ export function getPatientPortalStudents(filters: PatientStudentDirectorySearchP
 
   appendDirectoryParam(params, 'search', filters.search);
   appendDirectoryParam(params, 'treatment', filters.treatment);
-  appendDirectoryParam(params, 'location', filters.location);
+  appendDirectoryParam(params, 'city', filters.city);
+  appendDirectoryParam(params, 'locality', filters.locality);
   appendDirectoryParam(params, 'university', filters.university);
-  appendDirectoryParam(params, 'rating', filters.rating);
   appendDirectoryParam(params, 'limit', filters.limit);
 
   const queryString = params.toString();
