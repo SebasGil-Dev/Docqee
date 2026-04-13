@@ -9,6 +9,7 @@ import { StudentConversationDto } from '../../application/dto/student-conversati
 import { StudentPortalDashboardDto } from '../../application/dto/student-portal-dashboard.dto';
 import { StudentPracticeSiteDto } from '../../application/dto/student-practice-site.dto';
 import { StudentProfileDto } from '../../application/dto/student-profile.dto';
+import { StudentTreatmentTypeDto } from '../../application/dto/student-treatment-type.dto';
 import { StudentRequestDto } from '../../application/dto/student-request.dto';
 import { StudentScheduleBlockDto } from '../../application/dto/student-schedule-block.dto';
 import { StudentSupervisorDto } from '../../application/dto/student-supervisor.dto';
@@ -170,6 +171,7 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     const treatments: StudentTreatmentDto[] = (student?.estudiante_tratamiento ?? []).map((t) => ({
       description: t.tipo_tratamiento.descripcion ?? '',
       id: String(t.id_estudiante_tratamiento),
+      treatmentTypeId: String(t.id_tipo_tratamiento),
       name: t.tipo_tratamiento.nombre,
       status: t.estado === 'ACTIVO' ? 'active' : 'inactive',
     }));
@@ -429,6 +431,46 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       locality: sp.sede.localidad.nombre,
       name: sp.sede.nombre,
       status: sp.estado === 'ACTIVO' ? 'active' as const : 'inactive' as const,
+    }));
+  }
+
+  async getTreatmentTypes(): Promise<StudentTreatmentTypeDto[]> {
+    const types = await this.prisma.tipo_tratamiento.findMany({
+      orderBy: { nombre: 'asc' },
+    });
+    return types.map((t) => ({
+      id: String(t.id_tipo_tratamiento),
+      name: t.nombre,
+      description: t.descripcion ?? '',
+    }));
+  }
+
+  async updateTreatments(studentAccountId: number, treatmentTypeIds: number[]): Promise<StudentTreatmentDto[]> {
+    await this.prisma.$transaction([
+      this.prisma.estudiante_tratamiento.deleteMany({
+        where: { id_cuenta_estudiante: studentAccountId, id_tipo_tratamiento: { notIn: treatmentTypeIds } },
+      }),
+      ...treatmentTypeIds.map((id_tipo_tratamiento) =>
+        this.prisma.estudiante_tratamiento.upsert({
+          where: { id_cuenta_estudiante_id_tipo_tratamiento: { id_cuenta_estudiante: studentAccountId, id_tipo_tratamiento } },
+          create: { id_cuenta_estudiante: studentAccountId, id_tipo_tratamiento, estado: 'ACTIVO' },
+          update: { estado: 'ACTIVO' },
+        }),
+      ),
+    ]);
+
+    const updated = await this.prisma.estudiante_tratamiento.findMany({
+      where: { id_cuenta_estudiante: studentAccountId },
+      include: { tipo_tratamiento: true },
+      orderBy: { tipo_tratamiento: { nombre: 'asc' } },
+    });
+
+    return updated.map((t) => ({
+      description: t.tipo_tratamiento.descripcion ?? '',
+      id: String(t.id_estudiante_tratamiento),
+      treatmentTypeId: String(t.id_tipo_tratamiento),
+      name: t.tipo_tratamiento.nombre,
+      status: t.estado === 'ACTIVO' ? 'active' as const : 'inactive' as const,
     }));
   }
 

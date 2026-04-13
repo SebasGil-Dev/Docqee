@@ -14,6 +14,7 @@ import type {
   StudentScheduleBlock,
   StudentScheduleBlockFormValues,
   StudentTreatment,
+  StudentTreatmentType,
   StudentPracticeSite,
 } from '@/content/types';
 import { apiRequest } from '@/lib/apiClient';
@@ -54,6 +55,17 @@ export function toggleStudentPortalTreatmentStatus(treatmentId: string) {
 
 export function getStudentPortalUniversitySites() {
   return apiRequest<StudentPracticeSite[]>('/student-portal/university-sites');
+}
+
+export function getStudentPortalTreatmentTypes() {
+  return apiRequest<StudentTreatmentType[]>('/student-portal/treatment-types');
+}
+
+export function updateStudentPortalTreatments(treatmentTypeIds: string[]) {
+  return apiRequest<StudentTreatment[]>('/student-portal/treatments', {
+    body: { treatmentTypeIds },
+    method: 'PATCH',
+  });
 }
 
 export function updateStudentPortalPracticeSites(siteIds: string[]) {

@@ -18,6 +18,7 @@ import type {
   StudentScheduleBlockFormValues,
   StudentSupervisor,
   StudentTreatment,
+  StudentTreatmentType,
 } from '@/content/types';
 import { IS_TEST_MODE } from '@/lib/apiClient';
 import { readAuthSession } from '@/lib/authSession';
@@ -33,7 +34,9 @@ import {
   updateStudentPortalAppointment,
   updateStudentPortalAppointmentStatus,
   getStudentPortalUniversitySites,
+  getStudentPortalTreatmentTypes,
   updateStudentPortalPracticeSites,
+  updateStudentPortalTreatments,
   updateStudentPortalProfile,
   updateStudentPortalRequestStatus,
   updateStudentPortalScheduleBlock,
@@ -66,6 +69,8 @@ type StudentModuleActions = {
   updateProfile: (values: StudentProfileFormValues) => Promise<boolean>;
   getUniversitySites: () => Promise<StudentPracticeSite[]>;
   updatePracticeSites: (siteIds: string[]) => Promise<boolean>;
+  getTreatmentTypes: () => Promise<StudentTreatmentType[]>;
+  updateTreatments: (treatmentTypeIds: string[]) => Promise<boolean>;
   upsertAppointment: (
     values: StudentAppointmentFormValues,
     appointmentId?: string,
@@ -132,18 +137,21 @@ function createMockState(): StudentStoreState {
     {
       description: 'Atencion preventiva, valoracion inicial y acompanamiento de control.',
       id: 'treatment-1',
+      treatmentTypeId: 'type-1',
       name: 'Operatoria basica',
       status: 'active',
     },
     {
       description: 'Manejo de protocolos de higiene oral y educacion al paciente.',
       id: 'treatment-2',
+      treatmentTypeId: 'type-2',
       name: 'Promocion y prevencion',
       status: 'active',
     },
     {
       description: 'Seguimiento del paciente en procedimientos de apoyo restaurativo.',
       id: 'treatment-3',
+      treatmentTypeId: 'type-3',
       name: 'Rehabilitacion oral',
       status: 'inactive',
     },
@@ -1997,6 +2005,30 @@ async function updatePracticeSites(siteIds: string[]): Promise<boolean> {
   }
 }
 
+async function getTreatmentTypes(): Promise<StudentTreatmentType[]> {
+  if (IS_TEST_MODE) return [];
+  try {
+    return await getStudentPortalTreatmentTypes();
+  } catch {
+    return [];
+  }
+}
+
+async function updateTreatments(treatmentTypeIds: string[]): Promise<boolean> {
+  if (IS_TEST_MODE) return true;
+
+  patchState({ errorMessage: null, isLoading: true });
+
+  try {
+    const treatments = await updateStudentPortalTreatments(treatmentTypeIds);
+    updateState({ ...state, errorMessage: null, isLoading: false, isReady: true, treatments });
+    return true;
+  } catch (error) {
+    patchState({ errorMessage: getErrorMessage(error, 'No pudimos actualizar tus tratamientos.'), isLoading: false });
+    return false;
+  }
+}
+
 export function resetStudentModuleState() {
   if (!IS_TEST_MODE) {
     clearPersistedStudentModuleCache();
@@ -2039,10 +2071,12 @@ export function useStudentModuleStore(options: UseStudentModuleStoreOptions = {}
     respondToRequest,
     sendConversationMessage,
     getUniversitySites,
+    getTreatmentTypes,
     togglePracticeSiteStatus,
     toggleScheduleBlockStatus,
     toggleTreatmentStatus,
     updatePracticeSites,
+    updateTreatments,
     updateProfile,
     upsertAppointment,
     upsertScheduleBlock,
