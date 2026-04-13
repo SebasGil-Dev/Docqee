@@ -158,27 +158,28 @@ export function AdminUniversitiesPage() {
       ) : null}
       <div className="flex items-stretch gap-2 md:gap-2.5">
         <SurfaceCard
-          className="min-w-0 flex-1 overflow-hidden bg-brand-gradient text-white md:flex-[1.75]"
+          className="w-[8.75rem] flex-none overflow-hidden bg-brand-gradient text-white sm:w-auto sm:min-w-0 sm:flex-1 md:flex-[1.75]"
           paddingClassName="p-0"
         >
-          <div className="flex items-center gap-2 px-3 py-1.75 sm:gap-2.5 sm:px-3.5 sm:py-2">
-            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/12 text-white sm:h-9 sm:w-9">
-              <Building2 aria-hidden="true" className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
+          <div className="flex items-center gap-1.5 px-2.5 py-1.75 sm:gap-2.5 sm:px-3.5 sm:py-2">
+            <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/12 text-white sm:h-9 sm:w-9">
+              <Building2 aria-hidden="true" className="h-3.5 w-3.5 sm:h-4.5 sm:w-4.5" />
             </span>
-            <span className="font-headline text-[1rem] font-extrabold tracking-tight text-white sm:text-[1.25rem]">
+            <span className="font-headline text-[0.95rem] font-extrabold tracking-tight text-white sm:text-[1.25rem]">
               {universities.length}
             </span>
-            <p className="min-w-0 text-[0.64rem] font-semibold leading-tight text-white/90 sm:text-[0.78rem]">
-              {adminContent.universitiesPage.summaryLabel}
+            <p className="min-w-0 text-[0.58rem] font-semibold leading-tight text-white/90 sm:text-[0.78rem]">
+              <span className="sm:hidden">Universidades</span>
+              <span className="hidden sm:inline">{adminContent.universitiesPage.summaryLabel}</span>
             </p>
           </div>
         </SurfaceCard>
         <Link
-          className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-[1.2rem] bg-brand-gradient px-2.75 py-1.75 text-[0.74rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 sm:gap-2 sm:px-3.5 sm:py-2 sm:text-[0.82rem] md:min-w-[12.25rem] md:flex-none"
+          className="inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-[1.2rem] bg-brand-gradient px-2.75 py-1.75 text-[0.74rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 sm:gap-2 sm:px-3.5 sm:py-2 sm:text-[0.82rem] md:min-w-[12.25rem] md:flex-none"
           to={ROUTES.adminRegisterUniversity}
         >
           <Plus aria-hidden="true" className="h-3.5 w-3.5" />
-          <span className="leading-none">{adminContent.universitiesPage.actionLabels.register}</span>
+          <span className="whitespace-nowrap leading-none">{adminContent.universitiesPage.actionLabels.register}</span>
         </Link>
       </div>
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
@@ -281,10 +282,10 @@ export function AdminUniversitiesPage() {
           </div>
         </div>
         {filteredUniversities.length > 0 ? (
-          <div className="admin-scrollbar min-h-0 flex-1 overflow-x-auto overflow-y-auto">
-            <div className="min-w-full">
-              <table className="min-w-full">
-                <thead className="sticky top-0 z-10 bg-slate-100 text-left">
+          <div className="admin-scrollbar min-h-0 flex-1 overflow-x-auto overflow-y-auto overscroll-contain scroll-smooth [scrollbar-gutter:stable] [-webkit-overflow-scrolling:touch]">
+            <div className="min-w-[52rem] md:min-w-full">
+              <table className="min-w-full table-fixed md:table-auto">
+                <thead className="bg-slate-100 text-left md:sticky md:top-0 md:z-10">
                   <tr className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-ink-muted">
                     <th className="px-4 py-3 sm:px-5">Universidad</th>
                     <th className="px-4 py-3">Localidad</th>
