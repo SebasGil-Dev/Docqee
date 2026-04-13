@@ -4,6 +4,7 @@ import { PrismaService } from '@/shared/database/prisma.service';
 import { normalizeText } from '@/shared/utils/front-format.util';
 import { CreatePatientRequestDto } from '../../application/dto/create-patient-request.dto';
 import { PatientAppointmentDto } from '../../application/dto/patient-appointment.dto';
+import { PatientAppointmentReviewDto } from '../../application/dto/patient-appointment-review.dto';
 import { PatientConversationDto } from '../../application/dto/patient-conversation.dto';
 import { PatientPortalDashboardDto } from '../../application/dto/patient-portal-dashboard.dto';
 import { PatientProfileDto } from '../../application/dto/patient-profile.dto';
@@ -49,7 +50,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
   }
 
   async getDashboard(patientAccountId: number): Promise<PatientPortalDashboardDto> {
-    const [patient, solicitudes, students] = await Promise.all([
+    const [patient, solicitudes, students, valoraciones] = await Promise.all([
       this.prisma.cuenta_paciente.findUnique({
         where: { id_cuenta: patientAccountId },
         include: {
@@ -102,6 +103,25 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
           },
         },
       }),
+      this.prisma.valoracion.findMany({
+        where: { id_cuenta_receptor: patientAccountId },
+        include: {
+          cita: {
+            include: {
+              tipo_cita: true,
+              sede: true,
+              solicitud: {
+                include: {
+                  cuenta_estudiante: {
+                    include: { persona: true },
+                  },
+                },
+              },
+            },
+          },
+        },
+        orderBy: { fecha_creacion: 'desc' },
+      }),
     ]);
 
     const profile = patient ? this.toProfileDto(patient) : this.emptyProfile();
@@ -148,6 +168,16 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         };
       });
 
+    const reviews: PatientAppointmentReviewDto[] = valoraciones.map((valoracion) => ({
+      appointmentLabel: valoracion.cita.tipo_cita.nombre,
+      comment: valoracion.comentario ?? null,
+      createdAt: valoracion.fecha_creacion.toISOString(),
+      id: String(valoracion.id_valoracion),
+      rating: valoracion.calificacion,
+      siteName: valoracion.cita.sede.nombre,
+      studentName: `${valoracion.cita.solicitud.cuenta_estudiante.persona.nombres} ${valoracion.cita.solicitud.cuenta_estudiante.persona.apellidos}`,
+    }));
+
     const studentDirectory: PatientStudentDirectoryItemDto[] = students.map((s) => {
       const sede = s.estudiante_sede_practica[0]?.sede;
       return {
@@ -172,6 +202,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       appointments,
       conversations,
       profile,
+      reviews,
       requests,
       students: studentDirectory,
     };

@@ -67,6 +67,27 @@ describe('Patient pages', () => {
     expect(screen.getByText(/cali - san fernando/i)).toBeInTheDocument();
   });
 
+  it('muestra comentarios del paciente y permite filtrarlos por estrellas', async () => {
+    const user = userEvent.setup();
+
+    renderPatientApp([ROUTES.patientHome]);
+
+    expect(
+      await screen.findByRole('heading', { name: /bienvenido, sara lopez/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('patient-review-comments-dashboard')).toHaveTextContent('3');
+    expect(screen.getByTestId('patient-review-card-patient-review-1')).toBeInTheDocument();
+    expect(screen.getByTestId('patient-review-card-patient-review-2')).toBeInTheDocument();
+    expect(screen.getByTestId('patient-review-card-patient-review-3')).toBeInTheDocument();
+
+    await user.click(screen.getByTestId('patient-review-rating-filter-button'));
+    await user.click(screen.getByRole('menuitemradio', { name: /4 estrellas/i }));
+
+    expect(screen.queryByTestId('patient-review-card-patient-review-1')).not.toBeInTheDocument();
+    expect(screen.getByTestId('patient-review-card-patient-review-2')).toBeInTheDocument();
+    expect(screen.queryByTestId('patient-review-card-patient-review-3')).not.toBeInTheDocument();
+  });
+
   it('permite filtrar estudiantes y enviar una nueva solicitud', async () => {
     const user = userEvent.setup();
 
