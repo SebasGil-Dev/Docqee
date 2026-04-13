@@ -9,7 +9,6 @@ import {
   Save,
   School,
   Trash2,
-  UserRound,
 } from 'lucide-react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
@@ -92,7 +91,7 @@ export function StudentProfilePage() {
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [universitySites, setUniversitySites] = useState<StudentPracticeSite[]>([]);
   const [selectedSiteIds, setSelectedSiteIds] = useState<Set<string>>(() =>
-    new Set(practiceSites.map((s) => s.id)),
+    new Set(practiceSites.map((s) => s.siteId)),
   );
   const [sedesSaveMessage, setSedesSaveMessage] = useState<string | null>(null);
   const [isSedeSaving, setIsSedeSaving] = useState(false);

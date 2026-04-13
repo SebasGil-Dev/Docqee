@@ -1,5 +1,6 @@
 import {
   Building2,
+  Check,
   GraduationCap,
   ImagePlus,
   Link2,
@@ -25,6 +26,7 @@ import { Seo } from '@/components/ui/Seo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { studentContent } from '@/content/studentContent';
 import type {
+  StudentPracticeSite,
   StudentProfessionalLinkType,
   StudentProfile,
   StudentProfileFormErrors,
@@ -95,9 +97,11 @@ export function StudentProfilePage() {
     nextLinkId,
     practiceSites,
     profile,
+    getUniversitySites,
     togglePracticeSiteStatus,
     toggleTreatmentStatus,
     treatments,
+    updatePracticeSites,
     updateProfile,
   } = useStudentModuleStore();
   const [values, setValues] = useState<StudentProfileFormValues>(() => getInitialValues(profile));
@@ -108,6 +112,12 @@ export function StudentProfilePage() {
   const [avatarUploadStatus, setAvatarUploadStatus] =
     useState<AvatarUploadStatus>('idle');
   const [avatarUploadMessage, setAvatarUploadMessage] = useState<string | null>(null);
+  const [universitySites, setUniversitySites] = useState<StudentPracticeSite[]>([]);
+  const [selectedSiteIds, setSelectedSiteIds] = useState<Set<string>>(() =>
+    new Set(practiceSites.map((s) => s.siteId)),
+  );
+  const [sedesSaveMessage, setSedesSaveMessage] = useState<string | null>(null);
+  const [isSedeSaving, setIsSedeSaving] = useState(false);
   const avatarPreviewUrlRef = useRef<string | null>(null);
   const avatarUploadPromiseRef = useRef<Promise<string | null> | null>(null);
   const avatarUploadSequenceRef = useRef(0);
@@ -141,6 +151,35 @@ export function StudentProfilePage() {
     },
     [],
   );
+
+  useEffect(() => {
+    void getUniversitySites().then(setUniversitySites);
+  }, []);
+
+  useEffect(() => {
+    setSelectedSiteIds(new Set(practiceSites.map((s) => s.siteId)));
+  }, [practiceSites]);
+
+  const handleToggleSede = (siteId: string) => {
+    setSelectedSiteIds((current) => {
+      const next = new Set(current);
+      if (next.has(siteId)) {
+        next.delete(siteId);
+      } else {
+        next.add(siteId);
+      }
+      return next;
+    });
+    setSedesSaveMessage(null);
+  };
+
+  const handleSaveSedes = () => {
+    setIsSedeSaving(true);
+    void updatePracticeSites([...selectedSiteIds]).then((ok) => {
+      setIsSedeSaving(false);
+      if (ok) setSedesSaveMessage('Sedes de practica actualizadas correctamente.');
+    });
+  };
 
   const handleFieldChange = <K extends keyof StudentProfileFormValues>(
     field: K,
@@ -616,66 +655,71 @@ export function StudentProfilePage() {
                 paddingClassName="p-4 sm:p-5"
               >
                 <div className="space-y-3.5">
-                  <div>
-                    <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
-                      Sedes de practica clinica
-                    </h2>
-                    <p className="mt-1 text-sm leading-6 text-ink-muted">
-                      Controla en que sedes de tu universidad apareces disponible para atencion.
-                    </p>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
+                        Sedes de practica clinica
+                      </h2>
+                      <p className="mt-1 text-sm leading-6 text-ink-muted">
+                        Selecciona las sedes de tu universidad a las que perteneces.
+                      </p>
+                    </div>
+                    <button
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-4 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 disabled:opacity-60"
+                      disabled={isSedeSaving}
+                      type="button"
+                      onClick={handleSaveSedes}
+                    >
+                      <Save aria-hidden="true" className="h-4 w-4" />
+                      <span>Guardar sedes</span>
+                    </button>
                   </div>
-                  {practiceSites.length > 0 ? (
-                    <div className="grid gap-3 xl:grid-cols-2 2xl:grid-cols-3">
-                      {practiceSites.map((practiceSite) => (
-                        <div
-                          key={practiceSite.id}
-                          className="flex flex-col gap-3 rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-3.5 py-3"
-                          data-testid={`student-profile-practice-site-card-${practiceSite.id}`}
-                        >
-                          <div className="flex flex-wrap items-start justify-between gap-3">
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-2">
-                                <MapPin aria-hidden="true" className="h-4 w-4 text-primary" />
-                                <p className="text-sm font-semibold text-ink">{practiceSite.name}</p>
-                              </div>
-                              <p className="text-sm text-ink-muted">{practiceSite.address}</p>
-                              <p className="text-xs font-medium uppercase tracking-[0.18em] text-ink-muted">
-                                {practiceSite.city} - {practiceSite.locality}
-                              </p>
-                            </div>
-                            <AdminStatusBadge entity="teacher" status={practiceSite.status} />
-                          </div>
-                          <div className="flex justify-end">
-                            <button
-                              className={classNames(
-                                'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
-                                practiceSite.status === 'active'
-                                  ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
-                                  : 'bg-primary/10 text-primary hover:bg-primary/15',
-                              )}
-                              type="button"
-                              onClick={() => {
-                                void togglePracticeSiteStatus(practiceSite.id);
-                              }}
-                            >
-                              {practiceSite.status === 'active' ? (
-                                <PowerOff aria-hidden="true" className="h-3.5 w-3.5" />
-                              ) : (
-                                <Power aria-hidden="true" className="h-3.5 w-3.5" />
-                              )}
-                              <span>
-                                {practiceSite.status === 'active'
-                                  ? studentContent.treatmentsPage.actionLabels.deactivate
-                                  : studentContent.treatmentsPage.actionLabels.activate}
-                              </span>
-                            </button>
-                          </div>
-                        </div>
-                      ))}
+                  {sedesSaveMessage ? (
+                    <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+                      {sedesSaveMessage}
+                    </p>
+                  ) : null}
+                  {universitySites.length === 0 ? (
+                    <div className="rounded-[1.35rem] border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-ink-muted">
+                      No hay sedes disponibles para tu universidad.
                     </div>
                   ) : (
-                    <div className="rounded-[1.35rem] border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-ink-muted">
-                      No hay sedes asociadas a tu practica en este momento.
+                    <div className="grid gap-2 xl:grid-cols-2 2xl:grid-cols-3">
+                      {universitySites.map((site) => {
+                        const isSelected = selectedSiteIds.has(site.siteId);
+                        return (
+                          <button
+                            key={site.siteId}
+                            className={classNames(
+                              'flex items-center gap-3 rounded-[1.35rem] border px-4 py-3 text-left text-sm font-semibold transition duration-200',
+                              isSelected
+                                ? 'border-primary/30 bg-primary/8 text-primary'
+                                : 'border-slate-200 bg-slate-50 text-ink hover:bg-slate-100',
+                            )}
+                            type="button"
+                            onClick={() => handleToggleSede(site.siteId)}
+                          >
+                            <span
+                              className={classNames(
+                                'flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition duration-200',
+                                isSelected
+                                  ? 'border-primary bg-primary text-white'
+                                  : 'border-slate-300 bg-white',
+                              )}
+                            >
+                              {isSelected ? <Check aria-hidden="true" className="h-3 w-3" /> : null}
+                            </span>
+                            <MapPin
+                              aria-hidden="true"
+                              className={classNames(
+                                'h-4 w-4 shrink-0',
+                                isSelected ? 'text-primary' : 'text-ink-muted',
+                              )}
+                            />
+                            <span className="min-w-0 truncate">{site.name}</span>
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

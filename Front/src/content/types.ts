@@ -938,6 +938,7 @@ export type StudentPracticeSite = {
   address: string;
   city: string;
   id: string;
+  siteId: string;
   locality: string;
   name: string;
   status: PersonOperationalStatus;

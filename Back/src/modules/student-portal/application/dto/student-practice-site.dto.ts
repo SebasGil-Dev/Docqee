@@ -1,5 +1,6 @@
 export class StudentPracticeSiteDto {
   id!: string;
+  siteId!: string;
   name!: string;
   city!: string;
   locality!: string;
