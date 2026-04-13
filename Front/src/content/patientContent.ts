@@ -105,14 +105,14 @@ export const patientContent = {
       sendRequest: 'Enviar solicitud',
     },
     description:
-      'Explora estudiantes disponibles, revisa su perfil clinico y deja lista tu solicitud de atencion.',
+      'Busca por nombre o combina filtros para encontrar estudiantes segun tratamiento, ubicacion, universidad y calificacion.',
     emptyState: 'No encontramos estudiantes con los criterios seleccionados.',
     meta: {
       description: 'Explora estudiantes y solicita atencion odontologica universitaria en Docqee.',
       title: 'Docqee | Buscar Estudiantes',
     },
     searchLabel: 'Buscar estudiante',
-    searchPlaceholder: 'Buscar por nombre, universidad o tratamiento...',
+    searchPlaceholder: 'Buscar por nombre de estudiante',
     successNoticePrefix: 'Solicitud enviada:',
     title: 'Buscar estudiantes',
   },

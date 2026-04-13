@@ -93,10 +93,17 @@ describe('Patient pages', () => {
 
     renderPatientApp([ROUTES.patientSearchStudents]);
 
-    await user.click(
-      screen.getByRole('button', { name: /filtrar estudiantes por tratamiento/i }),
+    expect(screen.queryByText(/daniel pardo/i)).not.toBeInTheDocument();
+
+    await user.type(
+      screen.getByPlaceholderText(/buscar por nombre de estudiante/i),
+      'clinica',
     );
-    await user.click(screen.getByRole('menuitemradio', { name: /rehabilitacion oral/i }));
+    expect(screen.queryByTestId('patient-student-card-patient-student-1')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('patient-student-card-patient-student-2')).not.toBeInTheDocument();
+
+    await user.clear(screen.getByPlaceholderText(/buscar por nombre de estudiante/i));
+    await user.selectOptions(screen.getByLabelText(/tratamiento/i), 'Rehabilitacion oral');
 
     expect(screen.queryByText(/daniel pardo/i)).not.toBeInTheDocument();
 

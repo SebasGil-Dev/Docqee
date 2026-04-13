@@ -124,6 +124,25 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       }),
     ]);
 
+    const studentIds = students.map((student) => student.id_cuenta);
+    const studentRatingGroups = studentIds.length
+      ? await this.prisma.valoracion.groupBy({
+          by: ['id_cuenta_receptor'],
+          where: { id_cuenta_receptor: { in: studentIds } },
+          _avg: { calificacion: true },
+          _count: { _all: true },
+        })
+      : [];
+    const studentRatingMap = new Map(
+      studentRatingGroups.map((ratingGroup) => [
+        ratingGroup.id_cuenta_receptor,
+        {
+          averageRating: ratingGroup._avg.calificacion ?? null,
+          reviewsCount: ratingGroup._count._all,
+        },
+      ]),
+    );
+
     const profile = patient ? this.toProfileDto(patient) : this.emptyProfile();
 
     const requests: PatientRequestDto[] = solicitudes.map((s) => this.toRequestDto(s));
@@ -180,11 +199,14 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
 
     const studentDirectory: PatientStudentDirectoryItemDto[] = students.map((s) => {
       const sede = s.estudiante_sede_practica[0]?.sede;
+      const rating = studentRatingMap.get(s.id_cuenta);
+
       return {
         avatarAlt: `Foto de perfil de ${s.persona.nombres}`,
         avatarSrc: s.perfil_estudiante?.foto_url ?? null,
         availabilityGeneral: s.perfil_estudiante?.disponibilidad_general ?? '',
         availabilityStatus: 'available',
+        averageRating: rating?.averageRating ?? null,
         biography: s.perfil_estudiante?.descripcion ?? '',
         city: sede?.localidad?.ciudad?.nombre ?? '',
         firstName: s.persona.nombres,
@@ -192,6 +214,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         lastName: s.persona.apellidos,
         locality: sede?.localidad?.nombre ?? '',
         practiceSite: sede?.nombre ?? '',
+        reviewsCount: rating?.reviewsCount ?? 0,
         semester: String(s.semestre),
         treatments: s.estudiante_tratamiento.map((t) => t.tipo_tratamiento.nombre),
         universityName: s.universidad.nombre,

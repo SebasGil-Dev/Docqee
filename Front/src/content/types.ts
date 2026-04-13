@@ -1138,12 +1138,14 @@ export type PatientStudentDirectoryItem = {
   avatarSrc: string | null;
   availabilityGeneral: string;
   availabilityStatus: PatientDiscoveryAvailability;
+  averageRating: number | null;
   biography: string;
   city: string;
   id: string;
   lastName: string;
   locality: string;
   practiceSite: string;
+  reviewsCount: number;
   semester: string;
   firstName: string;
   treatments: string[];

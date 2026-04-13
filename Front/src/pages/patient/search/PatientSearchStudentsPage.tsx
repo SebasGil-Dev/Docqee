@@ -1,14 +1,13 @@
 import {
-  Check,
   MapPin,
   Search,
   SendHorizontal,
   ShieldCheck,
-  SlidersHorizontal,
+  Star,
   UserRound,
   X,
 } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
 import { Seo } from '@/components/ui/Seo';
@@ -16,13 +15,15 @@ import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { patientContent } from '@/content/patientContent';
 import type { PatientStudentDirectoryItem } from '@/content/types';
 import { classNames } from '@/lib/classNames';
+import { formatDisplayName } from '@/lib/formatDisplayName';
 import { getOptimizedAvatarUrl } from '@/lib/imageOptimization';
 import { usePatientModuleStore } from '@/lib/patientModuleStore';
 
-type TreatmentFilter = string;
+type NamedFilter = string;
+type RatingFilter = '3' | '4' | '5' | 'all';
 
 function getStudentFullName(student: PatientStudentDirectoryItem) {
-  return `${student.firstName} ${student.lastName}`;
+  return formatDisplayName(`${student.firstName} ${student.lastName}`);
 }
 
 function getStudentInitials(student: PatientStudentDirectoryItem) {
@@ -35,6 +36,10 @@ function getStudentLocation(student: PatientStudentDirectoryItem) {
   return locationParts.length ? locationParts.join(' - ') : 'Ubicacion por confirmar';
 }
 
+function getStudentLocationValue(student: PatientStudentDirectoryItem) {
+  return [student.city, student.locality].filter(Boolean).join('||');
+}
+
 function getStudentPracticeSite(student: PatientStudentDirectoryItem) {
   return student.practiceSite || 'Sede por confirmar';
 }
@@ -43,46 +48,136 @@ function getStudentAvailability(student: PatientStudentDirectoryItem) {
   return student.availabilityGeneral || 'Disponibilidad por confirmar';
 }
 
+function getRatingLabel(student: PatientStudentDirectoryItem) {
+  if (!student.averageRating || student.reviewsCount === 0) {
+    return 'Sin calificacion';
+  }
+
+  return `${student.averageRating.toFixed(1)} (${student.reviewsCount})`;
+}
+
+function renderStars(value: number | null, sizeClassName = 'h-3.5 w-3.5') {
+  return Array.from({ length: 5 }, (_, index) => {
+    const isFilled = value !== null && index < Math.round(value);
+
+    return (
+      <Star
+        key={`patient-search-star-${value ?? 'empty'}-${index}`}
+        aria-hidden="true"
+        className={`${sizeClassName} ${
+          isFilled ? 'fill-amber-300 text-amber-300' : 'text-slate-300'
+        }`}
+      />
+    );
+  });
+}
+
+function createUniqueOptions(values: Array<{ label: string; value: string }>) {
+  const optionsMap = new Map<string, string>();
+
+  values.forEach((option) => {
+    const normalizedValue = option.value.trim();
+
+    if (normalizedValue && !optionsMap.has(normalizedValue)) {
+      optionsMap.set(normalizedValue, option.label);
+    }
+  });
+
+  return [...optionsMap.entries()]
+    .map(([value, label]) => ({ label, value }))
+    .sort((first, second) => first.label.localeCompare(second.label, 'es-CO'));
+}
+
 export function PatientSearchStudentsPage() {
   const { createRequest, errorMessage, isLoading, requests, students } = usePatientModuleStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [reason, setReason] = useState('');
   const [reasonError, setReasonError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
-  const [treatmentFilter, setTreatmentFilter] = useState<TreatmentFilter>('all');
+  const [treatmentFilter, setTreatmentFilter] = useState<NamedFilter>('all');
+  const [locationFilter, setLocationFilter] = useState<NamedFilter>('all');
+  const [universityFilter, setUniversityFilter] = useState<NamedFilter>('all');
+  const [ratingFilter, setRatingFilter] = useState<RatingFilter>('all');
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
-  const filterMenuRef = useRef<HTMLDivElement | null>(null);
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const treatmentOptions = useMemo(
-    () => [
-      { label: 'Todos', value: 'all' as const },
-      ...Array.from(new Set(students.flatMap((student) => student.treatments)))
-        .sort((first, second) => first.localeCompare(second))
-        .map((treatment) => ({
-          label: treatment,
-          value: treatment,
-        })),
-    ],
+    () =>
+      createUniqueOptions(
+        students.flatMap((student) =>
+          student.treatments.map((treatment) => ({
+            label: treatment,
+            value: treatment,
+          })),
+        ),
+      ),
     [students],
   );
-  const filteredStudents = useMemo(
+  const locationOptions = useMemo(
     () =>
-      students.filter((student) => {
-        const matchesSearch =
-          getStudentFullName(student).toLowerCase().includes(normalizedSearch) ||
-          student.universityName.toLowerCase().includes(normalizedSearch) ||
-          student.city.toLowerCase().includes(normalizedSearch) ||
-          student.treatments.some((treatment) =>
-            treatment.toLowerCase().includes(normalizedSearch),
-          );
-        const matchesTreatment =
-          treatmentFilter === 'all' || student.treatments.includes(treatmentFilter);
-
-        return matchesSearch && matchesTreatment;
-      }),
-    [normalizedSearch, students, treatmentFilter],
+      createUniqueOptions(
+        students.map((student) => ({
+          label: getStudentLocation(student),
+          value: getStudentLocationValue(student),
+        })),
+      ),
+    [students],
   );
+  const universityOptions = useMemo(
+    () =>
+      createUniqueOptions(
+        students.map((student) => ({
+          label: student.universityName,
+          value: student.universityName,
+        })),
+      ),
+    [students],
+  );
+  const hasActiveCriteria =
+    Boolean(normalizedSearch) ||
+    treatmentFilter !== 'all' ||
+    locationFilter !== 'all' ||
+    universityFilter !== 'all' ||
+    ratingFilter !== 'all';
+  const filteredStudents = useMemo(() => {
+    if (!hasActiveCriteria) {
+      return [];
+    }
+
+    return students.filter((student) => {
+      const matchesSearch = normalizedSearch
+        ? getStudentFullName(student).toLowerCase().includes(normalizedSearch)
+        : true;
+      const matchesTreatment =
+        treatmentFilter === 'all' || student.treatments.includes(treatmentFilter);
+      const matchesLocation =
+        locationFilter === 'all' || getStudentLocationValue(student) === locationFilter;
+      const matchesUniversity =
+        universityFilter === 'all' || student.universityName === universityFilter;
+      const matchesRating =
+        ratingFilter === 'all' ||
+        Boolean(
+          student.averageRating &&
+            student.averageRating >= Number(ratingFilter) &&
+            student.reviewsCount > 0,
+        );
+
+      return (
+        matchesSearch &&
+        matchesTreatment &&
+        matchesLocation &&
+        matchesUniversity &&
+        matchesRating
+      );
+    });
+  }, [
+    hasActiveCriteria,
+    locationFilter,
+    normalizedSearch,
+    ratingFilter,
+    students,
+    treatmentFilter,
+    universityFilter,
+  ]);
   const selectedStudent = selectedStudentId
     ? filteredStudents.find((student) => student.id === selectedStudentId) ?? null
     : null;
@@ -93,32 +188,6 @@ export function PatientSearchStudentsPage() {
           (request.status === 'PENDIENTE' || request.status === 'ACEPTADA'),
       ) ?? null
     : null;
-
-  useEffect(() => {
-    if (!isFilterMenuOpen) {
-      return undefined;
-    }
-
-    function handlePointerDown(event: MouseEvent) {
-      if (!filterMenuRef.current?.contains(event.target as Node)) {
-        setIsFilterMenuOpen(false);
-      }
-    }
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        setIsFilterMenuOpen(false);
-      }
-    }
-
-    window.addEventListener('mousedown', handlePointerDown);
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      window.removeEventListener('mousedown', handlePointerDown);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isFilterMenuOpen]);
 
   useEffect(() => {
     if (
@@ -212,7 +281,7 @@ export function PatientSearchStudentsPage() {
           <span className="font-headline text-lg font-extrabold leading-none">
             {filteredStudents.length}
           </span>
-          <span className="text-xs font-semibold">Estudiantes visibles</span>
+          <span className="text-xs font-semibold">Resultados</span>
         </div>
       </div>
       {successMessage ? (
@@ -238,12 +307,14 @@ export function PatientSearchStudentsPage() {
       ) : null}
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
         <div className="border-b border-slate-200/80 px-3 py-3 sm:px-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <label className="relative min-w-0 flex-1 sm:max-w-[34rem] xl:max-w-[38rem]" htmlFor="patient-student-search">
-              <span className="sr-only">{patientContent.searchPage.searchLabel}</span>
+          <div className="grid gap-3 xl:grid-cols-[minmax(15rem,1.35fr)_repeat(4,minmax(9.5rem,1fr))] xl:items-end">
+            <label className="relative min-w-0" htmlFor="patient-student-search">
+              <span className="mb-1.5 block text-[0.72rem] font-bold uppercase tracking-[0.16em] text-ink-muted">
+                Nombre
+              </span>
               <Search
                 aria-hidden="true"
-                className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ghost"
+                className="pointer-events-none absolute left-4 top-[calc(50%+0.8rem)] h-4 w-4 -translate-y-1/2 text-ghost xl:top-[calc(50%+0.65rem)]"
               />
               <input
                 className="h-10 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-11 pr-4 text-sm text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
@@ -254,107 +325,106 @@ export function PatientSearchStudentsPage() {
                 onChange={(event) => setSearchTerm(event.target.value)}
               />
             </label>
-            <div className="relative shrink-0" ref={filterMenuRef}>
-              <button
-                aria-controls="patient-student-filter-menu"
-                aria-expanded={isFilterMenuOpen}
-                aria-haspopup="menu"
-                aria-label={
-                  treatmentFilter === 'all'
-                    ? 'Filtrar estudiantes por tratamiento'
-                    : `Filtrar estudiantes por tratamiento. Actual: ${treatmentFilter}`
-                }
-                className={classNames(
-                  'relative inline-flex h-10 w-10 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
-                  treatmentFilter === 'all'
-                    ? 'border-slate-200/90 hover:border-primary/30 hover:bg-white'
-                    : 'border-primary/25 bg-primary/[0.08] text-primary hover:bg-primary/[0.12]',
-                )}
-                type="button"
-                onClick={() => setIsFilterMenuOpen((currentValue) => !currentValue)}
+            <label className="min-w-0" htmlFor="patient-student-treatment-filter">
+              <span className="mb-1.5 block text-[0.72rem] font-bold uppercase tracking-[0.16em] text-ink-muted">
+                Tratamiento
+              </span>
+              <select
+                className="h-10 w-full rounded-full border border-slate-200/90 bg-white/98 px-4 text-sm font-semibold text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                id="patient-student-treatment-filter"
+                value={treatmentFilter}
+                onChange={(event) => setTreatmentFilter(event.target.value)}
               >
-                <SlidersHorizontal aria-hidden="true" className="h-[1.05rem] w-[1.05rem]" />
-                {treatmentFilter !== 'all' ? (
-                  <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary ring-2 ring-white" />
-                ) : null}
-              </button>
-              {isFilterMenuOpen ? (
-                <div
-                  className="absolute right-0 top-[calc(100%+0.6rem)] z-20 w-[16rem] overflow-hidden rounded-[1.4rem] border border-slate-200/80 bg-white/95 p-2 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.45)] backdrop-blur"
-                  id="patient-student-filter-menu"
-                  role="menu"
-                >
-                  <div className="px-2.5 pb-2 pt-1">
-                    <p className="text-[0.7rem] font-bold uppercase tracking-[0.24em] text-primary/75">
-                      Filtrar por tratamiento
-                    </p>
-                  </div>
-                  <div className="space-y-1">
-                    {treatmentOptions.map((option) => {
-                      const isSelected = treatmentFilter === option.value;
-
-                      return (
-                        <button
-                          key={option.value}
-                          aria-checked={isSelected}
-                          className={classNames(
-                            'flex w-full items-center justify-between rounded-[1rem] px-3 py-2.5 text-left text-sm font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
-                            isSelected
-                              ? 'bg-primary text-white shadow-[0_14px_30px_-20px_rgba(22,78,99,0.9)]'
-                              : 'bg-slate-50/70 text-ink hover:bg-slate-100',
-                          )}
-                          role="menuitemradio"
-                          type="button"
-                          onClick={() => {
-                            setTreatmentFilter(option.value);
-                            setIsFilterMenuOpen(false);
-                          }}
-                        >
-                          <span className="truncate">{option.label}</span>
-                          <span
-                            className={classNames(
-                              'inline-flex h-5 w-5 items-center justify-center rounded-full',
-                              isSelected ? 'bg-white/18 text-white' : 'bg-white text-slate-300',
-                            )}
-                          >
-                            <Check aria-hidden="true" className="h-3.5 w-3.5" />
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : null}
-            </div>
+                <option value="all">Todos</option>
+                {treatmentOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="min-w-0" htmlFor="patient-student-location-filter">
+              <span className="mb-1.5 block text-[0.72rem] font-bold uppercase tracking-[0.16em] text-ink-muted">
+                Ubicación
+              </span>
+              <select
+                className="h-10 w-full rounded-full border border-slate-200/90 bg-white/98 px-4 text-sm font-semibold text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                id="patient-student-location-filter"
+                value={locationFilter}
+                onChange={(event) => setLocationFilter(event.target.value)}
+              >
+                <option value="all">Todas</option>
+                {locationOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="min-w-0" htmlFor="patient-student-university-filter">
+              <span className="mb-1.5 block text-[0.72rem] font-bold uppercase tracking-[0.16em] text-ink-muted">
+                Universidad
+              </span>
+              <select
+                className="h-10 w-full rounded-full border border-slate-200/90 bg-white/98 px-4 text-sm font-semibold text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                id="patient-student-university-filter"
+                value={universityFilter}
+                onChange={(event) => setUniversityFilter(event.target.value)}
+              >
+                <option value="all">Todas</option>
+                {universityOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="min-w-0" htmlFor="patient-student-rating-filter">
+              <span className="mb-1.5 block text-[0.72rem] font-bold uppercase tracking-[0.16em] text-ink-muted">
+                Calificación
+              </span>
+              <select
+                className="h-10 w-full rounded-full border border-slate-200/90 bg-white/98 px-4 text-sm font-semibold text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                id="patient-student-rating-filter"
+                value={ratingFilter}
+                onChange={(event) => setRatingFilter(event.target.value as RatingFilter)}
+              >
+                <option value="all">Todas</option>
+                <option value="5">5 estrellas</option>
+                <option value="4">4 o más</option>
+                <option value="3">3 o más</option>
+              </select>
+            </label>
           </div>
         </div>
         <div className="min-h-0 flex-1 px-3 py-3 sm:px-4">
           <SurfaceCard className="h-full min-h-0 border border-slate-200/80 bg-white shadow-none" paddingClassName="p-0">
             <div className="flex h-full min-h-[18rem] flex-col">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 px-3 py-2.5">
-                <div className="min-w-0">
-                  <h2 className="font-headline text-lg font-extrabold tracking-tight text-ink">
-                    Estudiantes sugeridos
-                  </h2>
-                  <p className="text-xs leading-5 text-ink-muted">
-                    Selecciona un perfil para revisar su oferta y enviar tu solicitud.
-                  </p>
-                </div>
+                  <div className="min-w-0">
+                    <h2 className="font-headline text-lg font-extrabold tracking-tight text-ink">
+                      Resultados de búsqueda
+                    </h2>
+                    <p className="text-xs leading-5 text-ink-muted">
+                      Busca por nombre o usa los filtros para encontrar el estudiante adecuado.
+                    </p>
+                  </div>
                 <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-ink-muted">
                   {filteredStudents.length} perfiles
                 </span>
               </div>
               <div className="admin-scrollbar min-h-0 flex-1 overflow-x-auto overflow-y-auto">
                 {filteredStudents.length > 0 ? (
-                  <table className="min-w-[58rem] w-full lg:min-w-0 lg:table-fixed">
+                  <table className="min-w-[64rem] w-full lg:min-w-0 lg:table-fixed">
                     <thead className="sticky top-0 z-10 bg-slate-100 text-left">
                       <tr className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-ink-muted">
                         <th className="px-4 py-2.5 sm:px-5">Estudiante</th>
                         <th className="px-4 py-2.5">Universidad</th>
-                        <th className="px-4 py-2.5">Ubicacion</th>
+                        <th className="px-4 py-2.5">Ubicación</th>
                         <th className="px-4 py-2.5">Tratamientos</th>
+                        <th className="px-4 py-2.5">Calificación</th>
                         <th className="px-4 py-2.5 text-center">Estado</th>
-                        <th className="px-4 py-2.5 text-right sm:px-5">Accion</th>
+                        <th className="px-4 py-2.5 text-right sm:px-5">Acción</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200/80">
@@ -415,12 +485,22 @@ export function PatientSearchStudentsPage() {
                                   </span>
                                 ) : null}
                               </div>
-                            ) : (
-                              <span className="text-[0.78rem] text-ink-muted">Sin tratamientos</span>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            <span
+                              ) : (
+                                <span className="text-[0.78rem] text-ink-muted">Sin tratamientos</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-0.5">
+                                  {renderStars(student.averageRating)}
+                                </div>
+                                <p className="text-[0.72rem] font-semibold text-ink-muted">
+                                  {getRatingLabel(student)}
+                                </p>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <span
                               className={classNames(
                                 'inline-flex rounded-full px-2.5 py-1 text-[0.72rem] font-semibold ring-1 ring-inset',
                                 student.availabilityStatus === 'available'
@@ -447,8 +527,10 @@ export function PatientSearchStudentsPage() {
                     </tbody>
                   </table>
                 ) : (
-                  <div className="rounded-[1.35rem] border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-ink-muted">
-                    {patientContent.searchPage.emptyState}
+                  <div className="m-4 rounded-[1.35rem] border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-ink-muted">
+                    {hasActiveCriteria
+                      ? patientContent.searchPage.emptyState
+                      : 'Busca por nombre o selecciona filtros para ver estudiantes disponibles.'}
                   </div>
                 )}
               </div>
@@ -496,6 +578,14 @@ export function PatientSearchStudentsPage() {
                   <p className="mt-1 text-sm leading-6 text-ink-muted">
                     {selectedStudent.universityName} - Semestre {selectedStudent.semester}
                   </p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-0.5">
+                      {renderStars(selectedStudent.averageRating, 'h-4 w-4')}
+                    </div>
+                    <span className="text-sm font-semibold text-ink-muted">
+                      {getRatingLabel(selectedStudent)}
+                    </span>
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
