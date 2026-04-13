@@ -8,6 +8,7 @@ import { UpdatePatientAppointmentStatusDto } from './application/dto/update-pati
 import { UpdatePatientProfileDto } from './application/dto/update-patient-profile.dto';
 import { UpdatePatientRequestStatusDto } from './application/dto/update-patient-request-status.dto';
 import { CreatePatientRequestDto } from './application/dto/create-patient-request.dto';
+import { PatientStudentDirectoryQueryDto } from './application/dto/patient-student-directory-query.dto';
 import { PatientPortalRepository } from './domain/repositories/patient-portal.repository';
 
 @Injectable()
@@ -19,6 +20,10 @@ export class PatientPortalService {
 
   getDashboard(user: RequestUser) {
     return this.patientPortalRepository.getDashboard(user.id);
+  }
+
+  getStudentDirectory(user: RequestUser, query: PatientStudentDirectoryQueryDto) {
+    return this.patientPortalRepository.getStudentDirectory(user.id, query);
   }
 
   async updateProfile(user: RequestUser, payload: UpdatePatientProfileDto) {

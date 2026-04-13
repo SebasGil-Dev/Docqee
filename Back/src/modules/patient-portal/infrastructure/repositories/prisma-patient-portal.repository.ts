@@ -1,4 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 
 import { PrismaService } from '@/shared/database/prisma.service';
 import { normalizeText } from '@/shared/utils/front-format.util';
@@ -10,11 +11,54 @@ import { PatientConversationMessageDto } from '../../application/dto/patient-con
 import { PatientPortalDashboardDto } from '../../application/dto/patient-portal-dashboard.dto';
 import { PatientProfileDto } from '../../application/dto/patient-profile.dto';
 import { PatientRequestDto } from '../../application/dto/patient-request.dto';
+import { PatientStudentDirectoryFiltersDto } from '../../application/dto/patient-student-directory-filters.dto';
 import { PatientStudentDirectoryItemDto } from '../../application/dto/patient-student-directory-item.dto';
+import { PatientStudentDirectoryQueryDto } from '../../application/dto/patient-student-directory-query.dto';
 import { UpdatePatientAppointmentStatusDto } from '../../application/dto/update-patient-appointment-status.dto';
 import { UpdatePatientProfileDto } from '../../application/dto/update-patient-profile.dto';
 import { UpdatePatientRequestStatusDto } from '../../application/dto/update-patient-request-status.dto';
 import { PatientPortalRepository } from '../../domain/repositories/patient-portal.repository';
+
+const studentDirectoryInclude = Prisma.validator<Prisma.cuenta_estudianteInclude>()({
+  persona: true,
+  universidad: {
+    include: {
+      localidad: {
+        include: {
+          ciudad: true,
+        },
+      },
+    },
+  },
+  perfil_estudiante: true,
+  estudiante_tratamiento: {
+    where: { estado: 'ACTIVO' },
+    include: { tipo_tratamiento: true },
+  },
+  estudiante_sede_practica: {
+    where: { estado: 'ACTIVO' },
+    include: {
+      sede: {
+        include: {
+          localidad: {
+            include: {
+              ciudad: true,
+            },
+          },
+        },
+      },
+    },
+  },
+});
+
+type StudentDirectoryRecord = Prisma.cuenta_estudianteGetPayload<{
+  include: typeof studentDirectoryInclude;
+}>;
+
+type StudentRatingSummary = {
+  averageRating: number | null;
+  reviewsCount: number;
+};
 
 @Injectable()
 export class PrismaPatientPortalRepository extends PatientPortalRepository {
@@ -50,8 +94,328 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     };
   }
 
+  private getStudentDirectoryLocation(student: StudentDirectoryRecord) {
+    const practiceSite = student.estudiante_sede_practica[0]?.sede ?? null;
+    const fallbackLocation = student.universidad.localidad;
+
+    return {
+      city: practiceSite?.localidad.ciudad.nombre ?? fallbackLocation.ciudad.nombre,
+      locality: practiceSite?.localidad.nombre ?? fallbackLocation.nombre,
+      practiceSite: practiceSite?.nombre ?? '',
+    };
+  }
+
+  private toStudentDirectoryDto(
+    student: StudentDirectoryRecord,
+    ratingMap: Map<number, StudentRatingSummary>,
+  ): PatientStudentDirectoryItemDto {
+    const rating = ratingMap.get(student.id_cuenta);
+    const location = this.getStudentDirectoryLocation(student);
+
+    return {
+      avatarAlt: `Foto de perfil de ${student.persona.nombres}`,
+      avatarSrc: student.perfil_estudiante?.foto_url ?? null,
+      availabilityGeneral: student.perfil_estudiante?.disponibilidad_general ?? '',
+      availabilityStatus: 'available',
+      averageRating: rating?.averageRating ?? null,
+      biography: student.perfil_estudiante?.descripcion ?? '',
+      city: location.city,
+      firstName: student.persona.nombres,
+      id: String(student.id_cuenta),
+      lastName: student.persona.apellidos,
+      locality: location.locality,
+      practiceSite: location.practiceSite,
+      reviewsCount: rating?.reviewsCount ?? 0,
+      semester: String(student.semestre),
+      treatments: student.estudiante_tratamiento.map((treatment) => treatment.tipo_tratamiento.nombre),
+      universityName: student.universidad.nombre,
+    };
+  }
+
+  private buildStudentDirectoryWhere(
+    query: PatientStudentDirectoryQueryDto,
+  ): Prisma.cuenta_estudianteWhereInput {
+    const normalizedSearch = normalizeText(query.search ?? '');
+    const normalizedTreatment = normalizeText(query.treatment ?? '');
+    const normalizedLocation = normalizeText(query.location ?? '');
+    const normalizedUniversity = normalizeText(query.university ?? '');
+    const andFilters: Prisma.cuenta_estudianteWhereInput[] = [];
+
+    if (normalizedSearch) {
+      normalizedSearch
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 4)
+        .forEach((term) => {
+          andFilters.push({
+            OR: [
+              { persona: { nombres: { contains: term, mode: 'insensitive' } } },
+              { persona: { apellidos: { contains: term, mode: 'insensitive' } } },
+            ],
+          });
+        });
+    }
+
+    if (normalizedLocation) {
+      const [cityName, localityName] = normalizedLocation.split('||').map((part) => normalizeText(part));
+
+      if (cityName && localityName) {
+        andFilters.push({
+          OR: [
+            {
+              estudiante_sede_practica: {
+                some: {
+                  estado: 'ACTIVO',
+                  sede: {
+                    localidad: {
+                      nombre: { equals: localityName, mode: 'insensitive' },
+                      ciudad: { nombre: { equals: cityName, mode: 'insensitive' } },
+                    },
+                  },
+                },
+              },
+            },
+            {
+              AND: [
+                { estudiante_sede_practica: { none: { estado: 'ACTIVO' } } },
+                {
+                  universidad: {
+                    localidad: {
+                      nombre: { equals: localityName, mode: 'insensitive' },
+                      ciudad: { nombre: { equals: cityName, mode: 'insensitive' } },
+                    },
+                  },
+                },
+              ],
+            },
+          ],
+        });
+      }
+    }
+
+    if (normalizedUniversity) {
+      andFilters.push({
+        universidad: {
+          nombre: { equals: normalizedUniversity, mode: 'insensitive' },
+        },
+      });
+    }
+
+    const where: Prisma.cuenta_estudianteWhereInput = {
+      cuenta_acceso: { estado: 'ACTIVO' },
+      universidad: { estado: 'ACTIVO' },
+      estudiante_tratamiento: normalizedTreatment
+        ? {
+            some: {
+              estado: 'ACTIVO',
+              tipo_tratamiento: {
+                nombre: { equals: normalizedTreatment, mode: 'insensitive' },
+              },
+            },
+          }
+        : { some: { estado: 'ACTIVO' } },
+    };
+
+    if (andFilters.length > 0) {
+      where.AND = andFilters;
+    }
+
+    return where;
+  }
+
+  private async buildStudentRatingMap(studentIds: number[]) {
+    if (studentIds.length === 0) {
+      return new Map<number, StudentRatingSummary>();
+    }
+
+    const ratingGroups = await this.prisma.valoracion.groupBy({
+      by: ['id_cuenta_receptor'],
+      where: { id_cuenta_receptor: { in: studentIds } },
+      _avg: { calificacion: true },
+      _count: { _all: true },
+    });
+
+    return new Map(
+      ratingGroups.map((ratingGroup) => [
+        ratingGroup.id_cuenta_receptor,
+        {
+          averageRating: ratingGroup._avg.calificacion ?? null,
+          reviewsCount: ratingGroup._count._all,
+        },
+      ]),
+    );
+  }
+
+  private async getStudentDirectoryFilters(): Promise<PatientStudentDirectoryFiltersDto> {
+    const [treatments, universities, students] = await Promise.all([
+      this.prisma.tipo_tratamiento.findMany({
+        where: {
+          estudiante_tratamiento: {
+            some: {
+              estado: 'ACTIVO',
+              cuenta_estudiante: {
+                cuenta_acceso: { estado: 'ACTIVO' },
+                universidad: { estado: 'ACTIVO' },
+              },
+            },
+          },
+        },
+        orderBy: { nombre: 'asc' },
+        select: { nombre: true },
+      }),
+      this.prisma.universidad.findMany({
+        where: {
+          cuenta_estudiante: {
+            some: {
+              cuenta_acceso: { estado: 'ACTIVO' },
+              universidad: { estado: 'ACTIVO' },
+              estudiante_tratamiento: { some: { estado: 'ACTIVO' } },
+            },
+          },
+        },
+        orderBy: { nombre: 'asc' },
+        select: { nombre: true },
+      }),
+      this.prisma.cuenta_estudiante.findMany({
+        where: {
+          cuenta_acceso: { estado: 'ACTIVO' },
+          universidad: { estado: 'ACTIVO' },
+          estudiante_tratamiento: { some: { estado: 'ACTIVO' } },
+        },
+        select: {
+          universidad: {
+            select: {
+              localidad: {
+                select: {
+                  nombre: true,
+                  ciudad: { select: { nombre: true } },
+                },
+              },
+            },
+          },
+          estudiante_sede_practica: {
+            where: { estado: 'ACTIVO' },
+            select: {
+              sede: {
+                select: {
+                  localidad: {
+                    select: {
+                      nombre: true,
+                      ciudad: { select: { nombre: true } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      }),
+    ]);
+
+    const locationMap = new Map<string, string>();
+
+    students.forEach((student) => {
+      const location =
+        student.estudiante_sede_practica[0]?.sede.localidad ?? student.universidad.localidad;
+      const value = `${location.ciudad.nombre}||${location.nombre}`;
+
+      if (!locationMap.has(value)) {
+        locationMap.set(value, `${location.ciudad.nombre} - ${location.nombre}`);
+      }
+    });
+
+    return {
+      locations: [...locationMap.entries()]
+        .map(([value, label]) => ({ label, value }))
+        .sort((first, second) => first.label.localeCompare(second.label, 'es-CO')),
+      treatments: treatments.map((treatment) => treatment.nombre),
+      universities: universities.map((university) => university.nombre),
+    };
+  }
+
+  async getStudentDirectory(
+    patientAccountId: number,
+    query: PatientStudentDirectoryQueryDto,
+  ): Promise<PatientStudentDirectoryItemDto[]> {
+    const limit = Math.min(Math.max(query.limit ?? 6, 1), 30);
+    const hasSearchCriteria = Boolean(
+      normalizeText(query.search ?? '') ||
+        normalizeText(query.treatment ?? '') ||
+        normalizeText(query.location ?? '') ||
+        normalizeText(query.university ?? '') ||
+        query.rating,
+    );
+    const candidateLimit = hasSearchCriteria ? 80 : 60;
+
+    const [patient, candidates] = await Promise.all([
+      this.prisma.cuenta_paciente.findUnique({
+        where: { id_cuenta: patientAccountId },
+        select: {
+          localidad: {
+            select: {
+              nombre: true,
+              ciudad: { select: { nombre: true } },
+            },
+          },
+        },
+      }),
+      this.prisma.cuenta_estudiante.findMany({
+        where: this.buildStudentDirectoryWhere(query),
+        include: studentDirectoryInclude,
+        orderBy: { fecha_creacion: 'desc' },
+        take: candidateLimit,
+      }),
+    ]);
+
+    const ratingMap = await this.buildStudentRatingMap(candidates.map((student) => student.id_cuenta));
+    const minRating = query.rating ? Number(query.rating) : null;
+
+    return candidates
+      .map((student) => ({
+        dto: this.toStudentDirectoryDto(student, ratingMap),
+        location: this.getStudentDirectoryLocation(student),
+        rating: ratingMap.get(student.id_cuenta),
+      }))
+      .filter((student) => {
+        if (!minRating) {
+          return true;
+        }
+
+        return (
+          student.rating?.averageRating !== null &&
+          student.rating?.averageRating !== undefined &&
+          student.rating.averageRating >= minRating &&
+          student.rating.reviewsCount > 0
+        );
+      })
+      .sort((first, second) => {
+        if (hasSearchCriteria) {
+          return (
+            (second.rating?.averageRating ?? 0) - (first.rating?.averageRating ?? 0) ||
+            (second.rating?.reviewsCount ?? 0) - (first.rating?.reviewsCount ?? 0)
+          );
+        }
+
+        const patientLocality = patient?.localidad.nombre.toLowerCase() ?? '';
+        const patientCity = patient?.localidad.ciudad.nombre.toLowerCase() ?? '';
+        const firstSameLocality = first.location.locality.toLowerCase() === patientLocality ? 1 : 0;
+        const secondSameLocality = second.location.locality.toLowerCase() === patientLocality ? 1 : 0;
+        const firstSameCity = first.location.city.toLowerCase() === patientCity ? 1 : 0;
+        const secondSameCity = second.location.city.toLowerCase() === patientCity ? 1 : 0;
+
+        return (
+          secondSameLocality - firstSameLocality ||
+          secondSameCity - firstSameCity ||
+          (second.rating?.averageRating ?? 0) - (first.rating?.averageRating ?? 0) ||
+          (second.rating?.reviewsCount ?? 0) - (first.rating?.reviewsCount ?? 0)
+        );
+      })
+      .slice(0, limit)
+      .map((student) => student.dto);
+  }
+
   async getDashboard(patientAccountId: number): Promise<PatientPortalDashboardDto> {
-    const [patient, solicitudes, students, valoraciones] = await Promise.all([
+    const [patient, solicitudes, valoraciones, students, studentFilters] = await Promise.all([
       this.prisma.cuenta_paciente.findUnique({
         where: { id_cuenta: patientAccountId },
         include: {
@@ -88,22 +452,6 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         },
         orderBy: { fecha_envio: 'desc' },
       }),
-      this.prisma.cuenta_estudiante.findMany({
-        where: { cuenta_acceso: { estado: 'ACTIVO' } },
-        include: {
-          persona: true,
-          universidad: true,
-          perfil_estudiante: true,
-          estudiante_tratamiento: {
-            where: { estado: 'ACTIVO' },
-            include: { tipo_tratamiento: true },
-          },
-          estudiante_sede_practica: {
-            where: { estado: 'ACTIVO' },
-            include: { sede: { include: { localidad: { include: { ciudad: true } } } } },
-          },
-        },
-      }),
       this.prisma.valoracion.findMany({
         where: { id_cuenta_receptor: patientAccountId },
         include: {
@@ -123,26 +471,9 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         },
         orderBy: { fecha_creacion: 'desc' },
       }),
+      this.getStudentDirectory(patientAccountId, { limit: 6 }),
+      this.getStudentDirectoryFilters(),
     ]);
-
-    const studentIds = students.map((student) => student.id_cuenta);
-    const studentRatingGroups = studentIds.length
-      ? await this.prisma.valoracion.groupBy({
-          by: ['id_cuenta_receptor'],
-          where: { id_cuenta_receptor: { in: studentIds } },
-          _avg: { calificacion: true },
-          _count: { _all: true },
-        })
-      : [];
-    const studentRatingMap = new Map(
-      studentRatingGroups.map((ratingGroup) => [
-        ratingGroup.id_cuenta_receptor,
-        {
-          averageRating: ratingGroup._avg.calificacion ?? null,
-          reviewsCount: ratingGroup._count._all,
-        },
-      ]),
-    );
 
     const profile = patient ? this.toProfileDto(patient) : this.emptyProfile();
 
@@ -198,37 +529,14 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       studentName: `${valoracion.cita.solicitud.cuenta_estudiante.persona.nombres} ${valoracion.cita.solicitud.cuenta_estudiante.persona.apellidos}`,
     }));
 
-    const studentDirectory: PatientStudentDirectoryItemDto[] = students.map((s) => {
-      const sede = s.estudiante_sede_practica[0]?.sede;
-      const rating = studentRatingMap.get(s.id_cuenta);
-
-      return {
-        avatarAlt: `Foto de perfil de ${s.persona.nombres}`,
-        avatarSrc: s.perfil_estudiante?.foto_url ?? null,
-        availabilityGeneral: s.perfil_estudiante?.disponibilidad_general ?? '',
-        availabilityStatus: 'available',
-        averageRating: rating?.averageRating ?? null,
-        biography: s.perfil_estudiante?.descripcion ?? '',
-        city: sede?.localidad?.ciudad?.nombre ?? '',
-        firstName: s.persona.nombres,
-        id: String(s.id_cuenta),
-        lastName: s.persona.apellidos,
-        locality: sede?.localidad?.nombre ?? '',
-        practiceSite: sede?.nombre ?? '',
-        reviewsCount: rating?.reviewsCount ?? 0,
-        semester: String(s.semestre),
-        treatments: s.estudiante_tratamiento.map((t) => t.tipo_tratamiento.nombre),
-        universityName: s.universidad.nombre,
-      };
-    });
-
     return {
       appointments,
       conversations,
       profile,
       reviews,
       requests,
-      students: studentDirectory,
+      studentFilters,
+      students,
     };
   }
 

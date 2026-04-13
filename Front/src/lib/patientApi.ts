@@ -8,11 +8,56 @@ import type {
   PatientProfileFormValues,
   PatientRequest,
   PatientRequestStatus,
+  PatientStudentDirectoryItem,
 } from '@/content/types';
 import { apiRequest } from '@/lib/apiClient';
 
+export type PatientStudentDirectorySearchParams = {
+  limit?: number;
+  location?: string;
+  rating?: '3' | '4' | '5' | 'all';
+  search?: string;
+  treatment?: string;
+  university?: string;
+};
+
+function appendDirectoryParam(
+  params: URLSearchParams,
+  key: string,
+  value: string | number | undefined,
+) {
+  if (value === undefined) {
+    return;
+  }
+
+  const normalizedValue = String(value).trim();
+
+  if (!normalizedValue || normalizedValue === 'all') {
+    return;
+  }
+
+  params.set(key, normalizedValue);
+}
+
 export function getPatientPortalDashboard() {
   return apiRequest<PatientModuleState>('/patient-portal/dashboard');
+}
+
+export function getPatientPortalStudents(filters: PatientStudentDirectorySearchParams) {
+  const params = new URLSearchParams();
+
+  appendDirectoryParam(params, 'search', filters.search);
+  appendDirectoryParam(params, 'treatment', filters.treatment);
+  appendDirectoryParam(params, 'location', filters.location);
+  appendDirectoryParam(params, 'university', filters.university);
+  appendDirectoryParam(params, 'rating', filters.rating);
+  appendDirectoryParam(params, 'limit', filters.limit);
+
+  const queryString = params.toString();
+
+  return apiRequest<PatientStudentDirectoryItem[]>(
+    `/patient-portal/students${queryString ? `?${queryString}` : ''}`,
+  );
 }
 
 export function updatePatientPortalProfile(values: PatientProfileFormValues) {

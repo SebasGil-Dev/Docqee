@@ -1152,6 +1152,17 @@ export type PatientStudentDirectoryItem = {
   universityName: string;
 };
 
+export type PatientStudentDirectoryLocationFilter = {
+  label: string;
+  value: string;
+};
+
+export type PatientStudentDirectoryFilters = {
+  locations: PatientStudentDirectoryLocationFilter[];
+  treatments: string[];
+  universities: string[];
+};
+
 export type PatientRequest = {
   appointmentsCount: number;
   conversationId: string | null;
@@ -1215,6 +1226,7 @@ export type PatientModuleState = {
   profile: PatientProfile;
   reviews: PatientAppointmentReview[];
   requests: PatientRequest[];
+  studentFilters: PatientStudentDirectoryFilters;
   students: PatientStudentDirectoryItem[];
 };
 
