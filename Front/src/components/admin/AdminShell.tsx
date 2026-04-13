@@ -263,7 +263,7 @@ export function AdminShell({
       </a>
       <div className="relative z-10 mx-auto flex h-full max-w-[98rem] flex-col px-4 py-4 sm:px-6 lg:px-5 lg:py-3 xl:px-7">
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-[2.25rem] bg-[#f4f8ff] p-1 sm:p-1.5 lg:gap-3">
-          <header className="overflow-hidden rounded-[1.5rem] bg-[#ffffff] px-4 py-2 shadow-ambient backdrop-blur-sm sm:px-5 sm:py-2.5 lg:px-5 lg:py-2">
+          <header className="relative z-40 overflow-visible rounded-[1.5rem] bg-[#ffffff] px-4 py-2 shadow-ambient backdrop-blur-sm sm:px-5 sm:py-2.5 lg:px-5 lg:py-2">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="-translate-y-0.5 min-w-0">
                 <Link
@@ -428,7 +428,7 @@ export function AdminShell({
           </header>
           <div
             className={classNames(
-              'flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row lg:items-stretch',
+              'relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row lg:items-stretch',
               showMobileBottomNavigation ? 'gap-0 lg:gap-4' : 'gap-4',
             )}
           >
