@@ -174,7 +174,16 @@ export const router = createBrowserRouter([
       {
         index: true,
         Component: function PatientIndexRedirect() {
-          return <Navigate replace to={ROUTES.patientSearchStudents} />;
+          return <Navigate replace to={ROUTES.patientHome} />;
+        },
+      },
+      {
+        path: 'inicio',
+        lazy: async () => {
+          const { PatientHomePage } = await import(
+            '@/pages/patient/home/PatientHomePage'
+          );
+          return { Component: PatientHomePage };
         },
       },
       {
@@ -191,6 +200,15 @@ export const router = createBrowserRouter([
         lazy: async () => {
           const { PatientRequestsPage } = await import('@/pages/patient/requests/PatientRequestsPage');
           return { Component: PatientRequestsPage };
+        },
+      },
+      {
+        path: 'agenda',
+        lazy: async () => {
+          const { PatientAgendaPage } = await import(
+            '@/pages/patient/agenda/PatientAgendaPage'
+          );
+          return { Component: PatientAgendaPage };
         },
       },
       {

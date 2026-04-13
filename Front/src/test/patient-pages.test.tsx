@@ -6,8 +6,10 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { ROUTES } from '@/constants/routes';
 import { resetPatientModuleState } from '@/lib/patientModuleStore';
+import { PatientAgendaPage } from '@/pages/patient/agenda/PatientAgendaPage';
 import { PatientAppointmentsPage } from '@/pages/patient/appointments/PatientAppointmentsPage';
 import { PatientConversationsPage } from '@/pages/patient/conversations/PatientConversationsPage';
+import { PatientHomePage } from '@/pages/patient/home/PatientHomePage';
 import { PatientLayout } from '@/pages/patient/PatientLayout';
 import { PatientNotificationsPage } from '@/pages/patient/notifications/PatientNotificationsPage';
 import { PatientProfilePage } from '@/pages/patient/profile/PatientProfilePage';
@@ -15,18 +17,20 @@ import { PatientRequestsPage } from '@/pages/patient/requests/PatientRequestsPag
 import { PatientSearchStudentsPage } from '@/pages/patient/search/PatientSearchStudentsPage';
 
 function renderPatientApp(
-  initialEntries: MemoryRouterProps['initialEntries'] = [ROUTES.patientSearchStudents],
+  initialEntries: MemoryRouterProps['initialEntries'] = [ROUTES.patientHome],
 ) {
   return render(
     <MemoryRouter initialEntries={initialEntries}>
       <Routes>
         <Route element={<PatientLayout />} path={ROUTES.patientRoot}>
           <Route
-            element={<Navigate replace to={ROUTES.patientSearchStudents} />}
+            element={<Navigate replace to={ROUTES.patientHome} />}
             index
           />
+          <Route element={<PatientHomePage />} path="inicio" />
           <Route element={<PatientSearchStudentsPage />} path="buscar-estudiantes" />
           <Route element={<PatientRequestsPage />} path="solicitudes" />
+          <Route element={<PatientAgendaPage />} path="agenda" />
           <Route element={<PatientNotificationsPage />} path="notificaciones" />
           <Route element={<PatientConversationsPage />} path="conversaciones" />
           <Route element={<PatientAppointmentsPage />} path="citas" />

@@ -1,6 +1,15 @@
 import { ROUTES } from '@/constants/routes';
 
 export const patientContent = {
+  agendaPage: {
+    description:
+      'Organiza tus citas por dia, semana o mes y mantente al tanto de cada espacio confirmado, pendiente o finalizado.',
+    meta: {
+      description: 'Consulta la agenda del paciente dentro de Docqee.',
+      title: 'Docqee | Agenda del Paciente',
+    },
+    title: 'Agenda',
+  },
   appointmentsPage: {
     actionLabels: {
       accept: 'Aceptar',
@@ -27,13 +36,23 @@ export const patientContent = {
       'Habla con los estudiantes cuando una solicitud fue aceptada y consulta hilos previos en solo lectura.',
     emptyState: 'No encontramos conversaciones con los criterios seleccionados.',
     meta: {
-      description: 'Gestiona las conversaciones del paciente dentro de Docqee.',
-      title: 'Docqee | Conversaciones del Paciente',
+      description: 'Gestiona el chat del paciente dentro de Docqee.',
+      title: 'Docqee | Chat del Paciente',
     },
     searchLabel: 'Buscar conversacion',
     searchPlaceholder: 'Buscar por estudiante o universidad...',
     successNoticePrefix: 'Conversacion actualizada:',
-    title: 'Conversaciones',
+    title: 'Chat',
+  },
+  homePage: {
+    ctaLabel: 'Buscar estudiantes',
+    description:
+      'Consulta rapidamente tus solicitudes, proximas citas, conversaciones activas y estudiantes disponibles.',
+    meta: {
+      description: 'Consulta el resumen principal del portal del paciente dentro de Docqee.',
+      title: 'Docqee | Inicio del Paciente',
+    },
+    title: 'Inicio',
   },
   notificationsPage: {
     description:
@@ -62,7 +81,7 @@ export const patientContent = {
       title: 'Docqee | Perfil del Paciente',
     },
     successMessage: 'Tu perfil se actualizo correctamente en esta demo frontend.',
-    title: 'Mi perfil',
+    title: 'Perfil',
   },
   requestsPage: {
     actionLabels: {
@@ -79,7 +98,7 @@ export const patientContent = {
     searchLabel: 'Buscar solicitud',
     searchPlaceholder: 'Buscar por estudiante o universidad...',
     successNoticePrefix: 'Solicitud actualizada:',
-    title: 'Mis solicitudes',
+    title: 'Solicitudes',
   },
   searchPage: {
     actionLabels: {
@@ -110,6 +129,12 @@ export const patientContent = {
     },
     navigation: [
       {
+        icon: 'house',
+        label: 'Inicio',
+        matchPrefix: ROUTES.patientHome,
+        to: ROUTES.patientHome,
+      },
+      {
         icon: 'search',
         label: 'Buscar estudiantes',
         matchPrefix: ROUTES.patientSearchStudents,
@@ -117,9 +142,27 @@ export const patientContent = {
       },
       {
         icon: 'clipboard-list',
-        label: 'Mis solicitudes',
+        label: 'Solicitudes',
         matchPrefix: ROUTES.patientRequests,
         to: ROUTES.patientRequests,
+      },
+      {
+        icon: 'calendar-check-2',
+        label: 'Citas',
+        matchPrefix: ROUTES.patientAppointments,
+        to: ROUTES.patientAppointments,
+      },
+      {
+        icon: 'calendar-days',
+        label: 'Agenda',
+        matchPrefix: ROUTES.patientAgenda,
+        to: ROUTES.patientAgenda,
+      },
+      {
+        icon: 'message-square-more',
+        label: 'Chat',
+        matchPrefix: ROUTES.patientConversations,
+        to: ROUTES.patientConversations,
       },
       {
         icon: 'bell',
@@ -128,20 +171,8 @@ export const patientContent = {
         to: ROUTES.patientNotifications,
       },
       {
-        icon: 'message-square-more',
-        label: 'Conversaciones',
-        matchPrefix: ROUTES.patientConversations,
-        to: ROUTES.patientConversations,
-      },
-      {
-        icon: 'calendar-days',
-        label: 'Citas',
-        matchPrefix: ROUTES.patientAppointments,
-        to: ROUTES.patientAppointments,
-      },
-      {
         icon: 'user-round',
-        label: 'Mi perfil',
+        label: 'Perfil',
         matchPrefix: ROUTES.patientProfile,
         to: ROUTES.patientProfile,
       },
