@@ -197,7 +197,8 @@ export function AdminShell({
     avatarKind === 'logo'
       ? getOptimizedLogoUrl(avatarSrc, 320, 320)
       : getOptimizedAvatarUrl(avatarSrc, 96);
-  const hasHeaderNotifications = Array.isArray(headerNotifications);
+  const showHeaderNotifications =
+    Array.isArray(headerNotifications) || Boolean(notificationsPageTo);
   const visibleNotifications = useMemo(
     () =>
       [...(headerNotifications ?? [])]
@@ -213,6 +214,7 @@ export function AdminShell({
     headerNotifications?.filter(
       (notification) => notification.isRead !== true,
     ).length ?? 0;
+  const hasUnreadNotifications = unreadNotificationCount > 0;
   const notificationButtonLabel = unreadNotificationCount
     ? `Notificaciones (${unreadNotificationCount})`
     : 'Notificaciones';
@@ -282,7 +284,7 @@ export function AdminShell({
                 </Link>
               </div>
               <div className="inline-flex max-w-full items-center gap-2 self-start sm:self-center">
-                {hasHeaderNotifications ? (
+                {showHeaderNotifications ? (
                   <div className="relative -translate-x-1 sm:-translate-x-0.5" ref={notificationsRef}>
                   <button
                     aria-controls="admin-header-notifications"
@@ -312,7 +314,7 @@ export function AdminShell({
                           Notificaciones
                         </p>
                         <div className="flex items-center gap-2">
-                          {onMarkAllNotificationsRead && unreadNotificationCount > 0 ? (
+                          {onMarkAllNotificationsRead && hasUnreadNotifications ? (
                             <button
                               className="text-[0.72rem] font-semibold text-primary transition-colors duration-200 hover:text-primary/80"
                               type="button"
@@ -333,7 +335,13 @@ export function AdminShell({
                         </div>
                       </div>
                       {visibleNotifications.length > 0 ? (
-                        <div className="max-h-[22rem] overflow-y-auto">
+                        <>
+                          {!hasUnreadNotifications ? (
+                            <div className="border-b border-slate-200/80 px-4 py-3 text-[0.78rem] font-medium text-ink-muted">
+                              No tienes notificaciones sin leer.
+                            </div>
+                          ) : null}
+                          <div className="max-h-[22rem] overflow-y-auto">
                           {visibleNotifications.map((notification) => {
                             const notificationDestination = notificationsPageTo
                               ? `${notificationsPageTo}?notification=${encodeURIComponent(notification.id)}`
@@ -384,10 +392,11 @@ export function AdminShell({
 
                             return <div key={notification.id}>{itemContent}</div>;
                           })}
-                        </div>
+                          </div>
+                        </>
                       ) : (
                         <div className="px-4 py-5 text-sm text-ink-muted">
-                          No tienes notificaciones por ahora.
+                          No tienes notificaciones sin leer.
                         </div>
                       )}
                     </div>

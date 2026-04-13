@@ -93,6 +93,19 @@ describe('Student pages', () => {
     expect(screen.getByText(/ricardo suarez cancelo la cita/i)).toBeInTheDocument();
   });
 
+  it('muestra un mensaje cuando ya no quedan notificaciones sin leer en el header', async () => {
+    const user = userEvent.setup();
+
+    renderStudentApp([ROUTES.studentProfile]);
+
+    await user.click(screen.getByRole('button', { name: /notificaciones/i }));
+    await user.click(screen.getByRole('button', { name: /marcar todas/i }));
+
+    expect(
+      await screen.findByText(/no tienes notificaciones sin leer/i),
+    ).toBeInTheDocument();
+  });
+
   it('abre la pantalla de notificaciones del estudiante al seleccionar una alerta', async () => {
     const user = userEvent.setup();
 
