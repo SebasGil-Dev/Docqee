@@ -46,6 +46,10 @@ type PatientStoreState = PatientModuleState & {
   isReady: boolean;
 };
 
+type UsePatientModuleStoreOptions = {
+  autoLoad?: boolean;
+};
+
 const listeners = new Set<() => void>();
 
 function createMockState(): PatientStoreState {
@@ -794,16 +798,24 @@ export function resetPatientModuleState() {
   emitChange();
 }
 
-export function usePatientModuleStore() {
+export function usePatientModuleStore(
+  options: UsePatientModuleStoreOptions = {},
+) {
   const snapshot = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  const shouldAutoLoad = options.autoLoad ?? true;
 
   useEffect(() => {
-    if (IS_TEST_MODE || snapshot.isLoading || snapshot.isReady) {
+    if (
+      IS_TEST_MODE ||
+      !shouldAutoLoad ||
+      snapshot.isLoading ||
+      snapshot.isReady
+    ) {
       return;
     }
 
     void loadRuntimeState();
-  }, [snapshot.isLoading, snapshot.isReady]);
+  }, [shouldAutoLoad, snapshot.isLoading, snapshot.isReady]);
 
   const actions: PatientModuleActions = {
     createRequest,

@@ -9,6 +9,7 @@ import { resetPatientModuleState } from '@/lib/patientModuleStore';
 import { PatientAppointmentsPage } from '@/pages/patient/appointments/PatientAppointmentsPage';
 import { PatientConversationsPage } from '@/pages/patient/conversations/PatientConversationsPage';
 import { PatientLayout } from '@/pages/patient/PatientLayout';
+import { PatientNotificationsPage } from '@/pages/patient/notifications/PatientNotificationsPage';
 import { PatientProfilePage } from '@/pages/patient/profile/PatientProfilePage';
 import { PatientRequestsPage } from '@/pages/patient/requests/PatientRequestsPage';
 import { PatientSearchStudentsPage } from '@/pages/patient/search/PatientSearchStudentsPage';
@@ -26,6 +27,7 @@ function renderPatientApp(
           />
           <Route element={<PatientSearchStudentsPage />} path="buscar-estudiantes" />
           <Route element={<PatientRequestsPage />} path="solicitudes" />
+          <Route element={<PatientNotificationsPage />} path="notificaciones" />
           <Route element={<PatientConversationsPage />} path="conversaciones" />
           <Route element={<PatientAppointmentsPage />} path="citas" />
           <Route element={<PatientProfilePage />} path="mi-perfil" />
@@ -145,6 +147,21 @@ describe('Patient pages', () => {
           screen.getByTestId('patient-appointment-row-patient-appointment-1'),
         ).getByText(/^Aceptada$/i),
       ).toBeInTheDocument();
+    });
+  });
+
+  it('permite marcar todas las notificaciones del paciente como leidas', async () => {
+    const user = userEvent.setup();
+
+    renderPatientApp([ROUTES.patientNotifications]);
+
+    expect(await screen.findByRole('heading', { name: /^Notificaciones$/i })).toBeInTheDocument();
+    expect(screen.getAllByText(/^Sin leer$/i).length).toBeGreaterThan(0);
+
+    await user.click(screen.getByRole('button', { name: /marcar todas como leidas/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByText(/^Sin leer$/i)).not.toBeInTheDocument();
     });
   });
 });

@@ -607,6 +607,7 @@ export type RegisterUniversityFormErrors = Partial<Record<RegisterUniversityForm
 
 export type AdminShellNavigationIcon =
   | 'badge'
+  | 'bell'
   | 'building2'
   | 'calendar-check-2'
   | 'calendar-days'
@@ -626,6 +627,18 @@ export type AdminShellNavigationItem = {
   label: string;
   matchPrefix?: `/${string}`;
   to: `/${string}`;
+};
+
+export type PortalNotificationTone = 'danger' | 'info' | 'success' | 'warning';
+
+export type PortalNotification = {
+  createdAt: string;
+  description: string;
+  id: string;
+  isRead: boolean;
+  title: string;
+  tone?: PortalNotificationTone;
+  to?: string;
 };
 
 export type AdminShellContent = {

@@ -194,6 +194,15 @@ export const router = createBrowserRouter([
         },
       },
       {
+        path: 'notificaciones',
+        lazy: async () => {
+          const { PatientNotificationsPage } = await import(
+            '@/pages/patient/notifications/PatientNotificationsPage'
+          );
+          return { Component: PatientNotificationsPage };
+        },
+      },
+      {
         path: 'conversaciones',
         lazy: async () => {
           const { PatientConversationsPage } = await import(
@@ -274,6 +283,15 @@ export const router = createBrowserRouter([
             '@/pages/student/requests/StudentRequestsPage'
           );
           return { Component: StudentRequestsPage };
+        },
+      },
+      {
+        path: 'notificaciones',
+        lazy: async () => {
+          const { StudentNotificationsPage } = await import(
+            '@/pages/student/notifications/StudentNotificationsPage'
+          );
+          return { Component: StudentNotificationsPage };
         },
       },
       {

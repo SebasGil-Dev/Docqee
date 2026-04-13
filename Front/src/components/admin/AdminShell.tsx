@@ -30,6 +30,7 @@ import { adminContent } from '@/content/adminContent';
 import type {
   AdminShellContent,
   AdminShellNavigationIcon,
+  PortalNotification,
 } from '@/content/types';
 import { classNames } from '@/lib/classNames';
 import { formatDisplayName } from '@/lib/formatDisplayName';
@@ -43,23 +44,20 @@ type AdminShellProps = PropsWithChildren<{
   avatarSrc?: string | null;
   content?: AdminShellContent;
   headerNotifications?: AdminShellNotification[];
+  notificationsPageTo?: `/${string}`;
+  onMarkAllNotificationsRead?: () => void;
+  onOpenNotification?: (notificationId: string) => void;
   overrideName?: { firstName: string; lastName: string };
 }>;
 
-export type AdminShellNotification = {
-  createdAt: string;
-  description: string;
-  id: string;
-  title: string;
-  tone?: 'danger' | 'info' | 'success' | 'warning';
-  to?: string;
-};
+export type AdminShellNotification = PortalNotification;
 
 const SIDEBAR_STATE_STORAGE_KEY = 'docqee-admin-sidebar-collapsed';
 const MOBILE_ADMIN_MEDIA_QUERY = '(max-width: 1023px)';
 
 const navigationIcons: Record<AdminShellNavigationIcon, typeof Building2> = {
   badge: Badge,
+  bell: Bell,
   building2: Building2,
   'calendar-check-2': CalendarCheck2,
   'calendar-days': CalendarDays,
@@ -171,7 +169,10 @@ export function AdminShell({
   avatarSrc,
   children,
   content = adminContent.shell,
-  headerNotifications = [],
+  headerNotifications,
+  notificationsPageTo,
+  onMarkAllNotificationsRead,
+  onOpenNotification,
   overrideName,
 }: AdminShellProps) {
   const { logout, session } = useAuth();
@@ -196,9 +197,10 @@ export function AdminShell({
     avatarKind === 'logo'
       ? getOptimizedLogoUrl(avatarSrc, 320, 320)
       : getOptimizedAvatarUrl(avatarSrc, 96);
+  const hasHeaderNotifications = Array.isArray(headerNotifications);
   const visibleNotifications = useMemo(
     () =>
-      [...headerNotifications]
+      [...(headerNotifications ?? [])]
         .sort(
           (firstNotification, secondNotification) =>
             new Date(secondNotification.createdAt).getTime() -
@@ -207,8 +209,12 @@ export function AdminShell({
         .slice(0, 8),
     [headerNotifications],
   );
-  const notificationButtonLabel = headerNotifications.length
-    ? `Notificaciones (${headerNotifications.length})`
+  const unreadNotificationCount =
+    headerNotifications?.filter(
+      (notification) => notification.isRead !== true,
+    ).length ?? 0;
+  const notificationButtonLabel = unreadNotificationCount
+    ? `Notificaciones (${unreadNotificationCount})`
     : 'Notificaciones';
 
   useEffect(() => {
@@ -276,7 +282,8 @@ export function AdminShell({
                 </Link>
               </div>
               <div className="inline-flex max-w-full items-center gap-2 self-start sm:self-center">
-                <div className="relative -translate-x-1 sm:-translate-x-0.5" ref={notificationsRef}>
+                {hasHeaderNotifications ? (
+                  <div className="relative -translate-x-1 sm:-translate-x-0.5" ref={notificationsRef}>
                   <button
                     aria-controls="admin-header-notifications"
                     aria-expanded={isNotificationsOpen}
@@ -287,9 +294,9 @@ export function AdminShell({
                     onClick={() => setIsNotificationsOpen((currentValue) => !currentValue)}
                   >
                     <Bell aria-hidden="true" className="h-4 w-4 sm:h-[0.95rem] sm:w-[0.95rem]" />
-                    {headerNotifications.length > 0 ? (
+                    {unreadNotificationCount > 0 ? (
                       <span className="absolute -right-1 -top-1 inline-flex min-h-[1.1rem] min-w-[1.1rem] items-center justify-center rounded-full bg-rose-500 px-1 text-[0.62rem] font-bold leading-none text-white">
-                        {headerNotifications.length > 9 ? '9+' : headerNotifications.length}
+                        {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
                       </span>
                     ) : null}
                   </button>
@@ -300,16 +307,44 @@ export function AdminShell({
                       id="admin-header-notifications"
                       role="dialog"
                     >
-                      <div className="border-b border-slate-200/80 px-4 py-3">
+                      <div className="flex items-center justify-between gap-3 border-b border-slate-200/80 px-4 py-3">
                         <p className="text-sm font-extrabold tracking-tight text-ink">
                           Notificaciones
                         </p>
+                        <div className="flex items-center gap-2">
+                          {onMarkAllNotificationsRead && unreadNotificationCount > 0 ? (
+                            <button
+                              className="text-[0.72rem] font-semibold text-primary transition-colors duration-200 hover:text-primary/80"
+                              type="button"
+                              onClick={onMarkAllNotificationsRead}
+                            >
+                              Marcar todas
+                            </button>
+                          ) : null}
+                          {notificationsPageTo ? (
+                            <Link
+                              className="text-[0.72rem] font-semibold text-primary transition-colors duration-200 hover:text-primary/80"
+                              to={notificationsPageTo}
+                              onClick={() => setIsNotificationsOpen(false)}
+                            >
+                              Ver todas
+                            </Link>
+                          ) : null}
+                        </div>
                       </div>
                       {visibleNotifications.length > 0 ? (
                         <div className="max-h-[22rem] overflow-y-auto">
                           {visibleNotifications.map((notification) => {
+                            const notificationDestination = notificationsPageTo
+                              ? `${notificationsPageTo}?notification=${encodeURIComponent(notification.id)}`
+                              : notification.to;
                             const itemContent = (
-                              <div className="flex items-start gap-3 px-4 py-3 transition-colors duration-200 hover:bg-slate-50">
+                              <div
+                                className={classNames(
+                                  'flex items-start gap-3 px-4 py-3 transition-colors duration-200 hover:bg-slate-50',
+                                  notification.isRead !== true && 'bg-primary/[0.035]',
+                                )}
+                              >
                                 <span
                                   className={classNames(
                                     'mt-0.5 inline-flex h-2.5 w-2.5 shrink-0 rounded-full',
@@ -332,12 +367,15 @@ export function AdminShell({
                               </div>
                             );
 
-                            if (notification.to) {
+                            if (notificationDestination) {
                               return (
                                 <Link
                                   key={notification.id}
-                                  to={notification.to}
-                                  onClick={() => setIsNotificationsOpen(false)}
+                                  to={notificationDestination}
+                                  onClick={() => {
+                                    setIsNotificationsOpen(false);
+                                    onOpenNotification?.(notification.id);
+                                  }}
                                 >
                                   {itemContent}
                                 </Link>
@@ -354,7 +392,8 @@ export function AdminShell({
                       )}
                     </div>
                   ) : null}
-                </div>
+                  </div>
+                ) : null}
                 {optimizedAvatarSrc ? (
                   <img
                     alt={adminFullName}

@@ -10,6 +10,7 @@ import { StudentAgendaPage } from '@/pages/student/agenda/StudentAgendaPage';
 import { StudentAppointmentsPage } from '@/pages/student/appointments/StudentAppointmentsPage';
 import { StudentConversationsPage } from '@/pages/student/conversations/StudentConversationsPage';
 import { StudentLayout } from '@/pages/student/StudentLayout';
+import { StudentNotificationsPage } from '@/pages/student/notifications/StudentNotificationsPage';
 import { StudentProfilePage } from '@/pages/student/profile/StudentProfilePortalPage';
 import { StudentRequestsPage } from '@/pages/student/requests/StudentRequestsPage';
 import { StudentTreatmentsPage } from '@/pages/student/treatments/StudentTreatmentsPage';
@@ -33,6 +34,7 @@ function renderStudentApp(
           <Route element={<StudentAgendaPage />} path="agenda" />
           <Route element={<StudentAppointmentsPage />} path="citas" />
           <Route element={<StudentRequestsPage />} path="solicitudes" />
+          <Route element={<StudentNotificationsPage />} path="notificaciones" />
           <Route element={<StudentConversationsPage />} path="conversaciones" />
         </Route>
       </Routes>
@@ -89,6 +91,25 @@ describe('Student pages', () => {
     expect(screen.getByText(/julian torres acepto la cita/i)).toBeInTheDocument();
     expect(screen.getByText(/solicitud de reprogramacion/i)).toBeInTheDocument();
     expect(screen.getByText(/ricardo suarez cancelo la cita/i)).toBeInTheDocument();
+  });
+
+  it('abre la pantalla de notificaciones del estudiante al seleccionar una alerta', async () => {
+    const user = userEvent.setup();
+
+    renderStudentApp([ROUTES.studentProfile]);
+
+    await user.click(screen.getByRole('button', { name: /notificaciones/i }));
+    await user.click(screen.getByText(/nueva solicitud de ana maria perez/i));
+
+    expect(await screen.findByRole('heading', { name: /^Notificaciones$/i })).toBeInTheDocument();
+    expect(screen.getByText(/dolor dental persistente y revision general/i)).toBeInTheDocument();
+    expect(
+      within(
+        screen.getByTestId(
+          'portal-notification-card-student-request-student-request-1-PENDIENTE',
+        ),
+      ).getByRole('link', { name: /ver detalle/i }),
+    ).toBeInTheDocument();
   });
 
   it('muestra el resumen de valoraciones y comentarios del estudiante', async () => {

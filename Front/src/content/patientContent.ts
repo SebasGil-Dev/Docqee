@@ -35,6 +35,20 @@ export const patientContent = {
     successNoticePrefix: 'Conversacion actualizada:',
     title: 'Conversaciones',
   },
+  notificationsPage: {
+    description:
+      'Revisa las novedades del portal, marca avisos como leidos y abre el detalle asociado cuando quieras profundizar.',
+    emptyState: 'No tienes notificaciones por ahora.',
+    markAllReadLabel: 'Marcar todas como leidas',
+    markReadLabel: 'Marcar como leida',
+    meta: {
+      description: 'Consulta y gestiona las notificaciones del portal del paciente dentro de Docqee.',
+      title: 'Docqee | Notificaciones del Paciente',
+    },
+    title: 'Notificaciones',
+    unreadLabel: 'Sin leer',
+    viewDetailLabel: 'Ver detalle',
+  },
   profilePage: {
     actionLabels: {
       reset: 'Restablecer',
@@ -106,6 +120,12 @@ export const patientContent = {
         label: 'Mis solicitudes',
         matchPrefix: ROUTES.patientRequests,
         to: ROUTES.patientRequests,
+      },
+      {
+        icon: 'bell',
+        label: 'Notificaciones',
+        matchPrefix: ROUTES.patientNotifications,
+        to: ROUTES.patientNotifications,
       },
       {
         icon: 'message-square-more',

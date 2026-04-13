@@ -56,6 +56,21 @@ export const studentContent = {
     successNoticePrefix: 'Conversacion actualizada:',
     title: 'Chat',
   },
+  notificationsPage: {
+    description:
+      'Consulta las novedades del portal, marca avisos como leidos y abre el detalle relacionado cuando lo necesites.',
+    emptyState: 'No tienes notificaciones por ahora.',
+    markAllReadLabel: 'Marcar todas como leidas',
+    markReadLabel: 'Marcar como leida',
+    meta: {
+      description:
+        'Consulta y gestiona las notificaciones del portal del estudiante dentro de Docqee.',
+      title: 'Docqee | Notificaciones del Estudiante',
+    },
+    title: 'Notificaciones',
+    unreadLabel: 'Sin leer',
+    viewDetailLabel: 'Ver detalle',
+  },
   profilePage: {
     actionLabels: {
       addLink: 'Agregar enlace',
@@ -135,6 +150,12 @@ export const studentContent = {
         label: 'Solicitudes',
         matchPrefix: ROUTES.studentRequests,
         to: ROUTES.studentRequests,
+      },
+      {
+        icon: 'bell',
+        label: 'Notificaciones',
+        matchPrefix: ROUTES.studentNotifications,
+        to: ROUTES.studentNotifications,
       },
       {
         icon: 'calendar-check-2',

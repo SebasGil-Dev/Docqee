@@ -6,10 +6,26 @@ import { ROUTES } from '@/constants/routes';
 import { patientContent } from '@/content/patientContent';
 import { IS_TEST_MODE } from '@/lib/apiClient';
 import { getDefaultRouteForRole } from '@/lib/authRouting';
+import { usePatientPortalNotifications } from '@/lib/portalNotifications';
+import { usePatientModuleStore } from '@/lib/patientModuleStore';
 
 export function PatientLayout() {
   const { session } = useAuth();
   const location = useLocation();
+  const shouldAutoLoadPatientModule =
+    IS_TEST_MODE || session?.user.role === 'PATIENT';
+  const { appointments, conversations, profile, requests } = usePatientModuleStore({
+    autoLoad: shouldAutoLoadPatientModule,
+  });
+  const {
+    markAllNotificationsAsRead,
+    markNotificationAsRead,
+    notifications,
+  } = usePatientPortalNotifications({
+    appointments,
+    conversations,
+    requests,
+  });
 
   if (!IS_TEST_MODE) {
     if (!session) {
@@ -22,7 +38,17 @@ export function PatientLayout() {
   }
 
   return (
-    <AdminShell content={patientContent.shell}>
+    <AdminShell
+      content={patientContent.shell}
+      headerNotifications={notifications}
+      notificationsPageTo={ROUTES.patientNotifications}
+      onMarkAllNotificationsRead={markAllNotificationsAsRead}
+      onOpenNotification={markNotificationAsRead}
+      overrideName={{
+        firstName: profile.firstName || patientContent.shell.adminUser.firstName,
+        lastName: profile.lastName || patientContent.shell.adminUser.lastName,
+      }}
+    >
       <Outlet />
     </AdminShell>
   );

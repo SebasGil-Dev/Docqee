@@ -1,5 +1,6 @@
 import {
   Badge,
+  Bell,
   Building2,
   CalendarCheck2,
   CalendarDays,
@@ -34,6 +35,7 @@ type AdminMobileBottomNavigationProps = {
 
 const navigationIcons: Record<AdminShellNavigationIcon, LucideIcon> = {
   badge: Badge,
+  bell: Bell,
   building2: Building2,
   'calendar-check-2': CalendarCheck2,
   'calendar-days': CalendarDays,
