@@ -40,6 +40,14 @@ export class StudentPortalService {
     return this.studentPortalRepository.updateRequestStatus(user.id, requestId, payload);
   }
 
+  getConversations(user: RequestUser) {
+    return this.studentPortalRepository.getConversations(user.id);
+  }
+
+  sendConversationMessage(user: RequestUser, conversationId: number, content: string) {
+    return this.studentPortalRepository.sendConversationMessage(user.id, conversationId, content);
+  }
+
   async updateProfile(user: RequestUser, payload: UpdateStudentProfileDto) {
     const nextAvatarSrc = await this.resolveAvatarUrl(payload.avatarSrc, user.id);
 

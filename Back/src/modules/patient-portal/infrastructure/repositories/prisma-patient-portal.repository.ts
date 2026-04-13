@@ -6,6 +6,7 @@ import { CreatePatientRequestDto } from '../../application/dto/create-patient-re
 import { PatientAppointmentDto } from '../../application/dto/patient-appointment.dto';
 import { PatientAppointmentReviewDto } from '../../application/dto/patient-appointment-review.dto';
 import { PatientConversationDto } from '../../application/dto/patient-conversation.dto';
+import { PatientConversationMessageDto } from '../../application/dto/patient-conversation-message.dto';
 import { PatientPortalDashboardDto } from '../../application/dto/patient-portal-dashboard.dto';
 import { PatientProfileDto } from '../../application/dto/patient-profile.dto';
 import { PatientRequestDto } from '../../application/dto/patient-request.dto';
@@ -424,6 +425,50 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       studentName: `${updated.solicitud.cuenta_estudiante.persona.nombres} ${updated.solicitud.cuenta_estudiante.persona.apellidos}`,
       teacherName: `${updated.docente_universidad.docente.nombres} ${updated.docente_universidad.docente.apellidos}`,
       universityName: updated.solicitud.cuenta_estudiante.universidad.nombre,
+    };
+  }
+
+  async sendConversationMessage(
+    patientAccountId: number,
+    conversationId: number,
+    content: string,
+  ): Promise<PatientConversationMessageDto> {
+    const conv = await this.prisma.conversacion.findFirst({
+      where: {
+        id_conversacion: conversationId,
+        estado: 'ACTIVA',
+        solicitud: { id_cuenta_paciente: patientAccountId },
+      },
+      include: {
+        solicitud: {
+          include: {
+            cuenta_paciente: { include: { persona: true } },
+          },
+        },
+      },
+    });
+
+    if (!conv) {
+      throw new NotFoundException('La conversacion no existe, no te pertenece o no esta activa.');
+    }
+
+    const msg = await this.prisma.mensaje.create({
+      data: {
+        id_conversacion: conversationId,
+        id_cuenta_remitente: patientAccountId,
+        contenido: content,
+      },
+    });
+
+    const patient = conv.solicitud.cuenta_paciente;
+    const authorName = `${patient.persona.nombres} ${patient.persona.apellidos}`;
+
+    return {
+      id: String(msg.id_mensaje),
+      author: 'PACIENTE' as const,
+      authorName,
+      content: msg.contenido,
+      sentAt: msg.enviado_at.toISOString(),
     };
   }
 

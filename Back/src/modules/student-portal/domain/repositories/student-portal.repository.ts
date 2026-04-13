@@ -1,3 +1,5 @@
+import { StudentConversationDto } from '../../application/dto/student-conversation.dto';
+import { StudentConversationMessageDto } from '../../application/dto/student-conversation-message.dto';
 import { StudentPortalDashboardDto } from '../../application/dto/student-portal-dashboard.dto';
 import { StudentPracticeSiteDto } from '../../application/dto/student-practice-site.dto';
 import { StudentProfileDto } from '../../application/dto/student-profile.dto';
@@ -47,4 +49,12 @@ export abstract class StudentPortalRepository {
     requestId: number,
     payload: UpdateStudentRequestStatusDto,
   ): Promise<StudentRequestDto>;
+
+  abstract getConversations(studentAccountId: number): Promise<StudentConversationDto[]>;
+
+  abstract sendConversationMessage(
+    studentAccountId: number,
+    conversationId: number,
+    content: string,
+  ): Promise<StudentConversationMessageDto>;
 }

@@ -55,6 +55,10 @@ export class PatientPortalService {
     return this.patientPortalRepository.updateAppointmentStatus(user.id, appointmentId, payload);
   }
 
+  sendConversationMessage(user: RequestUser, conversationId: number, content: string) {
+    return this.patientPortalRepository.sendConversationMessage(user.id, conversationId, content);
+  }
+
   private async resolveAvatarUrl(avatarSrc: string | null | undefined, patientAccountId: number): Promise<string | null> {
     const normalized = avatarSrc?.trim();
     if (!normalized) return null;

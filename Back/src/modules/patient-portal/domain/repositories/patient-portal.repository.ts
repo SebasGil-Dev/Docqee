@@ -1,5 +1,6 @@
 import { CreatePatientRequestDto } from '../../application/dto/create-patient-request.dto';
 import { PatientAppointmentDto } from '../../application/dto/patient-appointment.dto';
+import { PatientConversationMessageDto } from '../../application/dto/patient-conversation-message.dto';
 import { PatientPortalDashboardDto } from '../../application/dto/patient-portal-dashboard.dto';
 import { PatientProfileDto } from '../../application/dto/patient-profile.dto';
 import { PatientRequestDto } from '../../application/dto/patient-request.dto';
@@ -31,4 +32,10 @@ export abstract class PatientPortalRepository {
     appointmentId: number,
     payload: UpdatePatientAppointmentStatusDto,
   ): Promise<PatientAppointmentDto>;
+
+  abstract sendConversationMessage(
+    patientAccountId: number,
+    conversationId: number,
+    content: string,
+  ): Promise<PatientConversationMessageDto>;
 }

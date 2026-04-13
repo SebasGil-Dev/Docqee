@@ -185,7 +185,7 @@ export function PatientConversationsPage() {
 
       setComposerValue('');
       setComposerError(null);
-      setSuccessMessage('Tu mensaje se envio correctamente en esta demo frontend.');
+      setSuccessMessage('Tu mensaje fue enviado correctamente.');
     })();
   };
 

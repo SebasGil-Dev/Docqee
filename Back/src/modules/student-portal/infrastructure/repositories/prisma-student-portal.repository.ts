@@ -6,6 +6,7 @@ import { UpdateStudentProfileDto } from '../../application/dto/update-student-pr
 import { StudentAgendaAppointmentDto } from '../../application/dto/student-agenda-appointment.dto';
 import { StudentAppointmentReviewDto } from '../../application/dto/student-appointment-review.dto';
 import { StudentConversationDto } from '../../application/dto/student-conversation.dto';
+import { StudentConversationMessageDto } from '../../application/dto/student-conversation-message.dto';
 import { StudentPortalDashboardDto } from '../../application/dto/student-portal-dashboard.dto';
 import { StudentPracticeSiteDto } from '../../application/dto/student-practice-site.dto';
 import { StudentProfileDto } from '../../application/dto/student-profile.dto';
@@ -529,6 +530,109 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       responseAt: updated.fecha_respuesta?.toISOString() ?? null,
       sentAt: updated.fecha_envio.toISOString(),
       status: updated.estado,
+    };
+  }
+
+  async getConversations(studentAccountId: number): Promise<StudentConversationDto[]> {
+    const student = await this.prisma.cuenta_estudiante.findUnique({
+      where: { id_cuenta: studentAccountId },
+      include: { persona: true },
+    });
+
+    const studentName = student
+      ? `${student.persona.nombres} ${student.persona.apellidos}`
+      : 'Estudiante';
+
+    const solicitudes = await this.prisma.solicitud.findMany({
+      where: {
+        id_cuenta_estudiante: studentAccountId,
+        conversacion: { isNot: null },
+      },
+      include: {
+        cuenta_paciente: {
+          include: {
+            persona: true,
+            localidad: { include: { ciudad: true } },
+          },
+        },
+        conversacion: {
+          include: {
+            mensaje: {
+              orderBy: { enviado_at: 'asc' },
+              include: { cuenta_acceso: { select: { tipo_cuenta: true } } },
+            },
+          },
+        },
+      },
+      orderBy: { fecha_envio: 'desc' },
+    });
+
+    return solicitudes
+      .filter((s) => s.conversacion !== null)
+      .map((s) => {
+        const conv = s.conversacion!;
+        const patientName = `${s.cuenta_paciente.persona.nombres} ${s.cuenta_paciente.persona.apellidos}`;
+        return {
+          id: String(conv.id_conversacion),
+          messages: conv.mensaje.map((m) => ({
+            author: m.cuenta_acceso.tipo_cuenta === 'PACIENTE' ? ('PACIENTE' as const) : ('ESTUDIANTE' as const),
+            authorName: m.cuenta_acceso.tipo_cuenta === 'PACIENTE' ? patientName : studentName,
+            content: m.contenido,
+            id: String(m.id_mensaje),
+            sentAt: m.enviado_at.toISOString(),
+          })),
+          patientAge: calcAge(s.cuenta_paciente.fecha_nacimiento),
+          patientCity: s.cuenta_paciente.localidad.ciudad.nombre,
+          patientName,
+          reason: s.motivo_consulta ?? null,
+          requestId: String(s.id_solicitud),
+          status: conv.estado,
+          unreadCount: 0,
+        };
+      });
+  }
+
+  async sendConversationMessage(
+    studentAccountId: number,
+    conversationId: number,
+    content: string,
+  ): Promise<StudentConversationMessageDto> {
+    const conv = await this.prisma.conversacion.findFirst({
+      where: {
+        id_conversacion: conversationId,
+        estado: 'ACTIVA',
+        solicitud: { id_cuenta_estudiante: studentAccountId },
+      },
+      include: {
+        solicitud: {
+          include: {
+            cuenta_estudiante: { include: { persona: true } },
+          },
+        },
+      },
+    });
+
+    if (!conv) {
+      throw new NotFoundException('La conversacion no existe, no te pertenece o no esta activa.');
+    }
+
+    const msg = await this.prisma.mensaje.create({
+      data: {
+        id_conversacion: conversationId,
+        id_cuenta_remitente: studentAccountId,
+        contenido: content,
+      },
+    });
+
+    const student = conv.solicitud.cuenta_estudiante;
+    const authorName = `${student.persona.nombres} ${student.persona.apellidos}`;
+
+    return {
+      id: String(msg.id_mensaje),
+      author: 'ESTUDIANTE' as const,
+      authorName,
+      content: msg.contenido,
+      sentAt: msg.enviado_at.toISOString(),
     };
   }
 }
