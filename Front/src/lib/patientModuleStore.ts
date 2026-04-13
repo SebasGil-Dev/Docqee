@@ -175,7 +175,7 @@ function createMockState(): PatientStoreState {
       firstName: 'Daniel',
       id: 'patient-student-1',
       lastName: 'Pardo',
-      locality: 'Usaquen',
+      locality: 'Chapinero',
       practiceSite: 'Sede Norte',
       reviewsCount: 12,
       semester: '8',

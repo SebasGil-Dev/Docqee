@@ -96,7 +96,11 @@ describe('Patient pages', () => {
     expect(
       screen.getByRole('heading', { name: /estudiantes recomendados para ti/i }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/daniel pardo/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByLabelText(/ciudad/i)).toHaveValue('Bogota');
+      expect(screen.getByLabelText(/localidad/i)).toHaveValue('Chapinero');
+      expect(screen.getByText(/daniel pardo/i)).toBeInTheDocument();
+    });
 
     await user.type(
       screen.getByPlaceholderText(/buscar por nombre de estudiante/i),
@@ -112,6 +116,7 @@ describe('Patient pages', () => {
     });
 
     await user.clear(screen.getByPlaceholderText(/buscar por nombre de estudiante/i));
+    await user.selectOptions(screen.getByLabelText(/ciudad/i), 'all');
     await user.selectOptions(screen.getByLabelText(/tratamiento/i), 'Rehabilitacion oral');
 
     await waitFor(() => {

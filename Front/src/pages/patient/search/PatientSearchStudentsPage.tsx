@@ -75,34 +75,38 @@ export function PatientSearchStudentsPage() {
     isLoading,
     isReady,
     isSearchingStudents,
+    profile,
     requests,
     searchStudents,
     studentFilters,
     students,
   } = usePatientModuleStore();
+  const defaultCityFilter = profile.city.trim() || 'all';
+  const defaultLocalityFilter = profile.locality.trim() || 'all';
   const [searchTerm, setSearchTerm] = useState('');
   const [hasInteractedWithSearch, setHasInteractedWithSearch] = useState(false);
   const [reason, setReason] = useState('');
   const [reasonError, setReasonError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [treatmentFilter, setTreatmentFilter] = useState<NamedFilter>('all');
-  const [cityFilter, setCityFilter] = useState<NamedFilter>('all');
-  const [localityFilter, setLocalityFilter] = useState<NamedFilter>('all');
+  const [cityFilter, setCityFilter] = useState<NamedFilter>(defaultCityFilter);
+  const [localityFilter, setLocalityFilter] = useState<NamedFilter>(defaultLocalityFilter);
   const [universityFilter, setUniversityFilter] = useState<NamedFilter>('all');
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const latestSearchFiltersRef = useRef({
-    city: 'all',
-    locality: 'all',
+    city: defaultCityFilter,
+    locality: defaultLocalityFilter,
     search: '',
     treatment: 'all',
     university: 'all',
   });
   const normalizedSearch = searchTerm.trim().toLowerCase();
+  const hasCustomLocationCriteria =
+    cityFilter !== defaultCityFilter || localityFilter !== defaultLocalityFilter;
   const hasSearchCriteria = Boolean(
     normalizedSearch ||
       treatmentFilter !== 'all' ||
-      cityFilter !== 'all' ||
-      localityFilter !== 'all' ||
+      hasCustomLocationCriteria ||
       universityFilter !== 'all',
   );
   const treatmentOptions = useMemo(
@@ -139,6 +143,31 @@ export function PatientSearchStudentsPage() {
           (request.status === 'PENDIENTE' || request.status === 'ACEPTADA'),
       ) ?? null
     : null;
+
+  useEffect(() => {
+    if (!isReady || hasInteractedWithSearch) {
+      return;
+    }
+
+    latestSearchFiltersRef.current.city = defaultCityFilter;
+    latestSearchFiltersRef.current.locality = defaultLocalityFilter;
+    setCityFilter(defaultCityFilter);
+    setLocalityFilter(defaultLocalityFilter);
+
+    if (IS_TEST_MODE) {
+      void searchStudents({
+        city: defaultCityFilter,
+        limit: 6,
+        locality: defaultLocalityFilter,
+      });
+    }
+  }, [
+    defaultCityFilter,
+    defaultLocalityFilter,
+    hasInteractedWithSearch,
+    isReady,
+    searchStudents,
+  ]);
 
   useEffect(() => {
     if (
@@ -259,11 +288,12 @@ export function PatientSearchStudentsPage() {
     const nextLocality = filters.locality ?? latestSearchFiltersRef.current.locality;
     const nextUniversity = filters.university ?? latestSearchFiltersRef.current.university;
     const resolvedSearch = filters.search ?? latestSearchFiltersRef.current.search;
+    const nextHasCustomLocationCriteria =
+      nextCity !== defaultCityFilter || nextLocality !== defaultLocalityFilter;
     const nextHasSearchCriteria = Boolean(
       resolvedSearch.trim() ||
         nextTreatment !== 'all' ||
-        nextCity !== 'all' ||
-        nextLocality !== 'all' ||
+        nextHasCustomLocationCriteria ||
         nextUniversity !== 'all',
     );
 

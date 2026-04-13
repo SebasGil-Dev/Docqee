@@ -355,16 +355,23 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
   }
 
   async getDashboard(patientAccountId: number): Promise<PatientPortalDashboardDto> {
-    const [patient, solicitudes, valoraciones, students, studentFilters] = await Promise.all([
-      this.prisma.cuenta_paciente.findUnique({
-        where: { id_cuenta: patientAccountId },
-        include: {
-          persona: true,
-          localidad: { include: { ciudad: true } },
-          tutor_responsable: true,
-          cuenta_acceso: { select: { correo: true } },
-        },
-      }),
+    const patient = await this.prisma.cuenta_paciente.findUnique({
+      where: { id_cuenta: patientAccountId },
+      include: {
+        persona: true,
+        localidad: { include: { ciudad: true } },
+        tutor_responsable: true,
+        cuenta_acceso: { select: { correo: true } },
+      },
+    });
+    const initialStudentQuery: PatientStudentDirectoryQueryDto = patient
+      ? {
+          city: patient.localidad.ciudad.nombre,
+          limit: 6,
+          locality: patient.localidad.nombre,
+        }
+      : { limit: 6 };
+    const [solicitudes, valoraciones, students, studentFilters] = await Promise.all([
       this.prisma.solicitud.findMany({
         where: { id_cuenta_paciente: patientAccountId },
         include: {
@@ -411,7 +418,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         },
         orderBy: { fecha_creacion: 'desc' },
       }),
-      this.getStudentDirectory(patientAccountId, { limit: 6 }),
+      this.getStudentDirectory(patientAccountId, initialStudentQuery),
       this.getStudentDirectoryFilters(),
     ]);
 
