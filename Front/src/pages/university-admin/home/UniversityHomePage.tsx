@@ -45,14 +45,14 @@ type SummaryMetricProps = {
 
 function SummaryMetric({ label, toneClassName, value }: SummaryMetricProps) {
   return (
-    <div className="rounded-[1rem] border border-slate-200/80 bg-slate-50 px-2 py-2 sm:px-3 sm:py-2.5">
-      <div className="flex items-center justify-center gap-1.5 sm:justify-between sm:gap-3">
-        <p className="text-center text-[0.55rem] font-bold uppercase tracking-[0.08em] text-ink-muted sm:text-left sm:text-[0.62rem] sm:tracking-[0.14em]">
+    <div className="min-w-0 rounded-[0.9rem] border border-slate-200/80 bg-slate-50 px-1.5 py-1.5 sm:rounded-[1rem] sm:px-3 sm:py-2.5">
+      <div className="flex min-w-0 items-center justify-center gap-1 sm:justify-between sm:gap-3">
+        <p className="min-w-0 text-center text-[0.5rem] font-bold uppercase leading-tight tracking-[0.04em] text-ink-muted sm:text-left sm:text-[0.62rem] sm:tracking-[0.14em]">
           {label}
         </p>
         <p
           className={classNames(
-            'font-headline text-[0.95rem] font-extrabold leading-none tracking-tight sm:text-[1.1rem]',
+            'shrink-0 font-headline text-[0.88rem] font-extrabold leading-none tracking-tight sm:text-[1.1rem]',
             toneClassName,
           )}
         >
@@ -131,7 +131,7 @@ export function UniversityHomePage() {
   }, [errorMessage]);
 
   return (
-    <div className="mx-auto flex h-full max-w-[90rem] min-h-0 flex-col gap-3 overflow-hidden 2xl:max-w-[98rem]">
+    <div className="mx-auto flex h-full max-w-[90rem] min-h-0 flex-col gap-2.5 overflow-hidden overflow-x-hidden 2xl:max-w-[98rem]">
       <Seo
         description={universityAdminContent.homePage.meta.description}
         noIndex
@@ -199,25 +199,29 @@ export function UniversityHomePage() {
           </div>
         </div>
       </SurfaceCard>
-      <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
-        <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-4 py-3.5 sm:px-5 sm:py-4">
+      <AdminPanelCard
+        className="flex-1"
+        panelClassName="bg-[#f4f8ff]"
+        shellPaddingClassName="p-0.5 sm:p-1.5"
+      >
+        <div className="admin-scrollbar min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-2.5 py-3 sm:px-5 sm:py-4">
           <div className="grid gap-3 xl:grid-cols-2">
             <SurfaceCard
               className="border border-slate-200/80 bg-white shadow-none"
-              paddingClassName="p-2.5 sm:p-3.5"
+              paddingClassName="p-2 sm:p-3.5"
             >
-              <div className="space-y-2.5 sm:space-y-3">
-                <div className="flex items-center gap-2.5">
-                  <span className="inline-flex h-[2.125rem] w-[2.125rem] items-center justify-center rounded-[0.8rem] bg-primary/10 text-primary sm:h-10 sm:w-10 sm:rounded-[0.9rem]">
+              <div className="space-y-2 sm:space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex h-[1.95rem] w-[1.95rem] items-center justify-center rounded-[0.75rem] bg-primary/10 text-primary sm:h-10 sm:w-10 sm:rounded-[0.9rem]">
                     <GraduationCap aria-hidden="true" className="h-4 w-4" />
                   </span>
                   <div>
-                    <h2 className="font-headline text-[0.92rem] font-extrabold tracking-tight text-ink sm:text-[1rem]">
+                    <h2 className="font-headline text-[0.88rem] font-extrabold tracking-tight text-ink sm:text-[1rem]">
                       Estado de estudiantes
                     </h2>
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-1.5">
+                <div className="grid grid-cols-3 gap-1">
                   {[
                     {
                       label: 'Activos',
@@ -244,12 +248,12 @@ export function UniversityHomePage() {
                   ))}
                 </div>
                 <div className="space-y-1.5 sm:hidden">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-[0.78rem] font-semibold text-ink">
+                  <div className="flex flex-wrap items-center justify-between gap-1.5">
+                    <p className="text-[0.74rem] font-semibold text-ink">
                       Ultimos registros
                     </p>
                     <Link
-                      className="inline-flex items-center gap-1 text-[0.7rem] font-semibold text-primary transition duration-200 hover:text-primary/80"
+                      className="inline-flex max-w-full items-center gap-1 text-[0.68rem] font-semibold text-primary transition duration-200 hover:text-primary/80"
                       to={ROUTES.universityStudents}
                     >
                       Ver estudiantes
@@ -261,11 +265,11 @@ export function UniversityHomePage() {
                       {mobileRecentStudents.map((student) => (
                         <div
                           key={student.id}
-                          className="flex items-center justify-between gap-2 rounded-[0.95rem] border border-slate-200/80 bg-slate-50 px-2.5 py-2"
+                          className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1.5 rounded-[0.9rem] border border-slate-200/80 bg-slate-50 px-2 py-1.5"
                         >
                           <div className="min-w-0 flex-1">
                             <p
-                              className="truncate text-[0.78rem] text-ink"
+                              className="truncate text-[0.73rem] text-ink"
                               title={`${formatDisplayName(`${student.firstName} ${student.lastName}`)} \u00b7 Semestre ${student.semester} \u00b7 ${formatRecentStudentDate(student.createdAt)}`}
                             >
                               <span className="font-semibold text-ink">
@@ -278,10 +282,12 @@ export function UniversityHomePage() {
                               </span>
                             </p>
                           </div>
-                          <AdminStatusBadge
-                            entity="student"
-                            status={student.displayStatus}
-                          />
+                          <div className="shrink-0">
+                            <AdminStatusBadge
+                              entity="student"
+                              status={student.displayStatus}
+                            />
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -414,20 +420,20 @@ export function UniversityHomePage() {
 
             <SurfaceCard
               className="border border-slate-200/80 bg-white shadow-none"
-              paddingClassName="p-2.5 sm:p-3.5"
+              paddingClassName="p-2 sm:p-3.5"
             >
-              <div className="space-y-2.5 sm:space-y-3">
-                <div className="flex items-center gap-2.5">
-                  <span className="inline-flex h-[2.125rem] w-[2.125rem] items-center justify-center rounded-[0.8rem] bg-primary/10 text-primary sm:h-10 sm:w-10 sm:rounded-[0.9rem]">
+              <div className="space-y-2 sm:space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex h-[1.95rem] w-[1.95rem] items-center justify-center rounded-[0.75rem] bg-primary/10 text-primary sm:h-10 sm:w-10 sm:rounded-[0.9rem]">
                     <Users aria-hidden="true" className="h-4 w-4" />
                   </span>
                   <div>
-                    <h2 className="font-headline text-[0.92rem] font-extrabold tracking-tight text-ink sm:text-[1rem]">
+                    <h2 className="font-headline text-[0.88rem] font-extrabold tracking-tight text-ink sm:text-[1rem]">
                       Equipo y sedes
                     </h2>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-1.5">
+                <div className="grid grid-cols-2 gap-1">
                   <SummaryMetric
                     label="Docentes activos"
                     toneClassName="text-emerald-700"
@@ -441,12 +447,12 @@ export function UniversityHomePage() {
                 </div>
                 <div className="space-y-2 sm:hidden">
                   <div className="space-y-1.5">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-[0.78rem] font-semibold text-ink">
+                    <div className="flex flex-wrap items-center justify-between gap-1.5">
+                      <p className="text-[0.74rem] font-semibold text-ink">
                         Docentes recientes
                       </p>
                       <Link
-                        className="inline-flex items-center gap-1 text-[0.7rem] font-semibold text-primary transition duration-200 hover:text-primary/80"
+                        className="inline-flex max-w-full items-center gap-1 text-[0.68rem] font-semibold text-primary transition duration-200 hover:text-primary/80"
                         to={ROUTES.universityTeachers}
                       >
                         Ver docentes
@@ -458,23 +464,25 @@ export function UniversityHomePage() {
                         {mobileRecentTeachers.map((teacher) => (
                           <div
                             key={teacher.id}
-                            className="flex items-center justify-between gap-2 rounded-[0.95rem] border border-slate-200/80 bg-slate-50 px-2.5 py-2"
+                            className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1.5 rounded-[0.9rem] border border-slate-200/80 bg-slate-50 px-2 py-1.5"
                           >
-                            <div className="min-w-0">
-                              <p className="truncate text-[0.78rem] font-semibold text-ink">
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-[0.73rem] font-semibold text-ink">
                                 {formatDisplayName(
                                   `${teacher.firstName} ${teacher.lastName}`,
                                 )}
                               </p>
-                              <p className="text-[0.69rem] text-ink-muted">
+                              <p className="truncate text-[0.65rem] text-ink-muted">
                                 {teacher.documentTypeCode}{' '}
                                 {teacher.documentNumber}
                               </p>
                             </div>
-                            <AdminStatusBadge
-                              entity="teacher"
-                              status={teacher.status}
-                            />
+                            <div className="shrink-0">
+                              <AdminStatusBadge
+                                entity="teacher"
+                                status={teacher.status}
+                              />
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -485,12 +493,12 @@ export function UniversityHomePage() {
                     )}
                   </div>
                   <div className="space-y-1.5">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-[0.78rem] font-semibold text-ink">
+                    <div className="flex flex-wrap items-center justify-between gap-1.5">
+                      <p className="text-[0.74rem] font-semibold text-ink">
                         Ultima sede registrada
                       </p>
                       <Link
-                        className="inline-flex items-center gap-1 text-[0.7rem] font-semibold text-primary transition duration-200 hover:text-primary/80"
+                        className="inline-flex max-w-full items-center gap-1 text-[0.68rem] font-semibold text-primary transition duration-200 hover:text-primary/80"
                         to={ROUTES.universityInstitution}
                       >
                         Ver sedes
@@ -502,20 +510,22 @@ export function UniversityHomePage() {
                         {mobileRecentCampuses.map((campus) => (
                           <div
                             key={campus.id}
-                            className="flex items-center justify-between gap-2 rounded-[0.95rem] border border-slate-200/80 bg-slate-50 px-2.5 py-2"
+                            className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1.5 rounded-[0.9rem] border border-slate-200/80 bg-slate-50 px-2 py-1.5"
                           >
-                            <div className="min-w-0">
-                              <p className="truncate text-[0.78rem] font-semibold text-ink">
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-[0.73rem] font-semibold text-ink">
                                 {formatDisplayName(campus.name)}
                               </p>
-                              <p className="text-[0.69rem] text-ink-muted">
+                              <p className="truncate text-[0.65rem] text-ink-muted">
                                 {campus.city} \u00b7 {campus.locality}
                               </p>
                             </div>
-                            <AdminStatusBadge
-                              entity="teacher"
-                              status={campus.status}
-                            />
+                            <div className="shrink-0">
+                              <AdminStatusBadge
+                                entity="teacher"
+                                status={campus.status}
+                              />
+                            </div>
                           </div>
                         ))}
                       </div>

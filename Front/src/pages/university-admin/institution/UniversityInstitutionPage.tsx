@@ -85,6 +85,12 @@ const passwordRuleOrder = [
   'number',
   'special',
 ] as const;
+const compactFieldContainerClassName = 'space-y-1';
+const compactFieldLabelClassName = 'text-[0.82rem] sm:text-sm';
+const compactTextFieldInputClassName =
+  'rounded-xl py-2.5 pl-10 pr-3 text-[0.83rem] sm:rounded-2xl sm:py-3 sm:pl-11 sm:pr-4 sm:text-sm';
+const compactSelectFieldClassName =
+  'rounded-xl py-2.5 pl-10 pr-3 text-[0.83rem] sm:rounded-2xl sm:py-3 sm:pl-11 sm:pr-4 sm:text-sm';
 
 function createEmptyCatalogState<T>(
   status: AsyncCatalogState<T>['status'],
@@ -264,41 +270,54 @@ function getUploadErrorMessage(error: unknown) {
 export function UniversityInstitutionPage({
   catalogDataSource = patientRegisterCatalogDataSource,
 }: UniversityInstitutionPageProps) {
-  const { changePassword, errorMessage, institutionProfile, isLoading, updateInstitutionProfile } =
-    useUniversityAdminProfileStore();
-  const [values, setValues] = useState(() => getInstitutionInitialValues(institutionProfile));
+  const {
+    changePassword,
+    errorMessage,
+    institutionProfile,
+    isLoading,
+    updateInstitutionProfile,
+  } = useUniversityAdminProfileStore();
+  const [values, setValues] = useState(() =>
+    getInstitutionInitialValues(institutionProfile),
+  );
   const [errors, setErrors] = useState<UniversityInstitutionFormErrors>({});
   const [citiesState, setCitiesState] = useState<AsyncCatalogState<CityOption>>(
     () => createInitialCatalogState(catalogDataSource.getCities(), 'loading'),
   );
-  const [localitiesState, setLocalitiesState] = useState<AsyncCatalogState<LocalityOption>>(
-    () => {
-      const initialValues = getInstitutionInitialValues(institutionProfile);
+  const [localitiesState, setLocalitiesState] = useState<
+    AsyncCatalogState<LocalityOption>
+  >(() => {
+    const initialValues = getInstitutionInitialValues(institutionProfile);
 
-      if (!initialValues.cityId) {
-        return createEmptyCatalogState('idle');
-      }
+    if (!initialValues.cityId) {
+      return createEmptyCatalogState('idle');
+    }
 
-      return createInitialCatalogState(
-        catalogDataSource.getLocalitiesByCity(initialValues.cityId),
-        'loading',
-      );
-    },
-  );
+    return createInitialCatalogState(
+      catalogDataSource.getLocalitiesByCity(initialValues.cityId),
+      'loading',
+    );
+  });
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [isPasswordPanelOpen, setIsPasswordPanelOpen] = useState(false);
   const [passwordValues, setPasswordValues] = useState(passwordInitialValues);
-  const [passwordErrors, setPasswordErrors] = useState<UniversityPasswordFormErrors>({});
-  const [passwordWarningMessage, setPasswordWarningMessage] = useState<string | null>(null);
+  const [passwordErrors, setPasswordErrors] =
+    useState<UniversityPasswordFormErrors>({});
+  const [passwordWarningMessage, setPasswordWarningMessage] = useState<
+    string | null
+  >(null);
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
   const [campusDraft, setCampusDraft] = useState(campusInitialValues);
   const [campusErrors, setCampusErrors] = useState<CampusFormErrors>({});
   const [editingCampusId, setEditingCampusId] = useState<string | null>(null);
-  const [logoUploadStatus, setLogoUploadStatus] = useState<LogoUploadStatus>('idle');
-  const [logoUploadMessage, setLogoUploadMessage] = useState<string | null>(null);
-  const [campusLocalitiesState, setCampusLocalitiesState] = useState<AsyncCatalogState<LocalityOption>>(
-    createEmptyCatalogState('idle'),
+  const [logoUploadStatus, setLogoUploadStatus] =
+    useState<LogoUploadStatus>('idle');
+  const [logoUploadMessage, setLogoUploadMessage] = useState<string | null>(
+    null,
   );
+  const [campusLocalitiesState, setCampusLocalitiesState] = useState<
+    AsyncCatalogState<LocalityOption>
+  >(createEmptyCatalogState('idle'));
   const adminFirstNameRef = useRef<HTMLInputElement>(null);
   const adminLastNameRef = useRef<HTMLInputElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
@@ -365,7 +384,9 @@ export function UniversityInstitutionPage({
     setLocalitiesState(
       institutionProfile.mainCityId
         ? createInitialCatalogState(
-            catalogDataSource.getLocalitiesByCity(institutionProfile.mainCityId),
+            catalogDataSource.getLocalitiesByCity(
+              institutionProfile.mainCityId,
+            ),
             'loading',
           )
         : createEmptyCatalogState('idle'),
@@ -433,10 +454,16 @@ export function UniversityInstitutionPage({
     let isCancelled = false;
 
     async function loadCities() {
-      setCitiesState(createInitialCatalogState(catalogDataSource.getCities(), 'loading'));
+      setCitiesState(
+        createInitialCatalogState(catalogDataSource.getCities(), 'loading'),
+      );
 
       try {
-        const cities = await resolveCatalogResult(catalogDataSource.loadCities ? catalogDataSource.loadCities() : catalogDataSource.getCities());
+        const cities = await resolveCatalogResult(
+          catalogDataSource.loadCities
+            ? catalogDataSource.loadCities()
+            : catalogDataSource.getCities(),
+        );
 
         if (isCancelled) {
           return;
@@ -480,7 +507,9 @@ export function UniversityInstitutionPage({
 
       try {
         const localities = await resolveCatalogResult(
-          catalogDataSource.loadLocalitiesByCity ? catalogDataSource.loadLocalitiesByCity(values.cityId) : catalogDataSource.getLocalitiesByCity(values.cityId),
+          catalogDataSource.loadLocalitiesByCity
+            ? catalogDataSource.loadLocalitiesByCity(values.cityId)
+            : catalogDataSource.getLocalitiesByCity(values.cityId),
         );
 
         if (isCancelled) {
@@ -596,7 +625,9 @@ export function UniversityInstitutionPage({
     setSaveMessage(null);
   };
 
-  const handleInstitutionFieldBlur = (field: UniversityInstitutionFormField) => {
+  const handleInstitutionFieldBlur = (
+    field: UniversityInstitutionFormField,
+  ) => {
     setErrors((currentErrors) => {
       const nextErrors = { ...currentErrors };
       const rawValue = values[field];
@@ -648,7 +679,10 @@ export function UniversityInstitutionPage({
           logoPreviewUrlRef.current = null;
         }
 
-        handleInstitutionFieldChange('logoFileName', result.logoFileName || file.name);
+        handleInstitutionFieldChange(
+          'logoFileName',
+          result.logoFileName || file.name,
+        );
         handleInstitutionFieldChange('logoSrc', result.logoSrc);
         setLogoUploadStatus('ready');
         setLogoUploadMessage('Logo cargado. Ya puedes guardar los cambios.');
@@ -672,7 +706,9 @@ export function UniversityInstitutionPage({
     logoUploadPromiseRef.current = uploadPromise;
   };
 
-  const validateInstitutionValues = (nextValues: UniversityInstitutionFormValues) => {
+  const validateInstitutionValues = (
+    nextValues: UniversityInstitutionFormValues,
+  ) => {
     const nextErrors: UniversityInstitutionFormErrors = {};
     const fieldOrder: UniversityInstitutionFormField[] = [
       'name',
@@ -710,7 +746,8 @@ export function UniversityInstitutionPage({
 
   const persistInstitutionValues = async (
     nextValues: UniversityInstitutionFormValues,
-    successMessage: string = universityAdminContent.institutionPage.successMessage,
+    successMessage: string = universityAdminContent.institutionPage
+      .successMessage,
   ) => {
     if (!validateInstitutionValues(nextValues)) {
       return false;
@@ -874,7 +911,12 @@ export function UniversityInstitutionPage({
     }
 
     const nextErrors: CampusFormErrors = {};
-    const fieldOrder: CampusFormField[] = ['name', 'cityId', 'localityId', 'address'];
+    const fieldOrder: CampusFormField[] = [
+      'name',
+      'cityId',
+      'localityId',
+      'address',
+    ];
 
     fieldOrder.forEach((field) => {
       const nextFieldError = validateCampusField(field, campusDraft[field]);
@@ -890,7 +932,9 @@ export function UniversityInstitutionPage({
       return;
     }
 
-    const selectedCity = citiesState.options.find((city) => city.id === campusDraft.cityId);
+    const selectedCity = citiesState.options.find(
+      (city) => city.id === campusDraft.cityId,
+    );
     const selectedLocality = campusLocalitiesState.options.find(
       (locality) => locality.id === campusDraft.localityId,
     );
@@ -969,7 +1013,10 @@ export function UniversityInstitutionPage({
       }
 
       if (field === 'newPassword' || field === 'confirmPassword') {
-        const confirmError = validatePasswordField('confirmPassword', nextValues);
+        const confirmError = validatePasswordField(
+          'confirmPassword',
+          nextValues,
+        );
 
         if (confirmError) {
           nextErrors.confirmPassword = confirmError;
@@ -996,7 +1043,10 @@ export function UniversityInstitutionPage({
       }
 
       if (field === 'newPassword' || field === 'confirmPassword') {
-        const confirmError = validatePasswordField('confirmPassword', passwordValues);
+        const confirmError = validatePasswordField(
+          'confirmPassword',
+          passwordValues,
+        );
 
         if (confirmError) {
           nextErrors.confirmPassword = confirmError;
@@ -1065,7 +1115,9 @@ export function UniversityInstitutionPage({
         newPassword: false,
       });
       setIsPasswordPanelOpen(false);
-      setSaveMessage(universityAdminContent.institutionPage.passwordSuccessMessage);
+      setSaveMessage(
+        universityAdminContent.institutionPage.passwordSuccessMessage,
+      );
     })();
   };
 
@@ -1106,7 +1158,7 @@ export function UniversityInstitutionPage({
         : 'text-[0.68rem] font-medium text-primary';
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden">
+    <div className="flex h-full min-h-0 flex-col gap-3 sm:gap-4 overflow-hidden">
       <Seo
         description={universityAdminContent.institutionPage.meta.description}
         noIndex
@@ -1114,14 +1166,15 @@ export function UniversityInstitutionPage({
       />
       <AdminPageHeader
         description={universityAdminContent.institutionPage.description}
+        descriptionClassName="text-sm leading-6 sm:text-lg"
         headingAlign="center"
         title={universityAdminContent.institutionPage.title}
-        titleClassName="text-center text-[1.7rem] sm:text-[2rem]"
+        titleClassName="text-center text-[1.35rem] leading-tight sm:text-[2rem]"
       />
       {saveMessage ? (
         <SurfaceCard
           className="border border-emerald-200 bg-emerald-50/90 text-sm font-medium text-emerald-800"
-          paddingClassName="p-3.5"
+          paddingClassName="p-3 sm:p-3.5"
         >
           <p role="status">{saveMessage}</p>
         </SurfaceCard>
@@ -1129,62 +1182,79 @@ export function UniversityInstitutionPage({
       {errorMessage && !isPasswordPanelOpen ? (
         <SurfaceCard
           className="border border-rose-200 bg-rose-50/90 text-sm font-medium text-rose-800"
-          paddingClassName="p-3.5"
+          paddingClassName="p-3 sm:p-3.5"
         >
           <p role="alert">{errorMessage}</p>
         </SurfaceCard>
       ) : null}
       <AdminPanelCard className="flex-1" panelClassName="bg-slate-50">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6 sm:py-5">
-            <div className="space-y-4 pb-5">
+          <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-3.5 sm:px-6 sm:py-5">
+            <div className="space-y-3 pb-4 sm:space-y-4 sm:pb-5">
               <SurfaceCard
                 className="overflow-hidden bg-white shadow-none"
                 paddingClassName="p-0"
               >
-                <div className="space-y-4">
-                  <div className="space-y-4 rounded-[1.6rem] border border-slate-200/80 bg-slate-50/80 p-4 sm:p-5">
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="space-y-3 rounded-[1.25rem] border border-slate-200/80 bg-slate-50/80 p-3 sm:space-y-4 sm:rounded-[1.6rem] sm:p-5">
                     <div>
-                      <h2 className="text-center font-headline text-[1.15rem] font-extrabold tracking-tight text-ink">
-                        {universityAdminContent.institutionPage.sectionTitles.institution}
+                      <h2 className="text-center font-headline text-[1rem] font-extrabold tracking-tight text-ink sm:text-[1.15rem]">
+                        {
+                          universityAdminContent.institutionPage.sectionTitles
+                            .institution
+                        }
                       </h2>
                     </div>
-                    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(13.5rem,15rem)] xl:items-start">
-                      <div className="grid gap-4 lg:grid-cols-2">
+                    <div className="grid gap-3 sm:gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(13.5rem,15rem)] xl:items-start">
+                      <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
                         <div className="lg:col-span-2">
                           <AdminTextField
+                            containerClassName={compactFieldContainerClassName}
                             error={errors.name}
                             icon={Building2}
                             id="university-institution-name"
+                            inputClassName={compactTextFieldInputClassName}
                             inputRef={nameRef}
                             label="Nombre de la universidad"
+                            labelClassName={compactFieldLabelClassName}
                             name="name"
                             placeholder="Ingresa el nombre oficial"
                             value={values.name}
                             onBlur={() => handleInstitutionFieldBlur('name')}
-                            onChange={(value) => handleInstitutionFieldChange('name', value)}
+                            onChange={(value) =>
+                              handleInstitutionFieldChange('name', value)
+                            }
                           />
                         </div>
                         <AdminSelectField
-                          disabled={citiesState.status !== 'ready' || citiesState.options.length === 0}
+                          containerClassName={compactFieldContainerClassName}
+                          disabled={
+                            citiesState.status !== 'ready' ||
+                            citiesState.options.length === 0
+                          }
                           error={errors.cityId}
                           helpText={
                             !errors.cityId && citiesState.status === 'error'
-                              ? citiesState.error ?? undefined
+                              ? (citiesState.error ?? undefined)
                               : undefined
                           }
                           icon={MapPin}
                           id="university-institution-city"
                           label="Ciudad principal"
+                          labelClassName={compactFieldLabelClassName}
                           name="cityId"
                           options={citiesState.options}
                           placeholder={cityPlaceholder}
+                          selectClassName={compactSelectFieldClassName}
                           selectRef={cityRef}
                           value={values.cityId}
                           onBlur={() => handleInstitutionFieldBlur('cityId')}
-                          onChange={(value) => handleInstitutionFieldChange('cityId', value)}
+                          onChange={(value) =>
+                            handleInstitutionFieldChange('cityId', value)
+                          }
                         />
                         <AdminSelectField
+                          containerClassName={compactFieldContainerClassName}
                           disabled={
                             !values.cityId ||
                             localitiesState.status !== 'ready' ||
@@ -1192,58 +1262,80 @@ export function UniversityInstitutionPage({
                           }
                           error={errors.mainLocalityId}
                           helpText={
-                            !errors.mainLocalityId && localitiesState.status === 'error'
-                              ? localitiesState.error ?? undefined
+                            !errors.mainLocalityId &&
+                            localitiesState.status === 'error'
+                              ? (localitiesState.error ?? undefined)
                               : undefined
                           }
                           icon={MapPin}
                           id="university-institution-locality"
                           label="Localidad principal"
+                          labelClassName={compactFieldLabelClassName}
                           name="mainLocalityId"
                           options={localitiesState.options}
                           placeholder={localityPlaceholder}
+                          selectClassName={compactSelectFieldClassName}
                           selectRef={localityRef}
                           value={values.mainLocalityId}
-                          onBlur={() => handleInstitutionFieldBlur('mainLocalityId')}
-                          onChange={(value) => handleInstitutionFieldChange('mainLocalityId', value)}
+                          onBlur={() =>
+                            handleInstitutionFieldBlur('mainLocalityId')
+                          }
+                          onChange={(value) =>
+                            handleInstitutionFieldChange(
+                              'mainLocalityId',
+                              value,
+                            )
+                          }
                         />
                       </div>
-                      <div className="space-y-2 self-start rounded-[1.2rem] border border-dashed border-slate-300 bg-slate-50 p-3 text-center xl:-mt-10">
-                        <div className="space-y-0.5">
+                      <div className="self-start rounded-[1rem] border border-dashed border-slate-300 bg-slate-50 p-2.5 sm:rounded-[1.2rem] sm:p-3 xl:-mt-10">
+                        <div className="space-y-0.5 text-center sm:text-center">
                           <p className="text-[0.72rem] font-bold uppercase tracking-[0.2em] text-primary">
                             Logo institucional
                           </p>
                         </div>
-                        <div className="flex flex-col items-center gap-2.5">
+                        <div className="mt-2 flex items-center gap-3 sm:flex-col sm:items-center sm:gap-2.5">
                           <div
                             aria-busy={isLogoUploading}
-                            className="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-[1.15rem] bg-white ring-1 ring-slate-200"
+                            className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-[1rem] bg-white ring-1 ring-slate-200 sm:h-28 sm:w-28 sm:rounded-[1.15rem]"
                           >
                             {values.logoSrc ? (
                               <img
                                 alt={institutionProfile.logoAlt}
                                 className="h-full w-full object-contain"
                                 decoding="async"
-                                src={getOptimizedLogoUrl(values.logoSrc, 720, 720)}
+                                src={getOptimizedLogoUrl(
+                                  values.logoSrc,
+                                  720,
+                                  720,
+                                )}
                               />
                             ) : (
-                              <span className="font-headline text-[1.35rem] font-extrabold tracking-tight text-primary">
+                              <span className="font-headline text-[1.05rem] font-extrabold tracking-tight text-primary sm:text-[1.35rem]">
                                 {logoInitials || 'UC'}
                               </span>
                             )}
                             {isLogoUploading ? (
-                              <span className="absolute inset-x-0 bottom-0 bg-primary/90 px-2 py-1 text-[0.62rem] font-semibold text-white">
+                              <span className="absolute inset-x-0 bottom-0 bg-primary/90 px-2 py-1 text-[0.58rem] font-semibold text-white sm:text-[0.62rem]">
                                 Subiendo
                               </span>
                             ) : null}
                           </div>
-                          <div className="space-y-1">
+                          <div className="min-w-0 flex-1 space-y-1 text-left sm:flex-none sm:text-center">
                             <label
-                              className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-brand-gradient px-3 py-1.5 text-[0.72rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
+                              className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-brand-gradient px-3 py-1.5 text-[0.7rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 sm:text-[0.72rem]"
                               htmlFor="institution-logo-input"
                             >
-                              <ImagePlus aria-hidden="true" className="h-3.5 w-3.5" />
-                              <span>{universityAdminContent.institutionPage.actionLabels.uploadLogo}</span>
+                              <ImagePlus
+                                aria-hidden="true"
+                                className="h-3.5 w-3.5"
+                              />
+                              <span>
+                                {
+                                  universityAdminContent.institutionPage
+                                    .actionLabels.uploadLogo
+                                }
+                              </span>
                             </label>
                             <input
                               accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
@@ -1255,7 +1347,11 @@ export function UniversityInstitutionPage({
                             {logoUploadMessage ? (
                               <p
                                 className={logoUploadMessageClassName}
-                                role={logoUploadStatus === 'error' ? 'alert' : 'status'}
+                                role={
+                                  logoUploadStatus === 'error'
+                                    ? 'alert'
+                                    : 'status'
+                                }
                               >
                                 {logoUploadMessage}
                               </p>
@@ -1266,258 +1362,329 @@ export function UniversityInstitutionPage({
                     </div>
                   </div>
 
-                  <div className="space-y-3 rounded-[1.6rem] border border-slate-200/80 bg-slate-50/80 p-4 sm:p-5">
-                        <div className="text-center">
-                          <div className="w-full">
-                            <h3 className="text-center font-headline text-[1rem] font-extrabold tracking-tight text-ink">
-                              Sedes de la universidad
-                            </h3>
-                          </div>
-                        </div>
-                        <div className="grid gap-3 lg:grid-cols-2">
-                          <AdminTextField
-                            error={campusErrors.name}
-                            icon={Building2}
-                            id="university-campus-name"
-                            label="Nombre de la sede"
-                            name="campusName"
-                            placeholder="Ej. Sede Norte"
-                            value={campusDraft.name}
-                            onBlur={() => handleCampusFieldBlur('name')}
-                            onChange={(value) => handleCampusFieldChange('name', value)}
+                  <div className="space-y-3 rounded-[1.25rem] border border-slate-200/80 bg-slate-50/80 p-3 sm:rounded-[1.6rem] sm:p-5">
+                    <div className="text-center">
+                      <div className="w-full">
+                        <h3 className="text-center font-headline text-[0.96rem] font-extrabold tracking-tight text-ink sm:text-[1rem]">
+                          Sedes de la universidad
+                        </h3>
+                      </div>
+                    </div>
+                    <div className="grid gap-3 lg:grid-cols-2">
+                      <AdminTextField
+                        containerClassName={compactFieldContainerClassName}
+                        error={campusErrors.name}
+                        icon={Building2}
+                        id="university-campus-name"
+                        inputClassName={compactTextFieldInputClassName}
+                        label="Nombre de la sede"
+                        labelClassName={compactFieldLabelClassName}
+                        name="campusName"
+                        placeholder="Ej. Sede Norte"
+                        value={campusDraft.name}
+                        onBlur={() => handleCampusFieldBlur('name')}
+                        onChange={(value) =>
+                          handleCampusFieldChange('name', value)
+                        }
+                      />
+                      <AdminTextField
+                        containerClassName={compactFieldContainerClassName}
+                        error={campusErrors.address}
+                        icon={MapPin}
+                        id="university-campus-address"
+                        inputClassName={compactTextFieldInputClassName}
+                        label="Dirección"
+                        labelClassName={compactFieldLabelClassName}
+                        name="campusAddress"
+                        placeholder="Ingresa la dirección"
+                        value={campusDraft.address}
+                        onBlur={() => handleCampusFieldBlur('address')}
+                        onChange={(value) =>
+                          handleCampusFieldChange('address', value)
+                        }
+                      />
+                      <div className="grid gap-3 lg:col-span-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(8rem,0.45fr)] md:items-start">
+                        <AdminSelectField
+                          containerClassName={compactFieldContainerClassName}
+                          disabled={
+                            citiesState.status !== 'ready' ||
+                            citiesState.options.length === 0
+                          }
+                          error={campusErrors.cityId}
+                          helpText={
+                            !campusErrors.cityId &&
+                            citiesState.status === 'error'
+                              ? (citiesState.error ?? undefined)
+                              : undefined
+                          }
+                          icon={MapPin}
+                          id="university-campus-city"
+                          label="Ciudad"
+                          labelClassName={compactFieldLabelClassName}
+                          name="campusCityId"
+                          options={citiesState.options}
+                          placeholder={cityPlaceholder}
+                          selectClassName={compactSelectFieldClassName}
+                          value={campusDraft.cityId}
+                          onBlur={() => handleCampusFieldBlur('cityId')}
+                          onChange={(value) =>
+                            handleCampusFieldChange('cityId', value)
+                          }
+                        />
+                        <AdminSelectField
+                          containerClassName={compactFieldContainerClassName}
+                          disabled={
+                            !campusDraft.cityId ||
+                            campusLocalitiesState.status !== 'ready' ||
+                            campusLocalitiesState.options.length === 0
+                          }
+                          error={campusErrors.localityId}
+                          helpText={
+                            !campusErrors.localityId &&
+                            campusLocalitiesState.status === 'error'
+                              ? (campusLocalitiesState.error ?? undefined)
+                              : undefined
+                          }
+                          icon={MapPin}
+                          id="university-campus-locality"
+                          label="Localidad"
+                          labelClassName={compactFieldLabelClassName}
+                          name="campusLocalityId"
+                          options={campusLocalitiesState.options}
+                          placeholder={campusLocalityPlaceholder}
+                          selectClassName={compactSelectFieldClassName}
+                          value={campusDraft.localityId}
+                          onBlur={() => handleCampusFieldBlur('localityId')}
+                          onChange={(value) =>
+                            handleCampusFieldChange('localityId', value)
+                          }
+                        />
+                        {editingCampusId ? (
+                          <AdminSelectField
+                            containerClassName={compactFieldContainerClassName}
+                            error={campusErrors.status}
+                            icon={Power}
+                            id="university-campus-status"
+                            label="Estado"
+                            labelClassName={compactFieldLabelClassName}
+                            name="campusStatus"
+                            options={[
+                              { id: 'active', label: 'Activa' },
+                              { id: 'inactive', label: 'Inactiva' },
+                            ]}
+                            placeholder="Selecciona un estado"
+                            selectClassName={compactSelectFieldClassName}
+                            value={campusDraft.status}
+                            onBlur={() => handleCampusFieldBlur('status')}
+                            onChange={(value) =>
+                              handleCampusFieldChange('status', value)
+                            }
                           />
-                          <AdminTextField
-                            error={campusErrors.address}
-                            icon={MapPin}
-                            id="university-campus-address"
-                            label="Dirección"
-                            name="campusAddress"
-                            placeholder="Ingresa la dirección"
-                            value={campusDraft.address}
-                            onBlur={() => handleCampusFieldBlur('address')}
-                            onChange={(value) => handleCampusFieldChange('address', value)}
-                          />
-                          <div className="grid gap-3 lg:col-span-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(8rem,0.45fr)] md:items-start">
-                            <AdminSelectField
-                              disabled={citiesState.status !== 'ready' || citiesState.options.length === 0}
-                              error={campusErrors.cityId}
-                              helpText={
-                                !campusErrors.cityId && citiesState.status === 'error'
-                                  ? citiesState.error ?? undefined
-                                  : undefined
-                              }
-                              icon={MapPin}
-                              id="university-campus-city"
-                              label="Ciudad"
-                              name="campusCityId"
-                              options={citiesState.options}
-                              placeholder={cityPlaceholder}
-                              value={campusDraft.cityId}
-                              onBlur={() => handleCampusFieldBlur('cityId')}
-                              onChange={(value) => handleCampusFieldChange('cityId', value)}
-                            />
-                            <AdminSelectField
-                              disabled={
-                                !campusDraft.cityId ||
-                                campusLocalitiesState.status !== 'ready' ||
-                                campusLocalitiesState.options.length === 0
-                              }
-                              error={campusErrors.localityId}
-                              helpText={
-                                !campusErrors.localityId && campusLocalitiesState.status === 'error'
-                                  ? campusLocalitiesState.error ?? undefined
-                                  : undefined
-                              }
-                              icon={MapPin}
-                              id="university-campus-locality"
-                              label="Localidad"
-                              name="campusLocalityId"
-                              options={campusLocalitiesState.options}
-                              placeholder={campusLocalityPlaceholder}
-                              value={campusDraft.localityId}
-                              onBlur={() => handleCampusFieldBlur('localityId')}
-                              onChange={(value) => handleCampusFieldChange('localityId', value)}
-                            />
-                            {editingCampusId ? (
-                              <AdminSelectField
-                                error={campusErrors.status}
-                                icon={Power}
-                                id="university-campus-status"
-                                label="Estado"
-                                name="campusStatus"
-                                options={[
-                                  { id: 'active', label: 'Activa' },
-                                  { id: 'inactive', label: 'Inactiva' },
-                                ]}
-                                placeholder="Selecciona un estado"
-                                value={campusDraft.status}
-                                onBlur={() => handleCampusFieldBlur('status')}
-                                onChange={(value) => handleCampusFieldChange('status', value)}
-                              />
-                            ) : (
-                              <div className="space-y-1">
-                                <span className="block text-[0.83rem] font-semibold text-ink">Estado</span>
-                                <div className="inline-flex min-h-[2.75rem] w-full items-center rounded-2xl border border-slate-200 bg-surface px-3.5 py-2.5 text-[0.83rem] font-semibold text-ink">
-                                  Activa
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <div
-                          className="flex flex-wrap items-center justify-center gap-3"
-                          style={{ marginTop: 30 }}
-                        >
-                          {editingCampusId ? (
-                            <button
-                              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-[0.82rem] font-semibold text-ink transition duration-300 hover:bg-slate-100"
-                              type="button"
-                              onClick={handleCampusReset}
-                            >
-                              <RotateCcw aria-hidden="true" className="h-4 w-4" />
-                              <span>Cancelar edicion</span>
-                            </button>
-                          ) : null}
-                          <button
-                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-gradient px-3.5 py-2.5 text-[0.82rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
-                            disabled={isLoading || isLogoUploadBlocked}
-                            type="button"
-                            onClick={handleCampusSubmit}
-                          >
-                            {editingCampusId ? (
-                              <Save aria-hidden="true" className="h-4 w-4" />
-                            ) : (
-                              <Plus aria-hidden="true" className="h-4 w-4" />
-                            )}
-                            <span>
-                              {isLoading
-                                ? 'Guardando...'
-                                : editingCampusId
-                                  ? 'Guardar sede'
-                                  : 'Agregar sede'}
+                        ) : (
+                          <div className="space-y-1">
+                            <span className="block text-[0.82rem] font-semibold text-ink sm:text-sm">
+                              Estado
                             </span>
+                            <div className="inline-flex min-h-[2.5rem] w-full items-center rounded-xl border border-slate-200 bg-surface px-3 py-2 text-[0.83rem] font-semibold text-ink sm:min-h-[2.75rem] sm:rounded-2xl sm:px-3.5 sm:py-2.5">
+                              Activa
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div
+                      className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3"
+                      style={{ marginTop: 30 }}
+                    >
+                      {editingCampusId ? (
+                        <button
+                          className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[0.8rem] font-semibold text-ink transition duration-300 hover:bg-slate-100 sm:px-3.5 sm:py-2.5 sm:text-[0.82rem]"
+                          type="button"
+                          onClick={handleCampusReset}
+                        >
+                          <RotateCcw aria-hidden="true" className="h-4 w-4" />
+                          <span>Cancelar edicion</span>
+                        </button>
+                      ) : null}
+                      <button
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-gradient px-3 py-2 text-[0.8rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 sm:px-3.5 sm:py-2.5 sm:text-[0.82rem]"
+                        disabled={isLoading || isLogoUploadBlocked}
+                        type="button"
+                        onClick={handleCampusSubmit}
+                      >
+                        {editingCampusId ? (
+                          <Save aria-hidden="true" className="h-4 w-4" />
+                        ) : (
+                          <Plus aria-hidden="true" className="h-4 w-4" />
+                        )}
+                        <span>
+                          {isLoading
+                            ? 'Guardando...'
+                            : editingCampusId
+                              ? 'Guardar sede'
+                              : 'Agregar sede'}
+                        </span>
+                      </button>
+                    </div>
+                    <div
+                      className="mt-[24px] grid gap-2 sm:mt-[30px] sm:gap-2.5"
+                      style={{ marginTop: 30 }}
+                    >
+                      {values.campuses.length > 0 ? (
+                        <div className="hidden gap-2.5 px-3 text-[0.66rem] font-extrabold uppercase tracking-[0.14em] text-ink md:grid md:grid-cols-[minmax(7rem,1fr)_minmax(8rem,1.15fr)_minmax(7rem,0.85fr)_minmax(7rem,0.85fr)_minmax(5.5rem,0.55fr)_minmax(6.5rem,0.55fr)] md:items-center">
+                          <span>Nombre</span>
+                          <span>Dirección</span>
+                          <span>Ciudad</span>
+                          <span>Localidad</span>
+                          <span>Estado</span>
+                          <span className="justify-self-end">Acción</span>
+                        </div>
+                      ) : null}
+                      {values.campuses.map((campus) => (
+                        <div
+                          key={campus.id}
+                          className="grid gap-2 rounded-[1rem] border border-slate-200/80 bg-white p-2.5 md:grid-cols-[minmax(7rem,1fr)_minmax(8rem,1.15fr)_minmax(7rem,0.85fr)_minmax(7rem,0.85fr)_minmax(5.5rem,0.55fr)_minmax(6.5rem,0.55fr)] md:items-center md:gap-2.5 md:rounded-[1.15rem] md:p-3"
+                        >
+                          <h4 className="min-w-0 truncate text-[0.83rem] font-semibold text-ink">
+                            {formatDisplayName(campus.name)}
+                          </h4>
+                          <p className="min-w-0 truncate text-[0.82rem] text-ink-muted">
+                            {campus.address}
+                          </p>
+                          <p className="min-w-0 truncate text-[0.78rem] font-semibold text-ink-muted">
+                            {campus.city}
+                          </p>
+                          <p className="min-w-0 truncate text-[0.78rem] font-semibold text-ink-muted">
+                            {campus.locality}
+                          </p>
+                          <span
+                            className={
+                              campus.status === 'active'
+                                ? 'inline-flex w-fit rounded-full bg-emerald-50 px-2.5 py-1 text-[0.66rem] font-semibold text-emerald-700 ring-1 ring-emerald-200'
+                                : 'inline-flex w-fit rounded-full bg-white px-2.5 py-1 text-[0.66rem] font-semibold text-slate-600 ring-1 ring-slate-200'
+                            }
+                          >
+                            {campus.status === 'active' ? 'Activa' : 'Inactiva'}
+                          </span>
+                          <button
+                            className="inline-flex items-center justify-center gap-2 justify-self-start rounded-xl border border-slate-200 bg-white px-3 py-2 text-[0.8rem] font-semibold text-primary transition duration-300 hover:bg-slate-100 md:justify-self-end"
+                            type="button"
+                            onClick={() => handleCampusEdit(campus)}
+                          >
+                            <PencilLine
+                              aria-hidden="true"
+                              className="h-4 w-4"
+                            />
+                            <span>Editar</span>
                           </button>
                         </div>
-                        <div
-                          className="mt-[30px] grid gap-2.5"
-                          style={{ marginTop: 30 }}
-                        >
-                          {values.campuses.length > 0 ? (
-                            <div className="hidden gap-2.5 px-3 text-[0.66rem] font-extrabold uppercase tracking-[0.14em] text-ink md:grid md:grid-cols-[minmax(7rem,1fr)_minmax(8rem,1.15fr)_minmax(7rem,0.85fr)_minmax(7rem,0.85fr)_minmax(5.5rem,0.55fr)_minmax(6.5rem,0.55fr)] md:items-center">
-                              <span>Nombre</span>
-                              <span>Dirección</span>
-                              <span>Ciudad</span>
-                              <span>Localidad</span>
-                              <span>Estado</span>
-                              <span className="justify-self-end">Acción</span>
-                            </div>
-                          ) : null}
-                          {values.campuses.map((campus) => (
-                            <div
-                              key={campus.id}
-                              className="grid gap-2.5 rounded-[1.15rem] border border-slate-200/80 bg-white p-3 md:grid-cols-[minmax(7rem,1fr)_minmax(8rem,1.15fr)_minmax(7rem,0.85fr)_minmax(7rem,0.85fr)_minmax(5.5rem,0.55fr)_minmax(6.5rem,0.55fr)] md:items-center"
-                            >
-                              <h4 className="min-w-0 truncate text-[0.83rem] font-semibold text-ink">
-                                {formatDisplayName(campus.name)}
-                              </h4>
-                              <p className="min-w-0 truncate text-[0.82rem] text-ink-muted">
-                                {campus.address}
-                              </p>
-                              <p className="min-w-0 truncate text-[0.78rem] font-semibold text-ink-muted">
-                                {campus.city}
-                              </p>
-                              <p className="min-w-0 truncate text-[0.78rem] font-semibold text-ink-muted">
-                                {campus.locality}
-                              </p>
-                              <span
-                                className={
-                                  campus.status === 'active'
-                                    ? 'inline-flex w-fit rounded-full bg-emerald-50 px-2.5 py-1 text-[0.66rem] font-semibold text-emerald-700 ring-1 ring-emerald-200'
-                                    : 'inline-flex w-fit rounded-full bg-white px-2.5 py-1 text-[0.66rem] font-semibold text-slate-600 ring-1 ring-slate-200'
-                                }
-                              >
-                                {campus.status === 'active' ? 'Activa' : 'Inactiva'}
-                              </span>
-                              <button
-                                className="inline-flex items-center justify-center gap-2 justify-self-start rounded-xl border border-slate-200 bg-white px-3 py-2 text-[0.8rem] font-semibold text-primary transition duration-300 hover:bg-slate-100 md:justify-self-end"
-                                type="button"
-                                onClick={() => handleCampusEdit(campus)}
-                              >
-                                <PencilLine aria-hidden="true" className="h-4 w-4" />
-                                <span>Editar</span>
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+                      ))}
+                    </div>
+                  </div>
 
-                  <div className="space-y-4 rounded-[1.6rem] border border-slate-200/80 bg-slate-50/80 p-4 sm:p-5">
+                  <div className="space-y-3 rounded-[1.25rem] border border-slate-200/80 bg-slate-50/80 p-3 sm:space-y-4 sm:rounded-[1.6rem] sm:p-5">
                     <div>
-                      <h2 className="text-center font-headline text-[1.15rem] font-extrabold tracking-tight text-ink">
-                        {universityAdminContent.institutionPage.sectionTitles.administrator}
+                      <h2 className="text-center font-headline text-[1rem] font-extrabold tracking-tight text-ink sm:text-[1.15rem]">
+                        {
+                          universityAdminContent.institutionPage.sectionTitles
+                            .administrator
+                        }
                       </h2>
                     </div>
-                    <div className="grid gap-4 lg:grid-cols-2">
+                    <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
                       <AdminTextField
+                        containerClassName={compactFieldContainerClassName}
                         error={errors.adminFirstName}
                         icon={UserRound}
                         id="university-institution-admin-first-name"
+                        inputClassName={compactTextFieldInputClassName}
                         inputRef={adminFirstNameRef}
                         label="Nombres"
+                        labelClassName={compactFieldLabelClassName}
                         name="adminFirstName"
                         placeholder="Ingresa los nombres"
                         value={values.adminFirstName}
-                        onBlur={() => handleInstitutionFieldBlur('adminFirstName')}
-                        onChange={(value) => handleInstitutionFieldChange('adminFirstName', value)}
+                        onBlur={() =>
+                          handleInstitutionFieldBlur('adminFirstName')
+                        }
+                        onChange={(value) =>
+                          handleInstitutionFieldChange('adminFirstName', value)
+                        }
                       />
                       <AdminTextField
+                        containerClassName={compactFieldContainerClassName}
                         error={errors.adminLastName}
                         icon={UserRound}
                         id="university-institution-admin-last-name"
+                        inputClassName={compactTextFieldInputClassName}
                         inputRef={adminLastNameRef}
                         label="Apellidos"
+                        labelClassName={compactFieldLabelClassName}
                         name="adminLastName"
                         placeholder="Ingresa los apellidos"
                         value={values.adminLastName}
-                        onBlur={() => handleInstitutionFieldBlur('adminLastName')}
-                        onChange={(value) => handleInstitutionFieldChange('adminLastName', value)}
+                        onBlur={() =>
+                          handleInstitutionFieldBlur('adminLastName')
+                        }
+                        onChange={(value) =>
+                          handleInstitutionFieldChange('adminLastName', value)
+                        }
                       />
-                      <div className="grid gap-4 md:grid-cols-2 lg:col-span-2">
+                      <div className="grid gap-3 sm:gap-4 md:grid-cols-2 lg:col-span-2">
                         <AdminTextField
+                          containerClassName={compactFieldContainerClassName}
                           error={errors.adminEmail}
                           icon={Mail}
                           id="university-institution-admin-email"
+                          inputClassName={compactTextFieldInputClassName}
                           inputRef={emailRef}
                           label="Correo electrónico"
+                          labelClassName={compactFieldLabelClassName}
                           name="adminEmail"
                           placeholder="admin@universidad.edu.co"
                           type="email"
                           value={values.adminEmail}
-                          onBlur={() => handleInstitutionFieldBlur('adminEmail')}
-                          onChange={(value) => handleInstitutionFieldChange('adminEmail', value)}
+                          onBlur={() =>
+                            handleInstitutionFieldBlur('adminEmail')
+                          }
+                          onChange={(value) =>
+                            handleInstitutionFieldChange('adminEmail', value)
+                          }
                         />
                         <AdminTextField
+                          containerClassName={compactFieldContainerClassName}
                           error={errors.adminPhone}
                           icon={Phone}
                           id="university-institution-admin-phone"
+                          inputClassName={compactTextFieldInputClassName}
                           inputRef={phoneRef}
                           label="Celular"
+                          labelClassName={compactFieldLabelClassName}
                           name="adminPhone"
                           placeholder="3001234567"
                           type="tel"
                           value={values.adminPhone}
-                          onBlur={() => handleInstitutionFieldBlur('adminPhone')}
-                          onChange={(value) => handleInstitutionFieldChange('adminPhone', value)}
+                          onBlur={() =>
+                            handleInstitutionFieldBlur('adminPhone')
+                          }
+                          onChange={(value) =>
+                            handleInstitutionFieldChange('adminPhone', value)
+                          }
                         />
                       </div>
                       <div className="flex justify-center lg:col-span-2">
                         <button
-                          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-[0.82rem] font-semibold text-primary transition duration-300 hover:bg-slate-100"
+                          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[0.8rem] font-semibold text-primary transition duration-300 hover:bg-slate-100 sm:px-3.5 sm:py-2.5 sm:text-[0.82rem]"
                           type="button"
                           onClick={openPasswordPanel}
                         >
                           <KeyRound aria-hidden="true" className="h-4 w-4" />
-                          <span>{universityAdminContent.institutionPage.actionLabels.changePassword}</span>
+                          <span>
+                            {
+                              universityAdminContent.institutionPage
+                                .actionLabels.changePassword
+                            }
+                          </span>
                         </button>
                       </div>
                     </div>
@@ -1526,24 +1693,28 @@ export function UniversityInstitutionPage({
               </SurfaceCard>
             </div>
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-3 border-t border-slate-200/80 bg-white px-6 py-4 sm:px-7">
+          <div className="grid grid-cols-2 gap-2.5 border-t border-slate-200/80 bg-white px-3 py-3 sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-3 sm:px-7 sm:py-4">
             <button
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-ink transition duration-300 hover:bg-slate-100"
+              className="inline-flex w-full min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-[0.8rem] font-semibold text-ink transition duration-300 hover:bg-slate-100 sm:w-auto sm:rounded-2xl sm:px-5 sm:py-3 sm:text-sm"
               disabled={isLoading}
               type="button"
               onClick={handleReset}
             >
               <RotateCcw aria-hidden="true" className="h-4 w-4" />
-              <span>{universityAdminContent.institutionPage.actionLabels.reset}</span>
+              <span>
+                {universityAdminContent.institutionPage.actionLabels.reset}
+              </span>
             </button>
             <button
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-5 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
+              className="inline-flex w-full min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-brand-gradient px-3 py-2.5 text-[0.8rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 sm:w-auto sm:rounded-2xl sm:px-5 sm:py-3 sm:text-sm"
               disabled={isLoading || isLogoUploadBlocked}
               type="button"
               onClick={() => handleInstitutionSubmit()}
             >
               <Save aria-hidden="true" className="h-4 w-4" />
-              <span>{universityAdminContent.institutionPage.actionLabels.save}</span>
+              <span>
+                {universityAdminContent.institutionPage.actionLabels.save}
+              </span>
             </button>
           </div>
         </div>
@@ -1575,9 +1746,13 @@ export function UniversityInstitutionPage({
                   >
                     {universityAdminContent.institutionPage.passwordPanelTitle}
                   </h2>
-                  {universityAdminContent.institutionPage.passwordPanelDescription ? (
+                  {universityAdminContent.institutionPage
+                    .passwordPanelDescription ? (
                     <p className="max-w-[34rem] text-sm leading-6 text-ink-muted">
-                      {universityAdminContent.institutionPage.passwordPanelDescription}
+                      {
+                        universityAdminContent.institutionPage
+                          .passwordPanelDescription
+                      }
                     </p>
                   ) : null}
                 </div>
@@ -1591,7 +1766,11 @@ export function UniversityInstitutionPage({
                 </button>
               </div>
             </div>
-            <form className="space-y-5 px-5 py-5 sm:px-6 sm:py-6" noValidate onSubmit={handlePasswordSubmit}>
+            <form
+              className="space-y-5 px-5 py-5 sm:px-6 sm:py-6"
+              noValidate
+              onSubmit={handlePasswordSubmit}
+            >
               {passwordWarningMessage ? (
                 <p
                   className="rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-3 text-sm font-medium text-rose-700"
@@ -1607,49 +1786,73 @@ export function UniversityInstitutionPage({
               ) : null}
               <AdminPasswordField
                 error={passwordErrors.currentPassword}
-                hidePasswordLabel={authContent.register.password.hidePasswordLabel}
+                hidePasswordLabel={
+                  authContent.register.password.hidePasswordLabel
+                }
                 id="university-password-current"
                 inputRef={currentPasswordRef}
                 label="Contraseña actual"
                 name="currentPassword"
                 placeholder="Ingresa la contraseña actual"
                 showPassword={showPasswords.currentPassword}
-                showPasswordLabel={authContent.register.password.showPasswordLabel}
+                showPasswordLabel={
+                  authContent.register.password.showPasswordLabel
+                }
                 value={passwordValues.currentPassword}
                 onBlur={() => handlePasswordFieldBlur('currentPassword')}
-                onChange={(value) => handlePasswordFieldChange('currentPassword', value)}
-                onToggleVisibility={() => togglePasswordVisibility('currentPassword')}
+                onChange={(value) =>
+                  handlePasswordFieldChange('currentPassword', value)
+                }
+                onToggleVisibility={() =>
+                  togglePasswordVisibility('currentPassword')
+                }
               />
               <div className="grid gap-4 md:grid-cols-2">
                 <AdminPasswordField
                   error={passwordErrors.newPassword}
-                  hidePasswordLabel={authContent.register.password.hidePasswordLabel}
+                  hidePasswordLabel={
+                    authContent.register.password.hidePasswordLabel
+                  }
                   id="university-password-new"
                   inputRef={newPasswordRef}
                   label="Nueva contraseña"
                   name="newPassword"
                   placeholder="Crea una contraseña segura"
                   showPassword={showPasswords.newPassword}
-                  showPasswordLabel={authContent.register.password.showPasswordLabel}
+                  showPasswordLabel={
+                    authContent.register.password.showPasswordLabel
+                  }
                   value={passwordValues.newPassword}
                   onBlur={() => handlePasswordFieldBlur('newPassword')}
-                  onChange={(value) => handlePasswordFieldChange('newPassword', value)}
-                  onToggleVisibility={() => togglePasswordVisibility('newPassword')}
+                  onChange={(value) =>
+                    handlePasswordFieldChange('newPassword', value)
+                  }
+                  onToggleVisibility={() =>
+                    togglePasswordVisibility('newPassword')
+                  }
                 />
                 <AdminPasswordField
                   error={passwordErrors.confirmPassword}
-                  hidePasswordLabel={authContent.register.password.hidePasswordLabel}
+                  hidePasswordLabel={
+                    authContent.register.password.hidePasswordLabel
+                  }
                   id="university-password-confirm"
                   inputRef={confirmPasswordRef}
                   label="Confirmar contraseña"
                   name="confirmPassword"
                   placeholder="Repite la nueva contraseña"
                   showPassword={showPasswords.confirmPassword}
-                  showPasswordLabel={authContent.register.password.showPasswordLabel}
+                  showPasswordLabel={
+                    authContent.register.password.showPasswordLabel
+                  }
                   value={passwordValues.confirmPassword}
                   onBlur={() => handlePasswordFieldBlur('confirmPassword')}
-                  onChange={(value) => handlePasswordFieldChange('confirmPassword', value)}
-                  onToggleVisibility={() => togglePasswordVisibility('confirmPassword')}
+                  onChange={(value) =>
+                    handlePasswordFieldChange('confirmPassword', value)
+                  }
+                  onToggleVisibility={() =>
+                    togglePasswordVisibility('confirmPassword')
+                  }
                 />
               </div>
               <div className="rounded-[1.45rem] border border-slate-200/80 bg-slate-50/85 p-4">
@@ -1657,23 +1860,35 @@ export function UniversityInstitutionPage({
                   Requisitos de la nueva contraseña
                 </p>
                 <ul className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
-                  {authContent.register.password.requirements.map((requirement) => {
-                    const isMet = passwordRequirementStatus[requirement.key];
+                  {authContent.register.password.requirements.map(
+                    (requirement) => {
+                      const isMet = passwordRequirementStatus[requirement.key];
 
-                    return (
-                      <li
-                        className={isMet ? 'flex items-start gap-2.5 text-emerald-700' : 'flex items-start gap-2.5 text-ink-muted'}
-                        key={requirement.key}
-                      >
-                        {isMet ? (
-                          <CheckCircle2 aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
-                        ) : (
-                          <Circle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
-                        )}
-                        <span>{requirement.label}</span>
-                      </li>
-                    );
-                  })}
+                      return (
+                        <li
+                          className={
+                            isMet
+                              ? 'flex items-start gap-2.5 text-emerald-700'
+                              : 'flex items-start gap-2.5 text-ink-muted'
+                          }
+                          key={requirement.key}
+                        >
+                          {isMet ? (
+                            <CheckCircle2
+                              aria-hidden="true"
+                              className="mt-0.5 h-4 w-4 shrink-0"
+                            />
+                          ) : (
+                            <Circle
+                              aria-hidden="true"
+                              className="mt-0.5 h-4 w-4 shrink-0"
+                            />
+                          )}
+                          <span>{requirement.label}</span>
+                        </li>
+                      );
+                    },
+                  )}
                 </ul>
               </div>
               <div className="flex flex-wrap items-center justify-end gap-3">
@@ -1690,7 +1905,12 @@ export function UniversityInstitutionPage({
                   type="submit"
                 >
                   <Save aria-hidden="true" className="h-4 w-4" />
-                  <span>{universityAdminContent.institutionPage.actionLabels.savePassword}</span>
+                  <span>
+                    {
+                      universityAdminContent.institutionPage.actionLabels
+                        .savePassword
+                    }
+                  </span>
                 </button>
               </div>
             </form>

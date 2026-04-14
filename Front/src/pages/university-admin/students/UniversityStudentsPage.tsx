@@ -1,4 +1,12 @@
-import { Check, GraduationCap, Plus, Power, PowerOff, Search, SlidersHorizontal } from 'lucide-react';
+import {
+  Check,
+  GraduationCap,
+  Plus,
+  Power,
+  PowerOff,
+  Search,
+  SlidersHorizontal,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
@@ -33,27 +41,40 @@ function formatDocumentLabel(documentTypeCode: string, documentNumber: string) {
 }
 
 export function UniversityStudentsPage() {
-  const { credentials, errorMessage, isLoading, students, toggleStudentStatus } =
-    useUniversityAdminStudentRecordsStore();
+  const {
+    credentials,
+    errorMessage,
+    isLoading,
+    students,
+    toggleStudentStatus,
+  } = useUniversityAdminStudentRecordsStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<StudentStatusFilter>('all');
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
-  const [pendingStatusStudentIds, setPendingStatusStudentIds] = useState<string[]>([]);
+  const [pendingStatusStudentIds, setPendingStatusStudentIds] = useState<
+    string[]
+  >([]);
   const pendingStatusStudentIdsRef = useRef(new Set<string>());
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const successNotice = getLocationState(location.state)?.successNotice ?? null;
   const normalizedSearch = searchTerm.trim().toLowerCase();
-  const studentFilterOptions: Array<{ label: string; value: StudentStatusFilter }> = [
+  const studentFilterOptions: Array<{
+    label: string;
+    value: StudentStatusFilter;
+  }> = [
     { label: 'Todos', value: 'all' },
     { label: 'Pendiente', value: 'pending' },
     { label: 'Activo', value: 'active' },
     { label: 'Inactivo', value: 'inactive' },
   ];
-  const credentialByStudentId = new Map(credentials.map((credential) => [credential.studentId, credential]));
+  const credentialByStudentId = new Map(
+    credentials.map((credential) => [credential.studentId, credential]),
+  );
   const filteredStudents = students.filter((student) => {
-    const normalizedFullName = `${student.firstName} ${student.lastName}`.toLowerCase();
+    const normalizedFullName =
+      `${student.firstName} ${student.lastName}`.toLowerCase();
     const credential = credentialByStudentId.get(student.id);
     const derivedStatus: StudentStatusFilter =
       student.status === 'inactive'
@@ -125,24 +146,24 @@ export function UniversityStudentsPage() {
   }
 
   return (
-    <div className="mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-3 overflow-hidden 2xl:max-w-[96rem]">
+    <div className="mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-2.5 overflow-hidden 2xl:max-w-[96rem]">
       <Seo
         description={universityAdminContent.studentsPage.meta.description}
         noIndex
         title={universityAdminContent.studentsPage.meta.title}
       />
       <AdminPageHeader
-        className="gap-3"
+        className="gap-2.5 sm:gap-3"
         description=""
         descriptionClassName="max-w-3xl text-sm leading-6 sm:text-[0.95rem]"
         headingAlign="center"
         title={universityAdminContent.studentsPage.title}
-        titleClassName="text-center text-[1.7rem] sm:text-[2rem]"
+        titleClassName="text-center text-[1.35rem] leading-tight sm:text-[2rem]"
       />
       {successNotice ? (
         <SurfaceCard
           className="border border-emerald-200 bg-emerald-50/90 text-sm font-medium text-emerald-800"
-          paddingClassName="p-3.5"
+          paddingClassName="p-3 sm:p-3.5"
         >
           <p role="status">
             <span className="font-semibold">
@@ -155,53 +176,62 @@ export function UniversityStudentsPage() {
       {errorMessage ? (
         <SurfaceCard
           className="border border-rose-200 bg-rose-50/90 text-sm font-medium text-rose-800"
-          paddingClassName="p-3.5"
+          paddingClassName="p-3 sm:p-3.5"
         >
           <p role="alert">{errorMessage}</p>
         </SurfaceCard>
       ) : null}
-      <div className="flex flex-col gap-2.5 md:flex-row md:items-stretch">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-stretch gap-2 md:flex md:flex-row md:items-stretch md:gap-2.5">
         <SurfaceCard
           className="min-w-0 flex-1 overflow-hidden bg-brand-gradient text-white md:flex-[1.6]"
           paddingClassName="p-0"
         >
-          <div className="flex items-center gap-2 px-3 py-1.75 sm:gap-2.5 sm:px-3.5 sm:py-2">
-            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-[0.8rem] bg-white/12 text-white ring-1 ring-white/20 sm:h-7 sm:w-7">
+          <div className="flex h-full items-center gap-1.5 px-2.5 py-1.5 sm:gap-2.5 sm:px-3.5 sm:py-2">
+            <span className="inline-flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded-[0.75rem] bg-white/12 text-white ring-1 ring-white/20 sm:h-7 sm:w-7">
               <GraduationCap aria-hidden="true" className="h-3.25 w-3.25" />
             </span>
-            <span className="font-headline text-[1.28rem] font-extrabold tracking-tight text-white sm:text-[1.45rem]">
+            <span className="font-headline text-[1.15rem] font-extrabold tracking-tight text-white sm:text-[1.45rem]">
               {students.length}
             </span>
-            <p className="min-w-0 text-[0.74rem] font-semibold text-white/90 sm:text-[0.8rem]">
+            <p className="hidden min-w-0 text-[0.74rem] font-semibold text-white/90 sm:block sm:text-[0.8rem]">
               {universityAdminContent.studentsPage.summaryLabel}
             </p>
           </div>
         </SurfaceCard>
         <Link
-          className="inline-flex items-center justify-center gap-2 rounded-[1.4rem] bg-brand-gradient px-3.5 py-2.25 text-[0.82rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 md:min-w-[12.5rem] md:flex-none"
+          className="inline-flex min-h-[3rem] items-center justify-center gap-1.5 whitespace-nowrap rounded-[1.05rem] bg-brand-gradient px-3 py-2 text-[0.74rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 sm:gap-2 sm:rounded-[1.4rem] sm:px-3.5 sm:py-2.25 sm:text-[0.82rem] md:min-w-[12.5rem] md:flex-none"
           to={ROUTES.universityRegisterStudent}
         >
-          <Plus aria-hidden="true" className="h-4 w-4" />
-          <span>{universityAdminContent.studentsPage.actionLabels.register}</span>
+          <Plus aria-hidden="true" className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+          <span>
+            {universityAdminContent.studentsPage.actionLabels.register}
+          </span>
         </Link>
       </div>
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
-        <div className="border-b border-slate-200/80 px-4 py-3 sm:px-5 sm:py-3.5">
-          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-            <h2 className="font-headline text-[1rem] font-extrabold tracking-tight text-ink sm:text-[1.25rem]">
+        <div className="border-b border-slate-200/80 px-3 py-2.5 sm:px-5 sm:py-3.5">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+            <h2 className="hidden font-headline text-[1rem] font-extrabold tracking-tight text-ink sm:block sm:text-[1.25rem]">
               {universityAdminContent.studentsPage.tableTitle}
             </h2>
-            <div className="flex min-w-0 items-center gap-2 sm:w-full sm:max-w-[26rem] sm:justify-end sm:gap-2.5 xl:max-w-[30rem]">
-              <label className="relative min-w-0 flex-1" htmlFor="university-student-search">
-                <span className="sr-only">{universityAdminContent.studentsPage.searchLabel}</span>
+            <div className="flex min-w-0 items-center gap-1.5 sm:w-full sm:max-w-[26rem] sm:justify-end sm:gap-2.5 xl:max-w-[30rem]">
+              <label
+                className="relative min-w-0 flex-1"
+                htmlFor="university-student-search"
+              >
+                <span className="sr-only">
+                  {universityAdminContent.studentsPage.searchLabel}
+                </span>
                 <Search
                   aria-hidden="true"
-                  className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ghost sm:left-4 sm:h-4 sm:w-4"
+                  className="pointer-events-none absolute left-3 top-1/2 h-3.25 w-3.25 -translate-y-1/2 text-ghost sm:left-4 sm:h-4 sm:w-4"
                 />
                 <input
-                  className="h-9 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-8 pr-4 text-[0.74rem] text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-10 sm:pl-10 sm:text-[0.82rem]"
+                  className="h-8.5 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-8 pr-3 text-[0.72rem] text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-10 sm:pl-10 sm:pr-4 sm:text-[0.82rem]"
                   id="university-student-search"
-                  placeholder={universityAdminContent.studentsPage.searchPlaceholder}
+                  placeholder={
+                    universityAdminContent.studentsPage.searchPlaceholder
+                  }
                   type="search"
                   value={searchTerm}
                   onChange={(event) => setSearchTerm(event.target.value)}
@@ -216,11 +246,13 @@ export function UniversityStudentsPage() {
                     statusFilter === 'all'
                       ? 'Filtrar estudiantes por estado'
                       : `Filtrar estudiantes por estado. Actual: ${
-                          studentFilterOptions.find((option) => option.value === statusFilter)?.label
+                          studentFilterOptions.find(
+                            (option) => option.value === statusFilter,
+                          )?.label
                         }`
                   }
                   className={classNames(
-                    'relative inline-flex h-9 w-9 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-10 sm:w-10',
+                    'relative inline-flex h-8.5 w-8.5 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-10 sm:w-10',
                     statusFilter === 'all'
                       ? 'border-slate-200/90 hover:border-primary/30 hover:bg-white'
                       : 'border-primary/25 bg-primary/[0.08] text-primary hover:bg-primary/[0.12]',
@@ -228,7 +260,10 @@ export function UniversityStudentsPage() {
                   type="button"
                   onClick={() => setIsStatusMenuOpen((current) => !current)}
                 >
-                  <SlidersHorizontal aria-hidden="true" className="h-4 w-4 sm:h-[1.05rem] sm:w-[1.05rem]" />
+                  <SlidersHorizontal
+                    aria-hidden="true"
+                    className="h-[0.95rem] w-[0.95rem] sm:h-[1.05rem] sm:w-[1.05rem]"
+                  />
                   {statusFilter !== 'all' ? (
                     <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary ring-2 ring-white" />
                   ) : null}
@@ -269,10 +304,15 @@ export function UniversityStudentsPage() {
                             <span
                               className={classNames(
                                 'inline-flex h-5 w-5 items-center justify-center rounded-full',
-                                isSelected ? 'bg-white/18 text-white' : 'bg-white text-slate-300',
+                                isSelected
+                                  ? 'bg-white/18 text-white'
+                                  : 'bg-white text-slate-300',
                               )}
                             >
-                              <Check aria-hidden="true" className="h-3.5 w-3.5" />
+                              <Check
+                                aria-hidden="true"
+                                className="h-3.5 w-3.5"
+                              />
                             </span>
                           </button>
                         );
@@ -293,17 +333,21 @@ export function UniversityStudentsPage() {
                   <th className="px-4 py-2.5">Documento</th>
                   <th className="px-4 py-2.5">Correo</th>
                   <th className="px-4 py-2.5 text-center">Semestre</th>
-                    <th className="px-4 py-2.5 text-center">Estado</th>
-                    <th className="px-4 py-2.5 text-center sm:px-5">Acciones</th>
+                  <th className="px-4 py-2.5 text-center">Estado</th>
+                  <th className="px-4 py-2.5 text-center sm:px-5">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200/80">
                 {filteredStudents.map((student, index) => {
                   const credential = credentialByStudentId.get(student.id);
                   const displayStatus: PersonOperationalStatus | 'pending' =
-                    credential?.deliveryStatus === 'generated' ? 'pending' : student.status;
+                    credential?.deliveryStatus === 'generated'
+                      ? 'pending'
+                      : student.status;
                   const isLast = index === filteredStudents.length - 1;
-                  const isUpdatingStatus = pendingStatusStudentIds.includes(student.id);
+                  const isUpdatingStatus = pendingStatusStudentIds.includes(
+                    student.id,
+                  );
 
                   return (
                     <tr key={student.id} className="align-top">
@@ -315,10 +359,15 @@ export function UniversityStudentsPage() {
                       >
                         <div className="space-y-1">
                           <p className="text-[0.83rem] font-semibold text-ink">
-                            {formatDisplayName(`${student.firstName} ${student.lastName}`)}
+                            {formatDisplayName(
+                              `${student.firstName} ${student.lastName}`,
+                            )}
                           </p>
                           <p className="text-[0.72rem] text-ink-muted sm:text-[0.76rem]">
-                            Registrado {new Date(student.createdAt).toLocaleDateString('es-CO')}
+                            Registrado{' '}
+                            {new Date(student.createdAt).toLocaleDateString(
+                              'es-CO',
+                            )}
                           </p>
                         </div>
                       </td>
@@ -329,7 +378,10 @@ export function UniversityStudentsPage() {
                         )}
                       >
                         <p className="text-[0.83rem] font-medium text-ink">
-                          {formatDocumentLabel(student.documentTypeCode, student.documentNumber)}
+                          {formatDocumentLabel(
+                            student.documentTypeCode,
+                            student.documentNumber,
+                          )}
                         </p>
                       </td>
                       <td
@@ -338,7 +390,9 @@ export function UniversityStudentsPage() {
                           isLast ? 'pb-3.5' : 'pb-3',
                         )}
                       >
-                        <p className="text-sm text-ink-muted">{student.email}</p>
+                        <p className="text-sm text-ink-muted">
+                          {student.email}
+                        </p>
                       </td>
                       <td
                         className={classNames(
@@ -359,7 +413,10 @@ export function UniversityStudentsPage() {
                         )}
                       >
                         <div className="flex items-center justify-center">
-                          <AdminStatusBadge entity="student" status={displayStatus} />
+                          <AdminStatusBadge
+                            entity="student"
+                            status={displayStatus}
+                          />
                         </div>
                       </td>
                       <td
@@ -385,7 +442,7 @@ export function UniversityStudentsPage() {
                           ) : (
                             <button
                               className={classNames(
-                                 'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-65',
+                                'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-65',
                                 student.status === 'active'
                                   ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
                                   : 'bg-primary/10 text-primary hover:bg-primary/15',
@@ -397,14 +454,22 @@ export function UniversityStudentsPage() {
                               }}
                             >
                               {student.status === 'active' ? (
-                                <PowerOff aria-hidden="true" className="h-3.5 w-3.5" />
+                                <PowerOff
+                                  aria-hidden="true"
+                                  className="h-3.5 w-3.5"
+                                />
                               ) : (
-                                <Power aria-hidden="true" className="h-3.5 w-3.5" />
+                                <Power
+                                  aria-hidden="true"
+                                  className="h-3.5 w-3.5"
+                                />
                               )}
                               <span>
                                 {student.status === 'active'
-                                  ? universityAdminContent.studentsPage.actionLabels.deactivate
-                                  : universityAdminContent.studentsPage.actionLabels.activate}
+                                  ? universityAdminContent.studentsPage
+                                      .actionLabels.deactivate
+                                  : universityAdminContent.studentsPage
+                                      .actionLabels.activate}
                               </span>
                             </button>
                           )}
