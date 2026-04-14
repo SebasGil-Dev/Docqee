@@ -328,23 +328,10 @@ export function PatientSearchStudentsPage() {
         noIndex
         title={patientContent.searchPage.meta.title}
       />
-      <div className="flex flex-col gap-2 rounded-[1.15rem] border border-slate-200/80 bg-white px-3.5 py-3 shadow-[0_14px_36px_-28px_rgba(15,23,42,0.42)] sm:flex-row sm:items-center sm:justify-between sm:px-4">
-        <div className="min-w-0">
-          <h1 className="font-headline text-xl font-extrabold leading-tight tracking-tight text-ink sm:text-[1.35rem]">
-            {patientContent.searchPage.title}
-          </h1>
-          <p className="mt-0.5 max-w-3xl text-xs leading-5 text-ink-muted sm:text-sm">
-            {patientContent.searchPage.description}
-          </p>
-        </div>
-        <div className="inline-flex shrink-0 items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-primary ring-1 ring-primary/10">
-          <span className="font-headline text-lg font-extrabold leading-none">
-            {students.length}
-          </span>
-          <span className="text-xs font-semibold">
-            {hasSearchCriteria ? 'Resultados' : 'Recomendados'}
-          </span>
-        </div>
+      <div className="rounded-[1.15rem] border border-slate-200/80 bg-white px-3.5 py-3 text-center shadow-[0_14px_36px_-28px_rgba(15,23,42,0.42)] sm:px-4">
+        <h1 className="font-headline text-xl font-extrabold leading-tight tracking-tight text-ink sm:text-[1.35rem]">
+          {patientContent.searchPage.title}
+        </h1>
       </div>
       {successMessage ? (
         <SurfaceCard
