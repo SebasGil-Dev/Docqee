@@ -1,4 +1,10 @@
-import { Check, MapPin, MessageSquareMore, SlidersHorizontal, Star } from 'lucide-react';
+import {
+  Check,
+  MapPin,
+  MessageSquareMore,
+  SlidersHorizontal,
+  Star,
+} from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
@@ -55,9 +61,9 @@ export function PatientHomePage() {
   );
   const patientInitials = useMemo(
     () =>
-      `${(profile.firstName || patientContent.shell.adminUser.firstName).charAt(0)}${
-        (profile.lastName || patientContent.shell.adminUser.lastName).charAt(0)
-      }`.toUpperCase(),
+      `${(profile.firstName || patientContent.shell.adminUser.firstName).charAt(0)}${(
+        profile.lastName || patientContent.shell.adminUser.lastName
+      ).charAt(0)}`.toUpperCase(),
     [profile.firstName, profile.lastName],
   );
   const optimizedAvatarSrc = getOptimizedAvatarUrl(profile.avatarSrc, 160);
@@ -66,7 +72,10 @@ export function PatientHomePage() {
       return 0;
     }
 
-    const totalRating = reviews.reduce((total, review) => total + review.rating, 0);
+    const totalRating = reviews.reduce(
+      (total, review) => total + review.rating,
+      0,
+    );
     return totalRating / reviews.length;
   }, [reviews]);
   const commentsCount = useMemo(
@@ -78,7 +87,9 @@ export function PatientHomePage() {
       return reviews;
     }
 
-    return reviews.filter((review) => Math.round(review.rating) === reviewRatingFilter);
+    return reviews.filter(
+      (review) => Math.round(review.rating) === reviewRatingFilter,
+    );
   }, [reviewRatingFilter, reviews]);
   const reviewRatingOptions: Array<{
     label: string;
@@ -133,7 +144,10 @@ export function PatientHomePage() {
           <p role="alert">{errorMessage}</p>
         </SurfaceCard>
       ) : null}
-      <SurfaceCard className="overflow-hidden bg-brand-gradient text-white" paddingClassName="p-0">
+      <SurfaceCard
+        className="overflow-hidden bg-brand-gradient text-white"
+        paddingClassName="p-0"
+      >
         <div className="flex flex-col gap-3 px-4 py-3.5 sm:px-5 sm:py-4 lg:flex-row lg:items-center lg:justify-between lg:gap-3 2xl:px-6">
           <div className="flex min-w-0 flex-1 items-center gap-3">
             {optimizedAvatarSrc ? (
@@ -157,7 +171,10 @@ export function PatientHomePage() {
               <div className="flex min-w-0 flex-wrap items-center gap-2">
                 {profile.city || profile.locality ? (
                   <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-[0.75rem] font-semibold text-white/88">
-                    <MapPin aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+                    <MapPin
+                      aria-hidden="true"
+                      className="h-3.5 w-3.5 shrink-0"
+                    />
                     <span className="max-w-[14rem] truncate sm:max-w-[16rem] xl:max-w-[18rem]">
                       {[profile.city, profile.locality]
                         .filter(Boolean)
@@ -180,29 +197,36 @@ export function PatientHomePage() {
           </div>
         </div>
       </SurfaceCard>
-      <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
-        <div className="border-b border-slate-200/80 px-4 py-3.5 sm:px-5 sm:py-3.5">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-            <div className="space-y-1">
-              <p className="text-[0.72rem] font-bold uppercase tracking-[0.24em] text-primary/75">
+      <AdminPanelCard
+        className="flex-1"
+        panelClassName="rounded-[1.1rem] bg-[#f4f8ff]"
+        shellPaddingClassName="p-0"
+      >
+        <div className="border-b border-slate-200/80 px-2.5 py-2 sm:px-3">
+          <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
+            <div className="space-y-0.5">
+              <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-primary/75">
                 Experiencia en citas
               </p>
-              <h2 className="font-headline text-[1.45rem] font-extrabold tracking-tight text-ink">
+              <h2 className="font-headline text-[1.08rem] font-extrabold tracking-tight text-ink">
                 Comentarios recibidos
               </h2>
             </div>
-            <div className="flex flex-wrap items-center gap-2.5 self-start">
+            <div className="flex flex-wrap items-center gap-1.5 self-start">
               <div
-                className="inline-flex items-center gap-2 rounded-[1.2rem] border border-sky-200/80 bg-sky-50 px-3.5 py-2.5 text-sky-950 shadow-[0_16px_34px_-24px_rgba(14,116,144,0.38)]"
+                className="inline-flex items-center gap-1.5 rounded-[0.9rem] border border-sky-200/80 bg-sky-50 px-2.5 py-1.5 text-sky-950"
                 data-testid="patient-review-comments-dashboard"
               >
-                <span className="inline-flex h-9 w-9 items-center justify-center rounded-[0.95rem] bg-white text-primary shadow-[0_14px_24px_-20px_rgba(14,116,144,0.55)]">
-                  <MessageSquareMore aria-hidden="true" className="h-4.5 w-4.5" />
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-[0.72rem] bg-white text-primary">
+                  <MessageSquareMore
+                    aria-hidden="true"
+                    className="h-3.5 w-3.5"
+                  />
                 </span>
-                <p className="text-[0.64rem] font-bold uppercase tracking-[0.18em] text-sky-700/80">
+                <p className="text-[0.58rem] font-bold uppercase tracking-[0.12em] text-sky-700/80">
                   Comentarios
                 </p>
-                <p className="font-headline text-[1.28rem] font-extrabold tracking-tight text-sky-950">
+                <p className="font-headline text-[1.02rem] font-extrabold tracking-tight text-sky-950">
                   {commentsCount}
                 </p>
               </div>
@@ -213,7 +237,7 @@ export function PatientHomePage() {
                   aria-haspopup="menu"
                   aria-label="Filtrar comentarios por estrellas"
                   className={classNames(
-                    'relative inline-flex h-11 w-11 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                    'relative inline-flex h-8 w-8 items-center justify-center rounded-full border bg-white/98 text-ink transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
                     reviewRatingFilter === 'all'
                       ? 'border-slate-200/90 hover:border-primary/30 hover:bg-white'
                       : 'border-primary/30 bg-primary/10 text-primary',
@@ -224,9 +248,12 @@ export function PatientHomePage() {
                     setIsReviewRatingMenuOpen((current) => !current);
                   }}
                 >
-                  <SlidersHorizontal aria-hidden="true" className="h-[1.02rem] w-[1.02rem]" />
+                  <SlidersHorizontal
+                    aria-hidden="true"
+                    className="h-3.5 w-3.5"
+                  />
                   {reviewRatingFilter !== 'all' ? (
-                    <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary" />
+                    <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-primary" />
                   ) : null}
                 </button>
                 {isReviewRatingMenuOpen ? (
@@ -267,7 +294,11 @@ export function PatientHomePage() {
                               ) : (
                                 <>
                                   <div className="flex items-center gap-0.5">
-                                    {renderStars(option.value, 'h-3.5 w-3.5', 'dark')}
+                                    {renderStars(
+                                      option.value,
+                                      'h-3.5 w-3.5',
+                                      'dark',
+                                    )}
                                   </div>
                                   <span>{option.label}</span>
                                 </>
@@ -276,7 +307,9 @@ export function PatientHomePage() {
                             <span
                               className={classNames(
                                 'inline-flex h-4.5 w-4.5 items-center justify-center rounded-full',
-                                isSelected ? 'bg-white/18 text-white' : 'bg-white text-slate-300',
+                                isSelected
+                                  ? 'bg-white/18 text-white'
+                                  : 'bg-white text-slate-300',
                               )}
                             >
                               <Check aria-hidden="true" className="h-3 w-3" />
@@ -291,45 +324,54 @@ export function PatientHomePage() {
             </div>
           </div>
         </div>
-        <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-4 py-3.5 sm:px-5 sm:py-4">
+        <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-2.5 py-2 sm:px-3">
           {filteredReviews.length > 0 ? (
-            <div className="grid gap-3 lg:grid-cols-2 2xl:grid-cols-3 2xl:gap-4">
+            <div className="grid gap-2 lg:grid-cols-2 2xl:grid-cols-3">
               {filteredReviews.map((review) => (
                 <SurfaceCard
                   key={review.id}
                   className="border border-slate-200/80 bg-white shadow-none"
-                  paddingClassName="p-4"
+                  paddingClassName="p-3"
                 >
-                  <div className="space-y-3" data-testid={`patient-review-card-${review.id}`}>
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="space-y-1">
-                        <p className="text-base font-semibold text-ink">
+                  <div
+                    className="space-y-2"
+                    data-testid={`patient-review-card-${review.id}`}
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div className="space-y-0.5">
+                        <p className="text-[0.88rem] font-semibold text-ink">
                           {formatDisplayName(review.studentName)}
                         </p>
-                        <p className="text-sm text-ink-muted">{review.appointmentLabel}</p>
+                        <p className="text-[0.76rem] text-ink-muted">
+                          {review.appointmentLabel}
+                        </p>
                       </div>
-                      <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      <div className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[0.66rem] font-semibold uppercase tracking-[0.12em] text-slate-500">
                         {reviewDateFormatter.format(new Date(review.createdAt))}
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1">
-                        {renderStars(review.rating, 'h-4 w-4', 'dark')}
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-0.5">
+                        {renderStars(review.rating, 'h-3.5 w-3.5', 'dark')}
                       </div>
-                      <span className="text-sm font-semibold text-ink">
+                      <span className="text-[0.78rem] font-semibold text-ink">
                         {review.rating.toFixed(1)}
                       </span>
                     </div>
-                    <p className="rounded-[1.2rem] bg-slate-50 px-3.5 py-3 text-sm leading-6 text-ink">
-                      {review.comment ?? 'No hay un comentario escrito para esta cita.'}
+                    <p className="rounded-[0.95rem] bg-slate-50 px-3 py-2 text-[0.8rem] leading-5 text-ink">
+                      {review.comment ??
+                        'No hay un comentario escrito para esta cita.'}
                     </p>
-                    <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-muted">
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5">
-                        <MapPin aria-hidden="true" className="h-3.5 w-3.5" />
+                    <div className="flex flex-wrap items-center gap-2 text-[0.64rem] font-semibold uppercase tracking-[0.12em] text-ink-muted">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1">
+                        <MapPin aria-hidden="true" className="h-3 w-3" />
                         {formatDisplayName(review.siteName)}
                       </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5">
-                        <MessageSquareMore aria-hidden="true" className="h-3.5 w-3.5" />
+                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1">
+                        <MessageSquareMore
+                          aria-hidden="true"
+                          className="h-3 w-3"
+                        />
                         Comentario recibido
                       </span>
                     </div>
@@ -340,15 +382,15 @@ export function PatientHomePage() {
           ) : (
             <SurfaceCard
               className="border border-dashed border-slate-200 bg-white shadow-none"
-              paddingClassName="px-5 py-8"
+              paddingClassName="px-3 py-5"
             >
-              <div className="space-y-2 text-center">
-                <p className="font-headline text-xl font-extrabold tracking-tight text-ink">
+              <div className="space-y-1.5 text-center">
+                <p className="font-headline text-[1rem] font-extrabold tracking-tight text-ink">
                   {reviews.length === 0
                     ? 'Aun no tienes comentarios registrados'
                     : 'No hay comentarios para este filtro'}
                 </p>
-                <p className="mx-auto max-w-xl text-sm leading-6 text-ink-muted">
+                <p className="mx-auto max-w-xl text-[0.8rem] leading-5 text-ink-muted">
                   {reviews.length === 0
                     ? 'Cuando finalicen citas con valoracion hacia tu perfil, aqui podras revisar las estrellas y comentarios recibidos.'
                     : 'Prueba con otra cantidad de estrellas para ver mas comentarios en esta seccion.'}
