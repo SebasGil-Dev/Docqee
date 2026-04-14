@@ -46,6 +46,40 @@ function getStudentAvailability(student: PatientStudentDirectoryItem) {
   return student.availabilityGeneral || 'Disponibilidad por confirmar';
 }
 
+function normalizeTreatmentFilter(value: string) {
+  return value
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+function getVisibleTreatments(
+  treatments: string[],
+  selectedTreatment: NamedFilter,
+) {
+  if (selectedTreatment === 'all') {
+    return treatments.slice(0, 3);
+  }
+
+  const normalizedSelectedTreatment = normalizeTreatmentFilter(
+    selectedTreatment,
+  );
+  const selectedTreatmentIndex = treatments.findIndex(
+    (treatment) =>
+      normalizeTreatmentFilter(treatment) === normalizedSelectedTreatment,
+  );
+
+  if (selectedTreatmentIndex === -1) {
+    return treatments.slice(0, 3);
+  }
+
+  return [
+    treatments[selectedTreatmentIndex],
+    ...treatments.filter((_, index) => index !== selectedTreatmentIndex),
+  ].slice(0, 3);
+}
+
 function getRatingLabel(student: PatientStudentDirectoryItem) {
   if (!student.averageRating || student.reviewsCount === 0) {
     return 'Sin calificacion';
@@ -555,9 +589,9 @@ export function PatientSearchStudentsPage() {
                     <tbody className="divide-y divide-slate-200/80">
                       {students.map((student) => {
                         const isSelected = selectedStudent?.id === student.id;
-                        const visibleTreatments = student.treatments.slice(
-                          0,
-                          3,
+                        const visibleTreatments = getVisibleTreatments(
+                          student.treatments,
+                          treatmentFilter,
                         );
                         const hiddenTreatmentsCount =
                           student.treatments.length - visibleTreatments.length;
