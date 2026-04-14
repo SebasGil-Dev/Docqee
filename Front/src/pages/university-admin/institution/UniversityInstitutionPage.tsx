@@ -88,13 +88,13 @@ const passwordRuleOrder = [
 ] as const;
 const UNIVERSITY_CAMPUSES_SECTION_ID = 'university-campuses-section';
 const compactFieldContainerClassName = 'space-y-1';
-const compactFieldLabelClassName = 'text-[0.78rem] sm:text-sm';
+const compactFieldLabelClassName = 'text-[0.74rem] sm:text-sm';
 const compactTextFieldInputClassName =
-  'rounded-xl py-2.25 pl-10 pr-3 text-[0.8rem] sm:rounded-2xl sm:py-3 sm:pl-11 sm:pr-4 sm:text-sm';
+  'rounded-lg py-2 pl-10 pr-2.5 text-[0.76rem] sm:rounded-2xl sm:py-3 sm:pl-11 sm:pr-4 sm:text-sm';
 const compactSelectFieldClassName =
-  'rounded-xl py-2.25 pl-10 pr-3 text-[0.8rem] sm:rounded-2xl sm:py-3 sm:pl-11 sm:pr-4 sm:text-sm';
+  'rounded-lg py-2 pl-10 pr-2.5 text-[0.76rem] sm:rounded-2xl sm:py-3 sm:pl-11 sm:pr-4 sm:text-sm';
 const compactPasswordFieldInputClassName =
-  'rounded-xl py-2.5 pl-10 pr-11 text-[0.82rem] sm:rounded-2xl sm:py-3 sm:pl-11 sm:pr-12 sm:text-sm';
+  'rounded-lg py-2.25 pl-10 pr-10 text-[0.78rem] sm:rounded-2xl sm:py-3 sm:pl-11 sm:pr-12 sm:text-sm';
 
 function createEmptyCatalogState<T>(
   status: AsyncCatalogState<T>['status'],
@@ -1231,26 +1231,26 @@ export function UniversityInstitutionPage({
       <AdminPanelCard className="flex-1" panelClassName="bg-slate-50">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div
-            className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-2.5 py-2.5 sm:px-6 sm:py-5"
+            className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-2 py-2 sm:px-6 sm:py-5"
             ref={scrollContainerRef}
           >
-            <div className="space-y-2.5 pb-3 sm:space-y-4 sm:pb-5">
+            <div className="space-y-2 pb-2.5 sm:space-y-4 sm:pb-5">
               <SurfaceCard
                 className="overflow-hidden bg-white shadow-none"
                 paddingClassName="p-0"
               >
-                <div className="space-y-2.5 sm:space-y-4">
-                  <div className="space-y-2.5 rounded-[1.05rem] border border-slate-200/80 bg-slate-50/80 p-2.5 sm:space-y-4 sm:rounded-[1.6rem] sm:p-5">
+                <div className="space-y-2 sm:space-y-4">
+                  <div className="space-y-2 rounded-[1rem] border border-slate-200/80 bg-slate-50/80 p-2 sm:space-y-4 sm:rounded-[1.6rem] sm:p-5">
                     <div>
-                      <h2 className="text-center font-headline text-[1rem] font-extrabold tracking-tight text-ink sm:text-[1.15rem]">
+                      <h2 className="text-center font-headline text-[0.92rem] font-extrabold tracking-tight text-ink sm:text-[1.15rem]">
                         {
                           universityAdminContent.institutionPage.sectionTitles
                             .institution
                         }
                       </h2>
                     </div>
-                    <div className="grid gap-2.5 sm:gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(13.5rem,15rem)] xl:items-start">
-                      <div className="grid gap-2.5 sm:gap-4 lg:grid-cols-2">
+                    <div className="grid gap-2 sm:gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(13.5rem,15rem)] xl:items-start">
+                      <div className="grid gap-2 sm:gap-4 lg:grid-cols-2">
                         <div className="lg:col-span-2">
                           <AdminTextField
                             containerClassName={compactFieldContainerClassName}
@@ -1270,7 +1270,7 @@ export function UniversityInstitutionPage({
                             }
                           />
                         </div>
-                        <div className="grid grid-cols-2 gap-2.5 lg:col-span-2 sm:gap-4">
+                        <div className="grid grid-cols-2 gap-2 lg:col-span-2 sm:gap-4">
                           <AdminSelectField
                             containerClassName={compactFieldContainerClassName}
                             disabled={
@@ -1360,16 +1360,16 @@ export function UniversityInstitutionPage({
                           />
                         </div>
                       </div>
-                      <div className="mx-auto self-center rounded-[0.95rem] border border-dashed border-slate-300 bg-slate-50 p-2 sm:mx-0 sm:self-start sm:rounded-[1.2rem] sm:p-3 xl:-mt-10">
+                      <div className="mx-auto self-center rounded-[0.9rem] border border-dashed border-slate-300 bg-slate-50 p-1.5 sm:mx-0 sm:self-start sm:rounded-[1.2rem] sm:p-3 xl:-mt-10">
                         <div className="space-y-0.5 text-center sm:text-center">
-                          <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-primary sm:text-[0.72rem] sm:tracking-[0.2em]">
+                          <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-primary sm:text-[0.72rem] sm:tracking-[0.2em]">
                             Logo institucional
                           </p>
                         </div>
-                        <div className="mt-2 flex items-center justify-center gap-2.5 sm:flex-col sm:items-center sm:gap-2.5">
+                        <div className="mt-1.5 flex items-center justify-center gap-2 sm:mt-2 sm:flex-col sm:items-center sm:gap-2.5">
                           <div
                             aria-busy={isLogoUploading}
-                            className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[0.95rem] bg-white ring-1 ring-slate-200 sm:h-28 sm:w-28 sm:rounded-[1.15rem]"
+                            className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-[0.85rem] bg-white ring-1 ring-slate-200 sm:h-28 sm:w-28 sm:rounded-[1.15rem]"
                           >
                             {values.logoSrc ? (
                               <img
@@ -1395,7 +1395,7 @@ export function UniversityInstitutionPage({
                           </div>
                           <div className="min-w-0 flex-none space-y-1 text-center sm:flex-none sm:text-center">
                             <label
-                              className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-brand-gradient px-2.5 py-1.5 text-[0.68rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 sm:px-3 sm:text-[0.72rem]"
+                              className="inline-flex cursor-pointer items-center justify-center gap-1 rounded-lg bg-brand-gradient px-2 py-1 text-[0.64rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 sm:gap-1.5 sm:rounded-xl sm:px-3 sm:py-1.5 sm:text-[0.72rem]"
                               htmlFor="institution-logo-input"
                             >
                               <ImagePlus
@@ -1434,19 +1434,19 @@ export function UniversityInstitutionPage({
                     </div>
                   </div>
 
-                  <div className="space-y-2.5 rounded-[1.05rem] border border-slate-200/80 bg-slate-50/80 p-2.5 sm:space-y-3 sm:rounded-[1.6rem] sm:p-5">
+                  <div className="space-y-2 rounded-[1rem] border border-slate-200/80 bg-slate-50/80 p-2 sm:space-y-3 sm:rounded-[1.6rem] sm:p-5">
                     <div
                       className="text-center"
                       id={UNIVERSITY_CAMPUSES_SECTION_ID}
                       ref={campusesSectionRef}
                     >
                       <div className="w-full">
-                        <h3 className="text-center font-headline text-[0.96rem] font-extrabold tracking-tight text-ink sm:text-[1rem]">
+                        <h3 className="text-center font-headline text-[0.9rem] font-extrabold tracking-tight text-ink sm:text-[1rem]">
                           Sedes de la universidad
                         </h3>
                       </div>
                     </div>
-                    <div className="grid gap-2.5 sm:gap-3 lg:grid-cols-2">
+                    <div className="grid gap-2 sm:gap-3 lg:grid-cols-2">
                       <AdminTextField
                         containerClassName={compactFieldContainerClassName}
                         error={campusErrors.name}
@@ -1479,8 +1479,8 @@ export function UniversityInstitutionPage({
                           handleCampusFieldChange('address', value)
                         }
                       />
-                      <div className="grid gap-2.5 lg:col-span-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(8rem,0.45fr)] md:items-start sm:gap-3">
-                        <div className="grid grid-cols-2 gap-2.5 md:contents sm:gap-3">
+                      <div className="grid gap-2 lg:col-span-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(8rem,0.45fr)] md:items-start sm:gap-3">
+                        <div className="grid grid-cols-2 gap-2 md:contents sm:gap-3">
                           <AdminSelectField
                             containerClassName={compactFieldContainerClassName}
                             disabled={
@@ -1560,20 +1560,20 @@ export function UniversityInstitutionPage({
                           />
                         ) : (
                           <div className="space-y-1">
-                            <span className="block text-[0.78rem] font-semibold text-ink sm:text-sm">
+                            <span className="block text-[0.74rem] font-semibold text-ink sm:text-sm">
                               Estado
                             </span>
-                            <div className="inline-flex min-h-[2.35rem] w-full items-center rounded-xl border border-slate-200 bg-surface px-3 py-2 text-[0.8rem] font-semibold text-ink sm:min-h-[2.75rem] sm:rounded-2xl sm:px-3.5 sm:py-2.5 sm:text-[0.83rem]">
+                            <div className="inline-flex min-h-[2.05rem] w-full items-center rounded-lg border border-slate-200 bg-surface px-2.5 py-1.5 text-[0.76rem] font-semibold text-ink sm:min-h-[2.75rem] sm:rounded-2xl sm:px-3.5 sm:py-2.5 sm:text-[0.83rem]">
                               Activa
                             </div>
                           </div>
                         )}
                       </div>
                     </div>
-                    <div className="mt-4 flex flex-wrap items-center justify-center gap-2.5 sm:mt-[30px] sm:gap-3">
+                    <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:mt-[30px] sm:gap-3">
                       {editingCampusId ? (
                         <button
-                          className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[0.8rem] font-semibold text-ink transition duration-300 hover:bg-slate-100 sm:px-3.5 sm:py-2.5 sm:text-[0.82rem]"
+                          className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[0.76rem] font-semibold text-ink transition duration-300 hover:bg-slate-100 sm:gap-2 sm:rounded-xl sm:px-3.5 sm:py-2.5 sm:text-[0.82rem]"
                           type="button"
                           onClick={handleCampusReset}
                         >
@@ -1582,7 +1582,7 @@ export function UniversityInstitutionPage({
                         </button>
                       ) : null}
                       <button
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-gradient px-3 py-2 text-[0.8rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 sm:px-3.5 sm:py-2.5 sm:text-[0.82rem]"
+                        className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand-gradient px-2.5 py-1.5 text-[0.76rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 sm:gap-2 sm:rounded-xl sm:px-3.5 sm:py-2.5 sm:text-[0.82rem]"
                         disabled={isLoading || isLogoUploadBlocked}
                         type="button"
                         onClick={handleCampusSubmit}
@@ -1601,7 +1601,7 @@ export function UniversityInstitutionPage({
                         </span>
                       </button>
                     </div>
-                    <div className="mt-4 grid gap-2 sm:mt-[30px] sm:gap-2.5">
+                    <div className="mt-3 grid gap-1.5 sm:mt-[30px] sm:gap-2.5">
                       {values.campuses.length > 0 ? (
                         <div className="hidden gap-2.5 px-3 text-[0.66rem] font-extrabold uppercase tracking-[0.14em] text-ink md:grid md:grid-cols-[minmax(7rem,1fr)_minmax(8rem,1.15fr)_minmax(7rem,0.85fr)_minmax(7rem,0.85fr)_minmax(5.5rem,0.55fr)_minmax(6.5rem,0.55fr)] md:items-center">
                           <span>Nombre</span>
@@ -1614,30 +1614,30 @@ export function UniversityInstitutionPage({
                       ) : null}
                       {values.campuses.map((campus) => (
                         <div className="md:contents" key={campus.id}>
-                          <div className="space-y-2 rounded-[0.95rem] border border-slate-200/80 bg-white p-2.5 md:hidden">
+                          <div className="space-y-1.5 rounded-[0.9rem] border border-slate-200/80 bg-white p-2 md:hidden">
                             <div className="flex flex-wrap items-center justify-center gap-1 text-center">
-                              <h4 className="min-w-0 max-w-full truncate text-[0.8rem] font-semibold text-ink">
+                              <h4 className="min-w-0 max-w-full truncate text-[0.76rem] font-semibold text-ink">
                                 {formatDisplayName(campus.name)}
                               </h4>
-                              <span className="text-[0.72rem] font-semibold text-ink-muted">
+                              <span className="text-[0.68rem] font-semibold text-ink-muted">
                                 ·
                               </span>
-                              <p className="min-w-0 max-w-full truncate text-[0.76rem] text-ink-muted">
+                              <p className="min-w-0 max-w-full truncate text-[0.72rem] text-ink-muted">
                                 {campus.address}
                               </p>
                             </div>
-                            <div className="flex flex-wrap items-center justify-center gap-1.5 text-center">
-                              <span className="text-[0.72rem] font-semibold text-ink-muted">
+                            <div className="flex flex-wrap items-center justify-center gap-1 text-center">
+                              <span className="text-[0.68rem] font-semibold text-ink-muted">
                                 {campus.city}
                               </span>
-                              <span className="text-[0.72rem] font-semibold text-ink-muted">
+                              <span className="text-[0.68rem] font-semibold text-ink-muted">
                                 {campus.locality}
                               </span>
                               <span
                                 className={
                                   campus.status === 'active'
-                                    ? 'inline-flex w-fit rounded-full bg-emerald-50 px-2 py-1 text-[0.64rem] font-semibold text-emerald-700 ring-1 ring-emerald-200'
-                                    : 'inline-flex w-fit rounded-full bg-white px-2 py-1 text-[0.64rem] font-semibold text-slate-600 ring-1 ring-slate-200'
+                                    ? 'inline-flex w-fit rounded-full bg-emerald-50 px-1.5 py-0.5 text-[0.6rem] font-semibold text-emerald-700 ring-1 ring-emerald-200'
+                                    : 'inline-flex w-fit rounded-full bg-white px-1.5 py-0.5 text-[0.6rem] font-semibold text-slate-600 ring-1 ring-slate-200'
                                 }
                               >
                                 {campus.status === 'active'
@@ -1647,7 +1647,7 @@ export function UniversityInstitutionPage({
                             </div>
                             <div className="flex justify-center">
                               <button
-                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[0.78rem] font-semibold text-primary transition duration-300 hover:bg-slate-100"
+                                className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[0.74rem] font-semibold text-primary transition duration-300 hover:bg-slate-100"
                                 type="button"
                                 onClick={() => handleCampusEdit(campus)}
                               >
@@ -1700,16 +1700,16 @@ export function UniversityInstitutionPage({
                     </div>
                   </div>
 
-                  <div className="space-y-2.5 rounded-[1.05rem] border border-slate-200/80 bg-slate-50/80 p-2.5 sm:space-y-4 sm:rounded-[1.6rem] sm:p-5">
+                  <div className="space-y-2 rounded-[1rem] border border-slate-200/80 bg-slate-50/80 p-2 sm:space-y-4 sm:rounded-[1.6rem] sm:p-5">
                     <div>
-                      <h2 className="text-center font-headline text-[1rem] font-extrabold tracking-tight text-ink sm:text-[1.15rem]">
+                      <h2 className="text-center font-headline text-[0.92rem] font-extrabold tracking-tight text-ink sm:text-[1.15rem]">
                         {
                           universityAdminContent.institutionPage.sectionTitles
                             .administrator
                         }
                       </h2>
                     </div>
-                    <div className="grid gap-2.5 sm:gap-4 lg:grid-cols-2">
+                    <div className="grid gap-2 sm:gap-4 lg:grid-cols-2">
                       <AdminTextField
                         containerClassName={compactFieldContainerClassName}
                         error={errors.adminFirstName}
@@ -1748,7 +1748,7 @@ export function UniversityInstitutionPage({
                           handleInstitutionFieldChange('adminLastName', value)
                         }
                       />
-                      <div className="grid gap-2.5 sm:gap-4 md:grid-cols-2 lg:col-span-2">
+                      <div className="grid gap-2 sm:gap-4 md:grid-cols-2 lg:col-span-2">
                         <AdminTextField
                           containerClassName={compactFieldContainerClassName}
                           error={errors.adminEmail}
@@ -1792,7 +1792,7 @@ export function UniversityInstitutionPage({
                       </div>
                       <div className="flex justify-center lg:col-span-2">
                         <button
-                          className="inline-flex min-w-[11.5rem] items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-[0.78rem] font-semibold text-primary transition duration-300 hover:bg-slate-100 sm:min-w-0 sm:px-3.5 sm:py-2.5 sm:text-[0.82rem]"
+                          className="inline-flex min-w-[11rem] items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-1.5 text-[0.76rem] font-semibold text-primary transition duration-300 hover:bg-slate-100 sm:min-w-0 sm:gap-2 sm:rounded-xl sm:px-3.5 sm:py-2.5 sm:text-[0.82rem]"
                           type="button"
                           onClick={openPasswordPanel}
                         >
@@ -1811,9 +1811,9 @@ export function UniversityInstitutionPage({
               </SurfaceCard>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2.5 border-t border-slate-200/80 bg-white px-3 py-3 sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-3 sm:px-7 sm:py-4">
+          <div className="grid grid-cols-2 gap-2 border-t border-slate-200/80 bg-white px-3 py-2.5 sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-3 sm:px-7 sm:py-4">
             <button
-              className="inline-flex w-full min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-[0.8rem] font-semibold text-ink transition duration-300 hover:bg-slate-100 sm:w-auto sm:rounded-2xl sm:px-5 sm:py-3 sm:text-sm"
+              className="inline-flex w-full min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 text-[0.76rem] font-semibold text-ink transition duration-300 hover:bg-slate-100 sm:w-auto sm:gap-2 sm:rounded-2xl sm:px-5 sm:py-3 sm:text-sm"
               disabled={isLoading}
               type="button"
               onClick={handleReset}
@@ -1824,7 +1824,7 @@ export function UniversityInstitutionPage({
               </span>
             </button>
             <button
-              className="inline-flex w-full min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-brand-gradient px-3 py-2.5 text-[0.8rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 sm:w-auto sm:rounded-2xl sm:px-5 sm:py-3 sm:text-sm"
+              className="inline-flex w-full min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-brand-gradient px-2.5 py-2 text-[0.76rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 sm:w-auto sm:gap-2 sm:rounded-2xl sm:px-5 sm:py-3 sm:text-sm"
               disabled={isLoading || isLogoUploadBlocked}
               type="button"
               onClick={() => handleInstitutionSubmit()}
