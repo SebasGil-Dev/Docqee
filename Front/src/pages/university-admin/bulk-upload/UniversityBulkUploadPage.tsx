@@ -29,8 +29,21 @@ type SpreadsheetLibrary = typeof import('xlsx');
 
 const VALID_DOCUMENT_TYPES = ['CC', 'TI', 'CE', 'PP'];
 
-const STUDENT_COLUMNS = ['nombres', 'apellidos', 'tipo_documento', 'numero_documento', 'correo', 'celular', 'semestre'];
-const TEACHER_COLUMNS = ['nombres', 'apellidos', 'tipo_documento', 'numero_documento'];
+const STUDENT_COLUMNS = [
+  'nombres',
+  'apellidos',
+  'tipo_documento',
+  'numero_documento',
+  'correo',
+  'celular',
+  'semestre',
+];
+const TEACHER_COLUMNS = [
+  'nombres',
+  'apellidos',
+  'tipo_documento',
+  'numero_documento',
+];
 
 let spreadsheetLibraryPromise: Promise<SpreadsheetLibrary> | null = null;
 
@@ -48,7 +61,15 @@ async function downloadTemplate(templateType: UniversityBulkTemplateType) {
 
   if (templateType === 'students') {
     const ws = XLSX.utils.aoa_to_sheet([STUDENT_COLUMNS]);
-    ws['!cols'] = [{ wch: 18 }, { wch: 18 }, { wch: 16 }, { wch: 16 }, { wch: 34 }, { wch: 14 }, { wch: 10 }];
+    ws['!cols'] = [
+      { wch: 18 },
+      { wch: 18 },
+      { wch: 16 },
+      { wch: 16 },
+      { wch: 34 },
+      { wch: 14 },
+      { wch: 10 },
+    ];
     XLSX.utils.book_append_sheet(wb, ws, 'Estudiantes');
     XLSX.writeFile(wb, 'plantilla-estudiantes.xlsx');
   } else {
@@ -67,7 +88,10 @@ function col(row: (string | number)[], idx: number): string {
   return String(row[idx] ?? '').trim();
 }
 
-function validateStudentRows(rows: (string | number)[][]): { errors: string[]; parsed: BulkStudentRow[] } {
+function validateStudentRows(rows: (string | number)[][]): {
+  errors: string[];
+  parsed: BulkStudentRow[];
+} {
   const errors: string[] = [];
   const parsed: BulkStudentRow[] = [];
 
@@ -83,30 +107,58 @@ function validateStudentRows(rows: (string | number)[][]): { errors: string[]; p
     const semestre = col(row, 6);
     const rowErrors: string[] = [];
 
-    if (!nombres) rowErrors.push(`Fila ${rowNum}, columna "nombres": campo obligatorio vacío.`);
-    if (!apellidos) rowErrors.push(`Fila ${rowNum}, columna "apellidos": campo obligatorio vacío.`);
+    if (!nombres)
+      rowErrors.push(
+        `Fila ${rowNum}, columna "nombres": campo obligatorio vacío.`,
+      );
+    if (!apellidos)
+      rowErrors.push(
+        `Fila ${rowNum}, columna "apellidos": campo obligatorio vacío.`,
+      );
 
     if (!tipo_documento) {
-      rowErrors.push(`Fila ${rowNum}, columna "tipo_documento": campo obligatorio vacío.`);
+      rowErrors.push(
+        `Fila ${rowNum}, columna "tipo_documento": campo obligatorio vacío.`,
+      );
     } else if (!VALID_DOCUMENT_TYPES.includes(tipo_documento.toUpperCase())) {
-      rowErrors.push(`Fila ${rowNum}, columna "tipo_documento": valor "${tipo_documento}" no válido. Use CC, TI, CE o PP.`);
+      rowErrors.push(
+        `Fila ${rowNum}, columna "tipo_documento": valor "${tipo_documento}" no válido. Use CC, TI, CE o PP.`,
+      );
     }
 
-    if (!numero_documento) rowErrors.push(`Fila ${rowNum}, columna "numero_documento": campo obligatorio vacío.`);
+    if (!numero_documento)
+      rowErrors.push(
+        `Fila ${rowNum}, columna "numero_documento": campo obligatorio vacío.`,
+      );
 
     if (!correo) {
-      rowErrors.push(`Fila ${rowNum}, columna "correo": campo obligatorio vacío.`);
+      rowErrors.push(
+        `Fila ${rowNum}, columna "correo": campo obligatorio vacío.`,
+      );
     } else if (!isValidEmail(correo)) {
-      rowErrors.push(`Fila ${rowNum}, columna "correo": "${correo}" no es un correo válido.`);
+      rowErrors.push(
+        `Fila ${rowNum}, columna "correo": "${correo}" no es un correo válido.`,
+      );
     }
 
-    if (!celular) rowErrors.push(`Fila ${rowNum}, columna "celular": campo obligatorio vacío.`);
+    if (!celular)
+      rowErrors.push(
+        `Fila ${rowNum}, columna "celular": campo obligatorio vacío.`,
+      );
 
     const semestreNum = Number(semestre);
     if (!semestre) {
-      rowErrors.push(`Fila ${rowNum}, columna "semestre": campo obligatorio vacío.`);
-    } else if (!Number.isInteger(semestreNum) || semestreNum < 1 || semestreNum > 10) {
-      rowErrors.push(`Fila ${rowNum}, columna "semestre": debe ser un número entero entre 1 y 10.`);
+      rowErrors.push(
+        `Fila ${rowNum}, columna "semestre": campo obligatorio vacío.`,
+      );
+    } else if (
+      !Number.isInteger(semestreNum) ||
+      semestreNum < 1 ||
+      semestreNum > 10
+    ) {
+      rowErrors.push(
+        `Fila ${rowNum}, columna "semestre": debe ser un número entero entre 1 y 10.`,
+      );
     }
 
     if (rowErrors.length > 0) {
@@ -127,7 +179,10 @@ function validateStudentRows(rows: (string | number)[][]): { errors: string[]; p
   return { errors, parsed };
 }
 
-function validateTeacherRows(rows: (string | number)[][]): { errors: string[]; parsed: BulkTeacherRow[] } {
+function validateTeacherRows(rows: (string | number)[][]): {
+  errors: string[];
+  parsed: BulkTeacherRow[];
+} {
   const errors: string[] = [];
   const parsed: BulkTeacherRow[] = [];
 
@@ -140,21 +195,39 @@ function validateTeacherRows(rows: (string | number)[][]): { errors: string[]; p
     const numero_documento = col(row, 3);
     const rowErrors: string[] = [];
 
-    if (!nombres) rowErrors.push(`Fila ${rowNum}, columna "nombres": campo obligatorio vacío.`);
-    if (!apellidos) rowErrors.push(`Fila ${rowNum}, columna "apellidos": campo obligatorio vacío.`);
+    if (!nombres)
+      rowErrors.push(
+        `Fila ${rowNum}, columna "nombres": campo obligatorio vacío.`,
+      );
+    if (!apellidos)
+      rowErrors.push(
+        `Fila ${rowNum}, columna "apellidos": campo obligatorio vacío.`,
+      );
 
     if (!tipo_documento) {
-      rowErrors.push(`Fila ${rowNum}, columna "tipo_documento": campo obligatorio vacío.`);
+      rowErrors.push(
+        `Fila ${rowNum}, columna "tipo_documento": campo obligatorio vacío.`,
+      );
     } else if (!VALID_DOCUMENT_TYPES.includes(tipo_documento.toUpperCase())) {
-      rowErrors.push(`Fila ${rowNum}, columna "tipo_documento": valor "${tipo_documento}" no válido. Use CC, TI, CE o PP.`);
+      rowErrors.push(
+        `Fila ${rowNum}, columna "tipo_documento": valor "${tipo_documento}" no válido. Use CC, TI, CE o PP.`,
+      );
     }
 
-    if (!numero_documento) rowErrors.push(`Fila ${rowNum}, columna "numero_documento": campo obligatorio vacío.`);
+    if (!numero_documento)
+      rowErrors.push(
+        `Fila ${rowNum}, columna "numero_documento": campo obligatorio vacío.`,
+      );
 
     if (rowErrors.length > 0) {
       errors.push(...rowErrors);
     } else {
-      parsed.push({ apellidos, nombres, numero_documento, tipo_documento: tipo_documento.toUpperCase() });
+      parsed.push({
+        apellidos,
+        nombres,
+        numero_documento,
+        tipo_documento: tipo_documento.toUpperCase(),
+      });
     }
   }
 
@@ -206,19 +279,32 @@ async function parseAndValidateFile(
     return { errors: ['El archivo no contiene hojas de datos.'], parsed: [] };
   }
 
-  const allRows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' }) as (string | number)[][];
+  const allRows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' }) as (
+    | string
+    | number
+  )[][];
 
   if (allRows.length < 2) {
-    return { errors: ['El archivo no contiene filas de datos (solo el encabezado o está vacío).'], parsed: [] };
+    return {
+      errors: [
+        'El archivo no contiene filas de datos (solo el encabezado o está vacío).',
+      ],
+      parsed: [],
+    };
   }
 
-  const expectedColumns = templateType === 'students' ? STUDENT_COLUMNS : TEACHER_COLUMNS;
-  const header = (allRows[0] as (string | number)[]).map((h) => String(h).trim().toLowerCase());
+  const expectedColumns =
+    templateType === 'students' ? STUDENT_COLUMNS : TEACHER_COLUMNS;
+  const header = (allRows[0] as (string | number)[]).map((h) =>
+    String(h).trim().toLowerCase(),
+  );
 
   for (const col of expectedColumns) {
     if (!header.includes(col)) {
       return {
-        errors: [`Columna obligatoria ausente: "${col}". Verifica que estés usando la plantilla correcta.`],
+        errors: [
+          `Columna obligatoria ausente: "${col}". Verifica que estés usando la plantilla correcta.`,
+        ],
         parsed: [],
       };
     }
@@ -226,11 +312,15 @@ async function parseAndValidateFile(
 
   // Reorder columns to match expected order based on header
   const colIndexes = expectedColumns.map((col) => header.indexOf(col));
-  const dataRows = allRows.slice(1).filter((row) =>
-    (row as (string | number)[]).some((cell) => String(cell).trim() !== ''),
-  ) as (string | number)[][];
+  const dataRows = allRows
+    .slice(1)
+    .filter((row) =>
+      (row as (string | number)[]).some((cell) => String(cell).trim() !== ''),
+    ) as (string | number)[][];
 
-  const reorderedRows = dataRows.map((row) => colIndexes.map((idx) => row[idx ?? 0] ?? ''));
+  const reorderedRows = dataRows.map((row) =>
+    colIndexes.map((idx) => row[idx ?? 0] ?? ''),
+  );
 
   if (templateType === 'students') {
     return validateStudentRows(reorderedRows);
@@ -240,10 +330,14 @@ async function parseAndValidateFile(
 }
 
 function formatServerErrors(errors: BulkRowError[]): string[] {
-  return errors.map((e) => `Fila ${e.row}, columna "${e.column}": ${e.message}`);
+  return errors.map(
+    (e) => `Fila ${e.row}, columna "${e.column}": ${e.message}`,
+  );
 }
 
-function getInitialUploadState(templateType: UniversityBulkTemplateType): UniversityBulkUploadState {
+function getInitialUploadState(
+  templateType: UniversityBulkTemplateType,
+): UniversityBulkUploadState {
   return { errors: [], fileName: null, status: 'idle', templateType };
 }
 
@@ -297,7 +391,9 @@ export function UniversityBulkUploadPage() {
     useUniversityAdminModuleStore({
       autoLoad: false,
     });
-  const [uploadState, setUploadState] = useState<UniversityBulkUploadState>(getInitialUploadState('students'));
+  const [uploadState, setUploadState] = useState<UniversityBulkUploadState>(
+    getInitialUploadState('students'),
+  );
   const [processedSummary, setProcessedSummary] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingProgress, setProcessingProgress] = useState(0);
@@ -338,7 +434,12 @@ export function UniversityBulkUploadPage() {
 
   const processFile = async (file: File) => {
     if (!/\.(xlsx|xls)$/i.test(file.name)) {
-      setUploadState({ errors: ['Solo se aceptan archivos .xlsx o .xls.'], fileName: file.name, status: 'invalid', templateType: uploadState.templateType });
+      setUploadState({
+        errors: ['Solo se aceptan archivos .xlsx o .xls.'],
+        fileName: file.name,
+        status: 'invalid',
+        templateType: uploadState.templateType,
+      });
       setProcessedSummary(null);
       return;
     }
@@ -363,8 +464,13 @@ export function UniversityBulkUploadPage() {
       const wb = XLSX.read(buffer, { type: 'array' });
       const ws = wb.Sheets[wb.SheetNames[0] ?? ''];
       if (ws) {
-        const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' }) as (string | number)[][];
-        const header = (rows[0] ?? []).map((h) => String(h).trim().toLowerCase());
+        const rows = XLSX.utils.sheet_to_json(ws, {
+          header: 1,
+          defval: '',
+        }) as (string | number)[][];
+        const header = (rows[0] ?? []).map((h) =>
+          String(h).trim().toLowerCase(),
+        );
         const studentSpecific = ['correo', 'celular', 'semestre'];
         if (studentSpecific.every((c) => header.includes(c))) {
           detected = 'students';
@@ -378,7 +484,9 @@ export function UniversityBulkUploadPage() {
 
     if (!detected) {
       setUploadState({
-        errors: ['No se pudo detectar el tipo de plantilla. Verifica que estés usando la plantilla correcta (estudiantes o docentes).'],
+        errors: [
+          'No se pudo detectar el tipo de plantilla. Verifica que estés usando la plantilla correcta (estudiantes o docentes).',
+        ],
         fileName: file.name,
         status: 'invalid',
         templateType: uploadState.templateType,
@@ -389,7 +497,12 @@ export function UniversityBulkUploadPage() {
 
     fileRef.current = file;
     parsedRowsRef.current = [];
-    setUploadState({ errors: [], fileName: file.name, status: 'file_selected', templateType: detected });
+    setUploadState({
+      errors: [],
+      fileName: file.name,
+      status: 'file_selected',
+      templateType: detected,
+    });
     setProcessedSummary(null);
   };
 
@@ -418,14 +531,21 @@ export function UniversityBulkUploadPage() {
 
   const handleValidate = async () => {
     if (!fileRef.current) {
-      setUploadState((s) => ({ ...s, errors: ['Selecciona un archivo antes de validar.'], status: 'invalid' }));
+      setUploadState((s) => ({
+        ...s,
+        errors: ['Selecciona un archivo antes de validar.'],
+        status: 'invalid',
+      }));
       return;
     }
 
     setIsValidating(true);
 
     try {
-      const { errors, parsed } = await parseAndValidateFile(fileRef.current, uploadState.templateType);
+      const { errors, parsed } = await parseAndValidateFile(
+        fileRef.current,
+        uploadState.templateType,
+      );
 
       if (errors.length > 0) {
         setUploadState((s) => ({ ...s, errors, status: 'invalid' }));
@@ -435,19 +555,30 @@ export function UniversityBulkUploadPage() {
         setUploadState((s) => ({ ...s, errors: [], status: 'validated' }));
       }
     } catch {
-      setUploadState((s) => ({ ...s, errors: ['No se pudo leer el archivo. Verifica que no esté dañado.'], status: 'invalid' }));
+      setUploadState((s) => ({
+        ...s,
+        errors: ['No se pudo leer el archivo. Verifica que no esté dañado.'],
+        status: 'invalid',
+      }));
     } finally {
       setIsValidating(false);
     }
   };
 
   const handleProcess = () => {
-    if (uploadState.status !== 'validated' || parsedRowsRef.current.length === 0) return;
+    if (
+      uploadState.status !== 'validated' ||
+      parsedRowsRef.current.length === 0
+    )
+      return;
 
     void (async () => {
       setIsProcessing(true);
       setProcessingProgress(10);
-      const result = await processBulkUpload(uploadState.templateType, parsedRowsRef.current);
+      const result = await processBulkUpload(
+        uploadState.templateType,
+        parsedRowsRef.current,
+      );
 
       if (!result) {
         setProcessingProgress(0);
@@ -459,7 +590,11 @@ export function UniversityBulkUploadPage() {
       setProcessingProgress(100);
 
       if (serverErrors.length > 0) {
-        setUploadState((s) => ({ ...s, errors: serverErrors, status: 'invalid' }));
+        setUploadState((s) => ({
+          ...s,
+          errors: serverErrors,
+          status: 'invalid',
+        }));
         setProcessedSummary(null);
       } else {
         setUploadState((s) => ({ ...s, status: 'processed' }));
@@ -482,7 +617,7 @@ export function UniversityBulkUploadPage() {
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden sm:gap-4">
+    <div className="flex h-full min-h-0 flex-col gap-2.5 overflow-hidden sm:gap-4">
       <Seo
         description={universityAdminContent.bulkUploadPage.meta.description}
         noIndex
@@ -492,89 +627,124 @@ export function UniversityBulkUploadPage() {
         description=""
         headingAlign="center"
         title={universityAdminContent.bulkUploadPage.title}
-        titleClassName="text-center text-[1.7rem] sm:text-[2rem]"
+        titleClassName="text-center text-[1.45rem] sm:text-[2rem]"
       />
       {errorMessage ? (
-        <SurfaceCard className="border border-rose-200 bg-rose-50/90 text-sm text-rose-800 shadow-none" paddingClassName="p-4">
+        <SurfaceCard
+          className="border border-rose-200 bg-rose-50/90 text-sm text-rose-800 shadow-none"
+          paddingClassName="p-3 sm:p-4"
+        >
           <p role="alert">{errorMessage}</p>
         </SurfaceCard>
       ) : null}
       <AdminPanelCard className="flex-1 w-full" panelClassName="bg-[#f4f8ff]">
-        <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5 sm:py-4 xl:px-6 xl:py-5 2xl:px-7">
-          <div className="grid min-h-0 gap-4 xl:grid-cols-[minmax(18rem,20rem)_minmax(0,1fr)] 2xl:grid-cols-1 2xl:gap-5">
-
+        <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-3 sm:px-5 sm:py-4 xl:px-6 xl:py-5 2xl:px-7">
+          <div className="grid min-h-0 gap-3 sm:gap-4 xl:grid-cols-[minmax(18rem,20rem)_minmax(0,1fr)] 2xl:grid-cols-1 2xl:gap-5">
             {/* Plantilla */}
-            <SurfaceCard className="h-full border border-slate-200/80 bg-white shadow-none" paddingClassName="p-4 lg:p-4.5 xl:p-5">
-              <div className="space-y-3.5 lg:space-y-3">
+            <SurfaceCard
+              className="min-w-0 h-full border border-slate-200/80 bg-white shadow-none"
+              paddingClassName="p-3 sm:p-4 lg:p-4.5 xl:p-5"
+            >
+              <div className="space-y-3 sm:space-y-3.5 lg:space-y-3">
                 <div className="space-y-1 text-center">
-                  <h2 className="font-headline text-[1.1rem] font-extrabold tracking-tight text-ink">Plantilla base</h2>
-                  <p className="text-[0.82rem] leading-5 text-ink-muted">
+                  <h2 className="font-headline text-[1rem] font-extrabold tracking-tight text-ink sm:text-[1.1rem]">
+                    Plantilla base
+                  </h2>
+                  <p className="text-[0.76rem] leading-4 text-ink-muted sm:text-[0.82rem] sm:leading-5">
                     {universityAdminContent.bulkUploadPage.templateDescription}
                   </p>
                 </div>
-                <div className="grid gap-2">
-                  {universityAdminContent.bulkUploadPage.templateOptions.map((option) => {
-                    const isSelected = uploadState.templateType === option.value;
-                    return (
-                      <button
-                        key={option.value}
-                        className={classNames(
-                          'flex w-full items-start justify-between rounded-[1.2rem] border px-3.5 py-3 text-left transition duration-300',
-                          isSelected
-                            ? 'border-primary bg-primary/5 text-primary'
-                            : 'border-slate-200 bg-slate-50 text-ink hover:border-primary/40 hover:bg-white',
-                        )}
-                        type="button"
-                        onClick={() => handleTemplateChange(option.value)}
-                      >
-                        <div className="space-y-1">
-                          <p className="text-[0.83rem] font-semibold">
-                            {option.value === 'students' ? 'Estudiantes' : 'Docentes'}
-                          </p>
-                          <p className="text-[0.72rem] leading-5 text-ink-muted">{option.description}</p>
-                        </div>
-                        {isSelected ? <CheckCircle2 aria-hidden="true" className="h-4.5 w-4.5 shrink-0" /> : null}
-                      </button>
-                    );
-                  })}
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-1">
+                  {universityAdminContent.bulkUploadPage.templateOptions.map(
+                    (option) => {
+                      const isSelected =
+                        uploadState.templateType === option.value;
+                      return (
+                        <button
+                          key={option.value}
+                          className={classNames(
+                            'flex min-w-0 w-full items-start justify-between gap-2 rounded-[1rem] border px-3 py-2.5 text-left transition duration-300 sm:rounded-[1.2rem] sm:px-3.5 sm:py-3',
+                            isSelected
+                              ? 'border-primary bg-primary/5 text-primary'
+                              : 'border-slate-200 bg-slate-50 text-ink hover:border-primary/40 hover:bg-white',
+                          )}
+                          type="button"
+                          onClick={() => handleTemplateChange(option.value)}
+                        >
+                          <div className="min-w-0 space-y-1">
+                            <p className="text-[0.78rem] font-semibold sm:text-[0.83rem]">
+                              {option.value === 'students'
+                                ? 'Estudiantes'
+                                : 'Docentes'}
+                            </p>
+                            <p className="hidden text-[0.72rem] leading-5 text-ink-muted sm:block">
+                              {option.description}
+                            </p>
+                          </div>
+                          {isSelected ? (
+                            <CheckCircle2
+                              aria-hidden="true"
+                              className="h-4 w-4 shrink-0 sm:h-4.5 sm:w-4.5"
+                            />
+                          ) : null}
+                        </button>
+                      );
+                    },
+                  )}
                 </div>
                 <button
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-gradient px-4 py-2.5 text-[0.82rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-gradient px-3.5 py-2.25 text-[0.78rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 sm:px-4 sm:py-2.5 sm:text-[0.82rem]"
                   type="button"
                   onClick={() => {
                     void downloadTemplate(uploadState.templateType);
                   }}
                 >
                   <Download aria-hidden="true" className="h-4 w-4" />
-                  <span>{universityAdminContent.bulkUploadPage.actionLabels.downloadTemplate}</span>
+                  <span>
+                    {
+                      universityAdminContent.bulkUploadPage.actionLabels
+                        .downloadTemplate
+                    }
+                  </span>
                 </button>
-                <div className="rounded-[1rem] border border-slate-200 bg-slate-50 p-3 text-[0.74rem] leading-5 text-ink-muted space-y-1">
+                <div className="space-y-1 rounded-[1rem] border border-slate-200 bg-slate-50 p-2.5 text-[0.7rem] leading-4 text-ink-muted sm:p-3 sm:text-[0.74rem] sm:leading-5">
                   <p className="font-semibold text-ink">Columnas requeridas</p>
                   {uploadState.templateType === 'students' ? (
-                    <p>nombres · apellidos · tipo_documento · numero_documento · correo · celular · semestre</p>
+                    <p>
+                      nombres · apellidos · tipo_documento · numero_documento ·
+                      correo · celular · semestre
+                    </p>
                   ) : (
-                    <p>nombres · apellidos · tipo_documento · numero_documento</p>
+                    <p>
+                      nombres · apellidos · tipo_documento · numero_documento
+                    </p>
                   )}
-                  <p className="pt-1">tipo_documento: <span className="font-medium text-ink">CC, TI, CE, PP</span></p>
+                  <p className="pt-0.5 sm:pt-1">
+                    tipo_documento:{' '}
+                    <span className="font-medium text-ink">CC, TI, CE, PP</span>
+                  </p>
                 </div>
               </div>
             </SurfaceCard>
 
             {/* Subida */}
-            <SurfaceCard className="h-full border border-slate-200/80 bg-white shadow-none" paddingClassName="p-4 lg:p-4.5 xl:p-5">
-              <div className="space-y-4">
+            <SurfaceCard
+              className="min-w-0 h-full border border-slate-200/80 bg-white shadow-none"
+              paddingClassName="p-3 sm:p-4 lg:p-4.5 xl:p-5"
+            >
+              <div className="space-y-3.5 sm:space-y-4">
                 <div className="space-y-1 text-center">
-                  <h2 className="font-headline text-[1.1rem] font-extrabold tracking-tight text-ink">
+                  <h2 className="font-headline text-[1rem] font-extrabold tracking-tight text-ink sm:text-[1.1rem]">
                     {universityAdminContent.bulkUploadPage.uploadCardTitle}
                   </h2>
-                  <p className="text-[0.82rem] leading-5 text-ink-muted">
+                  <p className="text-[0.76rem] leading-4 text-ink-muted sm:text-[0.82rem] sm:leading-5">
                     {universityAdminContent.bulkUploadPage.subtitle}
                   </p>
                 </div>
 
                 <label
                   className={classNames(
-                    'flex cursor-pointer flex-col items-center justify-center gap-2.5 rounded-[1.4rem] border-2 border-dashed px-5 py-6 text-center transition duration-300 lg:py-5',
+                    'flex cursor-pointer flex-col items-center justify-center gap-2 rounded-[1.2rem] border-2 border-dashed px-4 py-4 text-center transition duration-300 sm:gap-2.5 sm:rounded-[1.4rem] sm:px-5 sm:py-6 lg:py-5',
                     isDragging
                       ? 'border-primary bg-primary/5 scale-[1.01]'
                       : 'border-slate-300 bg-slate-50 hover:border-primary/50 hover:bg-white',
@@ -584,30 +754,53 @@ export function UniversityBulkUploadPage() {
                   onDragOver={handleDragOver}
                   onDrop={handleDrop}
                 >
-                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-[1.2rem] bg-white text-primary ring-1 ring-slate-200">
-                    <FileSpreadsheet aria-hidden="true" className="h-5 w-5" />
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-[1rem] bg-white text-primary ring-1 ring-slate-200 sm:h-11 sm:w-11 sm:rounded-[1.2rem]">
+                    <FileSpreadsheet
+                      aria-hidden="true"
+                      className="h-4.5 w-4.5 sm:h-5 sm:w-5"
+                    />
                   </span>
                   <div className="space-y-1">
-                    <p className="text-[0.83rem] font-semibold text-ink">Arrastra un archivo o selecciona uno desde tu equipo</p>
-                    <p className="text-[0.78rem] text-ink-muted">Formatos soportados: .xlsx, .xls</p>
+                    <p className="text-[0.8rem] font-semibold text-ink sm:text-[0.83rem]">
+                      Arrastra un archivo o selecciona uno desde tu equipo
+                    </p>
+                    <p className="text-[0.74rem] text-ink-muted sm:text-[0.78rem]">
+                      Formatos soportados: .xlsx, .xls
+                    </p>
                   </div>
-                  <span className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-3.5 py-1.75 text-[0.8rem] font-semibold text-white">
+                  <span className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-3 py-1.5 text-[0.76rem] font-semibold text-white sm:px-3.5 sm:py-1.75 sm:text-[0.8rem]">
                     {universityAdminContent.bulkUploadPage.filePickerLabel}
                   </span>
-                  <input accept=".xlsx,.xls" className="sr-only" id="bulk-upload-input" type="file" onChange={(e) => { void handleFileSelection(e); }} />
+                  <input
+                    accept=".xlsx,.xls"
+                    className="sr-only"
+                    id="bulk-upload-input"
+                    type="file"
+                    onChange={(e) => {
+                      void handleFileSelection(e);
+                    }}
+                  />
                 </label>
 
-                <div className="space-y-3">
+                <div className="space-y-2.5 sm:space-y-3">
                   {uploadState.fileName ? (
-                    <div className="rounded-[1.2rem] border border-slate-200 bg-slate-50 px-3.5 py-3">
+                    <div className="rounded-[1rem] border border-slate-200 bg-slate-50 px-3 py-2.5 sm:rounded-[1.2rem] sm:px-3.5 sm:py-3">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="space-y-1 min-w-0">
-                          <p className="truncate text-[0.83rem] font-semibold text-ink">{uploadState.fileName}</p>
-                          <p className="text-[0.72rem] text-ink-muted">
-                            {uploadState.status === 'file_selected' && universityAdminContent.bulkUploadPage.readyToValidateMessage}
-                            {uploadState.status === 'validated' && universityAdminContent.bulkUploadPage.validatedMessage}
-                            {uploadState.status === 'processed' && processedSummary}
-                            {uploadState.status === 'invalid' && 'Revisa los errores a continuación.'}
+                          <p className="truncate text-[0.8rem] font-semibold text-ink sm:text-[0.83rem]">
+                            {uploadState.fileName}
+                          </p>
+                          <p className="text-[0.7rem] text-ink-muted sm:text-[0.72rem]">
+                            {uploadState.status === 'file_selected' &&
+                              universityAdminContent.bulkUploadPage
+                                .readyToValidateMessage}
+                            {uploadState.status === 'validated' &&
+                              universityAdminContent.bulkUploadPage
+                                .validatedMessage}
+                            {uploadState.status === 'processed' &&
+                              processedSummary}
+                            {uploadState.status === 'invalid' &&
+                              'Revisa los errores a continuación.'}
                           </p>
                         </div>
                         <button
@@ -615,21 +808,35 @@ export function UniversityBulkUploadPage() {
                           type="button"
                           onClick={resetUpload}
                         >
-                          <XCircle aria-hidden="true" className="h-4.5 w-4.5" />
+                          <XCircle
+                            aria-hidden="true"
+                            className="h-4 w-4 sm:h-4.5 sm:w-4.5"
+                          />
                         </button>
                       </div>
                     </div>
                   ) : null}
 
                   {uploadState.errors.length > 0 ? (
-                    <SurfaceCard className="border border-rose-200 bg-rose-50/90 text-[0.82rem] text-rose-800 shadow-none" paddingClassName="p-3.5">
+                    <SurfaceCard
+                      className="border border-rose-200 bg-rose-50/90 text-[0.78rem] text-rose-800 shadow-none sm:text-[0.82rem]"
+                      paddingClassName="p-3 sm:p-3.5"
+                    >
                       <div className="flex items-start gap-2.5">
-                        <AlertCircle aria-hidden="true" className="mt-0.5 h-4.5 w-4.5 shrink-0" />
+                        <AlertCircle
+                          aria-hidden="true"
+                          className="mt-0.5 h-4 w-4 shrink-0 sm:h-4.5 sm:w-4.5"
+                        />
                         <div className="space-y-1 min-w-0">
-                          <p className="font-semibold">Se encontraron {uploadState.errors.length} error{uploadState.errors.length !== 1 ? 'es' : ''}:</p>
+                          <p className="font-semibold">
+                            Se encontraron {uploadState.errors.length} error
+                            {uploadState.errors.length !== 1 ? 'es' : ''}:
+                          </p>
                           <ul className="space-y-0.5 list-none">
                             {uploadState.errors.map((error, i) => (
-                              <li key={i} className="leading-5">{error}</li>
+                              <li key={i} className="leading-5">
+                                {error}
+                              </li>
                             ))}
                           </ul>
                         </div>
@@ -637,24 +844,41 @@ export function UniversityBulkUploadPage() {
                     </SurfaceCard>
                   ) : null}
 
-                  {uploadState.status === 'validated' && uploadState.errors.length === 0 ? (
-                    <SurfaceCard className="border border-emerald-200 bg-emerald-50/90 text-[0.82rem] text-emerald-800 shadow-none" paddingClassName="p-3.5">
+                  {uploadState.status === 'validated' &&
+                  uploadState.errors.length === 0 ? (
+                    <SurfaceCard
+                      className="border border-emerald-200 bg-emerald-50/90 text-[0.78rem] text-emerald-800 shadow-none sm:text-[0.82rem]"
+                      paddingClassName="p-3 sm:p-3.5"
+                    >
                       <div className="flex items-center gap-2.5">
-                        <CheckCircle2 aria-hidden="true" className="h-4.5 w-4.5 shrink-0" />
-                        <p>({parsedRowsRef.current.length} filas listas para procesar)</p>
+                        <CheckCircle2
+                          aria-hidden="true"
+                          className="h-4 w-4 shrink-0 sm:h-4.5 sm:w-4.5"
+                        />
+                        <p>
+                          ({parsedRowsRef.current.length} filas listas para
+                          procesar)
+                        </p>
                       </div>
                     </SurfaceCard>
                   ) : null}
 
                   {isProcessing ? (
-                    <SurfaceCard className="border border-primary/20 bg-primary/5 text-[0.82rem] text-ink shadow-none" paddingClassName="p-3.5">
+                    <SurfaceCard
+                      className="border border-primary/20 bg-primary/5 text-[0.78rem] text-ink shadow-none sm:text-[0.82rem]"
+                      paddingClassName="p-3 sm:p-3.5"
+                    >
                       <div className="space-y-3">
                         <div className="flex flex-wrap items-center justify-between gap-2.5">
                           <div className="space-y-1">
-                            <p className="font-semibold text-primary">Procesando carga</p>
-                            <p className="text-[0.76rem] text-ink-muted">{processingLabel}</p>
+                            <p className="font-semibold text-primary">
+                              Procesando carga
+                            </p>
+                            <p className="text-[0.72rem] text-ink-muted sm:text-[0.76rem]">
+                              {processingLabel}
+                            </p>
                           </div>
-                          <span className="inline-flex min-w-[3.5rem] items-center justify-center rounded-full bg-white px-2.5 py-1 text-[0.74rem] font-semibold text-primary ring-1 ring-primary/10">
+                          <span className="inline-flex min-w-[3.25rem] items-center justify-center rounded-full bg-white px-2.5 py-1 text-[0.72rem] font-semibold text-primary ring-1 ring-primary/10 sm:min-w-[3.5rem] sm:text-[0.74rem]">
                             {processingProgress}%
                           </span>
                         </div>
@@ -664,17 +888,24 @@ export function UniversityBulkUploadPage() {
                             style={{ width: `${processingProgress}%` }}
                           />
                         </div>
-                        <p className="text-[0.74rem] text-ink-muted">
-                          {processingRowCount} fila{processingRowCount === 1 ? '' : 's'} en proceso.
+                        <p className="text-[0.72rem] text-ink-muted sm:text-[0.74rem]">
+                          {processingRowCount} fila
+                          {processingRowCount === 1 ? '' : 's'} en proceso.
                         </p>
                       </div>
                     </SurfaceCard>
                   ) : null}
 
                   {uploadState.status === 'processed' && processedSummary ? (
-                    <SurfaceCard className="border border-sky-200 bg-sky-50/90 text-[0.82rem] text-sky-900 shadow-none" paddingClassName="p-3.5">
+                    <SurfaceCard
+                      className="border border-sky-200 bg-sky-50/90 text-[0.78rem] text-sky-900 shadow-none sm:text-[0.82rem]"
+                      paddingClassName="p-3 sm:p-3.5"
+                    >
                       <div className="flex items-center gap-2.5">
-                        <Rocket aria-hidden="true" className="h-4.5 w-4.5 shrink-0" />
+                        <Rocket
+                          aria-hidden="true"
+                          className="h-4 w-4 shrink-0 sm:h-4.5 sm:w-4.5"
+                        />
                         <p>{processedSummary}</p>
                       </div>
                     </SurfaceCard>
@@ -682,30 +913,52 @@ export function UniversityBulkUploadPage() {
 
                   <div className="flex flex-wrap justify-center gap-2.5">
                     <button
-                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/10 px-4 py-2.5 text-[0.82rem] font-semibold text-primary transition duration-300 hover:bg-primary/15 disabled:cursor-not-allowed disabled:opacity-50"
-                      disabled={!uploadState.fileName || isValidating || uploadState.status === 'processed'}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/10 px-3.5 py-2.25 text-[0.78rem] font-semibold text-primary transition duration-300 hover:bg-primary/15 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:py-2.5 sm:text-[0.82rem]"
+                      disabled={
+                        !uploadState.fileName ||
+                        isValidating ||
+                        uploadState.status === 'processed'
+                      }
                       type="button"
-                      onClick={() => { void handleValidate(); }}
+                      onClick={() => {
+                        void handleValidate();
+                      }}
                     >
                       <CheckCircle2 aria-hidden="true" className="h-4 w-4" />
-                      <span>{isValidating ? 'Validando...' : universityAdminContent.bulkUploadPage.actionLabels.validate}</span>
+                      <span>
+                        {isValidating
+                          ? 'Validando...'
+                          : universityAdminContent.bulkUploadPage.actionLabels
+                              .validate}
+                      </span>
                     </button>
                     <button
-                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-gradient px-4 py-2.5 text-[0.82rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
-                      disabled={uploadState.status !== 'validated' || isLoading || isProcessing}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-gradient px-3.5 py-2.25 text-[0.78rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:py-2.5 sm:text-[0.82rem]"
+                      disabled={
+                        uploadState.status !== 'validated' ||
+                        isLoading ||
+                        isProcessing
+                      }
                       type="button"
                       onClick={handleProcess}
                     >
                       <Rocket aria-hidden="true" className="h-4 w-4" />
-                      <span>{isProcessing ? 'Procesando...' : universityAdminContent.bulkUploadPage.actionLabels.process}</span>
+                      <span>
+                        {isProcessing
+                          ? 'Procesando...'
+                          : universityAdminContent.bulkUploadPage.actionLabels
+                              .process}
+                      </span>
                     </button>
                   </div>
 
                   {uploadState.status !== 'idle' && uploadState.fileName ? (
-                    <p className="text-center text-[0.72rem] leading-5 text-ink-muted">
+                    <p className="text-center text-[0.7rem] leading-4 text-ink-muted sm:text-[0.72rem] sm:leading-5">
                       Tipo detectado:{' '}
                       <span className="font-semibold text-ink">
-                        {uploadState.templateType === 'students' ? 'Estudiantes' : 'Docentes'}
+                        {uploadState.templateType === 'students'
+                          ? 'Estudiantes'
+                          : 'Docentes'}
                       </span>
                     </p>
                   ) : null}
