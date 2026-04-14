@@ -200,6 +200,14 @@ function matchesStudentSearch(
   );
 }
 
+function hasSearchablePracticeSite(student: PatientStudentDirectoryItem) {
+  return Boolean(student.practiceSites?.length || student.practiceSite?.trim());
+}
+
+function isSearchableStudent(student: PatientStudentDirectoryItem) {
+  return student.treatments.length > 0 && hasSearchablePracticeSite(student);
+}
+
 function createMockState(): PatientStoreState {
   const profile: PatientProfile = {
     avatarAlt: 'Foto de perfil de Sara Lopez',
@@ -331,6 +339,34 @@ function createMockState(): PatientStoreState {
       universityCity: 'Medellin',
       universityLocality: 'Laureles',
       universityName: 'Universidad de Antioquia Clinica',
+    },
+    {
+      avatarAlt: 'Foto de perfil de Laura Mendoza',
+      avatarSrc: null,
+      availabilityGeneral: 'Martes, jueves y sabados con disponibilidad variable.',
+      availabilityStatus: 'available',
+      averageRating: 4.5,
+      biography:
+        'Seguimiento clinico enfocado en rehabilitacion, diagnostico y manejo preventivo del paciente.',
+      city: 'Bogota',
+      firstName: 'Laura',
+      id: 'patient-student-5',
+      lastName: 'Mendoza',
+      locality: 'Suba',
+      practiceSite: 'Sede Clinica Suba',
+      practiceSites: [
+        {
+          city: 'Bogota',
+          locality: 'Suba',
+          name: 'Sede Clinica Suba',
+        },
+      ],
+      reviewsCount: 11,
+      semester: '10',
+      treatments: ['Rehabilitacion oral', 'Endodoncia'],
+      universityCity: 'Bogota',
+      universityLocality: 'Suba',
+      universityName: 'Universidad Distrital Clinica',
     },
   ];
 
@@ -912,7 +948,7 @@ function filterStudentDirectoryIndex(
   source: PatientStudentDirectoryItem[],
 ) {
   return source
-    .filter((student) => student.treatments.length > 0)
+    .filter(isSearchableStudent)
     .filter((student) => matchesStudentSearch(student, filters))
     .slice(0, getStudentSearchLimit(filters));
 }
@@ -935,14 +971,6 @@ function cacheDefaultStudentSearch(moduleState: PatientModuleState) {
   }
 
   lastDashboardStudents = moduleState.students;
-  cacheStudentSearch(
-    createStudentSearchCacheKey({
-      city: moduleState.profile.city,
-      limit: moduleState.students.length,
-      locality: moduleState.profile.locality,
-    }),
-    moduleState.students,
-  );
 }
 
 function getFallbackStudentSearchSource() {
@@ -1325,7 +1353,7 @@ async function searchStudents(filters: PatientStudentDirectorySearchParams) {
   if (IS_TEST_MODE) {
     const limit = filters.limit ?? 20;
     const filteredStudents = initialMockState.students
-      .filter((student) => student.treatments.length > 0)
+      .filter(isSearchableStudent)
       .filter((student) => matchesStudentSearch(student, filters))
       .slice(0, limit);
 

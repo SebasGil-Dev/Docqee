@@ -24,6 +24,7 @@ import { getOptimizedAvatarUrl } from '@/lib/imageOptimization';
 import { usePatientModuleStore } from '@/lib/patientModuleStore';
 
 type NamedFilter = string;
+const INITIAL_STUDENT_RESULTS_LIMIT = 5;
 
 function getStudentFullName(student: PatientStudentDirectoryItem) {
   return formatDisplayName(`${student.firstName} ${student.lastName}`);
@@ -264,14 +265,6 @@ export function PatientSearchStudentsPage() {
     latestSearchFiltersRef.current.locality = defaultLocalityFilter;
     setCityFilter(defaultCityFilter);
     setLocalityFilter(defaultLocalityFilter);
-
-    if (IS_TEST_MODE) {
-      void searchStudents({
-        city: defaultCityFilter,
-        limit: 6,
-        locality: defaultLocalityFilter,
-      });
-    }
   }, [
     defaultCityFilter,
     defaultLocalityFilter,
@@ -305,7 +298,7 @@ export function PatientSearchStudentsPage() {
     const timeoutId = window.setTimeout(() => {
       void searchStudents({
         city: cityFilter,
-        limit: hasSearchCriteria ? 20 : 6,
+        limit: hasSearchCriteria ? 20 : INITIAL_STUDENT_RESULTS_LIMIT,
         locality: localityFilter,
         search: searchTerm,
         treatment: treatmentFilter,
