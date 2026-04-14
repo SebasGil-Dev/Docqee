@@ -26,6 +26,6 @@ export class PatientStudentDirectoryQueryDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(30)
+  @Max(120)
   limit?: number;
 }

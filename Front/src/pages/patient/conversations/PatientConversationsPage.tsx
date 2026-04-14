@@ -161,6 +161,14 @@ export function PatientConversationsPage() {
   }, [selectedConversation?.id]);
 
   useEffect(() => {
+    if (!selectedConversation) {
+      return;
+    }
+
+    void refreshConversation(selectedConversation.id);
+  }, [selectedConversation?.id, refreshConversation]);
+
+  useEffect(() => {
     if (!selectedConversation || selectedConversation.status !== 'ACTIVA') {
       return undefined;
     }
