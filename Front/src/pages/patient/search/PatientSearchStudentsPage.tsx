@@ -328,8 +328,8 @@ export function PatientSearchStudentsPage() {
         noIndex
         title={patientContent.searchPage.meta.title}
       />
-      <div className="px-3.5 py-3 text-center sm:px-4">
-        <h1 className="font-headline text-xl font-extrabold leading-tight tracking-tight text-ink sm:text-[1.35rem]">
+      <div className="px-3.5 py-1.5 text-center sm:px-4">
+        <h1 className="font-headline text-lg font-extrabold leading-tight tracking-tight text-ink sm:text-[1.15rem]">
           {patientContent.searchPage.title}
         </h1>
       </div>
@@ -354,22 +354,26 @@ export function PatientSearchStudentsPage() {
           <p role="alert">{errorMessage}</p>
         </SurfaceCard>
       ) : null}
-      <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
-        <div className="border-b border-slate-200/80 px-3 py-3 sm:px-4">
-          <div className="grid gap-3 xl:grid-cols-[minmax(15rem,1.35fr)_repeat(4,minmax(9.5rem,1fr))] xl:items-end">
+      <AdminPanelCard
+        className="flex-1"
+        panelClassName="rounded-[1.1rem] bg-[#f4f8ff]"
+        shellPaddingClassName="p-0"
+      >
+        <div className="border-b border-slate-200/80 px-2.5 py-2 sm:px-3">
+          <div className="grid gap-2 xl:grid-cols-[minmax(15rem,1.35fr)_repeat(4,minmax(9.5rem,1fr))] xl:items-end">
             <label
               className="relative min-w-0"
               htmlFor="patient-student-search"
             >
-              <span className="mb-1.5 block text-[0.72rem] font-bold uppercase tracking-[0.16em] text-ink-muted">
+              <span className="mb-1 block text-[0.64rem] font-bold uppercase tracking-[0.12em] text-ink-muted">
                 Nombre
               </span>
               <Search
                 aria-hidden="true"
-                className="pointer-events-none absolute left-4 top-[calc(50%+0.8rem)] h-4 w-4 -translate-y-1/2 text-ghost xl:top-[calc(50%+0.65rem)]"
+                className="pointer-events-none absolute left-3.5 top-[calc(50%+0.55rem)] h-3.5 w-3.5 -translate-y-1/2 text-ghost"
               />
               <input
-                className="h-10 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-11 pr-4 text-sm text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                className="h-8 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-9 pr-3 text-[0.8rem] text-ink transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
                 id="patient-student-search"
                 placeholder={patientContent.searchPage.searchPlaceholder}
                 type="search"
@@ -387,11 +391,11 @@ export function PatientSearchStudentsPage() {
               className="min-w-0"
               htmlFor="patient-student-treatment-filter"
             >
-              <span className="mb-1.5 block text-[0.72rem] font-bold uppercase tracking-[0.16em] text-ink-muted">
+              <span className="mb-1 block text-[0.64rem] font-bold uppercase tracking-[0.12em] text-ink-muted">
                 Tratamiento
               </span>
               <select
-                className="h-10 w-full rounded-full border border-slate-200/90 bg-white/98 px-4 text-sm font-semibold text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                className="h-8 w-full rounded-full border border-slate-200/90 bg-white/98 px-3 text-[0.8rem] font-semibold text-ink transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
                 id="patient-student-treatment-filter"
                 value={treatmentFilter}
                 onChange={(event) => {
@@ -411,11 +415,11 @@ export function PatientSearchStudentsPage() {
               </select>
             </label>
             <label className="min-w-0" htmlFor="patient-student-city-filter">
-              <span className="mb-1.5 block text-[0.72rem] font-bold uppercase tracking-[0.16em] text-ink-muted">
+              <span className="mb-1 block text-[0.64rem] font-bold uppercase tracking-[0.12em] text-ink-muted">
                 Ciudad
               </span>
               <select
-                className="h-10 w-full rounded-full border border-slate-200/90 bg-white/98 px-4 text-sm font-semibold text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                className="h-8 w-full rounded-full border border-slate-200/90 bg-white/98 px-3 text-[0.8rem] font-semibold text-ink transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
                 id="patient-student-city-filter"
                 value={cityFilter}
                 onChange={(event) => {
@@ -440,11 +444,11 @@ export function PatientSearchStudentsPage() {
               className="min-w-0"
               htmlFor="patient-student-locality-filter"
             >
-              <span className="mb-1.5 block text-[0.72rem] font-bold uppercase tracking-[0.16em] text-ink-muted">
+              <span className="mb-1 block text-[0.64rem] font-bold uppercase tracking-[0.12em] text-ink-muted">
                 Localidad
               </span>
               <select
-                className="h-10 w-full rounded-full border border-slate-200/90 bg-white/98 px-4 text-sm font-semibold text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                className="h-8 w-full rounded-full border border-slate-200/90 bg-white/98 px-3 text-[0.8rem] font-semibold text-ink transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
                 disabled={cityFilter === 'all'}
                 id="patient-student-locality-filter"
                 value={localityFilter}
@@ -470,11 +474,11 @@ export function PatientSearchStudentsPage() {
               className="min-w-0"
               htmlFor="patient-student-university-filter"
             >
-              <span className="mb-1.5 block text-[0.72rem] font-bold uppercase tracking-[0.16em] text-ink-muted">
+              <span className="mb-1 block text-[0.64rem] font-bold uppercase tracking-[0.12em] text-ink-muted">
                 Universidad
               </span>
               <select
-                className="h-10 w-full rounded-full border border-slate-200/90 bg-white/98 px-4 text-sm font-semibold text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                className="h-8 w-full rounded-full border border-slate-200/90 bg-white/98 px-3 text-[0.8rem] font-semibold text-ink transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
                 id="patient-student-university-filter"
                 value={universityFilter}
                 onChange={(event) => {
@@ -495,32 +499,32 @@ export function PatientSearchStudentsPage() {
             </label>
           </div>
         </div>
-        <div className="min-h-0 flex-1 px-3 py-3 sm:px-4">
+        <div className="min-h-0 flex-1 px-2.5 py-2 sm:px-3">
           <SurfaceCard
             className="h-full min-h-0 border border-slate-200/80 bg-white shadow-none"
             paddingClassName="p-0"
           >
-            <div className="flex h-full min-h-[18rem] flex-col">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 px-3 py-2.5">
+            <div className="flex h-full min-h-[14rem] flex-col">
+              <div className="flex flex-wrap items-center justify-between gap-1.5 border-b border-slate-200/80 px-2.5 py-1.5">
                 <div className="min-w-0">
-                  <h2 className="font-headline text-lg font-extrabold tracking-tight text-ink">
+                  <h2 className="font-headline text-[0.98rem] font-extrabold tracking-tight text-ink">
                     {hasSearchCriteria
                       ? 'Resultados de búsqueda'
                       : 'Estudiantes recomendados para ti'}
                   </h2>
-                  <p className="text-xs leading-5 text-ink-muted">
+                  <p className="text-[0.7rem] leading-4 text-ink-muted">
                     {hasSearchCriteria
                       ? 'Busca por nombre o usa los filtros para encontrar el estudiante adecuado.'
                       : 'Estos perfiles tienen tratamientos publicados y cercania con tu ubicacion.'}
                   </p>
                 </div>
-                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-ink-muted">
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[0.68rem] font-semibold text-ink-muted">
                   {students.length} perfiles
                 </span>
               </div>
               <div className="admin-scrollbar min-h-0 flex-1 overflow-x-auto overflow-y-auto">
                 {students.length > 0 ? (
-                  <table className="min-w-[58rem] w-full lg:min-w-0 lg:table-fixed">
+                  <table className="min-w-[54rem] w-full lg:min-w-0 lg:table-fixed">
                     <colgroup>
                       <col className="w-[18%]" />
                       <col className="w-[18%]" />
@@ -529,12 +533,12 @@ export function PatientSearchStudentsPage() {
                       <col className="w-[14%]" />
                     </colgroup>
                     <thead className="sticky top-0 z-10 bg-slate-100 text-left">
-                      <tr className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-ink-muted">
-                        <th className="px-4 py-2.5 sm:px-5">Estudiante</th>
-                        <th className="px-4 py-2.5">Universidad</th>
-                        <th className="px-4 py-2.5">Ubicación</th>
-                        <th className="px-4 py-2.5">Tratamientos</th>
-                        <th className="px-4 py-2.5 text-right sm:px-5">
+                      <tr className="text-[0.6rem] font-bold uppercase tracking-[0.12em] text-ink-muted">
+                        <th className="px-3 py-1.5 sm:px-4">Estudiante</th>
+                        <th className="px-3 py-1.5">Universidad</th>
+                        <th className="px-3 py-1.5">Ubicación</th>
+                        <th className="px-3 py-1.5">Tratamientos</th>
+                        <th className="px-3 py-1.5 text-right sm:px-4">
                           Acción
                         </th>
                       </tr>
@@ -559,57 +563,57 @@ export function PatientSearchStudentsPage() {
                                 : 'hover:bg-slate-50/90',
                             )}
                           >
-                            <td className="px-4 py-3 sm:px-5">
-                              <div className="space-y-1">
-                                <p className="truncate text-[0.83rem] font-semibold text-ink">
+                            <td className="px-3 py-2 sm:px-4">
+                              <div className="space-y-0.5">
+                                <p className="truncate text-[0.8rem] font-semibold text-ink">
                                   {getStudentFullName(student)}
                                 </p>
-                                <p className="text-[0.72rem] text-ink-muted sm:text-[0.76rem]">
+                                <p className="text-[0.68rem] text-ink-muted">
                                   Semestre {student.semester}
                                 </p>
                               </div>
                             </td>
-                            <td className="px-4 py-3">
-                              <p className="truncate text-[0.83rem] font-medium text-ink">
+                            <td className="px-3 py-2">
+                              <p className="truncate text-[0.8rem] font-medium text-ink">
                                 {student.universityName}
                               </p>
                             </td>
-                            <td className="px-4 py-3">
-                              <div className="space-y-1">
-                                <p className="truncate text-[0.83rem] font-medium text-ink">
+                            <td className="px-3 py-2">
+                              <div className="space-y-0.5">
+                                <p className="truncate text-[0.8rem] font-medium text-ink">
                                   {getStudentPracticeSite(student)}
                                 </p>
-                                <p className="truncate text-[0.72rem] text-ink-muted sm:text-[0.76rem]">
+                                <p className="truncate text-[0.68rem] text-ink-muted">
                                   {getStudentLocation(student)}
                                 </p>
                               </div>
                             </td>
-                            <td className="px-4 py-3">
+                            <td className="px-3 py-2">
                               {student.treatments.length > 0 ? (
-                                <div className="flex flex-wrap gap-1.5">
+                                <div className="flex flex-wrap gap-1">
                                   {visibleTreatments.map((treatment) => (
                                     <span
                                       key={treatment}
-                                      className="inline-flex rounded-full bg-primary/10 px-2.5 py-1 text-[0.68rem] font-semibold text-primary"
+                                      className="inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-[0.64rem] font-semibold text-primary"
                                     >
                                       {treatment}
                                     </span>
                                   ))}
                                   {hiddenTreatmentsCount > 0 ? (
-                                    <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[0.68rem] font-semibold text-ink-muted">
+                                    <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[0.64rem] font-semibold text-ink-muted">
                                       +{hiddenTreatmentsCount}
                                     </span>
                                   ) : null}
                                 </div>
                               ) : (
-                                <span className="text-[0.78rem] text-ink-muted">
+                                <span className="text-[0.72rem] text-ink-muted">
                                   Sin tratamientos
                                 </span>
                               )}
                             </td>
-                            <td className="px-4 py-3 text-right sm:px-5">
+                            <td className="px-3 py-2 text-right sm:px-4">
                               <button
-                                className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary transition duration-200 hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                                className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-[0.7rem] font-semibold text-primary transition duration-200 hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
                                 data-testid={`patient-student-card-${student.id}`}
                                 type="button"
                                 onClick={() =>
@@ -625,7 +629,7 @@ export function PatientSearchStudentsPage() {
                     </tbody>
                   </table>
                 ) : (
-                  <div className="m-4 rounded-[1.35rem] border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-ink-muted">
+                  <div className="m-3 rounded-[1.15rem] border border-dashed border-slate-200 bg-slate-50 px-3 py-5 text-[0.82rem] text-ink-muted">
                     {isLoading || isSearchingStudents
                       ? 'Cargando estudiantes...'
                       : patientContent.searchPage.emptyState}
