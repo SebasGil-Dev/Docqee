@@ -631,8 +631,6 @@ function createRuntimeInitialState(): PatientStoreState {
   }
 
   lastDashboardStudents = cachedState.students;
-  studentDirectoryIndex = cachedState.students;
-  studentDirectoryIndexUpdatedAt = cachedState.updatedAt;
 
   return {
     ...createEmptyRuntimeState(),
@@ -859,6 +857,7 @@ function readPersistedStudentDirectoryIndex() {
 
     if (
       !Array.isArray(parsedCache.students) ||
+      parsedCache.students.length < PATIENT_STUDENT_DIRECTORY_PREFETCH_LIMIT ||
       typeof parsedCache.updatedAt !== 'number' ||
       parsedCache.userId !== session.user.id ||
       Date.now() - parsedCache.updatedAt >
@@ -885,14 +884,24 @@ function filterStudentDirectoryIndex(
     .slice(0, getStudentSearchLimit(filters));
 }
 
+function hasActiveStudentSearchFilters(
+  filters: PatientStudentDirectorySearchParams,
+) {
+  return Boolean(
+    normalizeSearchFilterValue(filters.search) ||
+      normalizeSearchFilterValue(filters.treatment) ||
+      normalizeSearchFilterValue(filters.city) ||
+      normalizeSearchFilterValue(filters.locality) ||
+      normalizeSearchFilterValue(filters.university),
+  );
+}
+
 function cacheDefaultStudentSearch(moduleState: PatientModuleState) {
   if (moduleState.students.length === 0) {
     return;
   }
 
-  studentDirectoryIndex = moduleState.students;
-  studentDirectoryIndexUpdatedAt = Date.now();
-  persistStudentDirectoryIndex(moduleState.students);
+  lastDashboardStudents = moduleState.students;
   cacheStudentSearch(
     createStudentSearchCacheKey({
       city: moduleState.profile.city,
@@ -915,14 +924,22 @@ function patchStudentsFromLocalSearchSource(
   filters: PatientStudentDirectorySearchParams,
   source: PatientStudentDirectoryItem[],
   cacheKey: string,
+  options: {
+    cacheResult?: boolean;
+    isSearchingStudents?: boolean;
+  } = {},
 ) {
   const localStudents = filterStudentDirectoryIndex(filters, source);
+  const shouldCacheResult = options.cacheResult ?? true;
 
-  cacheStudentSearch(cacheKey, localStudents);
+  if (shouldCacheResult) {
+    cacheStudentSearch(cacheKey, localStudents);
+  }
+
   patchState({
     errorMessage: null,
     isReady: true,
-    isSearchingStudents: false,
+    isSearchingStudents: options.isSearchingStudents ?? false,
     students: localStudents,
   });
 
@@ -1303,18 +1320,21 @@ async function searchStudents(filters: PatientStudentDirectorySearchParams) {
   }
 
   if (localSearchSource) {
+    const currentIndex = getFreshStudentDirectoryIndex();
+    const hasCompleteDirectoryIndex =
+      Boolean(currentIndex) &&
+      currentIndex!.length >= PATIENT_STUDENT_DIRECTORY_PREFETCH_LIMIT;
     const localStudents = patchStudentsFromLocalSearchSource(
       filters,
       localSearchSource,
       cacheKey,
+      {
+        cacheResult: hasCompleteDirectoryIndex,
+        isSearchingStudents: !hasCompleteDirectoryIndex,
+      },
     );
 
-    const currentIndex = getFreshStudentDirectoryIndex();
-
-    if (
-      !currentIndex ||
-      currentIndex.length < PATIENT_STUDENT_DIRECTORY_PREFETCH_LIMIT
-    ) {
+    if (!hasCompleteDirectoryIndex) {
       void prefetchStudentDirectory();
     }
 
@@ -1324,6 +1344,14 @@ async function searchStudents(filters: PatientStudentDirectorySearchParams) {
         cacheKey,
         requestSequence,
       );
+    }
+
+    if (
+      localStudents.length === 0 &&
+      !hasCompleteDirectoryIndex &&
+      hasActiveStudentSearchFilters(filters)
+    ) {
+      void refreshStudentSearchFromServer(filters, cacheKey, requestSequence);
     }
 
     return localStudents;
@@ -1430,6 +1458,16 @@ async function refreshStudentSearchFromDirectoryIndex(
       return;
     }
 
+    const indexedStudents = filterStudentDirectoryIndex(filters, source);
+
+    if (
+      indexedStudents.length === 0 &&
+      hasActiveStudentSearchFilters(filters)
+    ) {
+      void refreshStudentSearchFromServer(filters, cacheKey, requestSequence);
+      return;
+    }
+
     patchStudentsFromLocalSearchSource(filters, source, cacheKey);
   } catch {
     if (requestSequence === studentSearchRequestSequence) {
@@ -1463,16 +1501,20 @@ async function prefetchStudentDirectory() {
   const persistedStudents = readPersistedStudentDirectoryIndex();
 
   if (cachedStudents) {
-    studentDirectoryIndex = cachedStudents;
-    studentDirectoryIndexUpdatedAt = Date.now();
-    return;
+    if (cachedStudents.length >= PATIENT_STUDENT_DIRECTORY_PREFETCH_LIMIT) {
+      studentDirectoryIndex = cachedStudents;
+      studentDirectoryIndexUpdatedAt = Date.now();
+      return;
+    }
   }
 
   if (persistedStudents) {
-    studentDirectoryIndex = persistedStudents;
-    studentDirectoryIndexUpdatedAt = Date.now();
-    cacheStudentSearch(cacheKey, persistedStudents);
-    return;
+    if (persistedStudents.length >= PATIENT_STUDENT_DIRECTORY_PREFETCH_LIMIT) {
+      studentDirectoryIndex = persistedStudents;
+      studentDirectoryIndexUpdatedAt = Date.now();
+      cacheStudentSearch(cacheKey, persistedStudents);
+      return;
+    }
   }
 
   studentDirectoryIndexPromise = getPatientPortalStudents(filters)
