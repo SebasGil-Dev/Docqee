@@ -651,7 +651,16 @@ export function UniversityBulkUploadPage() {
                     Plantilla base
                   </h2>
                   <p className="text-[0.76rem] leading-4 text-ink-muted sm:text-[0.82rem] sm:leading-5">
-                    {universityAdminContent.bulkUploadPage.templateDescription}
+                    <span className="sm:hidden">
+                      Elige la plantilla estudiantes o docentes para
+                      descargarla.
+                    </span>
+                    <span className="hidden sm:inline">
+                      {
+                        universityAdminContent.bulkUploadPage
+                          .templateDescription
+                      }
+                    </span>
                   </p>
                 </div>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-1">
@@ -692,21 +701,23 @@ export function UniversityBulkUploadPage() {
                     },
                   )}
                 </div>
-                <button
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-gradient px-3.5 py-2.25 text-[0.78rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 sm:px-4 sm:py-2.5 sm:text-[0.82rem]"
-                  type="button"
-                  onClick={() => {
-                    void downloadTemplate(uploadState.templateType);
-                  }}
-                >
-                  <Download aria-hidden="true" className="h-4 w-4" />
-                  <span>
-                    {
-                      universityAdminContent.bulkUploadPage.actionLabels
-                        .downloadTemplate
-                    }
-                  </span>
-                </button>
+                <div className="flex justify-center sm:block">
+                  <button
+                    className="mx-auto flex min-h-[2.9rem] w-auto items-center justify-center gap-2 rounded-xl bg-brand-gradient px-4 py-2.5 text-[0.78rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 sm:min-h-0 sm:w-full sm:px-4 sm:py-2.5 sm:text-[0.82rem]"
+                    type="button"
+                    onClick={() => {
+                      void downloadTemplate(uploadState.templateType);
+                    }}
+                  >
+                    <Download aria-hidden="true" className="h-4 w-4" />
+                    <span>
+                      {
+                        universityAdminContent.bulkUploadPage.actionLabels
+                          .downloadTemplate
+                      }
+                    </span>
+                  </button>
+                </div>
                 <div className="space-y-1 rounded-[1rem] border border-slate-200 bg-slate-50 p-2.5 text-[0.7rem] leading-4 text-ink-muted sm:p-3 sm:text-[0.74rem] sm:leading-5">
                   <p className="font-semibold text-ink">Columnas requeridas</p>
                   {uploadState.templateType === 'students' ? (
@@ -911,9 +922,9 @@ export function UniversityBulkUploadPage() {
                     </SurfaceCard>
                   ) : null}
 
-                  <div className="flex flex-wrap justify-center gap-2.5">
+                  <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-center sm:gap-2.5">
                     <button
-                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/10 px-3.5 py-2.25 text-[0.78rem] font-semibold text-primary transition duration-300 hover:bg-primary/15 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:py-2.5 sm:text-[0.82rem]"
+                      className="inline-flex min-h-[2.9rem] w-full min-w-0 items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/10 px-2.5 py-2.5 text-[0.74rem] font-semibold text-primary transition duration-300 hover:bg-primary/15 disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-0 sm:w-auto sm:px-4 sm:py-2.5 sm:text-[0.82rem]"
                       disabled={
                         !uploadState.fileName ||
                         isValidating ||
@@ -933,7 +944,7 @@ export function UniversityBulkUploadPage() {
                       </span>
                     </button>
                     <button
-                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-gradient px-3.5 py-2.25 text-[0.78rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:py-2.5 sm:text-[0.82rem]"
+                      className="inline-flex min-h-[2.9rem] w-full min-w-0 items-center justify-center gap-2 rounded-xl bg-brand-gradient px-2.5 py-2.5 text-[0.74rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 sm:w-auto sm:px-4 sm:py-2.5 sm:text-[0.82rem]"
                       disabled={
                         uploadState.status !== 'validated' ||
                         isLoading ||

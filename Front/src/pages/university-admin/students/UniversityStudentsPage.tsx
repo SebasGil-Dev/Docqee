@@ -186,23 +186,31 @@ export function UniversityStudentsPage() {
           className="min-w-0 flex-1 overflow-hidden bg-brand-gradient text-white md:flex-[1.6]"
           paddingClassName="p-0"
         >
-          <div className="flex h-full items-center gap-1.5 px-2.5 py-1.5 sm:gap-2.5 sm:px-3.5 sm:py-2">
-            <span className="inline-flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded-[0.75rem] bg-white/12 text-white ring-1 ring-white/20 sm:h-7 sm:w-7">
-              <GraduationCap aria-hidden="true" className="h-3.25 w-3.25" />
+          <div className="flex h-full items-center gap-1.5 px-2.25 py-1.25 sm:gap-2.5 sm:px-3.5 sm:py-2">
+            <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-[0.7rem] bg-white/12 text-white ring-1 ring-white/20 sm:h-7 sm:w-7 sm:rounded-[0.75rem]">
+              <GraduationCap
+                aria-hidden="true"
+                className="h-3 w-3 sm:h-3.25 sm:w-3.25"
+              />
             </span>
-            <span className="font-headline text-[1.15rem] font-extrabold tracking-tight text-white sm:text-[1.45rem]">
-              {students.length}
-            </span>
+            <div className="min-w-0 flex items-baseline gap-1 sm:block">
+              <span className="font-headline text-[0.76rem] font-extrabold tracking-tight text-white sm:text-[1.45rem]">
+                {students.length}
+              </span>
+              <span className="text-[0.76rem] font-semibold text-white/92 sm:hidden">
+                estudiantes
+              </span>
+            </div>
             <p className="hidden min-w-0 text-[0.74rem] font-semibold text-white/90 sm:block sm:text-[0.8rem]">
               {universityAdminContent.studentsPage.summaryLabel}
             </p>
           </div>
         </SurfaceCard>
         <Link
-          className="inline-flex min-h-[3rem] items-center justify-center gap-1.5 whitespace-nowrap rounded-[1.05rem] bg-brand-gradient px-3 py-2 text-[0.74rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 sm:gap-2 sm:rounded-[1.4rem] sm:px-3.5 sm:py-2.25 sm:text-[0.82rem] md:min-w-[12.5rem] md:flex-none"
+          className="inline-flex min-h-[2.7rem] items-center justify-center gap-1.5 whitespace-nowrap rounded-[1rem] bg-brand-gradient px-3 py-1.75 text-[0.76rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 sm:min-h-[3rem] sm:gap-2 sm:rounded-[1.4rem] sm:px-3.5 sm:py-2.25 sm:text-[0.82rem] md:min-w-[12.5rem] md:flex-none"
           to={ROUTES.universityRegisterStudent}
         >
-          <Plus aria-hidden="true" className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+          <Plus aria-hidden="true" className="h-3.25 w-3.25 sm:h-4 sm:w-4" />
           <span>
             {universityAdminContent.studentsPage.actionLabels.register}
           </span>
@@ -214,7 +222,7 @@ export function UniversityStudentsPage() {
             <h2 className="hidden font-headline text-[1rem] font-extrabold tracking-tight text-ink sm:block sm:text-[1.25rem]">
               {universityAdminContent.studentsPage.tableTitle}
             </h2>
-            <div className="flex min-w-0 items-center gap-1.5 sm:w-full sm:max-w-[26rem] sm:justify-end sm:gap-2.5 xl:max-w-[30rem]">
+            <div className="flex min-w-0 items-center gap-2 sm:w-full sm:max-w-[26rem] sm:justify-end sm:gap-2.5 xl:max-w-[30rem]">
               <label
                 className="relative min-w-0 flex-1"
                 htmlFor="university-student-search"
@@ -224,10 +232,10 @@ export function UniversityStudentsPage() {
                 </span>
                 <Search
                   aria-hidden="true"
-                  className="pointer-events-none absolute left-3 top-1/2 h-3.25 w-3.25 -translate-y-1/2 text-ghost sm:left-4 sm:h-4 sm:w-4"
+                  className="pointer-events-none absolute left-3.5 top-1/2 h-3 w-3 -translate-y-1/2 text-ghost sm:left-4 sm:h-4 sm:w-4"
                 />
                 <input
-                  className="h-8.5 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-8 pr-3 text-[0.72rem] text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-10 sm:pl-10 sm:pr-4 sm:text-[0.82rem]"
+                  className="h-10 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-9 pr-3.5 text-[0.76rem] text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-10 sm:pl-10 sm:pr-4 sm:text-[0.82rem]"
                   id="university-student-search"
                   placeholder={
                     universityAdminContent.studentsPage.searchPlaceholder
@@ -252,7 +260,7 @@ export function UniversityStudentsPage() {
                         }`
                   }
                   className={classNames(
-                    'relative inline-flex h-8.5 w-8.5 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-10 sm:w-10',
+                    'relative inline-flex h-10 w-10 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-10 sm:w-10',
                     statusFilter === 'all'
                       ? 'border-slate-200/90 hover:border-primary/30 hover:bg-white'
                       : 'border-primary/25 bg-primary/[0.08] text-primary hover:bg-primary/[0.12]',
@@ -262,7 +270,7 @@ export function UniversityStudentsPage() {
                 >
                   <SlidersHorizontal
                     aria-hidden="true"
-                    className="h-[0.95rem] w-[0.95rem] sm:h-[1.05rem] sm:w-[1.05rem]"
+                    className="h-[1rem] w-[1rem] sm:h-[1.05rem] sm:w-[1.05rem]"
                   />
                   {statusFilter !== 'all' ? (
                     <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary ring-2 ring-white" />
