@@ -14,6 +14,7 @@ import type {
   PatientStudentDirectoryItem,
 } from '@/content/types';
 import { IS_TEST_MODE } from '@/lib/apiClient';
+import { readAuthSession } from '@/lib/authSession';
 import {
   createPatientPortalRequest,
   getPatientPortalConversation,
@@ -27,7 +28,10 @@ import {
 } from '@/lib/patientApi';
 
 type PatientModuleActions = {
-  createRequest: (studentId: string, reason: string) => Promise<PatientRequest | null>;
+  createRequest: (
+    studentId: string,
+    reason: string,
+  ) => Promise<PatientRequest | null>;
   refresh: () => Promise<void>;
   refreshConversation: (conversationId: string) => Promise<void>;
   searchStudents: (
@@ -53,17 +57,43 @@ type PatientStoreState = PatientModuleState & {
   isLoading: boolean;
   isReady: boolean;
   isSearchingStudents: boolean;
+  shouldRefresh: boolean;
 };
 
 type UsePatientModuleStoreOptions = {
   autoLoad?: boolean;
 };
 
+type PersistedPatientModuleCache = PatientModuleState & {
+  updatedAt: number;
+  userId: number;
+};
+
+type CachedStudentSearch = {
+  students: PatientStudentDirectoryItem[];
+  updatedAt: number;
+};
+
+const PATIENT_MODULE_CACHE_STORAGE_KEY = 'docqee.patient.module-cache';
+const PATIENT_MODULE_CACHE_MAX_AGE_MS = 30 * 60 * 1000;
+const PATIENT_STUDENT_SEARCH_CACHE_MAX_AGE_MS = 5 * 60 * 1000;
+const PATIENT_STUDENT_SEARCH_CACHE_MAX_ENTRIES = 24;
+
 const listeners = new Set<() => void>();
+const studentSearchCache = new Map<string, CachedStudentSearch>();
+const studentSearchPromises = new Map<
+  string,
+  Promise<PatientStudentDirectoryItem[]>
+>();
+let studentSearchRequestSequence = 0;
+let lastDashboardStudents: PatientStudentDirectoryItem[] | null = null;
 
 function createStudentFilterOptions(students: PatientStudentDirectoryItem[]) {
   const cityMap = new Map<string, string>();
-  const localityMap = new Map<string, { cityValue: string; label: string; value: string }>();
+  const localityMap = new Map<
+    string,
+    { cityValue: string; label: string; value: string }
+  >();
 
   students.forEach((student) => {
     const cityValue = normalizeText(student.city);
@@ -89,14 +119,18 @@ function createStudentFilterOptions(students: PatientStudentDirectoryItem[]) {
   return {
     cities: [...cityMap.entries()]
       .map(([value, label]) => ({ label, value }))
-      .sort((first, second) => first.label.localeCompare(second.label, 'es-CO')),
+      .sort((first, second) =>
+        first.label.localeCompare(second.label, 'es-CO'),
+      ),
     localities: [...localityMap.values()].sort((first, second) =>
       first.label.localeCompare(second.label, 'es-CO'),
     ),
     treatments: [...new Set(students.flatMap((student) => student.treatments))]
       .filter(Boolean)
       .sort((first, second) => first.localeCompare(second, 'es-CO')),
-    universities: [...new Set(students.map((student) => student.universityName))]
+    universities: [
+      ...new Set(students.map((student) => student.universityName)),
+    ]
       .filter(Boolean)
       .sort((first, second) => first.localeCompare(second, 'es-CO')),
   };
@@ -123,7 +157,8 @@ function matchesMockStudentSearch(
     filters.university && filters.university !== 'all'
       ? normalizeText(filters.university).toLowerCase()
       : '';
-  const studentFullName = `${student.firstName} ${student.lastName}`.toLowerCase();
+  const studentFullName =
+    `${student.firstName} ${student.lastName}`.toLowerCase();
   const studentTreatments = student.treatments.map((treatment) =>
     normalizeText(treatment).toLowerCase(),
   );
@@ -287,14 +322,16 @@ function createMockState(): PatientStoreState {
         {
           author: 'PACIENTE',
           authorName: 'Sara Lopez',
-          content: 'Hola, quisiera saber si puedes revisar un dolor dental persistente.',
+          content:
+            'Hola, quisiera saber si puedes revisar un dolor dental persistente.',
           id: 'patient-message-1',
           sentAt: '2026-04-03T17:12:00.000Z',
         },
         {
           author: 'ESTUDIANTE',
           authorName: 'Valentina Rios',
-          content: 'Hola Sara, claro que si. Ya revise tu solicitud y podemos avanzar.',
+          content:
+            'Hola Sara, claro que si. Ya revise tu solicitud y podemos avanzar.',
           id: 'patient-message-2',
           sentAt: '2026-04-04T11:22:00.000Z',
         },
@@ -313,7 +350,8 @@ function createMockState(): PatientStoreState {
         {
           author: 'PACIENTE',
           authorName: 'Sara Lopez',
-          content: 'Gracias por el acompanamiento durante el cierre del tratamiento.',
+          content:
+            'Gracias por el acompanamiento durante el cierre del tratamiento.',
           id: 'patient-message-3',
           sentAt: '2026-03-29T15:14:00.000Z',
         },
@@ -337,7 +375,8 @@ function createMockState(): PatientStoreState {
 
   const appointments: PatientAppointment[] = [
     {
-      additionalInfo: 'Recuerda llevar radiografia panoramica si la tienes disponible.',
+      additionalInfo:
+        'Recuerda llevar radiografia panoramica si la tienes disponible.',
       appointmentType: 'Valoracion inicial',
       city: 'Bogota',
       endAt: '2026-04-09T11:30:00.000Z',
@@ -380,7 +419,8 @@ function createMockState(): PatientStoreState {
   const reviews: PatientAppointmentReview[] = [
     {
       appointmentLabel: 'Control restaurativo',
-      comment: 'Paciente muy puntual, atento a las indicaciones y comprometido con su seguimiento clinico.',
+      comment:
+        'Paciente muy puntual, atento a las indicaciones y comprometido con su seguimiento clinico.',
       createdAt: '2026-04-10T16:20:00.000Z',
       id: 'patient-review-1',
       rating: 5,
@@ -389,7 +429,8 @@ function createMockState(): PatientStoreState {
     },
     {
       appointmentLabel: 'Valoracion inicial',
-      comment: 'La comunicacion durante la cita fue clara y el proceso se pudo desarrollar sin inconvenientes.',
+      comment:
+        'La comunicacion durante la cita fue clara y el proceso se pudo desarrollar sin inconvenientes.',
       createdAt: '2026-04-07T13:40:00.000Z',
       id: 'patient-review-2',
       rating: 4,
@@ -398,7 +439,8 @@ function createMockState(): PatientStoreState {
     },
     {
       appointmentLabel: 'Seguimiento final',
-      comment: 'Asistio a tiempo y mantuvo una muy buena disposicion durante toda la atencion.',
+      comment:
+        'Asistio a tiempo y mantuvo una muy buena disposicion durante toda la atencion.',
       createdAt: '2026-03-26T09:15:00.000Z',
       id: 'patient-review-3',
       rating: 5,
@@ -414,6 +456,7 @@ function createMockState(): PatientStoreState {
     isLoading: false,
     isReady: true,
     isSearchingStudents: false,
+    shouldRefresh: false,
     profile,
     reviews,
     requests,
@@ -422,7 +465,103 @@ function createMockState(): PatientStoreState {
   };
 }
 
-function createRuntimeInitialState(): PatientStoreState {
+function readSessionStorage() {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    return window.sessionStorage;
+  } catch {
+    return null;
+  }
+}
+
+function isPatientModuleState(value: unknown): value is PatientModuleState {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<PatientModuleState>;
+
+  return (
+    Array.isArray(candidate.appointments) &&
+    Array.isArray(candidate.conversations) &&
+    typeof candidate.profile === 'object' &&
+    candidate.profile !== null &&
+    Array.isArray(candidate.reviews) &&
+    Array.isArray(candidate.requests) &&
+    typeof candidate.studentFilters === 'object' &&
+    candidate.studentFilters !== null &&
+    Array.isArray(candidate.students)
+  );
+}
+
+function persistPatientModuleCache(moduleState: PatientModuleState) {
+  const storage = readSessionStorage();
+  const session = readAuthSession();
+
+  if (!storage || !session || session.user.role !== 'PATIENT') {
+    return;
+  }
+
+  const payload: PersistedPatientModuleCache = {
+    ...moduleState,
+    students: lastDashboardStudents ?? moduleState.students,
+    updatedAt: Date.now(),
+    userId: session.user.id,
+  };
+
+  storage.setItem(PATIENT_MODULE_CACHE_STORAGE_KEY, JSON.stringify(payload));
+}
+
+function clearPersistedPatientModuleCache() {
+  const storage = readSessionStorage();
+
+  if (!storage) {
+    return;
+  }
+
+  storage.removeItem(PATIENT_MODULE_CACHE_STORAGE_KEY);
+}
+
+function readPersistedPatientModuleCache() {
+  const storage = readSessionStorage();
+  const session = readAuthSession();
+
+  if (!storage || !session || session.user.role !== 'PATIENT') {
+    return null;
+  }
+
+  const rawCache = storage.getItem(PATIENT_MODULE_CACHE_STORAGE_KEY);
+
+  if (!rawCache) {
+    return null;
+  }
+
+  try {
+    const parsedCache = JSON.parse(
+      rawCache,
+    ) as Partial<PersistedPatientModuleCache>;
+
+    if (
+      typeof parsedCache.updatedAt !== 'number' ||
+      Date.now() - parsedCache.updatedAt > PATIENT_MODULE_CACHE_MAX_AGE_MS ||
+      parsedCache.userId !== session.user.id ||
+      !isPatientModuleState(parsedCache)
+    ) {
+      storage.removeItem(PATIENT_MODULE_CACHE_STORAGE_KEY);
+      return null;
+    }
+
+    return parsedCache;
+  } catch {
+    storage.removeItem(PATIENT_MODULE_CACHE_STORAGE_KEY);
+    return null;
+  }
+}
+
+function createEmptyRuntimeState(): PatientStoreState {
   return {
     appointments: [],
     conversations: [],
@@ -453,7 +592,31 @@ function createRuntimeInitialState(): PatientStoreState {
       treatments: [],
       universities: [],
     },
+    shouldRefresh: false,
     students: [],
+  };
+}
+
+function createRuntimeInitialState(): PatientStoreState {
+  const cachedState = readPersistedPatientModuleCache();
+
+  if (!cachedState) {
+    return createEmptyRuntimeState();
+  }
+
+  lastDashboardStudents = cachedState.students;
+
+  return {
+    ...createEmptyRuntimeState(),
+    appointments: cachedState.appointments,
+    conversations: cachedState.conversations,
+    isReady: true,
+    profile: cachedState.profile,
+    reviews: cachedState.reviews,
+    requests: cachedState.requests,
+    shouldRefresh: true,
+    studentFilters: cachedState.studentFilters,
+    students: cachedState.students,
   };
 }
 
@@ -499,8 +662,118 @@ function patchState(partialState: Partial<PatientStoreState>) {
   });
 }
 
+function extractPatientModuleState(
+  storeState: PatientStoreState,
+): PatientModuleState {
+  return {
+    appointments: storeState.appointments,
+    conversations: storeState.conversations,
+    profile: storeState.profile,
+    reviews: storeState.reviews,
+    requests: storeState.requests,
+    studentFilters: storeState.studentFilters,
+    students: storeState.students,
+  };
+}
+
+function setRuntimeState(
+  nextState: PatientStoreState,
+  options: {
+    persistCache?: boolean;
+    updateDashboardStudents?: boolean;
+  } = {},
+) {
+  if (options.updateDashboardStudents) {
+    lastDashboardStudents = nextState.students;
+  }
+
+  if (options.persistCache && !IS_TEST_MODE) {
+    persistPatientModuleCache(extractPatientModuleState(nextState));
+  }
+
+  updateState(nextState);
+}
+
 function normalizeText(value: string) {
   return value.trim();
+}
+
+function normalizeSearchFilterValue(value: string | number | undefined) {
+  if (value === undefined) {
+    return '';
+  }
+
+  const normalizedValue = String(value).trim();
+
+  return normalizedValue && normalizedValue !== 'all' ? normalizedValue : '';
+}
+
+function createStudentSearchCacheKey(
+  filters: PatientStudentDirectorySearchParams,
+) {
+  return JSON.stringify({
+    city: normalizeSearchFilterValue(filters.city),
+    limit: normalizeSearchFilterValue(filters.limit),
+    locality: normalizeSearchFilterValue(filters.locality),
+    search: normalizeSearchFilterValue(filters.search).toLowerCase(),
+    treatment: normalizeSearchFilterValue(filters.treatment),
+    university: normalizeSearchFilterValue(filters.university),
+  });
+}
+
+function getCachedStudentSearch(cacheKey: string) {
+  const cachedSearch = studentSearchCache.get(cacheKey);
+
+  if (!cachedSearch) {
+    return null;
+  }
+
+  if (
+    Date.now() - cachedSearch.updatedAt >
+    PATIENT_STUDENT_SEARCH_CACHE_MAX_AGE_MS
+  ) {
+    studentSearchCache.delete(cacheKey);
+    return null;
+  }
+
+  return cachedSearch.students;
+}
+
+function cacheStudentSearch(
+  cacheKey: string,
+  students: PatientStudentDirectoryItem[],
+) {
+  studentSearchCache.set(cacheKey, {
+    students,
+    updatedAt: Date.now(),
+  });
+
+  if (studentSearchCache.size <= PATIENT_STUDENT_SEARCH_CACHE_MAX_ENTRIES) {
+    return;
+  }
+
+  const oldestKey = studentSearchCache.keys().next().value as
+    | string
+    | undefined;
+
+  if (oldestKey) {
+    studentSearchCache.delete(oldestKey);
+  }
+}
+
+function cacheDefaultStudentSearch(moduleState: PatientModuleState) {
+  if (moduleState.students.length === 0) {
+    return;
+  }
+
+  cacheStudentSearch(
+    createStudentSearchCacheKey({
+      city: moduleState.profile.city,
+      limit: 6,
+      locality: moduleState.profile.locality,
+    }),
+    moduleState.students,
+  );
 }
 
 function getErrorMessage(error: unknown, fallbackMessage: string) {
@@ -523,7 +796,8 @@ function buildConversationFromRequest(request: PatientRequest) {
     author: 'PACIENTE',
     authorName: `${state.profile.firstName} ${state.profile.lastName}`,
     content:
-      request.reason ?? 'Hola, quisiera iniciar la conversacion a partir de mi solicitud.',
+      request.reason ??
+      'Hola, quisiera iniciar la conversacion a partir de mi solicitud.',
     id: `patient-message-${nextMessageSequence++}`,
     sentAt: new Date().toISOString(),
   };
@@ -550,7 +824,9 @@ function updateProfileMock(values: PatientProfileFormValues) {
 
 function createRequestMock(studentId: string, reason: string) {
   const normalizedReason = normalizeText(reason);
-  const selectedStudent = state.students.find((student) => student.id === studentId);
+  const selectedStudent = state.students.find(
+    (student) => student.id === studentId,
+  );
 
   if (!selectedStudent || !normalizedReason) {
     return null;
@@ -587,17 +863,22 @@ function createRequestMock(studentId: string, reason: string) {
   return nextRequest;
 }
 
-function updateRequestStatusMock(requestId: string, status: PatientRequestStatus) {
-  const currentRequest = state.requests.find((request) => request.id === requestId);
+function updateRequestStatusMock(
+  requestId: string,
+  status: PatientRequestStatus,
+) {
+  const currentRequest = state.requests.find(
+    (request) => request.id === requestId,
+  );
 
   if (!currentRequest) {
     return false;
   }
 
   const currentConversation = currentRequest.conversationId
-    ? state.conversations.find(
+    ? (state.conversations.find(
         (conversation) => conversation.id === currentRequest.conversationId,
-      ) ?? null
+      ) ?? null)
     : null;
 
   updateState({
@@ -637,7 +918,11 @@ function sendConversationMessageMock(conversationId: string, content: string) {
     (conversation) => conversation.id === conversationId,
   );
 
-  if (!currentConversation || currentConversation.status !== 'ACTIVA' || !normalizedContent) {
+  if (
+    !currentConversation ||
+    currentConversation.status !== 'ACTIVA' ||
+    !normalizedContent
+  ) {
     return false;
   }
 
@@ -679,7 +964,9 @@ function updateAppointmentStatusMock(
   updateState({
     ...state,
     appointments: state.appointments.map((appointment) =>
-      appointment.id === appointmentId ? { ...appointment, status } : appointment,
+      appointment.id === appointmentId
+        ? { ...appointment, status }
+        : appointment,
     ),
   });
 
@@ -691,7 +978,7 @@ async function loadRuntimeState(forceRefresh = false) {
     return state;
   }
 
-  if (state.isReady && !forceRefresh) {
+  if (state.isReady && !state.shouldRefresh && !forceRefresh) {
     return state;
   }
 
@@ -701,17 +988,25 @@ async function loadRuntimeState(forceRefresh = false) {
 
   patchState({
     errorMessage: null,
-    isLoading: true,
+    isLoading: !state.isReady,
   });
 
   runtimeLoadPromise = getPatientPortalDashboard()
     .then((payload) => {
-      updateState({
-        ...createRuntimeInitialState(),
+      const nextState: PatientStoreState = {
+        ...createEmptyRuntimeState(),
         ...payload,
         errorMessage: null,
         isLoading: false,
         isReady: true,
+        isSearchingStudents: false,
+        shouldRefresh: false,
+      };
+
+      cacheDefaultStudentSearch(payload);
+      setRuntimeState(nextState, {
+        persistCache: true,
+        updateDashboardStudents: true,
       });
 
       nextRequestSequence = payload.requests.length + 1;
@@ -726,8 +1021,12 @@ async function loadRuntimeState(forceRefresh = false) {
     })
     .catch((error) => {
       patchState({
-        errorMessage: getErrorMessage(error, 'No pudimos cargar el portal del paciente.'),
+        errorMessage: getErrorMessage(
+          error,
+          'No pudimos cargar el portal del paciente.',
+        ),
         isLoading: false,
+        shouldRefresh: false,
       });
 
       return state;
@@ -757,13 +1056,19 @@ async function updateProfile(values: PatientProfileFormValues) {
   try {
     const profile = await updatePatientPortalProfile(values);
 
-    updateState({
-      ...state,
-      errorMessage: null,
-      isLoading: false,
-      isReady: true,
-      profile,
-    });
+    setRuntimeState(
+      {
+        ...state,
+        errorMessage: null,
+        isLoading: false,
+        isReady: true,
+        profile,
+        shouldRefresh: false,
+      },
+      {
+        persistCache: true,
+      },
+    );
 
     return true;
   } catch (error) {
@@ -788,13 +1093,19 @@ async function createRequest(studentId: string, reason: string) {
   try {
     const request = await createPatientPortalRequest(studentId, reason);
 
-    updateState({
-      ...state,
-      errorMessage: null,
-      isLoading: false,
-      isReady: true,
-      requests: [request, ...state.requests],
-    });
+    setRuntimeState(
+      {
+        ...state,
+        errorMessage: null,
+        isLoading: false,
+        isReady: true,
+        requests: [request, ...state.requests],
+        shouldRefresh: false,
+      },
+      {
+        persistCache: true,
+      },
+    );
 
     return request;
   } catch (error) {
@@ -821,13 +1132,40 @@ async function searchStudents(filters: PatientStudentDirectorySearchParams) {
     return filteredStudents;
   }
 
+  const cacheKey = createStudentSearchCacheKey(filters);
+  const cachedStudents = getCachedStudentSearch(cacheKey);
+  const requestSequence = ++studentSearchRequestSequence;
+
+  if (cachedStudents) {
+    patchState({
+      errorMessage: null,
+      isReady: true,
+      isSearchingStudents: false,
+      students: cachedStudents,
+    });
+
+    return cachedStudents;
+  }
+
   patchState({
     errorMessage: null,
     isSearchingStudents: true,
   });
 
   try {
-    const students = await getPatientPortalStudents(filters);
+    const pendingSearch =
+      studentSearchPromises.get(cacheKey) ?? getPatientPortalStudents(filters);
+
+    studentSearchPromises.set(cacheKey, pendingSearch);
+
+    const students = await pendingSearch;
+
+    cacheStudentSearch(cacheKey, students);
+    studentSearchPromises.delete(cacheKey);
+
+    if (requestSequence !== studentSearchRequestSequence) {
+      return students;
+    }
 
     patchState({
       errorMessage: null,
@@ -838,6 +1176,12 @@ async function searchStudents(filters: PatientStudentDirectorySearchParams) {
 
     return students;
   } catch (error) {
+    studentSearchPromises.delete(cacheKey);
+
+    if (requestSequence !== studentSearchRequestSequence) {
+      return [];
+    }
+
     patchState({
       errorMessage: getErrorMessage(error, 'No pudimos buscar estudiantes.'),
       isSearchingStudents: false,
@@ -846,7 +1190,10 @@ async function searchStudents(filters: PatientStudentDirectorySearchParams) {
   }
 }
 
-async function updateRequestStatus(requestId: string, status: PatientRequestStatus) {
+async function updateRequestStatus(
+  requestId: string,
+  status: PatientRequestStatus,
+) {
   if (IS_TEST_MODE) {
     return updateRequestStatusMock(requestId, status);
   }
@@ -860,28 +1207,41 @@ async function updateRequestStatus(requestId: string, status: PatientRequestStat
     const request = await updatePatientPortalRequestStatus(requestId, status);
     const nextConversation =
       request.status === 'ACEPTADA' && request.conversationId
-        ? state.conversations.find((conversation) => conversation.id === request.conversationId) ??
-          buildConversationFromRequest(request)
+        ? (state.conversations.find(
+            (conversation) => conversation.id === request.conversationId,
+          ) ?? buildConversationFromRequest(request))
         : null;
 
-    updateState({
-      ...state,
-      conversations:
-        nextConversation && !state.conversations.some((conversation) => conversation.id === nextConversation.id)
-          ? [nextConversation, ...state.conversations]
-          : state.conversations,
-      errorMessage: null,
-      isLoading: false,
-      isReady: true,
-      requests: state.requests.map((currentRequest) =>
-        currentRequest.id === request.id ? request : currentRequest,
-      ),
-    });
+    setRuntimeState(
+      {
+        ...state,
+        conversations:
+          nextConversation &&
+          !state.conversations.some(
+            (conversation) => conversation.id === nextConversation.id,
+          )
+            ? [nextConversation, ...state.conversations]
+            : state.conversations,
+        errorMessage: null,
+        isLoading: false,
+        isReady: true,
+        requests: state.requests.map((currentRequest) =>
+          currentRequest.id === request.id ? request : currentRequest,
+        ),
+        shouldRefresh: false,
+      },
+      {
+        persistCache: true,
+      },
+    );
 
     return true;
   } catch (error) {
     patchState({
-      errorMessage: getErrorMessage(error, 'No pudimos actualizar la solicitud.'),
+      errorMessage: getErrorMessage(
+        error,
+        'No pudimos actualizar la solicitud.',
+      ),
       isLoading: false,
     });
     return false;
@@ -892,20 +1252,32 @@ async function refreshConversation(conversationId: string) {
   if (IS_TEST_MODE) return;
   try {
     const conversation = await getPatientPortalConversation(conversationId);
-    updateState({
-      ...state,
-      conversations: state.conversations.map((c) =>
-        c.id === conversationId
-          ? { ...c, messages: conversation.messages, status: conversation.status }
-          : c,
-      ),
-    });
+    setRuntimeState(
+      {
+        ...state,
+        conversations: state.conversations.map((c) =>
+          c.id === conversationId
+            ? {
+                ...c,
+                messages: conversation.messages,
+                status: conversation.status,
+              }
+            : c,
+        ),
+      },
+      {
+        persistCache: true,
+      },
+    );
   } catch {
     // silently ignore - background poll
   }
 }
 
-async function sendConversationMessage(conversationId: string, content: string) {
+async function sendConversationMessage(
+  conversationId: string,
+  content: string,
+) {
   if (IS_TEST_MODE) {
     return sendConversationMessageMock(conversationId, content);
   }
@@ -916,22 +1288,31 @@ async function sendConversationMessage(conversationId: string, content: string) 
   });
 
   try {
-    const message = await sendPatientPortalConversationMessage(conversationId, content);
+    const message = await sendPatientPortalConversationMessage(
+      conversationId,
+      content,
+    );
 
-    updateState({
-      ...state,
-      conversations: state.conversations.map((conversation) =>
-        conversation.id === conversationId
-          ? {
-              ...conversation,
-              messages: [...conversation.messages, message],
-            }
-          : conversation,
-      ),
-      errorMessage: null,
-      isLoading: false,
-      isReady: true,
-    });
+    setRuntimeState(
+      {
+        ...state,
+        conversations: state.conversations.map((conversation) =>
+          conversation.id === conversationId
+            ? {
+                ...conversation,
+                messages: [...conversation.messages, message],
+              }
+            : conversation,
+        ),
+        errorMessage: null,
+        isLoading: false,
+        isReady: true,
+        shouldRefresh: false,
+      },
+      {
+        persistCache: true,
+      },
+    );
 
     return true;
   } catch (error) {
@@ -957,17 +1338,28 @@ async function updateAppointmentStatus(
   });
 
   try {
-    const appointment = await updatePatientPortalAppointmentStatus(appointmentId, status);
+    const appointment = await updatePatientPortalAppointmentStatus(
+      appointmentId,
+      status,
+    );
 
-    updateState({
-      ...state,
-      appointments: state.appointments.map((currentAppointment) =>
-        currentAppointment.id === appointment.id ? appointment : currentAppointment,
-      ),
-      errorMessage: null,
-      isLoading: false,
-      isReady: true,
-    });
+    setRuntimeState(
+      {
+        ...state,
+        appointments: state.appointments.map((currentAppointment) =>
+          currentAppointment.id === appointment.id
+            ? appointment
+            : currentAppointment,
+        ),
+        errorMessage: null,
+        isLoading: false,
+        isReady: true,
+        shouldRefresh: false,
+      },
+      {
+        persistCache: true,
+      },
+    );
 
     return true;
   } catch (error) {
@@ -980,7 +1372,11 @@ async function updateAppointmentStatus(
 }
 
 export function resetPatientModuleState() {
-  state = IS_TEST_MODE ? createMockState() : createRuntimeInitialState();
+  if (!IS_TEST_MODE) {
+    clearPersistedPatientModuleCache();
+  }
+
+  state = IS_TEST_MODE ? createMockState() : createEmptyRuntimeState();
   nextRequestSequence = initialMockState.requests.length + 1;
   nextConversationSequence = initialMockState.conversations.length + 1;
   nextMessageSequence =
@@ -988,7 +1384,11 @@ export function resetPatientModuleState() {
       (total, conversation) => total + conversation.messages.length,
       0,
     ) + 1;
+  lastDashboardStudents = null;
   runtimeLoadPromise = null;
+  studentSearchCache.clear();
+  studentSearchPromises.clear();
+  studentSearchRequestSequence = 0;
   emitChange();
 }
 
@@ -1003,13 +1403,18 @@ export function usePatientModuleStore(
       IS_TEST_MODE ||
       !shouldAutoLoad ||
       snapshot.isLoading ||
-      snapshot.isReady
+      (snapshot.isReady && !snapshot.shouldRefresh)
     ) {
       return;
     }
 
     void loadRuntimeState();
-  }, [shouldAutoLoad, snapshot.isLoading, snapshot.isReady]);
+  }, [
+    shouldAutoLoad,
+    snapshot.isLoading,
+    snapshot.isReady,
+    snapshot.shouldRefresh,
+  ]);
 
   const actions: PatientModuleActions = {
     createRequest,
