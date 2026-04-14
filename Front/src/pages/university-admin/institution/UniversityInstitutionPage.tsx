@@ -1360,13 +1360,13 @@ export function UniversityInstitutionPage({
                           />
                         </div>
                       </div>
-                      <div className="self-start rounded-[0.95rem] border border-dashed border-slate-300 bg-slate-50 p-2 sm:rounded-[1.2rem] sm:p-3 xl:-mt-10">
+                      <div className="mx-auto self-center rounded-[0.95rem] border border-dashed border-slate-300 bg-slate-50 p-2 sm:mx-0 sm:self-start sm:rounded-[1.2rem] sm:p-3 xl:-mt-10">
                         <div className="space-y-0.5 text-center sm:text-center">
                           <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-primary sm:text-[0.72rem] sm:tracking-[0.2em]">
                             Logo institucional
                           </p>
                         </div>
-                        <div className="mt-2 flex items-center gap-2.5 sm:flex-col sm:items-center sm:gap-2.5">
+                        <div className="mt-2 flex items-center justify-center gap-2.5 sm:flex-col sm:items-center sm:gap-2.5">
                           <div
                             aria-busy={isLogoUploading}
                             className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[0.95rem] bg-white ring-1 ring-slate-200 sm:h-28 sm:w-28 sm:rounded-[1.15rem]"
@@ -1393,7 +1393,7 @@ export function UniversityInstitutionPage({
                               </span>
                             ) : null}
                           </div>
-                          <div className="min-w-0 flex-1 space-y-1 text-left sm:flex-none sm:text-center">
+                          <div className="min-w-0 flex-none space-y-1 text-center sm:flex-none sm:text-center">
                             <label
                               className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-brand-gradient px-2.5 py-1.5 text-[0.68rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 sm:px-3 sm:text-[0.72rem]"
                               htmlFor="institution-logo-input"
@@ -1792,7 +1792,7 @@ export function UniversityInstitutionPage({
                       </div>
                       <div className="flex justify-center lg:col-span-2">
                         <button
-                          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-2.75 py-2 text-[0.78rem] font-semibold text-primary transition duration-300 hover:bg-slate-100 sm:px-3.5 sm:py-2.5 sm:text-[0.82rem]"
+                          className="inline-flex min-w-[11.5rem] items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-[0.78rem] font-semibold text-primary transition duration-300 hover:bg-slate-100 sm:min-w-0 sm:px-3.5 sm:py-2.5 sm:text-[0.82rem]"
                           type="button"
                           onClick={openPasswordPanel}
                         >

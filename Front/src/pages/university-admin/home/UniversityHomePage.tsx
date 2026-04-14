@@ -251,7 +251,7 @@ export function UniversityHomePage() {
                 <div className="space-y-1.5 sm:hidden">
                   <div className="flex flex-wrap items-center justify-between gap-1.5">
                     <p className="text-[0.74rem] font-semibold text-ink">
-                      Ultimos registros
+                      Últimos registros
                     </p>
                     <Link
                       className="inline-flex max-w-full items-center gap-1 text-[0.68rem] font-semibold text-primary transition duration-200 hover:text-primary/80"
@@ -266,31 +266,28 @@ export function UniversityHomePage() {
                       {mobileRecentStudents.map((student) => (
                         <div
                           key={student.id}
-                          className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1.5 rounded-[0.9rem] border border-slate-200/80 bg-slate-50 px-2 py-1.5"
+                          className="rounded-[0.9rem] border border-slate-200/80 bg-slate-50 px-2 py-1.5"
                         >
-                          <div className="min-w-0 flex-1">
+                          <div className="min-w-0 space-y-0.5">
                             <p
-                              className="truncate text-[0.73rem] font-semibold text-ink"
-                              title={formatDisplayName(
-                                `${student.firstName} ${student.lastName}`,
-                              )}
+                              className="truncate text-[0.73rem] text-ink"
+                              title={`${formatDisplayName(`${student.firstName} ${student.lastName}`)} · Semestre ${student.semester}`}
                             >
-                              {formatDisplayName(
-                                `${student.firstName} ${student.lastName}`,
-                              )}
+                              <span className="font-semibold text-ink">
+                                {formatDisplayName(
+                                  `${student.firstName} ${student.lastName}`,
+                                )}
+                              </span>
+                              <span className="text-ink-muted">
+                                {` · Semestre ${student.semester}`}
+                              </span>
                             </p>
                             <p
                               className="truncate text-[0.65rem] text-ink-muted"
-                              title={`Semestre ${student.semester}, ${formatRecentStudentDate(student.createdAt)}`}
+                              title={formatRecentStudentDate(student.createdAt)}
                             >
-                              {`Semestre ${student.semester}, ${formatRecentStudentDate(student.createdAt)}`}
+                              {formatRecentStudentDate(student.createdAt)}
                             </p>
-                          </div>
-                          <div className="shrink-0">
-                            <AdminStatusBadge
-                              entity="student"
-                              status={student.displayStatus}
-                            />
                           </div>
                         </div>
                       ))}
@@ -468,25 +465,21 @@ export function UniversityHomePage() {
                         {mobileRecentTeachers.map((teacher) => (
                           <div
                             key={teacher.id}
-                            className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1.5 rounded-[0.9rem] border border-slate-200/80 bg-slate-50 px-2 py-1.5"
+                            className="rounded-[0.9rem] border border-slate-200/80 bg-slate-50 px-2 py-1.5"
                           >
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-[0.73rem] font-semibold text-ink">
+                            <p
+                              className="truncate text-[0.73rem] text-ink"
+                              title={`${formatDisplayName(`${teacher.firstName} ${teacher.lastName}`)} · ${teacher.documentTypeCode} ${teacher.documentNumber}`}
+                            >
+                              <span className="font-semibold text-ink">
                                 {formatDisplayName(
                                   `${teacher.firstName} ${teacher.lastName}`,
                                 )}
-                              </p>
-                              <p className="truncate text-[0.65rem] text-ink-muted">
-                                {teacher.documentTypeCode}{' '}
-                                {teacher.documentNumber}
-                              </p>
-                            </div>
-                            <div className="shrink-0">
-                              <AdminStatusBadge
-                                entity="teacher"
-                                status={teacher.status}
-                              />
-                            </div>
+                              </span>
+                              <span className="text-ink-muted">
+                                {` · ${teacher.documentTypeCode} ${teacher.documentNumber}`}
+                              </span>
+                            </p>
                           </div>
                         ))}
                       </div>
@@ -499,7 +492,7 @@ export function UniversityHomePage() {
                   <div className="space-y-1.5">
                     <div className="flex flex-wrap items-center justify-between gap-1.5">
                       <p className="text-[0.74rem] font-semibold text-ink">
-                        Ultima sede registrada
+                        Última sede registrada
                       </p>
                       <Link
                         className="inline-flex max-w-full items-center gap-1 text-[0.68rem] font-semibold text-primary transition duration-200 hover:text-primary/80"
@@ -514,22 +507,21 @@ export function UniversityHomePage() {
                         {mobileRecentCampuses.map((campus) => (
                           <div
                             key={campus.id}
-                            className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1.5 rounded-[0.9rem] border border-slate-200/80 bg-slate-50 px-2 py-1.5"
+                            className="rounded-[0.9rem] border border-slate-200/80 bg-slate-50 px-2 py-1.5"
                           >
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-[0.73rem] font-semibold text-ink">
+                            <p
+                              className="truncate text-[0.73rem] text-ink"
+                              title={`${formatDisplayName(campus.name)} · ${campus.city} ${campus.locality ? `· ${campus.locality}` : ''}`}
+                            >
+                              <span className="font-semibold text-ink">
                                 {formatDisplayName(campus.name)}
-                              </p>
-                              <p className="truncate text-[0.65rem] text-ink-muted">
-                                {campus.city}, {campus.locality}
-                              </p>
-                            </div>
-                            <div className="shrink-0">
-                              <AdminStatusBadge
-                                entity="teacher"
-                                status={campus.status}
-                              />
-                            </div>
+                              </span>
+                              <span className="text-ink-muted">
+                                {` · ${campus.city}${
+                                  campus.locality ? ` · ${campus.locality}` : ''
+                                }`}
+                              </span>
+                            </p>
                           </div>
                         ))}
                       </div>

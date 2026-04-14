@@ -22,7 +22,9 @@ import { classNames } from '@/lib/classNames';
 import { formatDisplayName } from '@/lib/formatDisplayName';
 import { useUniversityAdminStudentRecordsStore } from '@/lib/universityAdminStudentRecordsStore';
 
-type StudentRecordsStore = ReturnType<typeof useUniversityAdminStudentRecordsStore>;
+type StudentRecordsStore = ReturnType<
+  typeof useUniversityAdminStudentRecordsStore
+>;
 type CredentialRow = ReturnType<typeof buildCredentialRows>[number];
 type UniversityCredentialFilterValue = 'all' | 'generated' | 'sent';
 
@@ -67,7 +69,9 @@ function buildCredentialRows(
         ...credential,
         studentDocument: `${student.documentTypeCode} ${student.documentNumber}`,
         studentEmail: student.email,
-        studentName: formatDisplayName(`${student.firstName} ${student.lastName}`),
+        studentName: formatDisplayName(
+          `${student.firstName} ${student.lastName}`,
+        ),
       };
     })
     .filter((row): row is NonNullable<typeof row> => row !== null);
@@ -102,15 +106,19 @@ export function UniversityCredentialsPage() {
     [credentials, students],
   );
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<UniversityCredentialFilterValue>('all');
+  const [statusFilter, setStatusFilter] =
+    useState<UniversityCredentialFilterValue>('all');
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
-  const [editingCredentialId, setEditingCredentialId] = useState<string | null>(null);
+  const [editingCredentialId, setEditingCredentialId] = useState<string | null>(
+    null,
+  );
   const [emailDraft, setEmailDraft] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const [pendingConfirmation, setPendingConfirmation] =
     useState<UniversityCredentialConfirmation | null>(null);
-  const [isConfirmationSubmitting, setIsConfirmationSubmitting] = useState(false);
+  const [isConfirmationSubmitting, setIsConfirmationSubmitting] =
+    useState(false);
   const filterMenuRef = useRef<HTMLDivElement | null>(null);
   const lastAutoRefreshAtRef = useRef(0);
   const normalizedSearch = searchTerm.trim().toLowerCase();
@@ -164,7 +172,10 @@ export function UniversityCredentialsPage() {
     }
 
     void (async () => {
-      const updated = await editStudentCredentialEmail(credentialId, normalizedEmail);
+      const updated = await editStudentCredentialEmail(
+        credentialId,
+        normalizedEmail,
+      );
 
       if (!updated) {
         setEmailError('No pudimos actualizar el correo en este momento.');
@@ -174,7 +185,9 @@ export function UniversityCredentialsPage() {
       setEditingCredentialId(null);
       setEmailDraft('');
       setEmailError(null);
-      setFeedbackMessage(`El correo de ${studentName} se actualizo correctamente.`);
+      setFeedbackMessage(
+        `El correo de ${studentName} se actualizo correctamente.`,
+      );
     })();
   };
 
@@ -199,7 +212,9 @@ export function UniversityCredentialsPage() {
 
     void (async () => {
       if (pendingConfirmation.action === 'delete') {
-        const deleted = await deleteStudentCredential(pendingConfirmation.credential.id);
+        const deleted = await deleteStudentCredential(
+          pendingConfirmation.credential.id,
+        );
 
         if (deleted) {
           if (editingCredentialId === pendingConfirmation.credential.id) {
@@ -336,6 +351,17 @@ export function UniversityCredentialsPage() {
         title={universityAdminContent.credentialsPage.title}
         titleClassName="text-center text-[1.7rem] sm:text-[2rem]"
       />
+      <button
+        className="inline-flex self-center items-center justify-center gap-2 rounded-xl bg-brand-gradient px-4 py-2.25 text-[0.8rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 sm:hidden"
+        disabled={isLoading}
+        type="button"
+        onClick={handleSendAll}
+      >
+        <Send aria-hidden="true" className="h-4 w-4" />
+        <span>
+          {universityAdminContent.credentialsPage.actionLabels.sendAll}
+        </span>
+      </button>
       {feedbackMessage ? (
         <SurfaceCard
           className="border border-emerald-200 bg-emerald-50/90 text-sm font-medium text-emerald-800"
@@ -358,10 +384,10 @@ export function UniversityCredentialsPage() {
         </SurfaceCard>
       ) : null}
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
-        <div className="flex flex-col gap-3 border-b border-slate-200/80 px-4 py-3 sm:px-5 sm:py-3.5">
-          <div className="flex flex-col gap-2.5 xl:flex-row xl:items-center xl:justify-between">
-            <div className="min-w-0 space-y-1">
-              <h2 className="font-headline text-[1.12rem] font-extrabold tracking-tight text-ink sm:text-[1.25rem]">
+        <div className="flex flex-col gap-2 border-b border-slate-200/80 px-3 py-2.5 sm:gap-3 sm:px-5 sm:py-3.5">
+          <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
+            <div className="min-w-0 space-y-0.5 sm:space-y-1">
+              <h2 className="hidden font-headline text-[1.12rem] font-extrabold tracking-tight text-ink sm:block sm:text-[1.25rem]">
                 {universityAdminContent.credentialsPage.tableTitle}
               </h2>
               {universityAdminContent.credentialsPage.subtitle ? (
@@ -370,15 +396,17 @@ export function UniversityCredentialsPage() {
                 </p>
               ) : null}
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 sm:flex sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
               <label className="relative min-w-0 sm:w-[22rem] lg:w-[26rem] xl:w-[30rem]">
-                <span className="sr-only">Buscar por nombres, documento o correo</span>
+                <span className="sr-only">
+                  Buscar por nombres, documento o correo
+                </span>
                 <Search
                   aria-hidden="true"
-                  className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ghost"
+                  className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ghost sm:left-3.5 sm:h-4 sm:w-4"
                 />
                 <input
-                  className="h-10 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-10 pr-4 text-[0.82rem] text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                  className="h-9 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-8.5 pr-3 text-[0.78rem] text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-10 sm:pl-10 sm:pr-4 sm:text-[0.82rem]"
                   placeholder="Buscar por nombres, documento o correo"
                   type="search"
                   value={searchTerm}
@@ -394,7 +422,9 @@ export function UniversityCredentialsPage() {
                     statusFilter === 'all'
                       ? 'Filtrar credenciales por estado'
                       : `Filtrar credenciales por estado. Actual: ${
-                          credentialFilterOptions.find((option) => option.value === statusFilter)?.label
+                          credentialFilterOptions.find(
+                            (option) => option.value === statusFilter,
+                          )?.label
                         }`
                   }
                   className={classNames(
@@ -404,9 +434,14 @@ export function UniversityCredentialsPage() {
                       : 'border-primary/25 bg-primary/[0.08] text-primary hover:bg-primary/[0.12]',
                   )}
                   type="button"
-                  onClick={() => setIsFilterMenuOpen((currentValue) => !currentValue)}
+                  onClick={() =>
+                    setIsFilterMenuOpen((currentValue) => !currentValue)
+                  }
                 >
-                  <SlidersHorizontal aria-hidden="true" className="h-4 w-4 sm:h-[1.05rem] sm:w-[1.05rem]" />
+                  <SlidersHorizontal
+                    aria-hidden="true"
+                    className="h-4 w-4 sm:h-[1.05rem] sm:w-[1.05rem]"
+                  />
                   {statusFilter !== 'all' ? (
                     <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary ring-2 ring-white" />
                   ) : null}
@@ -447,10 +482,15 @@ export function UniversityCredentialsPage() {
                             <span
                               className={classNames(
                                 'inline-flex h-5 w-5 items-center justify-center rounded-full',
-                                isSelected ? 'bg-white/18 text-white' : 'bg-white text-slate-300',
+                                isSelected
+                                  ? 'bg-white/18 text-white'
+                                  : 'bg-white text-slate-300',
                               )}
                             >
-                              <Check aria-hidden="true" className="h-3.5 w-3.5" />
+                              <Check
+                                aria-hidden="true"
+                                className="h-3.5 w-3.5"
+                              />
                             </span>
                           </button>
                         );
@@ -460,13 +500,15 @@ export function UniversityCredentialsPage() {
                 ) : null}
               </div>
               <button
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-gradient px-3.5 py-2.5 text-[0.82rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+                className="hidden items-center justify-center gap-2 rounded-xl bg-brand-gradient px-3.5 py-2.5 text-[0.82rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 sm:inline-flex"
                 disabled={isLoading}
                 type="button"
                 onClick={handleSendAll}
               >
                 <Send aria-hidden="true" className="h-4 w-4" />
-                <span>{universityAdminContent.credentialsPage.actionLabels.sendAll}</span>
+                <span>
+                  {universityAdminContent.credentialsPage.actionLabels.sendAll}
+                </span>
               </button>
             </div>
           </div>
@@ -483,11 +525,17 @@ export function UniversityCredentialsPage() {
           <div className="admin-scrollbar min-h-0 flex-1 overflow-x-auto overflow-y-auto">
             <table className="min-w-full">
               <thead className="sticky top-0 z-10 bg-slate-100 text-left">
-                <tr className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-ink-muted">
-                  <th className="px-4 py-2.5 sm:px-5">Estudiante</th>
-                  <th className="px-4 py-2.5">Correo electronico</th>
-                  <th className="px-4 py-2.5 text-center">Estado</th>
-                  <th className="px-4 py-2.5 text-center sm:px-5">Acciones</th>
+                <tr className="text-[0.6rem] font-bold uppercase tracking-[0.14em] text-ink-muted sm:text-[0.64rem] sm:tracking-[0.16em]">
+                  <th className="px-3 py-2 sm:px-5 sm:py-2.5">Estudiante</th>
+                  <th className="px-3 py-2 sm:px-4 sm:py-2.5">
+                    Correo electronico
+                  </th>
+                  <th className="px-3 py-2 text-center sm:px-4 sm:py-2.5">
+                    Estado
+                  </th>
+                  <th className="px-3 py-2 text-center sm:px-5 sm:py-2.5">
+                    Acciones
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200/80">
@@ -500,28 +548,30 @@ export function UniversityCredentialsPage() {
                     <tr key={credential.id} className="align-top">
                       <td
                         className={classNames(
-                          'px-4 pt-3 sm:px-5',
-                          isLast ? 'pb-3.5' : 'pb-3',
+                          'px-3 pt-2.5 sm:px-5 sm:pt-3',
+                          isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
                         )}
                       >
-                        <div className="space-y-1">
-                          <p className="text-[0.83rem] font-semibold text-ink">{credential.studentName}</p>
-                          <p className="text-[0.72rem] text-ink-muted sm:text-[0.76rem]">
+                        <div className="space-y-0.5 sm:space-y-1">
+                          <p className="text-[0.78rem] font-semibold text-ink sm:text-[0.83rem]">
+                            {credential.studentName}
+                          </p>
+                          <p className="text-[0.68rem] text-ink-muted sm:text-[0.76rem]">
                             {credential.studentDocument}
                           </p>
-                          <p className="text-[0.72rem] text-ink-muted sm:text-[0.76rem]">
+                          <p className="text-[0.68rem] text-ink-muted sm:text-[0.76rem]">
                             {formatLastSentAt(credential.lastSentAt)}
                           </p>
                         </div>
                       </td>
                       <td
                         className={classNames(
-                          'px-4 pt-3',
-                          isLast ? 'pb-3.5' : 'pb-3',
+                          'px-3 pt-2.5 sm:px-4 sm:pt-3',
+                          isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
                         )}
                       >
                         {isEditing ? (
-                            <div className="max-w-[20rem] space-y-1.5">
+                          <div className="max-w-[20rem] space-y-1.5">
                             <label
                               className="sr-only"
                               htmlFor={`credential-email-${credential.id}`}
@@ -531,10 +581,10 @@ export function UniversityCredentialsPage() {
                             <div className="relative">
                               <Mail
                                 aria-hidden="true"
-                                className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ghost"
+                                className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ghost sm:left-3.5 sm:h-4 sm:w-4"
                               />
                               <input
-                                className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-10 pr-4 text-[0.82rem] text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:border-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                                className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-8.5 pr-3 text-[0.78rem] text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:border-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:pl-10 sm:pr-4 sm:text-[0.82rem]"
                                 id={`credential-email-${credential.id}`}
                                 type="email"
                                 value={emailDraft}
@@ -545,47 +595,64 @@ export function UniversityCredentialsPage() {
                               />
                             </div>
                             {emailError ? (
-                              <p className="text-xs font-medium text-rose-700">{emailError}</p>
+                              <p className="text-xs font-medium text-rose-700">
+                                {emailError}
+                              </p>
                             ) : null}
                           </div>
                         ) : (
-                          <div className="inline-flex items-center gap-2 text-[0.82rem] text-ink-muted">
-                            <Mail aria-hidden="true" className="h-4 w-4 shrink-0" />
+                          <div className="inline-flex items-center gap-1.5 text-[0.76rem] text-ink-muted sm:gap-2 sm:text-[0.82rem]">
+                            <Mail
+                              aria-hidden="true"
+                              className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4"
+                            />
                             <span>{credential.studentEmail}</span>
                           </div>
                         )}
                       </td>
                       <td
                         className={classNames(
-                          'px-4 pt-3 text-center',
-                          isLast ? 'pb-3.5' : 'pb-3',
+                          'px-3 pt-2.5 text-center sm:px-4 sm:pt-3',
+                          isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
                         )}
                       >
                         <div className="flex items-center justify-center">
-                          <AdminStatusBadge entity="credential" status={credential.deliveryStatus} />
+                          <AdminStatusBadge
+                            entity="credential"
+                            status={credential.deliveryStatus}
+                          />
                         </div>
                       </td>
                       <td
                         className={classNames(
-                          'px-4 pt-3 text-center sm:px-5',
-                          isLast ? 'pb-3.5' : 'pb-3',
+                          'px-3 pt-2.5 text-center sm:px-5 sm:pt-3',
+                          isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
                         )}
                       >
-                        <div className="mt-0.5 flex flex-nowrap items-center justify-center gap-1.5 sm:gap-2">
+                        <div className="mt-0.5 flex flex-nowrap items-center justify-center gap-1 sm:gap-2">
                           {isEditing ? (
                             <>
                               <button
-                                aria-label={universityAdminContent.credentialsPage.actionLabels.saveEmail}
+                                aria-label={
+                                  universityAdminContent.credentialsPage
+                                    .actionLabels.saveEmail
+                                }
                                 className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition duration-200 hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs sm:font-semibold"
                                 disabled={isLoading}
                                 type="button"
                                 onClick={() =>
-                                  handleSaveEmail(credential.id, credential.studentName)
+                                  handleSaveEmail(
+                                    credential.id,
+                                    credential.studentName,
+                                  )
                                 }
                               >
                                 <Check aria-hidden="true" className="h-4 w-4" />
                                 <span className="hidden sm:inline">
-                                  {universityAdminContent.credentialsPage.actionLabels.saveEmail}
+                                  {
+                                    universityAdminContent.credentialsPage
+                                      .actionLabels.saveEmail
+                                  }
                                 </span>
                               </button>
                               <button
@@ -596,7 +663,9 @@ export function UniversityCredentialsPage() {
                                 onClick={handleCancelEmailEdit}
                               >
                                 <X aria-hidden="true" className="h-4 w-4" />
-                                <span className="hidden sm:inline">Cancelar</span>
+                                <span className="hidden sm:inline">
+                                  Cancelar
+                                </span>
                               </button>
                             </>
                           ) : (
@@ -604,13 +673,17 @@ export function UniversityCredentialsPage() {
                               <button
                                 aria-label={
                                   isGenerated
-                                    ? universityAdminContent.credentialsPage.actionLabels.send
-                                    : universityAdminContent.credentialsPage.actionLabels.resend
+                                    ? universityAdminContent.credentialsPage
+                                        .actionLabels.send
+                                    : universityAdminContent.credentialsPage
+                                        .actionLabels.resend
                                 }
                                 title={
                                   isGenerated
-                                    ? universityAdminContent.credentialsPage.actionLabels.send
-                                    : universityAdminContent.credentialsPage.actionLabels.resend
+                                    ? universityAdminContent.credentialsPage
+                                        .actionLabels.send
+                                    : universityAdminContent.credentialsPage
+                                        .actionLabels.resend
                                 }
                                 className={classNames(
                                   'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs sm:font-semibold',
@@ -628,32 +701,58 @@ export function UniversityCredentialsPage() {
                                 }}
                               >
                                 {isGenerated ? (
-                                  <Send aria-hidden="true" className="h-4 w-4" />
+                                  <Send
+                                    aria-hidden="true"
+                                    className="h-4 w-4"
+                                  />
                                 ) : (
-                                  <RotateCcw aria-hidden="true" className="h-4 w-4" />
+                                  <RotateCcw
+                                    aria-hidden="true"
+                                    className="h-4 w-4"
+                                  />
                                 )}
                                 <span className="hidden sm:inline">
                                   {isGenerated
-                                    ? universityAdminContent.credentialsPage.actionLabels.send
-                                    : universityAdminContent.credentialsPage.actionLabels.resend}
+                                    ? universityAdminContent.credentialsPage
+                                        .actionLabels.send
+                                    : universityAdminContent.credentialsPage
+                                        .actionLabels.resend}
                                 </span>
                               </button>
                               <button
-                                aria-label={universityAdminContent.credentialsPage.actionLabels.editEmail}
-                                title={universityAdminContent.credentialsPage.actionLabels.editEmail}
+                                aria-label={
+                                  universityAdminContent.credentialsPage
+                                    .actionLabels.editEmail
+                                }
+                                title={
+                                  universityAdminContent.credentialsPage
+                                    .actionLabels.editEmail
+                                }
                                 className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs sm:font-semibold"
                                 disabled={isLoading}
                                 type="button"
                                 onClick={() => handleStartEmailEdit(credential)}
                               >
-                                <PencilLine aria-hidden="true" className="h-4 w-4" />
+                                <PencilLine
+                                  aria-hidden="true"
+                                  className="h-4 w-4"
+                                />
                                 <span className="hidden sm:inline">
-                                  {universityAdminContent.credentialsPage.actionLabels.editEmail}
+                                  {
+                                    universityAdminContent.credentialsPage
+                                      .actionLabels.editEmail
+                                  }
                                 </span>
                               </button>
                               <button
-                                aria-label={universityAdminContent.credentialsPage.actionLabels.delete}
-                                title={universityAdminContent.credentialsPage.actionLabels.delete}
+                                aria-label={
+                                  universityAdminContent.credentialsPage
+                                    .actionLabels.delete
+                                }
+                                title={
+                                  universityAdminContent.credentialsPage
+                                    .actionLabels.delete
+                                }
                                 className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-700 transition duration-200 hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200/70 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs sm:font-semibold"
                                 disabled={isLoading}
                                 type="button"
@@ -664,9 +763,15 @@ export function UniversityCredentialsPage() {
                                   });
                                 }}
                               >
-                                <Trash2 aria-hidden="true" className="h-4 w-4" />
+                                <Trash2
+                                  aria-hidden="true"
+                                  className="h-4 w-4"
+                                />
                                 <span className="hidden sm:inline">
-                                  {universityAdminContent.credentialsPage.actionLabels.delete}
+                                  {
+                                    universityAdminContent.credentialsPage
+                                      .actionLabels.delete
+                                  }
                                 </span>
                               </button>
                             </>
