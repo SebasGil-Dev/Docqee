@@ -551,7 +551,7 @@ function clearPersistedPatientModuleCache() {
   storage.removeItem(PATIENT_STUDENT_DIRECTORY_INDEX_STORAGE_KEY);
 }
 
-function readPersistedPatientModuleCache() {
+function readPersistedPatientModuleCache(): PersistedPatientModuleCache | null {
   const storage = readSessionStorage();
   const session = readAuthSession();
 
@@ -580,7 +580,7 @@ function readPersistedPatientModuleCache() {
       return null;
     }
 
-    return parsedCache;
+    return parsedCache as PersistedPatientModuleCache;
   } catch {
     storage.removeItem(PATIENT_MODULE_CACHE_STORAGE_KEY);
     return null;
@@ -631,6 +631,8 @@ function createRuntimeInitialState(): PatientStoreState {
   }
 
   lastDashboardStudents = cachedState.students;
+  studentDirectoryIndex = cachedState.students;
+  studentDirectoryIndexUpdatedAt = cachedState.updatedAt;
 
   return {
     ...createEmptyRuntimeState(),
@@ -888,14 +890,43 @@ function cacheDefaultStudentSearch(moduleState: PatientModuleState) {
     return;
   }
 
+  studentDirectoryIndex = moduleState.students;
+  studentDirectoryIndexUpdatedAt = Date.now();
+  persistStudentDirectoryIndex(moduleState.students);
   cacheStudentSearch(
     createStudentSearchCacheKey({
       city: moduleState.profile.city,
-      limit: 6,
+      limit: moduleState.students.length,
       locality: moduleState.profile.locality,
     }),
     moduleState.students,
   );
+}
+
+function getFallbackStudentSearchSource() {
+  return (
+    getFreshStudentDirectoryIndex() ??
+    lastDashboardStudents ??
+    (state.students.length > 0 ? state.students : null)
+  );
+}
+
+function patchStudentsFromLocalSearchSource(
+  filters: PatientStudentDirectorySearchParams,
+  source: PatientStudentDirectoryItem[],
+  cacheKey: string,
+) {
+  const localStudents = filterStudentDirectoryIndex(filters, source);
+
+  cacheStudentSearch(cacheKey, localStudents);
+  patchState({
+    errorMessage: null,
+    isReady: true,
+    isSearchingStudents: false,
+    students: localStudents,
+  });
+
+  return localStudents;
 }
 
 function getErrorMessage(error: unknown, fallbackMessage: string) {
@@ -1130,6 +1161,7 @@ async function loadRuntimeState(forceRefresh = false) {
         persistCache: true,
         updateDashboardStudents: true,
       });
+      void prefetchStudentDirectory();
 
       nextRequestSequence = payload.requests.length + 1;
       nextConversationSequence = payload.conversations.length + 1;
@@ -1257,7 +1289,7 @@ async function searchStudents(filters: PatientStudentDirectorySearchParams) {
   const cacheKey = createStudentSearchCacheKey(filters);
   const cachedStudents = getCachedStudentSearch(cacheKey);
   const requestSequence = ++studentSearchRequestSequence;
-  const localDirectoryIndex = getFreshStudentDirectoryIndex();
+  const localSearchSource = getFallbackStudentSearchSource();
 
   if (cachedStudents) {
     patchState({
@@ -1270,21 +1302,22 @@ async function searchStudents(filters: PatientStudentDirectorySearchParams) {
     return cachedStudents;
   }
 
-  if (localDirectoryIndex) {
-    const localStudents = filterStudentDirectoryIndex(
+  if (localSearchSource) {
+    const localStudents = patchStudentsFromLocalSearchSource(
       filters,
-      localDirectoryIndex,
+      localSearchSource,
+      cacheKey,
     );
 
-    cacheStudentSearch(cacheKey, localStudents);
-    patchState({
-      errorMessage: null,
-      isReady: true,
-      isSearchingStudents: false,
-      students: localStudents,
-    });
-
-    void refreshStudentSearchFromServer(filters, cacheKey, requestSequence);
+    if (studentDirectoryIndexPromise) {
+      void refreshStudentSearchFromDirectoryIndex(
+        filters,
+        cacheKey,
+        requestSequence,
+      );
+    } else {
+      void refreshStudentSearchFromServer(filters, cacheKey, requestSequence);
+    }
 
     return localStudents;
   }
@@ -1372,12 +1405,43 @@ async function refreshStudentSearchFromServer(
   }
 }
 
+async function refreshStudentSearchFromDirectoryIndex(
+  filters: PatientStudentDirectorySearchParams,
+  cacheKey: string,
+  requestSequence: number,
+) {
+  try {
+    const pendingDirectoryIndex = studentDirectoryIndexPromise;
+
+    if (!pendingDirectoryIndex) {
+      return;
+    }
+
+    const source = await pendingDirectoryIndex;
+
+    if (requestSequence !== studentSearchRequestSequence) {
+      return;
+    }
+
+    patchStudentsFromLocalSearchSource(filters, source, cacheKey);
+  } catch {
+    if (requestSequence === studentSearchRequestSequence) {
+      void refreshStudentSearchFromServer(filters, cacheKey, requestSequence);
+    }
+  }
+}
+
 async function prefetchStudentDirectory() {
   if (IS_TEST_MODE) {
     return;
   }
 
-  if (getFreshStudentDirectoryIndex()) {
+  const currentIndex = getFreshStudentDirectoryIndex();
+
+  if (
+    currentIndex &&
+    currentIndex.length >= PATIENT_STUDENT_DIRECTORY_PREFETCH_LIMIT
+  ) {
     return;
   }
 
