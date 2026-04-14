@@ -1309,14 +1309,21 @@ async function searchStudents(filters: PatientStudentDirectorySearchParams) {
       cacheKey,
     );
 
+    const currentIndex = getFreshStudentDirectoryIndex();
+
+    if (
+      !currentIndex ||
+      currentIndex.length < PATIENT_STUDENT_DIRECTORY_PREFETCH_LIMIT
+    ) {
+      void prefetchStudentDirectory();
+    }
+
     if (studentDirectoryIndexPromise) {
       void refreshStudentSearchFromDirectoryIndex(
         filters,
         cacheKey,
         requestSequence,
       );
-    } else {
-      void refreshStudentSearchFromServer(filters, cacheKey, requestSequence);
     }
 
     return localStudents;
