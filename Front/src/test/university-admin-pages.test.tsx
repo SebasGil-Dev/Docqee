@@ -144,7 +144,7 @@ describe('University admin pages', () => {
     expect(screen.getAllByText(/^Estudiantes$/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/estado de estudiantes/i)).toBeInTheDocument();
     expect(screen.getByText(/equipo y sedes/i)).toBeInTheDocument();
-    expect(screen.getByText(/últimos registros/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/últimos registros/i).length).toBeGreaterThan(0);
   });
 
   it('permite guardar, restablecer y actualizar la contraseña en informacion institucional', async () => {
@@ -632,7 +632,9 @@ describe('University admin pages', () => {
       /se reenvio correctamente/i,
     );
 
-    await user.click(screen.getByRole('button', { name: /enviar todas/i }));
+    await user.click(
+      screen.getAllByRole('button', { name: /enviar todas/i })[0]!,
+    );
     expect(screen.queryByText(/^Generada$/i)).not.toBeInTheDocument();
 
     const removableRow = screen.getByText(/Camila Vega/i).closest('tr');

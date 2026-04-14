@@ -645,7 +645,7 @@ export function UniversityBulkUploadPage() {
               className="min-w-0 h-full border border-slate-200/80 bg-white shadow-none"
               paddingClassName="p-3 sm:p-4 lg:p-4.5 xl:p-5"
             >
-              <div className="space-y-3 sm:space-y-3.5 lg:space-y-3">
+              <div className="flex flex-col gap-3 sm:gap-3.5 lg:gap-3">
                 <div className="space-y-1 text-center">
                   <h2 className="font-headline text-[1rem] font-extrabold tracking-tight text-ink sm:text-[1.1rem]">
                     Plantilla base
@@ -701,7 +701,7 @@ export function UniversityBulkUploadPage() {
                     },
                   )}
                 </div>
-                <div className="flex justify-center sm:block">
+                <div className="order-2 flex justify-center sm:order-1 sm:block">
                   <button
                     className="mx-auto flex min-h-[2.9rem] w-auto items-center justify-center gap-2 rounded-xl bg-brand-gradient px-4 py-2.5 text-[0.78rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 sm:min-h-0 sm:w-full sm:px-4 sm:py-2.5 sm:text-[0.82rem]"
                     type="button"
@@ -718,7 +718,7 @@ export function UniversityBulkUploadPage() {
                     </span>
                   </button>
                 </div>
-                <div className="space-y-1 rounded-[1rem] border border-slate-200 bg-slate-50 p-2.5 text-[0.7rem] leading-4 text-ink-muted sm:p-3 sm:text-[0.74rem] sm:leading-5">
+                <div className="order-1 space-y-1 rounded-[1rem] border border-slate-200 bg-slate-50 p-2.5 text-[0.7rem] leading-4 text-ink-muted sm:order-2 sm:p-3 sm:text-[0.74rem] sm:leading-5">
                   <p className="font-semibold text-ink">Columnas requeridas</p>
                   {uploadState.templateType === 'students' ? (
                     <p>

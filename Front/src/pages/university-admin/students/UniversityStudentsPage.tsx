@@ -186,14 +186,14 @@ export function UniversityStudentsPage() {
           className="min-w-0 flex-1 overflow-hidden bg-brand-gradient text-white md:flex-[1.6]"
           paddingClassName="p-0"
         >
-          <div className="flex h-full items-center gap-1.5 px-2.25 py-1.25 sm:gap-2.5 sm:px-3.5 sm:py-2">
-            <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-[0.7rem] bg-white/12 text-white ring-1 ring-white/20 sm:h-7 sm:w-7 sm:rounded-[0.75rem]">
+          <div className="flex h-full items-center gap-2 px-2.25 py-1.25 sm:gap-2.5 sm:px-3.5 sm:py-2">
+            <span className="inline-flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded-[0.75rem] bg-white/12 text-white ring-1 ring-white/20 sm:h-7 sm:w-7 sm:rounded-[0.75rem]">
               <GraduationCap
                 aria-hidden="true"
-                className="h-3 w-3 sm:h-3.25 sm:w-3.25"
+                className="h-3.25 w-3.25 sm:h-3.25 sm:w-3.25"
               />
             </span>
-            <div className="min-w-0 flex items-baseline gap-1 sm:block">
+            <div className="min-w-0 flex items-baseline gap-1 ml-0.5 sm:ml-0 sm:block">
               <span className="font-headline text-[0.76rem] font-extrabold tracking-tight text-white sm:text-[1.45rem]">
                 {students.length}
               </span>
