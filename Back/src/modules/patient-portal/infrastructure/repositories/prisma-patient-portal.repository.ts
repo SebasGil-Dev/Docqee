@@ -24,31 +24,49 @@ import { UpdatePatientProfileDto } from "../../application/dto/update-patient-pr
 import { UpdatePatientRequestStatusDto } from "../../application/dto/update-patient-request-status.dto";
 import { PatientPortalRepository } from "../../domain/repositories/patient-portal.repository";
 
-const studentDirectoryInclude =
-  Prisma.validator<Prisma.cuenta_estudianteInclude>()({
-    persona: true,
+const studentDirectorySelect =
+  Prisma.validator<Prisma.cuenta_estudianteSelect>()({
+    id_cuenta: true,
+    semestre: true,
+    fecha_creacion: true,
+    persona: {
+      select: {
+        nombres: true,
+        apellidos: true,
+      },
+    },
     universidad: {
-      include: {
+      select: {
+        nombre: true,
         localidad: {
-          include: {
-            ciudad: true,
+          select: {
+            nombre: true,
+            ciudad: { select: { nombre: true } },
           },
         },
       },
     },
-    perfil_estudiante: true,
+    perfil_estudiante: {
+      select: {
+        descripcion: true,
+        disponibilidad_general: true,
+        foto_url: true,
+      },
+    },
     estudiante_tratamiento: {
       where: { estado: "ACTIVO" },
-      include: { tipo_tratamiento: true },
+      select: { tipo_tratamiento: { select: { nombre: true } } },
     },
     estudiante_sede_practica: {
       where: { estado: "ACTIVO" },
-      include: {
+      select: {
         sede: {
-          include: {
+          select: {
+            nombre: true,
             localidad: {
-              include: {
-                ciudad: true,
+              select: {
+                nombre: true,
+                ciudad: { select: { nombre: true } },
               },
             },
           },
@@ -58,13 +76,8 @@ const studentDirectoryInclude =
   });
 
 type StudentDirectoryRecord = Prisma.cuenta_estudianteGetPayload<{
-  include: typeof studentDirectoryInclude;
+  select: typeof studentDirectorySelect;
 }>;
-
-type StudentRatingSummary = {
-  averageRating: number | null;
-  reviewsCount: number;
-};
 
 type PatientDirectoryLocationPreference = {
   city: string;
@@ -121,9 +134,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
 
   private toStudentDirectoryDto(
     student: StudentDirectoryRecord,
-    ratingMap: Map<number, StudentRatingSummary>,
   ): PatientStudentDirectoryItemDto {
-    const rating = ratingMap.get(student.id_cuenta);
     const location = this.getStudentDirectoryLocation(student);
 
     return {
@@ -132,7 +143,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       availabilityGeneral:
         student.perfil_estudiante?.disponibilidad_general ?? "",
       availabilityStatus: "available",
-      averageRating: rating?.averageRating ?? null,
+      averageRating: null,
       biography: student.perfil_estudiante?.descripcion ?? "",
       city: location.city,
       firstName: student.persona.nombres,
@@ -140,7 +151,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       lastName: student.persona.apellidos,
       locality: location.locality,
       practiceSite: location.practiceSite,
-      reviewsCount: rating?.reviewsCount ?? 0,
+      reviewsCount: 0,
       semester: String(student.semestre),
       treatments: student.estudiante_tratamiento.map(
         (treatment) => treatment.tipo_tratamiento.nombre,
@@ -246,29 +257,6 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     return where;
   }
 
-  private async buildStudentRatingMap(studentIds: number[]) {
-    if (studentIds.length === 0) {
-      return new Map<number, StudentRatingSummary>();
-    }
-
-    const ratingGroups = await this.prisma.valoracion.groupBy({
-      by: ["id_cuenta_receptor"],
-      where: { id_cuenta_receptor: { in: studentIds } },
-      _avg: { calificacion: true },
-      _count: { _all: true },
-    });
-
-    return new Map(
-      ratingGroups.map((ratingGroup) => [
-        ratingGroup.id_cuenta_receptor,
-        {
-          averageRating: ratingGroup._avg.calificacion ?? null,
-          reviewsCount: ratingGroup._count._all,
-        },
-      ]),
-    );
-  }
-
   private async getStudentDirectoryFilters(): Promise<PatientStudentDirectoryFiltersDto> {
     const [treatments, universities, cities] = await Promise.all([
       this.prisma.tipo_tratamiento.findMany({
@@ -314,7 +302,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     query: PatientStudentDirectoryQueryDto,
     patientLocation?: PatientDirectoryLocationPreference,
   ): Promise<PatientStudentDirectoryItemDto[]> {
-    const limit = Math.min(Math.max(query.limit ?? 6, 1), 30);
+    const limit = Math.min(Math.max(query.limit ?? 6, 1), 120);
     const hasSearchCriteria = Boolean(
       normalizeText(query.search ?? "") ||
       normalizeText(query.treatment ?? "") ||
@@ -322,59 +310,54 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       normalizeText(query.locality ?? "") ||
       normalizeText(query.university ?? ""),
     );
-    const candidateLimit = hasSearchCriteria ? 80 : 60;
+    const shouldSortByPatientLocation = !hasSearchCriteria;
+    const candidateLimit = shouldSortByPatientLocation
+      ? Math.max(limit, 60)
+      : limit;
 
-    const patientLocationPromise = patientLocation
-      ? Promise.resolve(patientLocation)
-      : this.prisma.cuenta_paciente
-          .findUnique({
-            where: { id_cuenta: patientAccountId },
-            select: {
-              localidad: {
-                select: {
-                  nombre: true,
-                  ciudad: { select: { nombre: true } },
+    const patientLocationPromise = !shouldSortByPatientLocation
+      ? Promise.resolve(null)
+      : patientLocation
+        ? Promise.resolve(patientLocation)
+        : this.prisma.cuenta_paciente
+            .findUnique({
+              where: { id_cuenta: patientAccountId },
+              select: {
+                localidad: {
+                  select: {
+                    nombre: true,
+                    ciudad: { select: { nombre: true } },
+                  },
                 },
               },
-            },
-          })
-          .then((patient) =>
-            patient
-              ? {
-                  city: patient.localidad.ciudad.nombre,
-                  locality: patient.localidad.nombre,
-                }
-              : null,
-          );
+            })
+            .then((patient) =>
+              patient
+                ? {
+                    city: patient.localidad.ciudad.nombre,
+                    locality: patient.localidad.nombre,
+                  }
+                : null,
+            );
 
     const [resolvedPatientLocation, candidates] = await Promise.all([
       patientLocationPromise,
       this.prisma.cuenta_estudiante.findMany({
         where: this.buildStudentDirectoryWhere(query),
-        include: studentDirectoryInclude,
+        select: studentDirectorySelect,
         orderBy: { fecha_creacion: "desc" },
         take: candidateLimit,
       }),
     ]);
 
-    const ratingMap = await this.buildStudentRatingMap(
-      candidates.map((student) => student.id_cuenta),
-    );
-
     return candidates
       .map((student) => ({
-        dto: this.toStudentDirectoryDto(student, ratingMap),
+        dto: this.toStudentDirectoryDto(student),
         location: this.getStudentDirectoryLocation(student),
-        rating: ratingMap.get(student.id_cuenta),
       }))
       .sort((first, second) => {
-        if (hasSearchCriteria) {
-          return (
-            (second.rating?.averageRating ?? 0) -
-              (first.rating?.averageRating ?? 0) ||
-            (second.rating?.reviewsCount ?? 0) -
-              (first.rating?.reviewsCount ?? 0)
-          );
+        if (!shouldSortByPatientLocation) {
+          return 0;
         }
 
         const patientLocality =
@@ -391,10 +374,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
 
         return (
           secondSameLocality - firstSameLocality ||
-          secondSameCity - firstSameCity ||
-          (second.rating?.averageRating ?? 0) -
-            (first.rating?.averageRating ?? 0) ||
-          (second.rating?.reviewsCount ?? 0) - (first.rating?.reviewsCount ?? 0)
+          secondSameCity - firstSameCity
         );
       })
       .slice(0, limit)

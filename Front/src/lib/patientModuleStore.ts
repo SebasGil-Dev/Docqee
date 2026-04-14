@@ -32,6 +32,7 @@ type PatientModuleActions = {
     studentId: string,
     reason: string,
   ) => Promise<PatientRequest | null>;
+  prefetchStudentDirectory: () => Promise<void>;
   refresh: () => Promise<void>;
   refreshConversation: (conversationId: string) => Promise<void>;
   searchStudents: (
@@ -74,10 +75,18 @@ type CachedStudentSearch = {
   updatedAt: number;
 };
 
+type PersistedStudentDirectoryIndexCache = CachedStudentSearch & {
+  userId: number;
+};
+
 const PATIENT_MODULE_CACHE_STORAGE_KEY = 'docqee.patient.module-cache';
+const PATIENT_STUDENT_DIRECTORY_INDEX_STORAGE_KEY =
+  'docqee.patient.student-directory-index';
 const PATIENT_MODULE_CACHE_MAX_AGE_MS = 30 * 60 * 1000;
-const PATIENT_STUDENT_SEARCH_CACHE_MAX_AGE_MS = 5 * 60 * 1000;
-const PATIENT_STUDENT_SEARCH_CACHE_MAX_ENTRIES = 24;
+const PATIENT_STUDENT_SEARCH_CACHE_MAX_AGE_MS = 10 * 60 * 1000;
+const PATIENT_STUDENT_SEARCH_CACHE_MAX_ENTRIES = 48;
+const PATIENT_STUDENT_DIRECTORY_INDEX_MAX_AGE_MS = 10 * 60 * 1000;
+const PATIENT_STUDENT_DIRECTORY_PREFETCH_LIMIT = 120;
 
 const listeners = new Set<() => void>();
 const studentSearchCache = new Map<string, CachedStudentSearch>();
@@ -85,6 +94,11 @@ const studentSearchPromises = new Map<
   string,
   Promise<PatientStudentDirectoryItem[]>
 >();
+let studentDirectoryIndex: PatientStudentDirectoryItem[] | null = null;
+let studentDirectoryIndexPromise: Promise<
+  PatientStudentDirectoryItem[]
+> | null = null;
+let studentDirectoryIndexUpdatedAt = 0;
 let studentSearchRequestSequence = 0;
 let lastDashboardStudents: PatientStudentDirectoryItem[] | null = null;
 
@@ -136,35 +150,46 @@ function createStudentFilterOptions(students: PatientStudentDirectoryItem[]) {
   };
 }
 
-function matchesMockStudentSearch(
+function normalizeDirectoryFilterText(value: string | undefined) {
+  return (value ?? '')
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+function matchesStudentSearch(
   student: PatientStudentDirectoryItem,
   filters: PatientStudentDirectorySearchParams,
 ) {
-  const normalizedSearch = normalizeText(filters.search ?? '').toLowerCase();
+  const normalizedSearch = normalizeDirectoryFilterText(filters.search);
   const normalizedTreatment =
     filters.treatment && filters.treatment !== 'all'
-      ? normalizeText(filters.treatment).toLowerCase()
+      ? normalizeDirectoryFilterText(filters.treatment)
       : '';
   const normalizedCity =
     filters.city && filters.city !== 'all'
-      ? normalizeText(filters.city).toLowerCase()
+      ? normalizeDirectoryFilterText(filters.city)
       : '';
   const normalizedLocality =
     filters.locality && filters.locality !== 'all'
-      ? normalizeText(filters.locality).toLowerCase()
+      ? normalizeDirectoryFilterText(filters.locality)
       : '';
   const normalizedUniversity =
     filters.university && filters.university !== 'all'
-      ? normalizeText(filters.university).toLowerCase()
+      ? normalizeDirectoryFilterText(filters.university)
       : '';
-  const studentFullName =
-    `${student.firstName} ${student.lastName}`.toLowerCase();
-  const studentTreatments = student.treatments.map((treatment) =>
-    normalizeText(treatment).toLowerCase(),
+  const studentFullName = normalizeDirectoryFilterText(
+    `${student.firstName} ${student.lastName}`,
   );
-  const studentCity = normalizeText(student.city).toLowerCase();
-  const studentLocality = normalizeText(student.locality).toLowerCase();
-  const studentUniversity = normalizeText(student.universityName).toLowerCase();
+  const studentTreatments = student.treatments.map((treatment) =>
+    normalizeDirectoryFilterText(treatment),
+  );
+  const studentCity = normalizeDirectoryFilterText(student.city);
+  const studentLocality = normalizeDirectoryFilterText(student.locality);
+  const studentUniversity = normalizeDirectoryFilterText(
+    student.universityName,
+  );
 
   return (
     (!normalizedSearch || studentFullName.includes(normalizedSearch)) &&
@@ -523,6 +548,7 @@ function clearPersistedPatientModuleCache() {
   }
 
   storage.removeItem(PATIENT_MODULE_CACHE_STORAGE_KEY);
+  storage.removeItem(PATIENT_STUDENT_DIRECTORY_INDEX_STORAGE_KEY);
 }
 
 function readPersistedPatientModuleCache() {
@@ -759,6 +785,102 @@ function cacheStudentSearch(
   if (oldestKey) {
     studentSearchCache.delete(oldestKey);
   }
+}
+
+function getStudentSearchLimit(filters: PatientStudentDirectorySearchParams) {
+  return Math.min(Math.max(filters.limit ?? 20, 1), 120);
+}
+
+function getFreshStudentDirectoryIndex() {
+  if (!studentDirectoryIndex) {
+    const persistedStudents = readPersistedStudentDirectoryIndex();
+
+    if (persistedStudents) {
+      studentDirectoryIndex = persistedStudents;
+      studentDirectoryIndexUpdatedAt = Date.now();
+      return studentDirectoryIndex;
+    }
+
+    return null;
+  }
+
+  if (
+    Date.now() - studentDirectoryIndexUpdatedAt >
+    PATIENT_STUDENT_DIRECTORY_INDEX_MAX_AGE_MS
+  ) {
+    studentDirectoryIndex = null;
+    studentDirectoryIndexUpdatedAt = 0;
+    return null;
+  }
+
+  return studentDirectoryIndex;
+}
+
+function persistStudentDirectoryIndex(students: PatientStudentDirectoryItem[]) {
+  const storage = readSessionStorage();
+  const session = readAuthSession();
+
+  if (!storage || !session || session.user.role !== 'PATIENT') {
+    return;
+  }
+
+  const payload: PersistedStudentDirectoryIndexCache = {
+    students,
+    updatedAt: Date.now(),
+    userId: session.user.id,
+  };
+
+  storage.setItem(
+    PATIENT_STUDENT_DIRECTORY_INDEX_STORAGE_KEY,
+    JSON.stringify(payload),
+  );
+}
+
+function readPersistedStudentDirectoryIndex() {
+  const storage = readSessionStorage();
+  const session = readAuthSession();
+
+  if (!storage || !session || session.user.role !== 'PATIENT') {
+    return null;
+  }
+
+  const rawCache = storage.getItem(PATIENT_STUDENT_DIRECTORY_INDEX_STORAGE_KEY);
+
+  if (!rawCache) {
+    return null;
+  }
+
+  try {
+    const parsedCache = JSON.parse(
+      rawCache,
+    ) as Partial<PersistedStudentDirectoryIndexCache>;
+
+    if (
+      !Array.isArray(parsedCache.students) ||
+      typeof parsedCache.updatedAt !== 'number' ||
+      parsedCache.userId !== session.user.id ||
+      Date.now() - parsedCache.updatedAt >
+        PATIENT_STUDENT_DIRECTORY_INDEX_MAX_AGE_MS
+    ) {
+      storage.removeItem(PATIENT_STUDENT_DIRECTORY_INDEX_STORAGE_KEY);
+      return null;
+    }
+
+    return parsedCache.students;
+  } catch {
+    storage.removeItem(PATIENT_STUDENT_DIRECTORY_INDEX_STORAGE_KEY);
+    return null;
+  }
+}
+
+function filterStudentDirectoryIndex(
+  filters: PatientStudentDirectorySearchParams,
+  source: PatientStudentDirectoryItem[],
+) {
+  return source
+    .filter((student) => student.treatments.length > 0)
+    .filter((student) => matchesStudentSearch(student, filters))
+    .slice(0, getStudentSearchLimit(filters));
 }
 
 function cacheDefaultStudentSearch(moduleState: PatientModuleState) {
@@ -1122,7 +1244,7 @@ async function searchStudents(filters: PatientStudentDirectorySearchParams) {
     const limit = filters.limit ?? 20;
     const filteredStudents = initialMockState.students
       .filter((student) => student.treatments.length > 0)
-      .filter((student) => matchesMockStudentSearch(student, filters))
+      .filter((student) => matchesStudentSearch(student, filters))
       .slice(0, limit);
 
     patchState({
@@ -1135,6 +1257,7 @@ async function searchStudents(filters: PatientStudentDirectorySearchParams) {
   const cacheKey = createStudentSearchCacheKey(filters);
   const cachedStudents = getCachedStudentSearch(cacheKey);
   const requestSequence = ++studentSearchRequestSequence;
+  const localDirectoryIndex = getFreshStudentDirectoryIndex();
 
   if (cachedStudents) {
     patchState({
@@ -1147,21 +1270,32 @@ async function searchStudents(filters: PatientStudentDirectorySearchParams) {
     return cachedStudents;
   }
 
+  if (localDirectoryIndex) {
+    const localStudents = filterStudentDirectoryIndex(
+      filters,
+      localDirectoryIndex,
+    );
+
+    cacheStudentSearch(cacheKey, localStudents);
+    patchState({
+      errorMessage: null,
+      isReady: true,
+      isSearchingStudents: false,
+      students: localStudents,
+    });
+
+    void refreshStudentSearchFromServer(filters, cacheKey, requestSequence);
+
+    return localStudents;
+  }
+
   patchState({
     errorMessage: null,
     isSearchingStudents: true,
   });
 
   try {
-    const pendingSearch =
-      studentSearchPromises.get(cacheKey) ?? getPatientPortalStudents(filters);
-
-    studentSearchPromises.set(cacheKey, pendingSearch);
-
-    const students = await pendingSearch;
-
-    cacheStudentSearch(cacheKey, students);
-    studentSearchPromises.delete(cacheKey);
+    const students = await fetchStudentSearchFromServer(filters, cacheKey);
 
     if (requestSequence !== studentSearchRequestSequence) {
       return students;
@@ -1188,6 +1322,101 @@ async function searchStudents(filters: PatientStudentDirectorySearchParams) {
     });
     return [];
   }
+}
+
+async function fetchStudentSearchFromServer(
+  filters: PatientStudentDirectorySearchParams,
+  cacheKey: string,
+) {
+  const pendingSearch =
+    studentSearchPromises.get(cacheKey) ?? getPatientPortalStudents(filters);
+
+  studentSearchPromises.set(cacheKey, pendingSearch);
+
+  try {
+    const students = await pendingSearch;
+    cacheStudentSearch(cacheKey, students);
+
+    return students;
+  } finally {
+    if (studentSearchPromises.get(cacheKey) === pendingSearch) {
+      studentSearchPromises.delete(cacheKey);
+    }
+  }
+}
+
+async function refreshStudentSearchFromServer(
+  filters: PatientStudentDirectorySearchParams,
+  cacheKey: string,
+  requestSequence: number,
+) {
+  try {
+    const students = await fetchStudentSearchFromServer(filters, cacheKey);
+
+    if (requestSequence !== studentSearchRequestSequence) {
+      return;
+    }
+
+    patchState({
+      errorMessage: null,
+      isReady: true,
+      isSearchingStudents: false,
+      students,
+    });
+  } catch {
+    if (requestSequence === studentSearchRequestSequence) {
+      patchState({
+        isSearchingStudents: false,
+      });
+    }
+  }
+}
+
+async function prefetchStudentDirectory() {
+  if (IS_TEST_MODE) {
+    return;
+  }
+
+  if (getFreshStudentDirectoryIndex()) {
+    return;
+  }
+
+  if (studentDirectoryIndexPromise) {
+    await studentDirectoryIndexPromise.catch(() => []);
+    return;
+  }
+
+  const filters = { limit: PATIENT_STUDENT_DIRECTORY_PREFETCH_LIMIT };
+  const cacheKey = createStudentSearchCacheKey(filters);
+  const cachedStudents = getCachedStudentSearch(cacheKey);
+  const persistedStudents = readPersistedStudentDirectoryIndex();
+
+  if (cachedStudents) {
+    studentDirectoryIndex = cachedStudents;
+    studentDirectoryIndexUpdatedAt = Date.now();
+    return;
+  }
+
+  if (persistedStudents) {
+    studentDirectoryIndex = persistedStudents;
+    studentDirectoryIndexUpdatedAt = Date.now();
+    cacheStudentSearch(cacheKey, persistedStudents);
+    return;
+  }
+
+  studentDirectoryIndexPromise = getPatientPortalStudents(filters)
+    .then((students) => {
+      studentDirectoryIndex = students;
+      studentDirectoryIndexUpdatedAt = Date.now();
+      cacheStudentSearch(cacheKey, students);
+      persistStudentDirectoryIndex(students);
+      return students;
+    })
+    .finally(() => {
+      studentDirectoryIndexPromise = null;
+    });
+
+  await studentDirectoryIndexPromise.catch(() => []);
 }
 
 async function updateRequestStatus(
@@ -1385,6 +1614,9 @@ export function resetPatientModuleState() {
       0,
     ) + 1;
   lastDashboardStudents = null;
+  studentDirectoryIndex = null;
+  studentDirectoryIndexPromise = null;
+  studentDirectoryIndexUpdatedAt = 0;
   runtimeLoadPromise = null;
   studentSearchCache.clear();
   studentSearchPromises.clear();
@@ -1418,6 +1650,7 @@ export function usePatientModuleStore(
 
   const actions: PatientModuleActions = {
     createRequest,
+    prefetchStudentDirectory,
     refresh: refreshPatientModuleState,
     refreshConversation,
     searchStudents,

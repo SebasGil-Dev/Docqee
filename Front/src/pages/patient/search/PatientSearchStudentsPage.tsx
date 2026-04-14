@@ -77,6 +77,7 @@ export function PatientSearchStudentsPage() {
     isLoading,
     isReady,
     isSearchingStudents,
+    prefetchStudentDirectory,
     profile,
     requests,
     searchStudents,
@@ -177,6 +178,14 @@ export function PatientSearchStudentsPage() {
   ]);
 
   useEffect(() => {
+    if (IS_TEST_MODE || !isReady) {
+      return;
+    }
+
+    void prefetchStudentDirectory();
+  }, [isReady, prefetchStudentDirectory]);
+
+  useEffect(() => {
     if (
       selectedStudentId &&
       !students.some((student) => student.id === selectedStudentId)
@@ -199,7 +208,7 @@ export function PatientSearchStudentsPage() {
         treatment: treatmentFilter,
         university: universityFilter,
       });
-    }, 300);
+    }, 120);
 
     return () => {
       window.clearTimeout(timeoutId);
