@@ -149,6 +149,7 @@ model cuenta_estudiante {
   solicitud                solicitud[]
 
   @@index([id_universidad, fecha_creacion], map: "idx_cuenta_estudiante_universidad_fecha")
+  @@index([fecha_creacion], map: "idx_cuenta_estudiante_fecha")
 }
 
 model cuenta_paciente {
@@ -233,6 +234,8 @@ model estudiante_sede_practica {
   sede                        sede               @relation(fields: [id_sede], references: [id_sede], onDelete: NoAction, onUpdate: NoAction, map: "fk_estudiante_sede_sede")
 
   @@unique([id_cuenta_estudiante, id_sede], map: "uq_estudiante_sede")
+  @@index([estado, id_cuenta_estudiante], map: "idx_estudiante_sede_estado_estudiante")
+  @@index([id_sede, estado, id_cuenta_estudiante], map: "idx_estudiante_sede_sede_estado_estudiante")
 }
 
 model estudiante_tratamiento {
@@ -246,6 +249,8 @@ model estudiante_tratamiento {
   tipo_tratamiento          tipo_tratamiento   @relation(fields: [id_tipo_tratamiento], references: [id_tipo_tratamiento], onDelete: NoAction, onUpdate: NoAction, map: "fk_estudiante_tratamiento_tipo")
 
   @@unique([id_cuenta_estudiante, id_tipo_tratamiento], map: "uq_estudiante_tratamiento")
+  @@index([estado, id_cuenta_estudiante], map: "idx_estudiante_tratamiento_estado_estudiante")
+  @@index([id_tipo_tratamiento, estado, id_cuenta_estudiante], map: "idx_estudiante_tratamiento_tipo_estado_estudiante")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -381,6 +386,7 @@ model sede {
 
   @@unique([id_universidad, nombre], map: "uq_sede_universidad_nombre")
   @@index([id_localidad], map: "idx_sede_localidad")
+  @@index([id_localidad, estado], map: "idx_sede_localidad_estado")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
