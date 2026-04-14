@@ -117,6 +117,8 @@ let studentDirectoryFiltersCache:
     }
   | null = null;
 
+const PATIENT_INITIAL_STUDENT_DIRECTORY_LIMIT = 5;
+
 @Injectable()
 export class PrismaPatientPortalRepository extends PatientPortalRepository {
   constructor(private readonly prisma: PrismaService) {
@@ -430,6 +432,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     const conditions: Prisma.Sql[] = [
       Prisma.sql`ca.estado = 'ACTIVO'::estado_simple_enum`,
       Prisma.sql`u.estado = 'ACTIVO'::estado_simple_enum`,
+      Prisma.sql`practice.practice_site IS NOT NULL`,
       Prisma.sql`COALESCE(array_length(treatments.treatments, 1), 0) > 0`,
     ];
 
@@ -460,65 +463,34 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     }
 
     if (normalizedCity) {
-      conditions.push(Prisma.sql`(
-        EXISTS (
-          SELECT 1
-          FROM estudiante_sede_practica esp_filter
-          INNER JOIN sede s_filter ON s_filter.id_sede = esp_filter.id_sede
-          INNER JOIN localidad l_filter
-            ON l_filter.id_localidad = s_filter.id_localidad
-          INNER JOIN ciudad c_filter ON c_filter.id_ciudad = l_filter.id_ciudad
-          WHERE esp_filter.id_cuenta_estudiante = ce.id_cuenta
-            AND esp_filter.estado = 'ACTIVO'::estado_simple_enum
-            AND s_filter.estado = 'ACTIVO'::estado_simple_enum
-            AND c_filter.nombre ILIKE ${normalizedCity}
-            ${
-              normalizedLocality
-                ? Prisma.sql`AND l_filter.nombre ILIKE ${normalizedLocality}`
-                : Prisma.empty
-            }
-        )
-        OR (
-          NOT EXISTS (
-            SELECT 1
-            FROM estudiante_sede_practica esp_any
-            INNER JOIN sede s_any ON s_any.id_sede = esp_any.id_sede
-            WHERE esp_any.id_cuenta_estudiante = ce.id_cuenta
-              AND esp_any.estado = 'ACTIVO'::estado_simple_enum
-              AND s_any.estado = 'ACTIVO'::estado_simple_enum
-          )
-          AND fallback_city.nombre ILIKE ${normalizedCity}
+      conditions.push(Prisma.sql`EXISTS (
+        SELECT 1
+        FROM estudiante_sede_practica esp_filter
+        INNER JOIN sede s_filter ON s_filter.id_sede = esp_filter.id_sede
+        INNER JOIN localidad l_filter
+          ON l_filter.id_localidad = s_filter.id_localidad
+        INNER JOIN ciudad c_filter ON c_filter.id_ciudad = l_filter.id_ciudad
+        WHERE esp_filter.id_cuenta_estudiante = ce.id_cuenta
+          AND esp_filter.estado = 'ACTIVO'::estado_simple_enum
+          AND s_filter.estado = 'ACTIVO'::estado_simple_enum
+          AND c_filter.nombre ILIKE ${normalizedCity}
           ${
             normalizedLocality
-              ? Prisma.sql`AND fallback_locality.nombre ILIKE ${normalizedLocality}`
+              ? Prisma.sql`AND l_filter.nombre ILIKE ${normalizedLocality}`
               : Prisma.empty
           }
-        )
       )`);
     } else if (normalizedLocality) {
-      conditions.push(Prisma.sql`(
-        EXISTS (
-          SELECT 1
-          FROM estudiante_sede_practica esp_filter
-          INNER JOIN sede s_filter ON s_filter.id_sede = esp_filter.id_sede
-          INNER JOIN localidad l_filter
-            ON l_filter.id_localidad = s_filter.id_localidad
-          WHERE esp_filter.id_cuenta_estudiante = ce.id_cuenta
-            AND esp_filter.estado = 'ACTIVO'::estado_simple_enum
-            AND s_filter.estado = 'ACTIVO'::estado_simple_enum
-            AND l_filter.nombre ILIKE ${normalizedLocality}
-        )
-        OR (
-          NOT EXISTS (
-            SELECT 1
-            FROM estudiante_sede_practica esp_any
-            INNER JOIN sede s_any ON s_any.id_sede = esp_any.id_sede
-            WHERE esp_any.id_cuenta_estudiante = ce.id_cuenta
-              AND esp_any.estado = 'ACTIVO'::estado_simple_enum
-              AND s_any.estado = 'ACTIVO'::estado_simple_enum
-          )
-          AND fallback_locality.nombre ILIKE ${normalizedLocality}
-        )
+      conditions.push(Prisma.sql`EXISTS (
+        SELECT 1
+        FROM estudiante_sede_practica esp_filter
+        INNER JOIN sede s_filter ON s_filter.id_sede = esp_filter.id_sede
+        INNER JOIN localidad l_filter
+          ON l_filter.id_localidad = s_filter.id_localidad
+        WHERE esp_filter.id_cuenta_estudiante = ce.id_cuenta
+          AND esp_filter.estado = 'ACTIVO'::estado_simple_enum
+          AND s_filter.estado = 'ACTIVO'::estado_simple_enum
+          AND l_filter.nombre ILIKE ${normalizedLocality}
       )`);
     }
 
@@ -541,8 +513,8 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       shouldSortByPatientLocation && resolvedPatientLocation
         ? Prisma.sql`
             CASE
-              WHEN LOWER(COALESCE(practice.locality, fallback_locality.nombre)) = LOWER(${resolvedPatientLocation.locality}) THEN 2
-              WHEN LOWER(COALESCE(practice.city, fallback_city.nombre)) = LOWER(${resolvedPatientLocation.city}) THEN 1
+              WHEN LOWER(practice.locality) = LOWER(${resolvedPatientLocation.locality}) THEN 2
+              WHEN LOWER(practice.city) = LOWER(${resolvedPatientLocation.city}) THEN 1
               ELSE 0
             END DESC,
           `
@@ -560,8 +532,8 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         pe.descripcion,
         pe.disponibilidad_general,
         pe.foto_url,
-        COALESCE(practice.city, fallback_city.nombre) AS city,
-        COALESCE(practice.locality, fallback_locality.nombre) AS locality,
+        practice.city AS city,
+        practice.locality AS locality,
         practice.practice_site,
         COALESCE(practice_sites.practice_sites, '[]'::jsonb) AS practice_sites,
         COALESCE(treatments.treatments, ARRAY[]::text[]) AS treatments
@@ -655,13 +627,9 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
           locality: patient.localidad.nombre,
         }
       : null;
-    const initialStudentQuery: PatientStudentDirectoryQueryDto = patientLocation
-      ? {
-          city: patientLocation.city,
-          limit: 20,
-          locality: patientLocation.locality,
-        }
-      : { limit: 20 };
+    const initialStudentQuery: PatientStudentDirectoryQueryDto = {
+      limit: PATIENT_INITIAL_STUDENT_DIRECTORY_LIMIT,
+    };
     const [solicitudes, valoraciones, initialStudents, studentFilters] =
       await Promise.all([
         this.prisma.solicitud.findMany({
@@ -722,7 +690,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       patient && initialStudents.length === 0
         ? await this.getStudentDirectory(
             patientAccountId,
-            { limit: 20 },
+            { limit: PATIENT_INITIAL_STUDENT_DIRECTORY_LIMIT },
             patientLocation ?? undefined,
           )
         : initialStudents;
