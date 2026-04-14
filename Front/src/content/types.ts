@@ -1145,11 +1145,20 @@ export type PatientStudentDirectoryItem = {
   lastName: string;
   locality: string;
   practiceSite: string;
+  practiceSites?: PatientStudentPracticeSiteSummary[];
   reviewsCount: number;
   semester: string;
   firstName: string;
   treatments: string[];
+  universityCity?: string;
+  universityLocality?: string;
   universityName: string;
+};
+
+export type PatientStudentPracticeSiteSummary = {
+  city: string;
+  locality: string;
+  name: string;
 };
 
 export type PatientStudentDirectoryFilterOption = {

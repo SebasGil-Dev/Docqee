@@ -13,7 +13,10 @@ import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
 import { Seo } from '@/components/ui/Seo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { patientContent } from '@/content/patientContent';
-import type { PatientStudentDirectoryItem } from '@/content/types';
+import type {
+  PatientStudentDirectoryItem,
+  PatientStudentPracticeSiteSummary,
+} from '@/content/types';
 import { IS_TEST_MODE } from '@/lib/apiClient';
 import { classNames } from '@/lib/classNames';
 import { formatDisplayName } from '@/lib/formatDisplayName';
@@ -30,16 +33,43 @@ function getStudentInitials(student: PatientStudentDirectoryItem) {
   return `${student.firstName.charAt(0)}${student.lastName.charAt(0)}`.toUpperCase();
 }
 
-function getStudentLocation(student: PatientStudentDirectoryItem) {
-  const locationParts = [student.city, student.locality].filter(Boolean);
+function getLocationLabel(city?: string, locality?: string) {
+  const locationParts = [city, locality].filter(Boolean);
 
   return locationParts.length
     ? locationParts.join(' - ')
     : 'Ubicacion por confirmar';
 }
 
+function getStudentLocation(student: PatientStudentDirectoryItem) {
+  return getLocationLabel(student.city, student.locality);
+}
+
+function getUniversityLocation(student: PatientStudentDirectoryItem) {
+  return getLocationLabel(
+    student.universityCity ?? student.city,
+    student.universityLocality ?? student.locality,
+  );
+}
+
+function getStudentPracticeSites(student: PatientStudentDirectoryItem) {
+  if (student.practiceSites?.length) {
+    return student.practiceSites;
+  }
+
+  return student.practiceSite
+    ? [
+        {
+          city: student.city,
+          locality: student.locality,
+          name: student.practiceSite,
+        },
+      ]
+    : [];
+}
+
 function getStudentPracticeSite(student: PatientStudentDirectoryItem) {
-  return student.practiceSite || 'Sede por confirmar';
+  return getStudentPracticeSites(student)[0]?.name || 'Sede por confirmar';
 }
 
 function getStudentAvailability(student: PatientStudentDirectoryItem) {
@@ -52,6 +82,45 @@ function normalizeTreatmentFilter(value: string) {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase();
+}
+
+function getVisiblePracticeSite(
+  student: PatientStudentDirectoryItem,
+  selectedCity: NamedFilter,
+  selectedLocality: NamedFilter,
+): PatientStudentPracticeSiteSummary | null {
+  const practiceSites = getStudentPracticeSites(student);
+
+  if (practiceSites.length === 0) {
+    return null;
+  }
+
+  if (selectedLocality !== 'all') {
+    const normalizedSelectedLocality = normalizeTreatmentFilter(
+      selectedLocality,
+    );
+    const matchingLocality = practiceSites.find(
+      (site) =>
+        normalizeTreatmentFilter(site.locality) === normalizedSelectedLocality,
+    );
+
+    if (matchingLocality) {
+      return matchingLocality;
+    }
+  }
+
+  if (selectedCity !== 'all') {
+    const normalizedSelectedCity = normalizeTreatmentFilter(selectedCity);
+    const matchingCity = practiceSites.find(
+      (site) => normalizeTreatmentFilter(site.city) === normalizedSelectedCity,
+    );
+
+    if (matchingCity) {
+      return matchingCity;
+    }
+  }
+
+  return practiceSites[0] ?? null;
 }
 
 function getVisibleTreatments(
@@ -595,6 +664,15 @@ export function PatientSearchStudentsPage() {
                         );
                         const hiddenTreatmentsCount =
                           student.treatments.length - visibleTreatments.length;
+                        const visiblePracticeSite = getVisiblePracticeSite(
+                          student,
+                          cityFilter,
+                          localityFilter,
+                        );
+                        const hiddenPracticeSitesCount = Math.max(
+                          getStudentPracticeSites(student).length - 1,
+                          0,
+                        );
 
                         return (
                           <tr
@@ -617,17 +695,35 @@ export function PatientSearchStudentsPage() {
                               </div>
                             </td>
                             <td className="px-3 py-2">
-                              <p className="truncate text-[0.8rem] font-medium text-ink">
-                                {student.universityName}
-                              </p>
+                              <div className="space-y-0.5">
+                                <p className="truncate text-[0.8rem] font-medium text-ink">
+                                  {student.universityName}
+                                </p>
+                                <p className="truncate text-[0.68rem] text-ink-muted">
+                                  {getUniversityLocation(student)}
+                                </p>
+                              </div>
                             </td>
                             <td className="px-3 py-2">
                               <div className="space-y-0.5">
-                                <p className="truncate text-[0.8rem] font-medium text-ink">
-                                  {getStudentPracticeSite(student)}
-                                </p>
+                                <div className="flex min-w-0 items-center gap-1.5">
+                                  <p className="min-w-0 truncate text-[0.8rem] font-medium text-ink">
+                                    {visiblePracticeSite?.name ??
+                                      'Sede por confirmar'}
+                                  </p>
+                                  {hiddenPracticeSitesCount > 0 ? (
+                                    <span className="inline-flex shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[0.64rem] font-semibold text-ink-muted">
+                                      +{hiddenPracticeSitesCount}
+                                    </span>
+                                  ) : null}
+                                </div>
                                 <p className="truncate text-[0.68rem] text-ink-muted">
-                                  {getStudentLocation(student)}
+                                  {visiblePracticeSite
+                                    ? getLocationLabel(
+                                        visiblePracticeSite.city,
+                                        visiblePracticeSite.locality,
+                                      )
+                                    : getStudentLocation(student)}
                                 </p>
                               </div>
                             </td>

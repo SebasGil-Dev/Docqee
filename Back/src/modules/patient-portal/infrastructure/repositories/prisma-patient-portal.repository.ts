@@ -90,12 +90,21 @@ type StudentDirectoryRow = {
   nombres: string;
   apellidos: string;
   universidad_nombre: string;
+  university_city: string;
+  university_locality: string;
   descripcion: string | null;
   disponibilidad_general: string | null;
   foto_url: string | null;
   city: string;
   locality: string;
   practice_site: string | null;
+  practice_sites:
+    | {
+        city: string;
+        locality: string;
+        name: string;
+      }[]
+    | null;
   treatments: string[] | null;
 };
 
@@ -160,6 +169,11 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     student: StudentDirectoryRecord,
   ): PatientStudentDirectoryItemDto {
     const location = this.getStudentDirectoryLocation(student);
+    const practiceSites = student.estudiante_sede_practica.map((practice) => ({
+      city: practice.sede.localidad.ciudad.nombre,
+      locality: practice.sede.localidad.nombre,
+      name: practice.sede.nombre,
+    }));
 
     return {
       avatarAlt: `Foto de perfil de ${student.persona.nombres}`,
@@ -175,11 +189,14 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       lastName: student.persona.apellidos,
       locality: location.locality,
       practiceSite: location.practiceSite,
+      practiceSites,
       reviewsCount: 0,
       semester: String(student.semestre),
       treatments: student.estudiante_tratamiento.map(
         (treatment) => treatment.tipo_tratamiento.nombre,
       ),
+      universityCity: student.universidad.localidad.ciudad.nombre,
+      universityLocality: student.universidad.localidad.nombre,
       universityName: student.universidad.nombre,
     };
   }
@@ -200,9 +217,12 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       lastName: student.apellidos,
       locality: student.locality,
       practiceSite: student.practice_site ?? "",
+      practiceSites: student.practice_sites ?? [],
       reviewsCount: 0,
       semester: String(student.semestre),
       treatments: student.treatments ?? [],
+      universityCity: student.university_city,
+      universityLocality: student.university_locality,
       universityName: student.universidad_nombre,
     };
   }
@@ -440,20 +460,82 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     }
 
     if (normalizedCity) {
-      conditions.push(
-        Prisma.sql`COALESCE(practice.city, fallback_city.nombre) ILIKE ${normalizedCity}`,
-      );
-    }
-
-    if (normalizedLocality) {
-      conditions.push(
-        Prisma.sql`COALESCE(practice.locality, fallback_locality.nombre) ILIKE ${normalizedLocality}`,
-      );
+      conditions.push(Prisma.sql`(
+        EXISTS (
+          SELECT 1
+          FROM estudiante_sede_practica esp_filter
+          INNER JOIN sede s_filter ON s_filter.id_sede = esp_filter.id_sede
+          INNER JOIN localidad l_filter
+            ON l_filter.id_localidad = s_filter.id_localidad
+          INNER JOIN ciudad c_filter ON c_filter.id_ciudad = l_filter.id_ciudad
+          WHERE esp_filter.id_cuenta_estudiante = ce.id_cuenta
+            AND esp_filter.estado = 'ACTIVO'::estado_simple_enum
+            AND s_filter.estado = 'ACTIVO'::estado_simple_enum
+            AND c_filter.nombre ILIKE ${normalizedCity}
+            ${
+              normalizedLocality
+                ? Prisma.sql`AND l_filter.nombre ILIKE ${normalizedLocality}`
+                : Prisma.empty
+            }
+        )
+        OR (
+          NOT EXISTS (
+            SELECT 1
+            FROM estudiante_sede_practica esp_any
+            INNER JOIN sede s_any ON s_any.id_sede = esp_any.id_sede
+            WHERE esp_any.id_cuenta_estudiante = ce.id_cuenta
+              AND esp_any.estado = 'ACTIVO'::estado_simple_enum
+              AND s_any.estado = 'ACTIVO'::estado_simple_enum
+          )
+          AND fallback_city.nombre ILIKE ${normalizedCity}
+          ${
+            normalizedLocality
+              ? Prisma.sql`AND fallback_locality.nombre ILIKE ${normalizedLocality}`
+              : Prisma.empty
+          }
+        )
+      )`);
+    } else if (normalizedLocality) {
+      conditions.push(Prisma.sql`(
+        EXISTS (
+          SELECT 1
+          FROM estudiante_sede_practica esp_filter
+          INNER JOIN sede s_filter ON s_filter.id_sede = esp_filter.id_sede
+          INNER JOIN localidad l_filter
+            ON l_filter.id_localidad = s_filter.id_localidad
+          WHERE esp_filter.id_cuenta_estudiante = ce.id_cuenta
+            AND esp_filter.estado = 'ACTIVO'::estado_simple_enum
+            AND s_filter.estado = 'ACTIVO'::estado_simple_enum
+            AND l_filter.nombre ILIKE ${normalizedLocality}
+        )
+        OR (
+          NOT EXISTS (
+            SELECT 1
+            FROM estudiante_sede_practica esp_any
+            INNER JOIN sede s_any ON s_any.id_sede = esp_any.id_sede
+            WHERE esp_any.id_cuenta_estudiante = ce.id_cuenta
+              AND esp_any.estado = 'ACTIVO'::estado_simple_enum
+              AND s_any.estado = 'ACTIVO'::estado_simple_enum
+          )
+          AND fallback_locality.nombre ILIKE ${normalizedLocality}
+        )
+      )`);
     }
 
     if (normalizedUniversity) {
       conditions.push(Prisma.sql`u.nombre ILIKE ${normalizedUniversity}`);
     }
+
+    const practiceLocationOrder =
+      normalizedLocality || normalizedCity
+        ? Prisma.sql`
+            CASE
+              WHEN ${normalizedLocality} <> '' AND l.nombre ILIKE ${normalizedLocality} THEN 2
+              WHEN ${normalizedCity} <> '' AND c.nombre ILIKE ${normalizedCity} THEN 1
+              ELSE 0
+            END DESC,
+          `
+        : Prisma.empty;
 
     const locationOrder =
       shouldSortByPatientLocation && resolvedPatientLocation
@@ -473,12 +555,15 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         p.nombres,
         p.apellidos,
         u.nombre AS universidad_nombre,
+        fallback_city.nombre AS university_city,
+        fallback_locality.nombre AS university_locality,
         pe.descripcion,
         pe.disponibilidad_general,
         pe.foto_url,
         COALESCE(practice.city, fallback_city.nombre) AS city,
         COALESCE(practice.locality, fallback_locality.nombre) AS locality,
         practice.practice_site,
+        COALESCE(practice_sites.practice_sites, '[]'::jsonb) AS practice_sites,
         COALESCE(treatments.treatments, ARRAY[]::text[]) AS treatments
       FROM cuenta_estudiante ce
       INNER JOIN cuenta_acceso ca ON ca.id_cuenta = ce.id_cuenta
@@ -502,9 +587,38 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         WHERE esp.id_cuenta_estudiante = ce.id_cuenta
           AND esp.estado = 'ACTIVO'::estado_simple_enum
           AND s.estado = 'ACTIVO'::estado_simple_enum
-        ORDER BY esp.fecha_creacion DESC
+        ORDER BY ${practiceLocationOrder} esp.fecha_creacion DESC
         LIMIT 1
       ) practice ON TRUE
+      LEFT JOIN LATERAL (
+        SELECT jsonb_agg(
+          jsonb_build_object(
+            'name', s.name,
+            'city', s.city,
+            'locality', s.locality
+          )
+          ORDER BY s.sort_weight DESC, s.created_at DESC
+        ) AS practice_sites
+        FROM (
+          SELECT
+            sede.nombre AS name,
+            c.nombre AS city,
+            l.nombre AS locality,
+            esp.fecha_creacion AS created_at,
+            CASE
+              WHEN ${normalizedLocality} <> '' AND l.nombre ILIKE ${normalizedLocality} THEN 2
+              WHEN ${normalizedCity} <> '' AND c.nombre ILIKE ${normalizedCity} THEN 1
+              ELSE 0
+            END AS sort_weight
+          FROM estudiante_sede_practica esp
+          INNER JOIN sede ON sede.id_sede = esp.id_sede
+          INNER JOIN localidad l ON l.id_localidad = sede.id_localidad
+          INNER JOIN ciudad c ON c.id_ciudad = l.id_ciudad
+          WHERE esp.id_cuenta_estudiante = ce.id_cuenta
+            AND esp.estado = 'ACTIVO'::estado_simple_enum
+            AND sede.estado = 'ACTIVO'::estado_simple_enum
+        ) s
+      ) practice_sites ON TRUE
       LEFT JOIN LATERAL (
         SELECT array_agg(tt.nombre ORDER BY tt.nombre)::text[] AS treatments
         FROM estudiante_tratamiento et

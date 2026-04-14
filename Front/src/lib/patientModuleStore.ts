@@ -237,9 +237,19 @@ function createMockState(): PatientStoreState {
       lastName: 'Pardo',
       locality: 'Chapinero',
       practiceSite: 'Sede Norte',
+      practiceSites: [
+        { city: 'Bogota', locality: 'Chapinero', name: 'Sede Norte' },
+        {
+          city: 'Bogota',
+          locality: 'Teusaquillo',
+          name: 'Sede Complementaria',
+        },
+      ],
       reviewsCount: 12,
       semester: '8',
       treatments: ['Operatoria basica', 'Promocion y prevencion'],
+      universityCity: 'Bogota',
+      universityLocality: 'Chapinero',
       universityName: 'Universidad Clinica del Norte',
     },
     {
@@ -256,9 +266,18 @@ function createMockState(): PatientStoreState {
       lastName: 'Rios',
       locality: 'Barrios Unidos',
       practiceSite: 'Sede Escuela Clinica',
+      practiceSites: [
+        {
+          city: 'Bogota',
+          locality: 'Barrios Unidos',
+          name: 'Sede Escuela Clinica',
+        },
+      ],
       reviewsCount: 9,
       semester: '8',
       treatments: ['Rehabilitacion oral', 'Promocion y prevencion'],
+      universityCity: 'Bogota',
+      universityLocality: 'Chapinero',
       universityName: 'Universidad Clinica del Norte',
     },
     {
@@ -275,9 +294,14 @@ function createMockState(): PatientStoreState {
       lastName: 'Perez',
       locality: 'Teusaquillo',
       practiceSite: 'Sede Central',
+      practiceSites: [
+        { city: 'Bogota', locality: 'Teusaquillo', name: 'Sede Central' },
+      ],
       reviewsCount: 15,
       semester: '9',
       treatments: ['Rehabilitacion oral', 'Valoracion integral'],
+      universityCity: 'Bogota',
+      universityLocality: 'Teusaquillo',
       universityName: 'Universidad Metropolitana',
     },
     {
@@ -294,9 +318,18 @@ function createMockState(): PatientStoreState {
       lastName: 'Diaz',
       locality: 'Laureles',
       practiceSite: 'Sede Clinica Laureles',
+      practiceSites: [
+        {
+          city: 'Medellin',
+          locality: 'Laureles',
+          name: 'Sede Clinica Laureles',
+        },
+      ],
       reviewsCount: 6,
       semester: '7',
       treatments: ['Valoracion integral', 'Promocion y prevencion'],
+      universityCity: 'Medellin',
+      universityLocality: 'Laureles',
       universityName: 'Universidad de Antioquia Clinica',
     },
   ];

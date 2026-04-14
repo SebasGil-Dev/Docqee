@@ -1,3 +1,9 @@
+export class PatientStudentPracticeSiteDto {
+  city!: string;
+  locality!: string;
+  name!: string;
+}
+
 export class PatientStudentDirectoryItemDto {
   avatarAlt!: string;
   avatarSrc!: string | null;
@@ -11,8 +17,11 @@ export class PatientStudentDirectoryItemDto {
   lastName!: string;
   locality!: string;
   practiceSite!: string;
+  practiceSites!: PatientStudentPracticeSiteDto[];
   reviewsCount!: number;
   semester!: string;
   treatments!: string[];
+  universityCity!: string;
+  universityLocality!: string;
   universityName!: string;
 }
