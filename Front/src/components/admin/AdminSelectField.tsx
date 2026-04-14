@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import type { Ref } from 'react';
+import type { ReactNode, Ref } from 'react';
 
 import { classNames } from '@/lib/classNames';
 
@@ -15,8 +15,9 @@ type AdminSelectFieldProps = {
   helpText?: string | undefined;
   icon: LucideIcon;
   id: string;
-  label: string;
+  label: ReactNode;
   labelClassName?: string;
+  labelSrText?: string;
   name: string;
   onBlur?: (() => void) | undefined;
   onChange: (value: string) => void;
@@ -36,6 +37,7 @@ export function AdminSelectField({
   id,
   label,
   labelClassName,
+  labelSrText,
   name,
   onBlur,
   onChange,
@@ -47,8 +49,15 @@ export function AdminSelectField({
 }: AdminSelectFieldProps) {
   return (
     <div className={classNames('space-y-1.5', containerClassName)}>
-      <label className={classNames('block text-sm font-semibold text-ink', labelClassName)} htmlFor={id}>
+      <label
+        className={classNames(
+          'block text-sm font-semibold text-ink',
+          labelClassName,
+        )}
+        htmlFor={id}
+      >
         {label}
+        {labelSrText ? <span className="sr-only">{labelSrText}</span> : null}
       </label>
       <div className="relative">
         <Icon
@@ -56,7 +65,9 @@ export function AdminSelectField({
           className="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-ghost"
         />
         <select
-          aria-describedby={error ? `${id}-error` : helpText ? `${id}-help` : undefined}
+          aria-describedby={
+            error ? `${id}-error` : helpText ? `${id}-help` : undefined
+          }
           aria-invalid={Boolean(error)}
           className={classNames(
             'w-full rounded-2xl border bg-surface py-3 pl-11 pr-4 text-sm text-ink transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',

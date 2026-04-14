@@ -26,6 +26,7 @@ const MAX_RECENT_CAMPUSES = 3;
 const MOBILE_RECENT_STUDENTS = 2;
 const MOBILE_RECENT_TEACHERS = 2;
 const MOBILE_RECENT_CAMPUSES = 1;
+const UNIVERSITY_CAMPUSES_HASH = '#university-campuses-section';
 const recentStudentDateFormatter = new Intl.DateTimeFormat('en-US', {
   day: '2-digit',
   month: '2-digit',
@@ -269,17 +270,20 @@ export function UniversityHomePage() {
                         >
                           <div className="min-w-0 flex-1">
                             <p
-                              className="truncate text-[0.73rem] text-ink"
-                              title={`${formatDisplayName(`${student.firstName} ${student.lastName}`)} \u00b7 Semestre ${student.semester} \u00b7 ${formatRecentStudentDate(student.createdAt)}`}
+                              className="truncate text-[0.73rem] font-semibold text-ink"
+                              title={formatDisplayName(
+                                `${student.firstName} ${student.lastName}`,
+                              )}
                             >
-                              <span className="font-semibold text-ink">
-                                {formatDisplayName(
-                                  `${student.firstName} ${student.lastName}`,
-                                )}
-                              </span>
-                              <span className="text-ink-muted">
-                                {` \u00b7 Semestre ${student.semester} \u00b7 ${formatRecentStudentDate(student.createdAt)}`}
-                              </span>
+                              {formatDisplayName(
+                                `${student.firstName} ${student.lastName}`,
+                              )}
+                            </p>
+                            <p
+                              className="truncate text-[0.65rem] text-ink-muted"
+                              title={`Semestre ${student.semester}, ${formatRecentStudentDate(student.createdAt)}`}
+                            >
+                              {`Semestre ${student.semester}, ${formatRecentStudentDate(student.createdAt)}`}
                             </p>
                           </div>
                           <div className="shrink-0">
@@ -499,7 +503,7 @@ export function UniversityHomePage() {
                       </p>
                       <Link
                         className="inline-flex max-w-full items-center gap-1 text-[0.68rem] font-semibold text-primary transition duration-200 hover:text-primary/80"
-                        to={ROUTES.universityInstitution}
+                        to={`${ROUTES.universityInstitution}${UNIVERSITY_CAMPUSES_HASH}`}
                       >
                         Ver sedes
                         <ArrowRight aria-hidden="true" className="h-3 w-3" />
@@ -517,7 +521,7 @@ export function UniversityHomePage() {
                                 {formatDisplayName(campus.name)}
                               </p>
                               <p className="truncate text-[0.65rem] text-ink-muted">
-                                {campus.city} \u00b7 {campus.locality}
+                                {campus.city}, {campus.locality}
                               </p>
                             </div>
                             <div className="shrink-0">

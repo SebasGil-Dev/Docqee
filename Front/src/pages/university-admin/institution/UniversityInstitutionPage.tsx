@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
 import { AdminPasswordField } from '@/components/admin/AdminPasswordField';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
@@ -85,12 +86,15 @@ const passwordRuleOrder = [
   'number',
   'special',
 ] as const;
+const UNIVERSITY_CAMPUSES_SECTION_ID = 'university-campuses-section';
 const compactFieldContainerClassName = 'space-y-1';
-const compactFieldLabelClassName = 'text-[0.82rem] sm:text-sm';
+const compactFieldLabelClassName = 'text-[0.78rem] sm:text-sm';
 const compactTextFieldInputClassName =
-  'rounded-xl py-2.5 pl-10 pr-3 text-[0.83rem] sm:rounded-2xl sm:py-3 sm:pl-11 sm:pr-4 sm:text-sm';
+  'rounded-xl py-2.25 pl-10 pr-3 text-[0.8rem] sm:rounded-2xl sm:py-3 sm:pl-11 sm:pr-4 sm:text-sm';
 const compactSelectFieldClassName =
-  'rounded-xl py-2.5 pl-10 pr-3 text-[0.83rem] sm:rounded-2xl sm:py-3 sm:pl-11 sm:pr-4 sm:text-sm';
+  'rounded-xl py-2.25 pl-10 pr-3 text-[0.8rem] sm:rounded-2xl sm:py-3 sm:pl-11 sm:pr-4 sm:text-sm';
+const compactPasswordFieldInputClassName =
+  'rounded-xl py-2.5 pl-10 pr-11 text-[0.82rem] sm:rounded-2xl sm:py-3 sm:pl-11 sm:pr-12 sm:text-sm';
 
 function createEmptyCatalogState<T>(
   status: AsyncCatalogState<T>['status'],
@@ -270,6 +274,7 @@ function getUploadErrorMessage(error: unknown) {
 export function UniversityInstitutionPage({
   catalogDataSource = patientRegisterCatalogDataSource,
 }: UniversityInstitutionPageProps) {
+  const location = useLocation();
   const {
     changePassword,
     errorMessage,
@@ -325,6 +330,8 @@ export function UniversityInstitutionPage({
   const localityRef = useRef<HTMLSelectElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const campusesSectionRef = useRef<HTMLDivElement>(null);
   const currentPasswordRef = useRef<HTMLInputElement>(null);
   const newPasswordRef = useRef<HTMLInputElement>(null);
   const confirmPasswordRef = useRef<HTMLInputElement>(null);
@@ -420,6 +427,40 @@ export function UniversityInstitutionPage({
       window.clearTimeout(timeoutId);
     };
   }, [saveMessage]);
+
+  useEffect(() => {
+    if (location.hash !== `#${UNIVERSITY_CAMPUSES_SECTION_ID}`) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      const container = scrollContainerRef.current;
+      const section = campusesSectionRef.current;
+
+      if (!section) {
+        return;
+      }
+
+      if (!container) {
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+
+      const containerRect = container.getBoundingClientRect();
+      const sectionRect = section.getBoundingClientRect();
+      const nextTop =
+        container.scrollTop + (sectionRect.top - containerRect.top) - 12;
+
+      container.scrollTo({
+        behavior: 'smooth',
+        top: Math.max(nextTop, 0),
+      });
+    }, 80);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [location.hash, values.campuses.length]);
 
   useEffect(() => {
     if (!isPasswordPanelOpen) {
@@ -1158,7 +1199,7 @@ export function UniversityInstitutionPage({
         : 'text-[0.68rem] font-medium text-primary';
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 sm:gap-4 overflow-hidden">
+    <div className="flex h-full min-h-0 flex-col gap-2.5 overflow-hidden sm:gap-4">
       <Seo
         description={universityAdminContent.institutionPage.meta.description}
         noIndex
@@ -1166,10 +1207,10 @@ export function UniversityInstitutionPage({
       />
       <AdminPageHeader
         description={universityAdminContent.institutionPage.description}
-        descriptionClassName="text-sm leading-6 sm:text-lg"
+        descriptionClassName="text-[0.82rem] leading-5 sm:text-lg"
         headingAlign="center"
         title={universityAdminContent.institutionPage.title}
-        titleClassName="text-center text-[1.35rem] leading-tight sm:text-[2rem]"
+        titleClassName="text-center text-[1.22rem] leading-tight sm:text-[2rem]"
       />
       {saveMessage ? (
         <SurfaceCard
@@ -1189,14 +1230,17 @@ export function UniversityInstitutionPage({
       ) : null}
       <AdminPanelCard className="flex-1" panelClassName="bg-slate-50">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-3.5 sm:px-6 sm:py-5">
-            <div className="space-y-3 pb-4 sm:space-y-4 sm:pb-5">
+          <div
+            className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-2.5 py-2.5 sm:px-6 sm:py-5"
+            ref={scrollContainerRef}
+          >
+            <div className="space-y-2.5 pb-3 sm:space-y-4 sm:pb-5">
               <SurfaceCard
                 className="overflow-hidden bg-white shadow-none"
                 paddingClassName="p-0"
               >
-                <div className="space-y-3 sm:space-y-4">
-                  <div className="space-y-3 rounded-[1.25rem] border border-slate-200/80 bg-slate-50/80 p-3 sm:space-y-4 sm:rounded-[1.6rem] sm:p-5">
+                <div className="space-y-2.5 sm:space-y-4">
+                  <div className="space-y-2.5 rounded-[1.05rem] border border-slate-200/80 bg-slate-50/80 p-2.5 sm:space-y-4 sm:rounded-[1.6rem] sm:p-5">
                     <div>
                       <h2 className="text-center font-headline text-[1rem] font-extrabold tracking-tight text-ink sm:text-[1.15rem]">
                         {
@@ -1205,8 +1249,8 @@ export function UniversityInstitutionPage({
                         }
                       </h2>
                     </div>
-                    <div className="grid gap-3 sm:gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(13.5rem,15rem)] xl:items-start">
-                      <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
+                    <div className="grid gap-2.5 sm:gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(13.5rem,15rem)] xl:items-start">
+                      <div className="grid gap-2.5 sm:gap-4 lg:grid-cols-2">
                         <div className="lg:col-span-2">
                           <AdminTextField
                             containerClassName={compactFieldContainerClassName}
@@ -1226,78 +1270,106 @@ export function UniversityInstitutionPage({
                             }
                           />
                         </div>
-                        <AdminSelectField
-                          containerClassName={compactFieldContainerClassName}
-                          disabled={
-                            citiesState.status !== 'ready' ||
-                            citiesState.options.length === 0
-                          }
-                          error={errors.cityId}
-                          helpText={
-                            !errors.cityId && citiesState.status === 'error'
-                              ? (citiesState.error ?? undefined)
-                              : undefined
-                          }
-                          icon={MapPin}
-                          id="university-institution-city"
-                          label="Ciudad principal"
-                          labelClassName={compactFieldLabelClassName}
-                          name="cityId"
-                          options={citiesState.options}
-                          placeholder={cityPlaceholder}
-                          selectClassName={compactSelectFieldClassName}
-                          selectRef={cityRef}
-                          value={values.cityId}
-                          onBlur={() => handleInstitutionFieldBlur('cityId')}
-                          onChange={(value) =>
-                            handleInstitutionFieldChange('cityId', value)
-                          }
-                        />
-                        <AdminSelectField
-                          containerClassName={compactFieldContainerClassName}
-                          disabled={
-                            !values.cityId ||
-                            localitiesState.status !== 'ready' ||
-                            localitiesState.options.length === 0
-                          }
-                          error={errors.mainLocalityId}
-                          helpText={
-                            !errors.mainLocalityId &&
-                            localitiesState.status === 'error'
-                              ? (localitiesState.error ?? undefined)
-                              : undefined
-                          }
-                          icon={MapPin}
-                          id="university-institution-locality"
-                          label="Localidad principal"
-                          labelClassName={compactFieldLabelClassName}
-                          name="mainLocalityId"
-                          options={localitiesState.options}
-                          placeholder={localityPlaceholder}
-                          selectClassName={compactSelectFieldClassName}
-                          selectRef={localityRef}
-                          value={values.mainLocalityId}
-                          onBlur={() =>
-                            handleInstitutionFieldBlur('mainLocalityId')
-                          }
-                          onChange={(value) =>
-                            handleInstitutionFieldChange(
-                              'mainLocalityId',
-                              value,
-                            )
-                          }
-                        />
+                        <div className="grid grid-cols-2 gap-2.5 lg:col-span-2 sm:gap-4">
+                          <AdminSelectField
+                            containerClassName={compactFieldContainerClassName}
+                            disabled={
+                              citiesState.status !== 'ready' ||
+                              citiesState.options.length === 0
+                            }
+                            error={errors.cityId}
+                            helpText={
+                              !errors.cityId && citiesState.status === 'error'
+                                ? (citiesState.error ?? undefined)
+                                : undefined
+                            }
+                            icon={MapPin}
+                            id="university-institution-city"
+                            label={
+                              <>
+                                <span aria-hidden="true" className="sm:hidden">
+                                  Ciudad
+                                </span>
+                                <span
+                                  aria-hidden="true"
+                                  className="hidden sm:inline"
+                                >
+                                  Ciudad principal
+                                </span>
+                              </>
+                            }
+                            labelClassName={compactFieldLabelClassName}
+                            labelSrText="Ciudad principal"
+                            name="cityId"
+                            options={citiesState.options}
+                            placeholder={cityPlaceholder}
+                            selectClassName={compactSelectFieldClassName}
+                            selectRef={cityRef}
+                            value={values.cityId}
+                            onBlur={() => handleInstitutionFieldBlur('cityId')}
+                            onChange={(value) =>
+                              handleInstitutionFieldChange('cityId', value)
+                            }
+                          />
+                          <AdminSelectField
+                            containerClassName={compactFieldContainerClassName}
+                            disabled={
+                              !values.cityId ||
+                              localitiesState.status !== 'ready' ||
+                              localitiesState.options.length === 0
+                            }
+                            error={errors.mainLocalityId}
+                            helpText={
+                              !errors.mainLocalityId &&
+                              localitiesState.status === 'error'
+                                ? (localitiesState.error ?? undefined)
+                                : undefined
+                            }
+                            icon={MapPin}
+                            id="university-institution-locality"
+                            label={
+                              <>
+                                <span aria-hidden="true" className="sm:hidden">
+                                  Localidad
+                                </span>
+                                <span
+                                  aria-hidden="true"
+                                  className="hidden sm:inline"
+                                >
+                                  Localidad principal
+                                </span>
+                              </>
+                            }
+                            labelClassName={compactFieldLabelClassName}
+                            labelSrText="Localidad principal"
+                            name="mainLocalityId"
+                            options={localitiesState.options}
+                            placeholder={localityPlaceholder}
+                            selectClassName={compactSelectFieldClassName}
+                            selectRef={localityRef}
+                            value={values.mainLocalityId}
+                            onBlur={() =>
+                              handleInstitutionFieldBlur('mainLocalityId')
+                            }
+                            onChange={(value) =>
+                              handleInstitutionFieldChange(
+                                'mainLocalityId',
+                                value,
+                              )
+                            }
+                          />
+                        </div>
                       </div>
-                      <div className="self-start rounded-[1rem] border border-dashed border-slate-300 bg-slate-50 p-2.5 sm:rounded-[1.2rem] sm:p-3 xl:-mt-10">
+                      <div className="self-start rounded-[0.95rem] border border-dashed border-slate-300 bg-slate-50 p-2 sm:rounded-[1.2rem] sm:p-3 xl:-mt-10">
                         <div className="space-y-0.5 text-center sm:text-center">
-                          <p className="text-[0.72rem] font-bold uppercase tracking-[0.2em] text-primary">
+                          <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-primary sm:text-[0.72rem] sm:tracking-[0.2em]">
                             Logo institucional
                           </p>
                         </div>
-                        <div className="mt-2 flex items-center gap-3 sm:flex-col sm:items-center sm:gap-2.5">
+                        <div className="mt-2 flex items-center gap-2.5 sm:flex-col sm:items-center sm:gap-2.5">
                           <div
                             aria-busy={isLogoUploading}
-                            className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-[1rem] bg-white ring-1 ring-slate-200 sm:h-28 sm:w-28 sm:rounded-[1.15rem]"
+                            className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[0.95rem] bg-white ring-1 ring-slate-200 sm:h-28 sm:w-28 sm:rounded-[1.15rem]"
                           >
                             {values.logoSrc ? (
                               <img
@@ -1323,7 +1395,7 @@ export function UniversityInstitutionPage({
                           </div>
                           <div className="min-w-0 flex-1 space-y-1 text-left sm:flex-none sm:text-center">
                             <label
-                              className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-brand-gradient px-3 py-1.5 text-[0.7rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 sm:text-[0.72rem]"
+                              className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-brand-gradient px-2.5 py-1.5 text-[0.68rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 sm:px-3 sm:text-[0.72rem]"
                               htmlFor="institution-logo-input"
                             >
                               <ImagePlus
@@ -1362,15 +1434,19 @@ export function UniversityInstitutionPage({
                     </div>
                   </div>
 
-                  <div className="space-y-3 rounded-[1.25rem] border border-slate-200/80 bg-slate-50/80 p-3 sm:rounded-[1.6rem] sm:p-5">
-                    <div className="text-center">
+                  <div className="space-y-2.5 rounded-[1.05rem] border border-slate-200/80 bg-slate-50/80 p-2.5 sm:space-y-3 sm:rounded-[1.6rem] sm:p-5">
+                    <div
+                      className="text-center"
+                      id={UNIVERSITY_CAMPUSES_SECTION_ID}
+                      ref={campusesSectionRef}
+                    >
                       <div className="w-full">
                         <h3 className="text-center font-headline text-[0.96rem] font-extrabold tracking-tight text-ink sm:text-[1rem]">
                           Sedes de la universidad
                         </h3>
                       </div>
                     </div>
-                    <div className="grid gap-3 lg:grid-cols-2">
+                    <div className="grid gap-2.5 sm:gap-3 lg:grid-cols-2">
                       <AdminTextField
                         containerClassName={compactFieldContainerClassName}
                         error={campusErrors.name}
@@ -1403,62 +1479,64 @@ export function UniversityInstitutionPage({
                           handleCampusFieldChange('address', value)
                         }
                       />
-                      <div className="grid gap-3 lg:col-span-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(8rem,0.45fr)] md:items-start">
-                        <AdminSelectField
-                          containerClassName={compactFieldContainerClassName}
-                          disabled={
-                            citiesState.status !== 'ready' ||
-                            citiesState.options.length === 0
-                          }
-                          error={campusErrors.cityId}
-                          helpText={
-                            !campusErrors.cityId &&
-                            citiesState.status === 'error'
-                              ? (citiesState.error ?? undefined)
-                              : undefined
-                          }
-                          icon={MapPin}
-                          id="university-campus-city"
-                          label="Ciudad"
-                          labelClassName={compactFieldLabelClassName}
-                          name="campusCityId"
-                          options={citiesState.options}
-                          placeholder={cityPlaceholder}
-                          selectClassName={compactSelectFieldClassName}
-                          value={campusDraft.cityId}
-                          onBlur={() => handleCampusFieldBlur('cityId')}
-                          onChange={(value) =>
-                            handleCampusFieldChange('cityId', value)
-                          }
-                        />
-                        <AdminSelectField
-                          containerClassName={compactFieldContainerClassName}
-                          disabled={
-                            !campusDraft.cityId ||
-                            campusLocalitiesState.status !== 'ready' ||
-                            campusLocalitiesState.options.length === 0
-                          }
-                          error={campusErrors.localityId}
-                          helpText={
-                            !campusErrors.localityId &&
-                            campusLocalitiesState.status === 'error'
-                              ? (campusLocalitiesState.error ?? undefined)
-                              : undefined
-                          }
-                          icon={MapPin}
-                          id="university-campus-locality"
-                          label="Localidad"
-                          labelClassName={compactFieldLabelClassName}
-                          name="campusLocalityId"
-                          options={campusLocalitiesState.options}
-                          placeholder={campusLocalityPlaceholder}
-                          selectClassName={compactSelectFieldClassName}
-                          value={campusDraft.localityId}
-                          onBlur={() => handleCampusFieldBlur('localityId')}
-                          onChange={(value) =>
-                            handleCampusFieldChange('localityId', value)
-                          }
-                        />
+                      <div className="grid gap-2.5 lg:col-span-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(8rem,0.45fr)] md:items-start sm:gap-3">
+                        <div className="grid grid-cols-2 gap-2.5 md:contents sm:gap-3">
+                          <AdminSelectField
+                            containerClassName={compactFieldContainerClassName}
+                            disabled={
+                              citiesState.status !== 'ready' ||
+                              citiesState.options.length === 0
+                            }
+                            error={campusErrors.cityId}
+                            helpText={
+                              !campusErrors.cityId &&
+                              citiesState.status === 'error'
+                                ? (citiesState.error ?? undefined)
+                                : undefined
+                            }
+                            icon={MapPin}
+                            id="university-campus-city"
+                            label="Ciudad"
+                            labelClassName={compactFieldLabelClassName}
+                            name="campusCityId"
+                            options={citiesState.options}
+                            placeholder={cityPlaceholder}
+                            selectClassName={compactSelectFieldClassName}
+                            value={campusDraft.cityId}
+                            onBlur={() => handleCampusFieldBlur('cityId')}
+                            onChange={(value) =>
+                              handleCampusFieldChange('cityId', value)
+                            }
+                          />
+                          <AdminSelectField
+                            containerClassName={compactFieldContainerClassName}
+                            disabled={
+                              !campusDraft.cityId ||
+                              campusLocalitiesState.status !== 'ready' ||
+                              campusLocalitiesState.options.length === 0
+                            }
+                            error={campusErrors.localityId}
+                            helpText={
+                              !campusErrors.localityId &&
+                              campusLocalitiesState.status === 'error'
+                                ? (campusLocalitiesState.error ?? undefined)
+                                : undefined
+                            }
+                            icon={MapPin}
+                            id="university-campus-locality"
+                            label="Localidad"
+                            labelClassName={compactFieldLabelClassName}
+                            name="campusLocalityId"
+                            options={campusLocalitiesState.options}
+                            placeholder={campusLocalityPlaceholder}
+                            selectClassName={compactSelectFieldClassName}
+                            value={campusDraft.localityId}
+                            onBlur={() => handleCampusFieldBlur('localityId')}
+                            onChange={(value) =>
+                              handleCampusFieldChange('localityId', value)
+                            }
+                          />
+                        </div>
                         {editingCampusId ? (
                           <AdminSelectField
                             containerClassName={compactFieldContainerClassName}
@@ -1482,20 +1560,17 @@ export function UniversityInstitutionPage({
                           />
                         ) : (
                           <div className="space-y-1">
-                            <span className="block text-[0.82rem] font-semibold text-ink sm:text-sm">
+                            <span className="block text-[0.78rem] font-semibold text-ink sm:text-sm">
                               Estado
                             </span>
-                            <div className="inline-flex min-h-[2.5rem] w-full items-center rounded-xl border border-slate-200 bg-surface px-3 py-2 text-[0.83rem] font-semibold text-ink sm:min-h-[2.75rem] sm:rounded-2xl sm:px-3.5 sm:py-2.5">
+                            <div className="inline-flex min-h-[2.35rem] w-full items-center rounded-xl border border-slate-200 bg-surface px-3 py-2 text-[0.8rem] font-semibold text-ink sm:min-h-[2.75rem] sm:rounded-2xl sm:px-3.5 sm:py-2.5 sm:text-[0.83rem]">
                               Activa
                             </div>
                           </div>
                         )}
                       </div>
                     </div>
-                    <div
-                      className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3"
-                      style={{ marginTop: 30 }}
-                    >
+                    <div className="mt-4 flex flex-wrap items-center justify-center gap-2.5 sm:mt-[30px] sm:gap-3">
                       {editingCampusId ? (
                         <button
                           className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[0.8rem] font-semibold text-ink transition duration-300 hover:bg-slate-100 sm:px-3.5 sm:py-2.5 sm:text-[0.82rem]"
@@ -1526,10 +1601,7 @@ export function UniversityInstitutionPage({
                         </span>
                       </button>
                     </div>
-                    <div
-                      className="mt-[24px] grid gap-2 sm:mt-[30px] sm:gap-2.5"
-                      style={{ marginTop: 30 }}
-                    >
+                    <div className="mt-4 grid gap-2 sm:mt-[30px] sm:gap-2.5">
                       {values.campuses.length > 0 ? (
                         <div className="hidden gap-2.5 px-3 text-[0.66rem] font-extrabold uppercase tracking-[0.14em] text-ink md:grid md:grid-cols-[minmax(7rem,1fr)_minmax(8rem,1.15fr)_minmax(7rem,0.85fr)_minmax(7rem,0.85fr)_minmax(5.5rem,0.55fr)_minmax(6.5rem,0.55fr)] md:items-center">
                           <span>Nombre</span>
@@ -1541,48 +1613,94 @@ export function UniversityInstitutionPage({
                         </div>
                       ) : null}
                       {values.campuses.map((campus) => (
-                        <div
-                          key={campus.id}
-                          className="grid gap-2 rounded-[1rem] border border-slate-200/80 bg-white p-2.5 md:grid-cols-[minmax(7rem,1fr)_minmax(8rem,1.15fr)_minmax(7rem,0.85fr)_minmax(7rem,0.85fr)_minmax(5.5rem,0.55fr)_minmax(6.5rem,0.55fr)] md:items-center md:gap-2.5 md:rounded-[1.15rem] md:p-3"
-                        >
-                          <h4 className="min-w-0 truncate text-[0.83rem] font-semibold text-ink">
-                            {formatDisplayName(campus.name)}
-                          </h4>
-                          <p className="min-w-0 truncate text-[0.82rem] text-ink-muted">
-                            {campus.address}
-                          </p>
-                          <p className="min-w-0 truncate text-[0.78rem] font-semibold text-ink-muted">
-                            {campus.city}
-                          </p>
-                          <p className="min-w-0 truncate text-[0.78rem] font-semibold text-ink-muted">
-                            {campus.locality}
-                          </p>
-                          <span
-                            className={
-                              campus.status === 'active'
-                                ? 'inline-flex w-fit rounded-full bg-emerald-50 px-2.5 py-1 text-[0.66rem] font-semibold text-emerald-700 ring-1 ring-emerald-200'
-                                : 'inline-flex w-fit rounded-full bg-white px-2.5 py-1 text-[0.66rem] font-semibold text-slate-600 ring-1 ring-slate-200'
-                            }
-                          >
-                            {campus.status === 'active' ? 'Activa' : 'Inactiva'}
-                          </span>
-                          <button
-                            className="inline-flex items-center justify-center gap-2 justify-self-start rounded-xl border border-slate-200 bg-white px-3 py-2 text-[0.8rem] font-semibold text-primary transition duration-300 hover:bg-slate-100 md:justify-self-end"
-                            type="button"
-                            onClick={() => handleCampusEdit(campus)}
-                          >
-                            <PencilLine
-                              aria-hidden="true"
-                              className="h-4 w-4"
-                            />
-                            <span>Editar</span>
-                          </button>
+                        <div className="md:contents" key={campus.id}>
+                          <div className="space-y-2 rounded-[0.95rem] border border-slate-200/80 bg-white p-2.5 md:hidden">
+                            <div className="flex flex-wrap items-center justify-center gap-1 text-center">
+                              <h4 className="min-w-0 max-w-full truncate text-[0.8rem] font-semibold text-ink">
+                                {formatDisplayName(campus.name)}
+                              </h4>
+                              <span className="text-[0.72rem] font-semibold text-ink-muted">
+                                ·
+                              </span>
+                              <p className="min-w-0 max-w-full truncate text-[0.76rem] text-ink-muted">
+                                {campus.address}
+                              </p>
+                            </div>
+                            <div className="flex flex-wrap items-center justify-center gap-1.5 text-center">
+                              <span className="text-[0.72rem] font-semibold text-ink-muted">
+                                {campus.city}
+                              </span>
+                              <span className="text-[0.72rem] font-semibold text-ink-muted">
+                                {campus.locality}
+                              </span>
+                              <span
+                                className={
+                                  campus.status === 'active'
+                                    ? 'inline-flex w-fit rounded-full bg-emerald-50 px-2 py-1 text-[0.64rem] font-semibold text-emerald-700 ring-1 ring-emerald-200'
+                                    : 'inline-flex w-fit rounded-full bg-white px-2 py-1 text-[0.64rem] font-semibold text-slate-600 ring-1 ring-slate-200'
+                                }
+                              >
+                                {campus.status === 'active'
+                                  ? 'Activa'
+                                  : 'Inactiva'}
+                              </span>
+                            </div>
+                            <div className="flex justify-center">
+                              <button
+                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[0.78rem] font-semibold text-primary transition duration-300 hover:bg-slate-100"
+                                type="button"
+                                onClick={() => handleCampusEdit(campus)}
+                              >
+                                <PencilLine
+                                  aria-hidden="true"
+                                  className="h-4 w-4"
+                                />
+                                <span>Editar</span>
+                              </button>
+                            </div>
+                          </div>
+                          <div className="hidden gap-2 rounded-[1rem] border border-slate-200/80 bg-white p-2.5 md:grid md:grid-cols-[minmax(7rem,1fr)_minmax(8rem,1.15fr)_minmax(7rem,0.85fr)_minmax(7rem,0.85fr)_minmax(5.5rem,0.55fr)_minmax(6.5rem,0.55fr)] md:items-center md:gap-2.5 md:rounded-[1.15rem] md:p-3">
+                            <h4 className="min-w-0 truncate text-[0.83rem] font-semibold text-ink">
+                              {formatDisplayName(campus.name)}
+                            </h4>
+                            <p className="min-w-0 truncate text-[0.82rem] text-ink-muted">
+                              {campus.address}
+                            </p>
+                            <p className="min-w-0 truncate text-[0.78rem] font-semibold text-ink-muted">
+                              {campus.city}
+                            </p>
+                            <p className="min-w-0 truncate text-[0.78rem] font-semibold text-ink-muted">
+                              {campus.locality}
+                            </p>
+                            <span
+                              className={
+                                campus.status === 'active'
+                                  ? 'inline-flex w-fit rounded-full bg-emerald-50 px-2.5 py-1 text-[0.66rem] font-semibold text-emerald-700 ring-1 ring-emerald-200'
+                                  : 'inline-flex w-fit rounded-full bg-white px-2.5 py-1 text-[0.66rem] font-semibold text-slate-600 ring-1 ring-slate-200'
+                              }
+                            >
+                              {campus.status === 'active'
+                                ? 'Activa'
+                                : 'Inactiva'}
+                            </span>
+                            <button
+                              className="inline-flex items-center justify-center gap-2 justify-self-start rounded-xl border border-slate-200 bg-white px-3 py-2 text-[0.8rem] font-semibold text-primary transition duration-300 hover:bg-slate-100 md:justify-self-end"
+                              type="button"
+                              onClick={() => handleCampusEdit(campus)}
+                            >
+                              <PencilLine
+                                aria-hidden="true"
+                                className="h-4 w-4"
+                              />
+                              <span>Editar</span>
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  <div className="space-y-3 rounded-[1.25rem] border border-slate-200/80 bg-slate-50/80 p-3 sm:space-y-4 sm:rounded-[1.6rem] sm:p-5">
+                  <div className="space-y-2.5 rounded-[1.05rem] border border-slate-200/80 bg-slate-50/80 p-2.5 sm:space-y-4 sm:rounded-[1.6rem] sm:p-5">
                     <div>
                       <h2 className="text-center font-headline text-[1rem] font-extrabold tracking-tight text-ink sm:text-[1.15rem]">
                         {
@@ -1591,7 +1709,7 @@ export function UniversityInstitutionPage({
                         }
                       </h2>
                     </div>
-                    <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
+                    <div className="grid gap-2.5 sm:gap-4 lg:grid-cols-2">
                       <AdminTextField
                         containerClassName={compactFieldContainerClassName}
                         error={errors.adminFirstName}
@@ -1630,7 +1748,7 @@ export function UniversityInstitutionPage({
                           handleInstitutionFieldChange('adminLastName', value)
                         }
                       />
-                      <div className="grid gap-3 sm:gap-4 md:grid-cols-2 lg:col-span-2">
+                      <div className="grid gap-2.5 sm:gap-4 md:grid-cols-2 lg:col-span-2">
                         <AdminTextField
                           containerClassName={compactFieldContainerClassName}
                           error={errors.adminEmail}
@@ -1674,7 +1792,7 @@ export function UniversityInstitutionPage({
                       </div>
                       <div className="flex justify-center lg:col-span-2">
                         <button
-                          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[0.8rem] font-semibold text-primary transition duration-300 hover:bg-slate-100 sm:px-3.5 sm:py-2.5 sm:text-[0.82rem]"
+                          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-2.75 py-2 text-[0.78rem] font-semibold text-primary transition duration-300 hover:bg-slate-100 sm:px-3.5 sm:py-2.5 sm:text-[0.82rem]"
                           type="button"
                           onClick={openPasswordPanel}
                         >
@@ -1722,7 +1840,7 @@ export function UniversityInstitutionPage({
       {isPasswordPanelOpen ? (
         <div
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 p-4 backdrop-blur-[2px]"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 p-2.5 backdrop-blur-[2px] sm:p-4"
           role="dialog"
           onClick={(event) => {
             if (event.target === event.currentTarget) {
@@ -1731,24 +1849,24 @@ export function UniversityInstitutionPage({
           }}
         >
           <SurfaceCard
-            className="w-full max-w-[44rem] overflow-hidden border border-slate-200/80 bg-white shadow-[0_30px_80px_-35px_rgba(15,23,42,0.38)]"
+            className="w-full max-w-[28rem] overflow-hidden border border-slate-200/80 bg-white shadow-[0_30px_80px_-35px_rgba(15,23,42,0.38)] sm:max-w-[44rem]"
             paddingClassName="p-0"
           >
-            <div className="border-b border-slate-200/80 bg-slate-50/85 px-5 py-4 sm:px-6">
+            <div className="border-b border-slate-200/80 bg-slate-50/85 px-3.5 py-3 sm:px-6 sm:py-4">
               <div className="flex items-start justify-between gap-4">
                 <div className="space-y-1">
-                  <p className="text-[0.68rem] font-black uppercase tracking-[0.26em] text-primary">
+                  <p className="text-[0.62rem] font-black uppercase tracking-[0.22em] text-primary sm:text-[0.68rem] sm:tracking-[0.26em]">
                     Seguridad de acceso
                   </p>
                   <h2
-                    className="font-headline text-[1.45rem] font-extrabold tracking-tight text-ink"
+                    className="font-headline text-[1.1rem] font-extrabold tracking-tight text-ink sm:text-[1.45rem]"
                     id="university-password-dialog-title"
                   >
                     {universityAdminContent.institutionPage.passwordPanelTitle}
                   </h2>
                   {universityAdminContent.institutionPage
                     .passwordPanelDescription ? (
-                    <p className="max-w-[34rem] text-sm leading-6 text-ink-muted">
+                    <p className="max-w-[34rem] text-[0.78rem] leading-5 text-ink-muted sm:text-sm sm:leading-6">
                       {
                         universityAdminContent.institutionPage
                           .passwordPanelDescription
@@ -1758,7 +1876,7 @@ export function UniversityInstitutionPage({
                 </div>
                 <button
                   aria-label="Cerrar diálogo de cambio de contraseña"
-                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-ink-muted transition duration-300 hover:border-primary/20 hover:text-primary"
+                  className="inline-flex h-8.5 w-8.5 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-ink-muted transition duration-300 hover:border-primary/20 hover:text-primary sm:h-10 sm:w-10"
                   type="button"
                   onClick={closePasswordPanel}
                 >
@@ -1767,29 +1885,34 @@ export function UniversityInstitutionPage({
               </div>
             </div>
             <form
-              className="space-y-5 px-5 py-5 sm:px-6 sm:py-6"
+              className="max-h-[calc(100vh-8.5rem)] space-y-3.5 overflow-y-auto px-3.5 py-3.5 sm:max-h-[calc(100vh-11rem)] sm:space-y-5 sm:px-6 sm:py-6"
               noValidate
               onSubmit={handlePasswordSubmit}
             >
               {passwordWarningMessage ? (
                 <p
-                  className="rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-3 text-sm font-medium text-rose-700"
+                  className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-[0.82rem] font-medium text-rose-700 sm:px-3.5 sm:py-3 sm:text-sm"
                   role="alert"
                 >
                   {passwordWarningMessage}
                 </p>
               ) : null}
               {passwordMessage ? (
-                <p className="text-sm font-medium text-ink" role="status">
+                <p
+                  className="text-[0.82rem] font-medium text-ink sm:text-sm"
+                  role="status"
+                >
                   {passwordMessage}
                 </p>
               ) : null}
               <AdminPasswordField
+                containerClassName="space-y-1"
                 error={passwordErrors.currentPassword}
                 hidePasswordLabel={
                   authContent.register.password.hidePasswordLabel
                 }
                 id="university-password-current"
+                inputClassName={compactPasswordFieldInputClassName}
                 inputRef={currentPasswordRef}
                 label="Contraseña actual"
                 name="currentPassword"
@@ -1809,11 +1932,13 @@ export function UniversityInstitutionPage({
               />
               <div className="grid gap-4 md:grid-cols-2">
                 <AdminPasswordField
+                  containerClassName="space-y-1"
                   error={passwordErrors.newPassword}
                   hidePasswordLabel={
                     authContent.register.password.hidePasswordLabel
                   }
                   id="university-password-new"
+                  inputClassName={compactPasswordFieldInputClassName}
                   inputRef={newPasswordRef}
                   label="Nueva contraseña"
                   name="newPassword"
@@ -1832,11 +1957,13 @@ export function UniversityInstitutionPage({
                   }
                 />
                 <AdminPasswordField
+                  containerClassName="space-y-1"
                   error={passwordErrors.confirmPassword}
                   hidePasswordLabel={
                     authContent.register.password.hidePasswordLabel
                   }
                   id="university-password-confirm"
+                  inputClassName={compactPasswordFieldInputClassName}
                   inputRef={confirmPasswordRef}
                   label="Confirmar contraseña"
                   name="confirmPassword"
@@ -1855,11 +1982,11 @@ export function UniversityInstitutionPage({
                   }
                 />
               </div>
-              <div className="rounded-[1.45rem] border border-slate-200/80 bg-slate-50/85 p-4">
-                <p className="text-[0.7rem] font-black uppercase tracking-[0.24em] text-primary/80">
+              <div className="rounded-[1.2rem] border border-slate-200/80 bg-slate-50/85 p-3 sm:rounded-[1.45rem] sm:p-4">
+                <p className="text-[0.64rem] font-black uppercase tracking-[0.2em] text-primary/80 sm:text-[0.7rem] sm:tracking-[0.24em]">
                   Requisitos de la nueva contraseña
                 </p>
-                <ul className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+                <ul className="mt-2.5 grid gap-1.5 text-[0.78rem] sm:mt-3 sm:grid-cols-2 sm:gap-2 sm:text-sm">
                   {authContent.register.password.requirements.map(
                     (requirement) => {
                       const isMet = passwordRequirementStatus[requirement.key];
@@ -1891,16 +2018,16 @@ export function UniversityInstitutionPage({
                   )}
                 </ul>
               </div>
-              <div className="flex flex-wrap items-center justify-end gap-3">
+              <div className="grid grid-cols-2 gap-2.5 sm:flex sm:flex-wrap sm:items-center sm:justify-end sm:gap-3">
                 <button
-                  className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-ink transition duration-300 hover:bg-slate-50"
+                  className="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[0.82rem] font-semibold text-ink transition duration-300 hover:bg-slate-50 sm:w-auto sm:rounded-2xl sm:px-4 sm:py-3 sm:text-sm"
                   type="button"
                   onClick={closePasswordPanel}
                 >
                   Cancelar
                 </button>
                 <button
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-5 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-gradient px-3 py-2.5 text-[0.82rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 sm:w-auto sm:rounded-2xl sm:px-5 sm:py-3 sm:text-sm"
                   disabled={isLoading}
                   type="submit"
                 >
