@@ -328,7 +328,7 @@ export function PatientSearchStudentsPage() {
         noIndex
         title={patientContent.searchPage.meta.title}
       />
-      <div className="rounded-[1.15rem] border border-slate-200/80 bg-white px-3.5 py-3 text-center shadow-[0_14px_36px_-28px_rgba(15,23,42,0.42)] sm:px-4">
+      <div className="px-3.5 py-3 text-center sm:px-4">
         <h1 className="font-headline text-xl font-extrabold leading-tight tracking-tight text-ink sm:text-[1.35rem]">
           {patientContent.searchPage.title}
         </h1>
