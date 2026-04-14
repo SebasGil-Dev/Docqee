@@ -33,7 +33,9 @@ function getStudentInitials(student: PatientStudentDirectoryItem) {
 function getStudentLocation(student: PatientStudentDirectoryItem) {
   const locationParts = [student.city, student.locality].filter(Boolean);
 
-  return locationParts.length ? locationParts.join(' - ') : 'Ubicacion por confirmar';
+  return locationParts.length
+    ? locationParts.join(' - ')
+    : 'Ubicacion por confirmar';
 }
 
 function getStudentPracticeSite(student: PatientStudentDirectoryItem) {
@@ -90,9 +92,13 @@ export function PatientSearchStudentsPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [treatmentFilter, setTreatmentFilter] = useState<NamedFilter>('all');
   const [cityFilter, setCityFilter] = useState<NamedFilter>(defaultCityFilter);
-  const [localityFilter, setLocalityFilter] = useState<NamedFilter>(defaultLocalityFilter);
+  const [localityFilter, setLocalityFilter] = useState<NamedFilter>(
+    defaultLocalityFilter,
+  );
   const [universityFilter, setUniversityFilter] = useState<NamedFilter>('all');
-  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
+    null,
+  );
   const latestSearchFiltersRef = useRef({
     city: defaultCityFilter,
     locality: defaultLocalityFilter,
@@ -102,12 +108,13 @@ export function PatientSearchStudentsPage() {
   });
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const hasCustomLocationCriteria =
-    cityFilter !== defaultCityFilter || localityFilter !== defaultLocalityFilter;
+    cityFilter !== defaultCityFilter ||
+    localityFilter !== defaultLocalityFilter;
   const hasSearchCriteria = Boolean(
     normalizedSearch ||
-      treatmentFilter !== 'all' ||
-      hasCustomLocationCriteria ||
-      universityFilter !== 'all',
+    treatmentFilter !== 'all' ||
+    hasCustomLocationCriteria ||
+    universityFilter !== 'all',
   );
   const treatmentOptions = useMemo(
     () =>
@@ -134,14 +141,14 @@ export function PatientSearchStudentsPage() {
     [studentFilters.universities],
   );
   const selectedStudent = selectedStudentId
-    ? students.find((student) => student.id === selectedStudentId) ?? null
+    ? (students.find((student) => student.id === selectedStudentId) ?? null)
     : null;
   const currentRequestForSelectedStudent = selectedStudent
-    ? requests.find(
+    ? (requests.find(
         (request) =>
           request.studentId === selectedStudent.id &&
           (request.status === 'PENDIENTE' || request.status === 'ACEPTADA'),
-      ) ?? null
+      ) ?? null)
     : null;
 
   useEffect(() => {
@@ -254,7 +261,10 @@ export function PatientSearchStudentsPage() {
     }
 
     void (async () => {
-      const createdRequest = await createRequest(selectedStudent.id, normalizedReason);
+      const createdRequest = await createRequest(
+        selectedStudent.id,
+        normalizedReason,
+      );
 
       if (!createdRequest) {
         setReasonError(
@@ -283,18 +293,22 @@ export function PatientSearchStudentsPage() {
       return;
     }
 
-    const nextTreatment = filters.treatment ?? latestSearchFiltersRef.current.treatment;
+    const nextTreatment =
+      filters.treatment ?? latestSearchFiltersRef.current.treatment;
     const nextCity = filters.city ?? latestSearchFiltersRef.current.city;
-    const nextLocality = filters.locality ?? latestSearchFiltersRef.current.locality;
-    const nextUniversity = filters.university ?? latestSearchFiltersRef.current.university;
-    const resolvedSearch = filters.search ?? latestSearchFiltersRef.current.search;
+    const nextLocality =
+      filters.locality ?? latestSearchFiltersRef.current.locality;
+    const nextUniversity =
+      filters.university ?? latestSearchFiltersRef.current.university;
+    const resolvedSearch =
+      filters.search ?? latestSearchFiltersRef.current.search;
     const nextHasCustomLocationCriteria =
       nextCity !== defaultCityFilter || nextLocality !== defaultLocalityFilter;
     const nextHasSearchCriteria = Boolean(
       resolvedSearch.trim() ||
-        nextTreatment !== 'all' ||
-        nextHasCustomLocationCriteria ||
-        nextUniversity !== 'all',
+      nextTreatment !== 'all' ||
+      nextHasCustomLocationCriteria ||
+      nextUniversity !== 'all',
     );
 
     void searchStudents({
@@ -356,7 +370,10 @@ export function PatientSearchStudentsPage() {
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
         <div className="border-b border-slate-200/80 px-3 py-3 sm:px-4">
           <div className="grid gap-3 xl:grid-cols-[minmax(15rem,1.35fr)_repeat(4,minmax(9.5rem,1fr))] xl:items-end">
-            <label className="relative min-w-0" htmlFor="patient-student-search">
+            <label
+              className="relative min-w-0"
+              htmlFor="patient-student-search"
+            >
               <span className="mb-1.5 block text-[0.72rem] font-bold uppercase tracking-[0.16em] text-ink-muted">
                 Nombre
               </span>
@@ -379,7 +396,10 @@ export function PatientSearchStudentsPage() {
                 }}
               />
             </label>
-            <label className="min-w-0" htmlFor="patient-student-treatment-filter">
+            <label
+              className="min-w-0"
+              htmlFor="patient-student-treatment-filter"
+            >
               <span className="mb-1.5 block text-[0.72rem] font-bold uppercase tracking-[0.16em] text-ink-muted">
                 Tratamiento
               </span>
@@ -429,7 +449,10 @@ export function PatientSearchStudentsPage() {
                 ))}
               </select>
             </label>
-            <label className="min-w-0" htmlFor="patient-student-locality-filter">
+            <label
+              className="min-w-0"
+              htmlFor="patient-student-locality-filter"
+            >
               <span className="mb-1.5 block text-[0.72rem] font-bold uppercase tracking-[0.16em] text-ink-muted">
                 Localidad
               </span>
@@ -456,7 +479,10 @@ export function PatientSearchStudentsPage() {
                 ))}
               </select>
             </label>
-            <label className="min-w-0" htmlFor="patient-student-university-filter">
+            <label
+              className="min-w-0"
+              htmlFor="patient-student-university-filter"
+            >
               <span className="mb-1.5 block text-[0.72rem] font-bold uppercase tracking-[0.16em] text-ink-muted">
                 Universidad
               </span>
@@ -483,134 +509,132 @@ export function PatientSearchStudentsPage() {
           </div>
         </div>
         <div className="min-h-0 flex-1 px-3 py-3 sm:px-4">
-          <SurfaceCard className="h-full min-h-0 border border-slate-200/80 bg-white shadow-none" paddingClassName="p-0">
+          <SurfaceCard
+            className="h-full min-h-0 border border-slate-200/80 bg-white shadow-none"
+            paddingClassName="p-0"
+          >
             <div className="flex h-full min-h-[18rem] flex-col">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 px-3 py-2.5">
-                  <div className="min-w-0">
-                    <h2 className="font-headline text-lg font-extrabold tracking-tight text-ink">
-                      {hasSearchCriteria ? 'Resultados de búsqueda' : 'Estudiantes recomendados para ti'}
-                    </h2>
-                    <p className="text-xs leading-5 text-ink-muted">
-                      {hasSearchCriteria
-                        ? 'Busca por nombre o usa los filtros para encontrar el estudiante adecuado.'
-                        : 'Estos perfiles tienen tratamientos publicados y cercania con tu ubicacion.'}
-                    </p>
-                  </div>
+                <div className="min-w-0">
+                  <h2 className="font-headline text-lg font-extrabold tracking-tight text-ink">
+                    {hasSearchCriteria
+                      ? 'Resultados de búsqueda'
+                      : 'Estudiantes recomendados para ti'}
+                  </h2>
+                  <p className="text-xs leading-5 text-ink-muted">
+                    {hasSearchCriteria
+                      ? 'Busca por nombre o usa los filtros para encontrar el estudiante adecuado.'
+                      : 'Estos perfiles tienen tratamientos publicados y cercania con tu ubicacion.'}
+                  </p>
+                </div>
                 <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-ink-muted">
                   {students.length} perfiles
                 </span>
               </div>
               <div className="admin-scrollbar min-h-0 flex-1 overflow-x-auto overflow-y-auto">
                 {students.length > 0 ? (
-                  <table className="min-w-[64rem] w-full lg:min-w-0 lg:table-fixed">
+                  <table className="min-w-[58rem] w-full lg:min-w-0 lg:table-fixed">
+                    <colgroup>
+                      <col className="w-[18%]" />
+                      <col className="w-[18%]" />
+                      <col className="w-[20%]" />
+                      <col className="w-[30%]" />
+                      <col className="w-[14%]" />
+                    </colgroup>
                     <thead className="sticky top-0 z-10 bg-slate-100 text-left">
                       <tr className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-ink-muted">
                         <th className="px-4 py-2.5 sm:px-5">Estudiante</th>
                         <th className="px-4 py-2.5">Universidad</th>
                         <th className="px-4 py-2.5">Ubicación</th>
                         <th className="px-4 py-2.5">Tratamientos</th>
-                        <th className="px-4 py-2.5">Calificación</th>
-                        <th className="px-4 py-2.5 text-center">Estado</th>
-                        <th className="px-4 py-2.5 text-right sm:px-5">Acción</th>
+                        <th className="px-4 py-2.5 text-right sm:px-5">
+                          Acción
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200/80">
-                    {students.map((student) => {
-                      const isSelected = selectedStudent?.id === student.id;
-                      const visibleTreatments = student.treatments.slice(0, 2);
-                      const hiddenTreatmentsCount = student.treatments.length - visibleTreatments.length;
+                      {students.map((student) => {
+                        const isSelected = selectedStudent?.id === student.id;
+                        const visibleTreatments = student.treatments.slice(
+                          0,
+                          3,
+                        );
+                        const hiddenTreatmentsCount =
+                          student.treatments.length - visibleTreatments.length;
 
-                      return (
-                        <tr
-                          key={student.id}
-                          className={classNames(
-                            'align-top transition duration-200',
-                            isSelected
-                              ? 'bg-primary/[0.06]'
-                              : 'hover:bg-slate-50/90',
-                          )}
-                        >
-                          <td className="px-4 py-3 sm:px-5">
-                            <div className="space-y-1">
-                              <p className="truncate text-[0.83rem] font-semibold text-ink">
-                                {getStudentFullName(student)}
-                              </p>
-                              <p className="text-[0.72rem] text-ink-muted sm:text-[0.76rem]">
-                                Semestre {student.semester}
-                              </p>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <p className="truncate text-[0.83rem] font-medium text-ink">
-                              {student.universityName}
-                            </p>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="space-y-1">
-                              <p className="truncate text-[0.83rem] font-medium text-ink">
-                                {getStudentPracticeSite(student)}
-                              </p>
-                              <p className="truncate text-[0.72rem] text-ink-muted sm:text-[0.76rem]">
-                                {getStudentLocation(student)}
-                              </p>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            {student.treatments.length > 0 ? (
-                              <div className="flex flex-wrap gap-1.5">
-                                {visibleTreatments.map((treatment) => (
-                                  <span
-                                    key={treatment}
-                                    className="inline-flex rounded-full bg-primary/10 px-2.5 py-1 text-[0.68rem] font-semibold text-primary"
-                                  >
-                                    {treatment}
-                                  </span>
-                                ))}
-                                {hiddenTreatmentsCount > 0 ? (
-                                  <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[0.68rem] font-semibold text-ink-muted">
-                                    +{hiddenTreatmentsCount}
-                                  </span>
-                                ) : null}
-                              </div>
-                              ) : (
-                                <span className="text-[0.78rem] text-ink-muted">Sin tratamientos</span>
-                              )}
-                            </td>
-                            <td className="px-4 py-3">
+                        return (
+                          <tr
+                            key={student.id}
+                            className={classNames(
+                              'align-top transition duration-200',
+                              isSelected
+                                ? 'bg-primary/[0.06]'
+                                : 'hover:bg-slate-50/90',
+                            )}
+                          >
+                            <td className="px-4 py-3 sm:px-5">
                               <div className="space-y-1">
-                                <div className="flex items-center gap-0.5">
-                                  {renderStars(student.averageRating)}
-                                </div>
-                                <p className="text-[0.72rem] font-semibold text-ink-muted">
-                                  {getRatingLabel(student)}
+                                <p className="truncate text-[0.83rem] font-semibold text-ink">
+                                  {getStudentFullName(student)}
+                                </p>
+                                <p className="text-[0.72rem] text-ink-muted sm:text-[0.76rem]">
+                                  Semestre {student.semester}
                                 </p>
                               </div>
                             </td>
-                            <td className="px-4 py-3 text-center">
-                              <span
-                              className={classNames(
-                                'inline-flex rounded-full px-2.5 py-1 text-[0.72rem] font-semibold ring-1 ring-inset',
-                                student.availabilityStatus === 'available'
-                                  ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
-                                  : 'bg-amber-50 text-amber-700 ring-amber-200',
+                            <td className="px-4 py-3">
+                              <p className="truncate text-[0.83rem] font-medium text-ink">
+                                {student.universityName}
+                              </p>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="space-y-1">
+                                <p className="truncate text-[0.83rem] font-medium text-ink">
+                                  {getStudentPracticeSite(student)}
+                                </p>
+                                <p className="truncate text-[0.72rem] text-ink-muted sm:text-[0.76rem]">
+                                  {getStudentLocation(student)}
+                                </p>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              {student.treatments.length > 0 ? (
+                                <div className="flex flex-wrap gap-1.5">
+                                  {visibleTreatments.map((treatment) => (
+                                    <span
+                                      key={treatment}
+                                      className="inline-flex rounded-full bg-primary/10 px-2.5 py-1 text-[0.68rem] font-semibold text-primary"
+                                    >
+                                      {treatment}
+                                    </span>
+                                  ))}
+                                  {hiddenTreatmentsCount > 0 ? (
+                                    <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[0.68rem] font-semibold text-ink-muted">
+                                      +{hiddenTreatmentsCount}
+                                    </span>
+                                  ) : null}
+                                </div>
+                              ) : (
+                                <span className="text-[0.78rem] text-ink-muted">
+                                  Sin tratamientos
+                                </span>
                               )}
-                            >
-                              {student.availabilityStatus === 'available' ? 'Disponible' : 'Limitado'}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-right sm:px-5">
-                            <button
-                              className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary transition duration-200 hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
-                              data-testid={`patient-student-card-${student.id}`}
-                              type="button"
-                              onClick={() => handleOpenStudentModal(student.id)}
-                            >
-                              Ver perfil
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                            </td>
+                            <td className="px-4 py-3 text-right sm:px-5">
+                              <button
+                                className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary transition duration-200 hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                                data-testid={`patient-student-card-${student.id}`}
+                                type="button"
+                                onClick={() =>
+                                  handleOpenStudentModal(student.id)
+                                }
+                              >
+                                Ver perfil
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 ) : (
@@ -647,7 +671,10 @@ export function PatientSearchStudentsPage() {
                       alt={selectedStudent.avatarAlt}
                       className="h-full w-full object-cover"
                       decoding="async"
-                      src={getOptimizedAvatarUrl(selectedStudent.avatarSrc, 220)}
+                      src={getOptimizedAvatarUrl(
+                        selectedStudent.avatarSrc,
+                        220,
+                      )}
                     />
                   ) : (
                     <span className="text-xl font-extrabold uppercase text-primary">
@@ -663,7 +690,8 @@ export function PatientSearchStudentsPage() {
                     {getStudentFullName(selectedStudent)}
                   </h2>
                   <p className="mt-1 text-sm leading-6 text-ink-muted">
-                    {selectedStudent.universityName} - Semestre {selectedStudent.semester}
+                    {selectedStudent.universityName} - Semestre{' '}
+                    {selectedStudent.semester}
                   </p>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <div className="flex items-center gap-0.5">
@@ -702,8 +730,13 @@ export function PatientSearchStudentsPage() {
             <div className="mt-5 grid gap-4 md:grid-cols-2">
               <div className="rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-4 py-4">
                 <div className="flex items-center gap-2">
-                  <MapPin aria-hidden="true" className="h-4.5 w-4.5 text-primary" />
-                  <p className="text-sm font-semibold text-ink">Sede y ubicacion</p>
+                  <MapPin
+                    aria-hidden="true"
+                    className="h-4.5 w-4.5 text-primary"
+                  />
+                  <p className="text-sm font-semibold text-ink">
+                    Sede y ubicacion
+                  </p>
                 </div>
                 <p className="mt-2 text-sm leading-6 text-ink-muted">
                   {getStudentPracticeSite(selectedStudent)}
@@ -714,8 +747,13 @@ export function PatientSearchStudentsPage() {
               </div>
               <div className="rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-4 py-4">
                 <div className="flex items-center gap-2">
-                  <UserRound aria-hidden="true" className="h-4.5 w-4.5 text-primary" />
-                  <p className="text-sm font-semibold text-ink">Disponibilidad general</p>
+                  <UserRound
+                    aria-hidden="true"
+                    className="h-4.5 w-4.5 text-primary"
+                  />
+                  <p className="text-sm font-semibold text-ink">
+                    Disponibilidad general
+                  </p>
                 </div>
                 <p className="mt-2 text-sm leading-6 text-ink-muted">
                   {getStudentAvailability(selectedStudent)}
@@ -724,7 +762,9 @@ export function PatientSearchStudentsPage() {
             </div>
 
             <div className="mt-5">
-              <p className="text-sm font-semibold text-ink">Tratamientos visibles</p>
+              <p className="text-sm font-semibold text-ink">
+                Tratamientos visibles
+              </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {selectedStudent.treatments.length > 0 ? (
                   selectedStudent.treatments.map((treatment) => (
@@ -736,7 +776,9 @@ export function PatientSearchStudentsPage() {
                     </span>
                   ))
                 ) : (
-                  <span className="text-sm text-ink-muted">Sin tratamientos publicados.</span>
+                  <span className="text-sm text-ink-muted">
+                    Sin tratamientos publicados.
+                  </span>
                 )}
               </div>
             </div>
@@ -747,18 +789,24 @@ export function PatientSearchStudentsPage() {
                   <ShieldCheck aria-hidden="true" className="h-4.5 w-4.5" />
                   <p className="font-medium">
                     Ya tienes una solicitud{' '}
-                    {currentRequestForSelectedStudent.status.toLowerCase()} con este estudiante.
+                    {currentRequestForSelectedStudent.status.toLowerCase()} con
+                    este estudiante.
                   </p>
                 </div>
               </div>
             ) : (
               <div className="mt-5 space-y-3">
                 <div className="space-y-1.5">
-                  <label className="block text-sm font-semibold text-ink" htmlFor="patient-request-reason">
+                  <label
+                    className="block text-sm font-semibold text-ink"
+                    htmlFor="patient-request-reason"
+                  >
                     Motivo de la solicitud
                   </label>
                   <textarea
-                    aria-describedby={reasonError ? 'patient-request-reason-error' : undefined}
+                    aria-describedby={
+                      reasonError ? 'patient-request-reason-error' : undefined
+                    }
                     aria-invalid={Boolean(reasonError)}
                     className={classNames(
                       'min-h-[7.5rem] w-full rounded-[1.35rem] border bg-surface px-4 py-3 text-sm text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
@@ -776,7 +824,10 @@ export function PatientSearchStudentsPage() {
                     }}
                   />
                   {reasonError ? (
-                    <p className="text-sm text-rose-600" id="patient-request-reason-error">
+                    <p
+                      className="text-sm text-rose-600"
+                      id="patient-request-reason-error"
+                    >
                       {reasonError}
                     </p>
                   ) : null}
@@ -796,7 +847,9 @@ export function PatientSearchStudentsPage() {
                     onClick={handleSendRequest}
                   >
                     <SendHorizontal aria-hidden="true" className="h-4 w-4" />
-                    <span>{patientContent.searchPage.actionLabels.sendRequest}</span>
+                    <span>
+                      {patientContent.searchPage.actionLabels.sendRequest}
+                    </span>
                   </button>
                 </div>
               </div>
