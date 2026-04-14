@@ -509,7 +509,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
           `
         : Prisma.empty;
 
-    const locationOrder =
+    const initialRelevanceOrder =
       shouldSortByPatientLocation && resolvedPatientLocation
         ? Prisma.sql`
             CASE
@@ -517,6 +517,8 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
               WHEN LOWER(practice.city) = LOWER(${resolvedPatientLocation.city}) THEN 1
               ELSE 0
             END DESC,
+            COALESCE(jsonb_array_length(practice_sites.practice_sites), 0) DESC,
+            COALESCE(array_length(treatments.treatments, 1), 0) DESC,
           `
         : Prisma.empty;
 
@@ -600,7 +602,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
           AND et.estado = 'ACTIVO'::estado_simple_enum
       ) treatments ON TRUE
       WHERE ${Prisma.join(conditions, " AND ")}
-      ORDER BY ${locationOrder} ce.fecha_creacion DESC
+      ORDER BY ${initialRelevanceOrder} ce.fecha_creacion DESC
       LIMIT ${candidateLimit}
     `;
 
