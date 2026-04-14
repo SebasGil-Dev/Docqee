@@ -5,23 +5,31 @@ import type {
 } from '@/content/types';
 import { classNames } from '@/lib/classNames';
 
-type AdminStatusBadgeProps =
-  | {
-      entity: 'credential';
-      status: CredentialDeliveryStatus;
-    }
-  | {
-      entity: 'student';
-      status: PersonOperationalStatus | 'pending';
-    }
-  | {
-      entity: 'teacher';
-      status: PersonOperationalStatus;
-    }
-  | {
-      entity: 'university';
-      status: UniversityStatus;
-    };
+type AdminStatusBadgeSize = 'compact-mobile' | 'default';
+
+type AdminStatusBadgeBaseProps = {
+  size?: AdminStatusBadgeSize;
+};
+
+type AdminStatusBadgeProps = AdminStatusBadgeBaseProps &
+  (
+    | {
+        entity: 'credential';
+        status: CredentialDeliveryStatus;
+      }
+    | {
+        entity: 'student';
+        status: PersonOperationalStatus | 'pending';
+      }
+    | {
+        entity: 'teacher';
+        status: PersonOperationalStatus;
+      }
+    | {
+        entity: 'university';
+        status: UniversityStatus;
+      }
+  );
 
 const badgeStyles = {
   credential: {
@@ -71,11 +79,16 @@ export function AdminStatusBadge(props: AdminStatusBadgeProps) {
       : props.entity === 'university'
         ? badgeStyles.university[props.status]
         : badgeStyles.person[props.status];
+  const sizeClassName =
+    props.size === 'compact-mobile'
+      ? 'px-2.5 py-0.5 text-[0.7rem] sm:px-3 sm:py-1 sm:text-xs'
+      : 'px-3 py-1 text-xs';
 
   return (
     <span
       className={classNames(
-        'admin-status-badge inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset',
+        'admin-status-badge inline-flex items-center rounded-full font-semibold ring-1 ring-inset',
+        sizeClassName,
         tone,
       )}
     >

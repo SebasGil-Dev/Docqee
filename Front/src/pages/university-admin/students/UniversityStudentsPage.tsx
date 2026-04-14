@@ -217,7 +217,7 @@ export function UniversityStudentsPage() {
         </Link>
       </div>
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
-        <div className="border-b border-slate-200/80 px-3 py-2.5 sm:px-5 sm:py-3.5">
+        <div className="border-b border-slate-200/80 px-3 py-2 sm:px-5 sm:py-3.5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
             <h2 className="hidden font-headline text-[1rem] font-extrabold tracking-tight text-ink sm:block sm:text-[1.25rem]">
               {universityAdminContent.studentsPage.tableTitle}
@@ -336,13 +336,19 @@ export function UniversityStudentsPage() {
           <div className="admin-scrollbar min-h-0 flex-1 overflow-x-auto overflow-y-auto">
             <table className="min-w-full">
               <thead className="sticky top-0 z-10 bg-slate-100 text-left">
-                <tr className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-ink-muted">
-                  <th className="px-4 py-2.5 sm:px-5">Estudiante</th>
-                  <th className="px-4 py-2.5">Documento</th>
-                  <th className="px-4 py-2.5">Correo</th>
-                  <th className="px-4 py-2.5 text-center">Semestre</th>
-                  <th className="px-4 py-2.5 text-center">Estado</th>
-                  <th className="px-4 py-2.5 text-center sm:px-5">Acciones</th>
+                <tr className="text-[0.6rem] font-bold uppercase tracking-[0.14em] text-ink-muted sm:text-[0.64rem] sm:tracking-[0.16em]">
+                  <th className="px-3 py-2 sm:px-5 sm:py-2.5">Estudiante</th>
+                  <th className="px-3 py-2 sm:px-4 sm:py-2.5">Documento</th>
+                  <th className="px-3 py-2 sm:px-4 sm:py-2.5">Correo</th>
+                  <th className="px-3 py-2 text-center sm:px-4 sm:py-2.5">
+                    Semestre
+                  </th>
+                  <th className="px-3 py-2 text-center sm:px-4 sm:py-2.5">
+                    Estado
+                  </th>
+                  <th className="px-3 py-2 text-center sm:px-5 sm:py-2.5">
+                    Acciones
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200/80">
@@ -361,17 +367,17 @@ export function UniversityStudentsPage() {
                     <tr key={student.id} className="align-top">
                       <td
                         className={classNames(
-                          'px-4 pt-3 sm:px-5',
-                          isLast ? 'pb-3.5' : 'pb-3',
+                          'px-3 pt-2.5 sm:px-5 sm:pt-3',
+                          isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
                         )}
                       >
-                        <div className="space-y-1">
-                          <p className="text-[0.83rem] font-semibold text-ink">
+                        <div className="space-y-0.5 sm:space-y-1">
+                          <p className="text-[0.78rem] font-semibold text-ink sm:text-[0.83rem]">
                             {formatDisplayName(
                               `${student.firstName} ${student.lastName}`,
                             )}
                           </p>
-                          <p className="text-[0.72rem] text-ink-muted sm:text-[0.76rem]">
+                          <p className="text-[0.68rem] text-ink-muted sm:text-[0.76rem]">
                             Registrado{' '}
                             {new Date(student.createdAt).toLocaleDateString(
                               'es-CO',
@@ -381,11 +387,11 @@ export function UniversityStudentsPage() {
                       </td>
                       <td
                         className={classNames(
-                          'px-4 pt-3',
-                          isLast ? 'pb-3.5' : 'pb-3',
+                          'px-3 pt-2.5 sm:px-4 sm:pt-3',
+                          isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
                         )}
                       >
-                        <p className="text-[0.83rem] font-medium text-ink">
+                        <p className="text-[0.78rem] font-medium text-ink sm:text-[0.83rem]">
                           {formatDocumentLabel(
                             student.documentTypeCode,
                             student.documentNumber,
@@ -394,44 +400,47 @@ export function UniversityStudentsPage() {
                       </td>
                       <td
                         className={classNames(
-                          'px-4 pt-3',
-                          isLast ? 'pb-3.5' : 'pb-3',
+                          'px-3 pt-2.5 sm:px-4 sm:pt-3',
+                          isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
                         )}
                       >
-                        <p className="text-sm text-ink-muted">
+                        <p className="text-[0.76rem] text-ink-muted sm:text-sm">
                           {student.email}
                         </p>
                       </td>
                       <td
                         className={classNames(
-                          'px-4 pt-3.5 text-center',
-                          isLast ? 'pb-4' : 'pb-3.5',
+                          'px-3 pt-2.5 text-center sm:px-4 sm:pt-3.5',
+                          isLast ? 'pb-3 sm:pb-4' : 'pb-2.5 sm:pb-3.5',
                         )}
                       >
                         <div className="flex items-center justify-center">
-                          <span className="text-[0.83rem] font-normal text-ink">
+                          <span className="text-[0.78rem] font-normal text-ink sm:text-[0.83rem]">
                             {student.semester}
                           </span>
                         </div>
                       </td>
                       <td
                         className={classNames(
-                          'px-4 pt-3 text-center',
-                          isLast ? 'pb-3.5' : 'pb-3',
+                          'px-3 pt-2.5 text-center sm:px-4 sm:pt-3',
+                          isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
                         )}
                       >
                         <div className="flex items-center justify-center">
                           <AdminStatusBadge
                             entity="student"
+                            size="compact-mobile"
                             status={displayStatus}
                           />
                         </div>
                       </td>
                       <td
                         className={classNames(
-                          'px-4 text-center sm:px-5',
-                          displayStatus === 'pending' ? 'pt-3' : 'pt-3.5',
-                          isLast ? 'pb-3.5' : 'pb-3',
+                          'px-3 text-center sm:px-5',
+                          displayStatus === 'pending'
+                            ? 'pt-2.5 sm:pt-3'
+                            : 'pt-2.5 sm:pt-3.5',
+                          isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
                         )}
                       >
                         <div
@@ -442,7 +451,7 @@ export function UniversityStudentsPage() {
                         >
                           {displayStatus === 'pending' ? (
                             <span
-                              className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset bg-amber-50 text-amber-700 ring-amber-200"
+                              className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-[0.7rem] font-semibold text-amber-700 ring-1 ring-inset ring-amber-200 sm:px-3 sm:py-1 sm:text-xs"
                               title="Envia la credencial primero"
                             >
                               Pendiente
@@ -450,7 +459,7 @@ export function UniversityStudentsPage() {
                           ) : (
                             <button
                               className={classNames(
-                                'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-65',
+                                'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[0.7rem] font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-65 sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs',
                                 student.status === 'active'
                                   ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
                                   : 'bg-primary/10 text-primary hover:bg-primary/15',
@@ -464,12 +473,12 @@ export function UniversityStudentsPage() {
                               {student.status === 'active' ? (
                                 <PowerOff
                                   aria-hidden="true"
-                                  className="h-3.5 w-3.5"
+                                  className="h-3.25 w-3.25 sm:h-3.5 sm:w-3.5"
                                 />
                               ) : (
                                 <Power
                                   aria-hidden="true"
-                                  className="h-3.5 w-3.5"
+                                  className="h-3.25 w-3.25 sm:h-3.5 sm:w-3.5"
                                 />
                               )}
                               <span>

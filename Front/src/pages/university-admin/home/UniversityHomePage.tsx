@@ -23,8 +23,8 @@ import { useUniversityAdminOverviewStore } from '@/lib/universityAdminOverviewSt
 const MAX_RECENT_STUDENTS = 5;
 const MAX_RECENT_TEACHERS = 4;
 const MAX_RECENT_CAMPUSES = 3;
-const MOBILE_RECENT_STUDENTS = 2;
-const MOBILE_RECENT_TEACHERS = 2;
+const MOBILE_RECENT_STUDENTS = 3;
+const MOBILE_RECENT_TEACHERS = 3;
 const MOBILE_RECENT_CAMPUSES = 1;
 const UNIVERSITY_CAMPUSES_HASH = '#university-campuses-section';
 const recentStudentDateFormatter = new Intl.DateTimeFormat('en-US', {
@@ -268,10 +268,10 @@ export function UniversityHomePage() {
                           key={student.id}
                           className="rounded-[0.9rem] border border-slate-200/80 bg-slate-50 px-2 py-1.5"
                         >
-                          <div className="min-w-0 space-y-0.5">
+                          <div className="min-w-0">
                             <p
                               className="truncate text-[0.73rem] text-ink"
-                              title={`${formatDisplayName(`${student.firstName} ${student.lastName}`)} · Semestre ${student.semester}`}
+                              title={`${formatDisplayName(`${student.firstName} ${student.lastName}`)} · Semestre ${student.semester} · ${formatRecentStudentDate(student.createdAt)}`}
                             >
                               <span className="font-semibold text-ink">
                                 {formatDisplayName(
@@ -281,12 +281,9 @@ export function UniversityHomePage() {
                               <span className="text-ink-muted">
                                 {` · Semestre ${student.semester}`}
                               </span>
-                            </p>
-                            <p
-                              className="truncate text-[0.65rem] text-ink-muted"
-                              title={formatRecentStudentDate(student.createdAt)}
-                            >
-                              {formatRecentStudentDate(student.createdAt)}
+                              <span className="text-ink-muted">
+                                {` \u00b7 ${formatRecentStudentDate(student.createdAt)}`}
+                              </span>
                             </p>
                           </div>
                         </div>

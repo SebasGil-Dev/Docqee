@@ -384,7 +384,7 @@ export function UniversityCredentialsPage() {
         </SurfaceCard>
       ) : null}
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
-        <div className="flex flex-col gap-2 border-b border-slate-200/80 px-3 py-2.5 sm:gap-3 sm:px-5 sm:py-3.5">
+        <div className="flex flex-col gap-2 border-b border-slate-200/80 px-3 py-2 sm:gap-3 sm:px-5 sm:py-3.5">
           <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
             <div className="min-w-0 space-y-0.5 sm:space-y-1">
               <h2 className="hidden font-headline text-[1.12rem] font-extrabold tracking-tight text-ink sm:block sm:text-[1.25rem]">
@@ -619,6 +619,7 @@ export function UniversityCredentialsPage() {
                         <div className="flex items-center justify-center">
                           <AdminStatusBadge
                             entity="credential"
+                            size="compact-mobile"
                             status={credential.deliveryStatus}
                           />
                         </div>
@@ -637,7 +638,7 @@ export function UniversityCredentialsPage() {
                                   universityAdminContent.credentialsPage
                                     .actionLabels.saveEmail
                                 }
-                                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition duration-200 hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs sm:font-semibold"
+                                className="inline-flex h-[1.875rem] w-[1.875rem] shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition duration-200 hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs sm:font-semibold"
                                 disabled={isLoading}
                                 type="button"
                                 onClick={() =>
@@ -657,7 +658,7 @@ export function UniversityCredentialsPage() {
                               </button>
                               <button
                                 aria-label="Cancelar"
-                                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs sm:font-semibold"
+                                className="inline-flex h-[1.875rem] w-[1.875rem] shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs sm:font-semibold"
                                 disabled={isLoading}
                                 type="button"
                                 onClick={handleCancelEmailEdit}
@@ -686,7 +687,7 @@ export function UniversityCredentialsPage() {
                                         .actionLabels.resend
                                 }
                                 className={classNames(
-                                  'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs sm:font-semibold',
+                                  'inline-flex h-[1.875rem] w-[1.875rem] shrink-0 items-center justify-center rounded-full transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs sm:font-semibold',
                                   isGenerated
                                     ? 'bg-primary/10 text-primary hover:bg-primary/15'
                                     : 'bg-sky-50 text-sky-700 hover:bg-sky-100',
@@ -728,7 +729,7 @@ export function UniversityCredentialsPage() {
                                   universityAdminContent.credentialsPage
                                     .actionLabels.editEmail
                                 }
-                                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs sm:font-semibold"
+                                className="inline-flex h-[1.875rem] w-[1.875rem] shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs sm:font-semibold"
                                 disabled={isLoading}
                                 type="button"
                                 onClick={() => handleStartEmailEdit(credential)}
@@ -753,7 +754,7 @@ export function UniversityCredentialsPage() {
                                   universityAdminContent.credentialsPage
                                     .actionLabels.delete
                                 }
-                                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-700 transition duration-200 hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200/70 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs sm:font-semibold"
+                                className="inline-flex h-[1.875rem] w-[1.875rem] shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-700 transition duration-200 hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200/70 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs sm:font-semibold"
                                 disabled={isLoading}
                                 type="button"
                                 onClick={() => {
