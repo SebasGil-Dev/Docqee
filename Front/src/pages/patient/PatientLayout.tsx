@@ -10,7 +10,7 @@ import { getDefaultRouteForRole } from '@/lib/authRouting';
 import { usePatientPortalNotifications } from '@/lib/portalNotifications';
 import { usePatientModuleStore } from '@/lib/patientModuleStore';
 
-const NOTIFICATION_POLL_INTERVAL_MS = 30_000;
+const NOTIFICATION_POLL_INTERVAL_MS = 15_000;
 
 export function PatientLayout() {
   const { session } = useAuth();
