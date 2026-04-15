@@ -1953,9 +1953,19 @@ async function refreshConversation(conversationId: string) {
         const optimisticMessages = c.messages.filter((m) =>
           m.id.startsWith('optimistic-'),
         );
+        const currentRealMessages = c.messages.filter(
+          (m) => !m.id.startsWith('optimistic-'),
+        );
+        // If we have more confirmed messages than the API returned, keep ours.
+        // This handles the window where a just-sent message hasn't propagated
+        // to the conversation endpoint yet (race between send API and read API).
+        const baseMessages =
+          currentRealMessages.length > conversation.messages.length
+            ? currentRealMessages
+            : conversation.messages;
         return {
           ...c,
-          messages: [...conversation.messages, ...optimisticMessages],
+          messages: [...baseMessages, ...optimisticMessages],
           status: conversation.status,
         };
       }),
