@@ -76,7 +76,6 @@ export function PatientConversationsPage() {
   const [statusFilter, setStatusFilter] = useState<ConversationStatusFilter>('all');
   const [composerValue, setComposerValue] = useState('');
   const [composerError, setComposerError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
@@ -163,7 +162,6 @@ export function PatientConversationsPage() {
   useEffect(() => {
     setComposerValue('');
     setComposerError(null);
-    setSuccessMessage(null);
   }, [selectedConversation?.id]);
 
   useEffect(() => {
@@ -204,16 +202,15 @@ export function PatientConversationsPage() {
       return;
     }
 
+    setComposerValue('');
+    setComposerError(null);
+
     void (async () => {
       const sent = await sendConversationMessage(selectedConversation.id, normalizedMessage);
 
       if (!sent) {
-        return;
+        setComposerValue(normalizedMessage);
       }
-
-      setComposerValue('');
-      setComposerError(null);
-      setSuccessMessage('Tu mensaje fue enviado correctamente.');
     })();
   };
 
@@ -232,19 +229,6 @@ export function PatientConversationsPage() {
         title={patientContent.conversationsPage.title}
         titleClassName="text-[2rem] sm:text-[2.35rem]"
       />
-      {successMessage ? (
-        <SurfaceCard
-          className="border border-emerald-200 bg-emerald-50/90 text-sm font-medium text-emerald-800"
-          paddingClassName="p-3.5"
-        >
-          <p role="status">
-            <span className="font-semibold">
-              {patientContent.conversationsPage.successNoticePrefix}
-            </span>{' '}
-            {successMessage}
-          </p>
-        </SurfaceCard>
-      ) : null}
       {visibleErrorMessage ? (
         <SurfaceCard
           className="border border-rose-200 bg-rose-50/90 text-sm font-medium text-rose-800"

@@ -1685,16 +1685,32 @@ async function sendConversationMessage(
     return sendConversationMessageMock(conversationId, content);
   }
 
-  patchState({
-    errorMessage: null,
-    isLoading: true,
-  });
+  const tempId = `optimistic-${Date.now()}`;
+  const optimisticMessage: PatientConversationMessage = {
+    author: 'PACIENTE',
+    authorName: `${state.profile.firstName} ${state.profile.lastName}`,
+    content: content.trim(),
+    id: tempId,
+    sentAt: new Date().toISOString(),
+  };
+
+  const conversationsSnapshot = state.conversations;
+
+  setRuntimeState(
+    {
+      ...state,
+      conversations: state.conversations.map((conversation) =>
+        conversation.id === conversationId
+          ? { ...conversation, messages: [...conversation.messages, optimisticMessage] }
+          : conversation,
+      ),
+      errorMessage: null,
+    },
+    { persistCache: false },
+  );
 
   try {
-    const message = await sendPatientPortalConversationMessage(
-      conversationId,
-      content,
-    );
+    const message = await sendPatientPortalConversationMessage(conversationId, content);
 
     setRuntimeState(
       {
@@ -1703,7 +1719,7 @@ async function sendConversationMessage(
           conversation.id === conversationId
             ? {
                 ...conversation,
-                messages: [...conversation.messages, message],
+                messages: conversation.messages.map((m) => (m.id === tempId ? message : m)),
               }
             : conversation,
         ),
@@ -1712,17 +1728,20 @@ async function sendConversationMessage(
         isReady: true,
         shouldRefresh: false,
       },
-      {
-        persistCache: true,
-      },
+      { persistCache: true },
     );
 
     return true;
   } catch (error) {
-    patchState({
-      errorMessage: getErrorMessage(error, 'No pudimos enviar el mensaje.'),
-      isLoading: false,
-    });
+    setRuntimeState(
+      {
+        ...state,
+        conversations: conversationsSnapshot,
+        errorMessage: getErrorMessage(error, 'No pudimos enviar el mensaje.'),
+        isLoading: false,
+      },
+      { persistCache: false },
+    );
     return false;
   }
 }

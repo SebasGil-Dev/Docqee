@@ -1967,9 +1967,25 @@ async function sendConversationMessage(
     return sendConversationMessageMock(conversationId, content);
   }
 
-  patchState({
+  const tempId = `optimistic-${Date.now()}`;
+  const optimisticMessage: StudentConversationMessage = {
+    author: 'ESTUDIANTE',
+    authorName: `${state.profile.firstName} ${state.profile.lastName}`,
+    content: content.trim(),
+    id: tempId,
+    sentAt: new Date().toISOString(),
+  };
+
+  const conversationsSnapshot = state.conversations;
+
+  updateState({
+    ...state,
+    conversations: state.conversations.map((conversation) =>
+      conversation.id === conversationId
+        ? { ...conversation, messages: [...conversation.messages, optimisticMessage] }
+        : conversation,
+    ),
     errorMessage: null,
-    isLoading: true,
   });
 
   try {
@@ -1981,7 +1997,7 @@ async function sendConversationMessage(
         conversation.id === conversationId
           ? {
               ...conversation,
-              messages: [...conversation.messages, message],
+              messages: conversation.messages.map((m) => (m.id === tempId ? message : m)),
             }
           : conversation,
       ),
@@ -1992,7 +2008,9 @@ async function sendConversationMessage(
 
     return true;
   } catch (error) {
-    patchState({
+    updateState({
+      ...state,
+      conversations: conversationsSnapshot,
       errorMessage: getErrorMessage(error, 'No pudimos enviar el mensaje.'),
       isLoading: false,
     });
