@@ -44,6 +44,16 @@ function buildAdministratorLabel(university: AdminUniversity) {
   );
 }
 
+function getFirstNamePart(value: string) {
+  return value.trim().split(/\s+/)[0] ?? '';
+}
+
+function buildCompactAdministratorLabel(university: AdminUniversity) {
+  return formatDisplayName(
+    `${getFirstNamePart(university.adminFirstName)} ${getFirstNamePart(university.adminLastName)}`,
+  );
+}
+
 function getLocationState(locationState: unknown): UniversitiesLocationState {
   if (!locationState || typeof locationState !== 'object') {
     return null;
@@ -322,16 +332,27 @@ export function AdminUniversitiesPage() {
           </div>
         </div>
         {filteredUniversities.length > 0 ? (
-          <div className="admin-scrollbar min-h-0 flex-1 overflow-x-auto overflow-y-auto overscroll-contain scroll-smooth [scrollbar-gutter:stable] [-webkit-overflow-scrolling:touch]">
-            <div className="min-w-[52rem] md:min-w-full">
-              <table className="min-w-full table-fixed md:table-auto">
+          <div className="admin-scrollbar min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain scroll-smooth md:overflow-x-auto md:[scrollbar-gutter:stable] [-webkit-overflow-scrolling:touch]">
+            <div className="w-full md:min-w-[52rem]">
+              <table className="w-full table-fixed">
                 <thead className="sticky top-0 z-10 bg-slate-100 text-left">
-                  <tr className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-ink-muted">
-                    <th className="px-4 py-3 sm:px-5">Universidad</th>
-                    <th className="px-4 py-3">Localidad</th>
-                    <th className="px-4 py-3">Administrador</th>
-                    <th className="px-4 py-3">Estado</th>
-                    <th className="px-4 py-3 text-right sm:px-5">Acciones</th>
+                  <tr className="text-[0.56rem] font-bold uppercase tracking-[0.06em] text-ink-muted sm:text-[0.68rem] sm:tracking-[0.18em]">
+                    <th className="w-[38%] px-2 py-2.5 sm:px-5 sm:py-3 md:w-auto">
+                      Universidad
+                    </th>
+                    <th className="hidden px-4 py-3 md:table-cell">
+                      Localidad
+                    </th>
+                    <th className="w-[29%] px-1.5 py-2.5 sm:px-4 sm:py-3 md:w-auto">
+                      Administrador
+                    </th>
+                    <th className="w-[18%] px-1 py-2.5 text-center sm:px-4 sm:py-3 md:w-auto md:text-left">
+                      Estado
+                    </th>
+                    <th className="w-[15%] px-1 py-2.5 text-center sm:px-5 sm:py-3 md:w-auto md:text-right">
+                      <span className="sm:hidden">Acción</span>
+                      <span className="hidden sm:inline">Acciones</span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200/80">
@@ -345,15 +366,18 @@ export function AdminUniversitiesPage() {
                       <tr key={university.id} className="align-top">
                         <td
                           className={classNames(
-                            'px-4 pt-3.5 sm:px-5',
-                            isLast ? 'pb-4' : 'pb-3.5',
+                            'overflow-hidden px-2 pt-2.5 sm:px-5 sm:pt-3.5',
+                            isLast ? 'pb-3 sm:pb-4' : 'pb-2.5 sm:pb-3.5',
                           )}
                         >
-                          <div className="space-y-1">
-                            <p className="text-sm font-semibold text-ink">
+                          <div className="min-w-0 space-y-1">
+                            <p className="break-words text-[0.72rem] font-semibold leading-tight text-ink sm:text-sm">
                               {formatDisplayName(university.name)}
                             </p>
-                            <p className="text-xs text-ink-muted sm:text-[0.82rem]">
+                            <p className="text-[0.6rem] font-medium leading-tight text-ink-muted sm:text-xs md:hidden">
+                              {university.mainCity} · {university.mainLocality}
+                            </p>
+                            <p className="hidden text-xs text-ink-muted sm:text-[0.82rem] md:block">
                               Registrada{' '}
                               {new Date(
                                 university.createdAt,
@@ -363,8 +387,8 @@ export function AdminUniversitiesPage() {
                         </td>
                         <td
                           className={classNames(
-                            'px-4 pt-3.5',
-                            isLast ? 'pb-4' : 'pb-3.5',
+                            'hidden px-4 pt-3.5 md:table-cell',
+                            isLast ? 'pb-3 sm:pb-4' : 'pb-2.5 sm:pb-3.5',
                           )}
                         >
                           <div className="space-y-1">
@@ -378,44 +402,69 @@ export function AdminUniversitiesPage() {
                         </td>
                         <td
                           className={classNames(
-                            'px-4 pt-3.5',
-                            isLast ? 'pb-4' : 'pb-3.5',
+                            'overflow-hidden px-1.5 pt-2.5 sm:px-4 sm:pt-3.5',
+                            isLast ? 'pb-3 sm:pb-4' : 'pb-2.5 sm:pb-3.5',
                           )}
                         >
-                          <div className="space-y-1">
-                            <p className="text-sm font-semibold text-ink">
-                              {buildAdministratorLabel(university)}
+                          <div className="min-w-0 space-y-1">
+                            <p className="break-words text-[0.7rem] font-semibold leading-tight text-ink sm:text-sm">
+                              <span className="md:hidden">
+                                {buildCompactAdministratorLabel(university)}
+                              </span>
+                              <span className="hidden md:inline">
+                                {buildAdministratorLabel(university)}
+                              </span>
                             </p>
-                            <p className="text-xs text-ink-muted sm:text-[0.82rem]">
+                            <p
+                              className="block max-w-full truncate text-[0.58rem] leading-tight text-ink-muted sm:text-xs md:text-[0.82rem]"
+                              title={university.adminEmail}
+                            >
                               {university.adminEmail}
                             </p>
                           </div>
                         </td>
                         <td
                           className={classNames(
-                            'px-4 pt-3.5',
-                            isLast ? 'pb-4' : 'pb-3.5',
+                            'overflow-hidden px-1 pt-2.5 text-center sm:px-4 sm:pt-3.5 md:text-left',
+                            isLast ? 'pb-3 sm:pb-4' : 'pb-2.5 sm:pb-3.5',
                           )}
                         >
-                          <AdminStatusBadge
-                            entity="university"
-                            status={university.status}
-                          />
+                          <div className="flex justify-center md:justify-start">
+                            <AdminStatusBadge
+                              entity="university"
+                              size="compact-mobile"
+                              status={university.status}
+                            />
+                          </div>
                         </td>
                         <td
                           className={classNames(
-                            'px-4 pt-3.5 text-right sm:px-5',
-                            isLast ? 'pb-4' : 'pb-3.5',
+                            'overflow-hidden px-1 pt-2.5 text-center sm:px-5 sm:pt-3.5 md:text-right',
+                            isLast ? 'pb-3 sm:pb-4' : 'pb-2.5 sm:pb-3.5',
                           )}
                         >
                           {isPending ? (
-                            <span className="inline-flex rounded-full bg-amber-50 px-2.5 py-1.5 text-[0.72rem] font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">
+                            <span className="inline-flex rounded-full bg-amber-50 px-1.5 py-1 text-[0.62rem] font-semibold text-amber-700 ring-1 ring-inset ring-amber-200 sm:px-2.5 sm:py-1.5 sm:text-[0.72rem]">
                               {adminContent.universitiesPage.pendingActionLabel}
                             </span>
                           ) : (
                             <button
+                              aria-label={
+                                university.status === 'active'
+                                  ? adminContent.universitiesPage.actionLabels
+                                      .deactivate
+                                  : adminContent.universitiesPage.actionLabels
+                                      .activate
+                              }
+                              title={
+                                university.status === 'active'
+                                  ? adminContent.universitiesPage.actionLabels
+                                      .deactivate
+                                  : adminContent.universitiesPage.actionLabels
+                                      .activate
+                              }
                               className={classNames(
-                                'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[0.72rem] font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-65',
+                                'inline-flex h-8 w-8 items-center justify-center rounded-full text-[0.72rem] font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-65 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-2.5 sm:py-1.5',
                                 university.status === 'active'
                                   ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
                                   : 'bg-primary/10 text-primary hover:bg-primary/15',
@@ -437,7 +486,7 @@ export function AdminUniversitiesPage() {
                                   className="h-3.5 w-3.5"
                                 />
                               )}
-                              <span>
+                              <span className="hidden sm:inline">
                                 {university.status === 'active'
                                   ? adminContent.universitiesPage.actionLabels
                                       .deactivate
