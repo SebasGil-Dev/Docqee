@@ -88,11 +88,17 @@ export function StudentConversationsPage() {
   const selectedConversationId = searchParams.get('conversation');
   const filteredConversations = useMemo(
     () =>
-      conversations.filter((conversation) => {
-        const matchesSearch = conversation.patientName.toLowerCase().includes(normalizedSearch);
+      conversations
+        .filter((conversation) => {
+          const matchesSearch = conversation.patientName.toLowerCase().includes(normalizedSearch);
 
-        return matchesSearch && (statusFilter === 'all' || conversation.status === statusFilter);
-      }),
+          return matchesSearch && (statusFilter === 'all' || conversation.status === statusFilter);
+        })
+        .sort((a, b) => {
+          const aTime = getLastMessage(a)?.sentAt ?? '';
+          const bTime = getLastMessage(b)?.sentAt ?? '';
+          return bTime < aTime ? -1 : bTime > aTime ? 1 : 0;
+        }),
     [conversations, normalizedSearch, statusFilter],
   );
   const selectedConversation = useMemo(

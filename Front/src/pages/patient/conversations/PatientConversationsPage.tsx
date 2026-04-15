@@ -85,16 +85,22 @@ export function PatientConversationsPage() {
   const selectedConversationId = searchParams.get('conversation');
   const filteredConversations = useMemo(
     () =>
-      conversations.filter((conversation) => {
-        const lastMessage = getLastMessage(conversation);
-        const matchesSearch =
-          conversation.studentName.toLowerCase().includes(normalizedSearch) ||
-          conversation.universityName.toLowerCase().includes(normalizedSearch) ||
-          (conversation.reason ?? '').toLowerCase().includes(normalizedSearch) ||
-          (lastMessage?.content ?? '').toLowerCase().includes(normalizedSearch);
+      conversations
+        .filter((conversation) => {
+          const lastMessage = getLastMessage(conversation);
+          const matchesSearch =
+            conversation.studentName.toLowerCase().includes(normalizedSearch) ||
+            conversation.universityName.toLowerCase().includes(normalizedSearch) ||
+            (conversation.reason ?? '').toLowerCase().includes(normalizedSearch) ||
+            (lastMessage?.content ?? '').toLowerCase().includes(normalizedSearch);
 
-        return matchesSearch && (statusFilter === 'all' || conversation.status === statusFilter);
-      }),
+          return matchesSearch && (statusFilter === 'all' || conversation.status === statusFilter);
+        })
+        .sort((a, b) => {
+          const aTime = getLastMessage(a)?.sentAt ?? '';
+          const bTime = getLastMessage(b)?.sentAt ?? '';
+          return bTime < aTime ? -1 : bTime > aTime ? 1 : 0;
+        }),
     [conversations, normalizedSearch, statusFilter],
   );
   const selectedConversation = useMemo(
