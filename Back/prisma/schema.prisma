@@ -33,10 +33,6 @@ model cita {
   cita_tratamiento       cita_tratamiento[]
   reprogramacion_cita    reprogramacion_cita[]
   valoracion             valoracion[]
-
-  @@index([id_solicitud, fecha_hora_inicio], map: "idx_cita_solicitud_inicio")
-  @@index([id_docente_universidad, fecha_hora_inicio], map: "idx_cita_docente_inicio")
-  @@index([id_sede], map: "idx_cita_sede")
 }
 
 model cita_tratamiento {
@@ -72,9 +68,6 @@ model credencial_inicial {
   fecha_creacion        DateTime           @default(now()) @db.Timestamptz(6)
   cuenta_acceso         cuenta_acceso      @relation(fields: [id_cuenta_acceso], references: [id_cuenta], onDelete: NoAction, onUpdate: NoAction, map: "fk_credencial_inicial_cuenta")
   envio_credencial      envio_credencial[]
-
-  @@index([fecha_creacion], map: "idx_credencial_inicial_fecha")
-  @@index([anulada_at, fecha_creacion], map: "idx_credencial_inicial_pendientes_fecha")
 }
 
 model cuenta_acceso {
@@ -104,8 +97,6 @@ model cuenta_acceso {
   valoracion_valoracion_id_cuenta_emisorTocuenta_acceso                       valoracion[]              @relation("valoracion_id_cuenta_emisorTocuenta_acceso")
   valoracion_valoracion_id_cuenta_receptorTocuenta_acceso                     valoracion[]              @relation("valoracion_id_cuenta_receptorTocuenta_acceso")
   verificacion_correo                                                         verificacion_correo[]
-
-  @@index([tipo_cuenta, primer_ingreso_pendiente, ultimo_login_at], map: "idx_cuenta_acceso_credenciales_pendientes")
 }
 
 model cuenta_admin_plataforma {
@@ -168,8 +159,6 @@ model cuenta_paciente {
   persona              persona            @relation(fields: [id_persona], references: [id_persona], onDelete: NoAction, onUpdate: NoAction, map: "fk_cuenta_paciente_persona")
   tutor_responsable    tutor_responsable? @relation(fields: [id_tutor_responsable], references: [id_tutor_responsable], onDelete: NoAction, onUpdate: NoAction, map: "fk_cuenta_paciente_tutor")
   solicitud            solicitud[]
-
-  @@index([id_localidad], map: "idx_cuenta_paciente_localidad")
 }
 
 model docente {
@@ -198,7 +187,6 @@ model docente_universidad {
   universidad            universidad        @relation(fields: [id_universidad], references: [id_universidad], onDelete: NoAction, onUpdate: NoAction, map: "fk_docente_universidad_universidad")
 
   @@unique([id_docente, id_universidad], map: "uq_docente_universidad")
-  @@index([id_universidad, fecha_creacion], map: "idx_docente_universidad_universidad_fecha")
 }
 
 model enlace_profesional {
@@ -209,8 +197,6 @@ model enlace_profesional {
   fecha_creacion        DateTime          @default(now()) @db.Timestamptz(6)
   fecha_actualizacion   DateTime          @default(now()) @db.Timestamptz(6)
   cuenta_estudiante     cuenta_estudiante @relation(fields: [id_cuenta_estudiante], references: [id_cuenta], onDelete: NoAction, onUpdate: NoAction, map: "fk_enlace_profesional_cuenta")
-
-  @@index([id_cuenta_estudiante], map: "idx_enlace_profesional_estudiante")
 }
 
 model envio_credencial {
@@ -219,8 +205,6 @@ model envio_credencial {
   tipo_envio            tipo_envio_credencial_enum
   enviado_at            DateTime                   @default(now()) @db.Timestamptz(6)
   credencial_inicial    credencial_inicial         @relation(fields: [id_credencial_inicial], references: [id_credencial_inicial], onDelete: NoAction, onUpdate: NoAction, map: "fk_envio_credencial")
-
-  @@index([id_credencial_inicial, enviado_at], map: "idx_envio_credencial_credencial_fecha")
 }
 
 model estudiante_sede_practica {
@@ -269,8 +253,6 @@ model horario_bloqueado {
   fecha_creacion           DateTime           @default(now()) @db.Timestamptz(6)
   fecha_actualizacion      DateTime           @default(now()) @db.Timestamptz(6)
   cuenta_estudiante        cuenta_estudiante  @relation(fields: [id_cuenta_estudiante], references: [id_cuenta], onDelete: NoAction, onUpdate: NoAction, map: "fk_horario_bloqueado_cuenta")
-
-  @@index([id_cuenta_estudiante, hora_inicio], map: "idx_horario_bloqueado_estudiante_inicio")
 }
 
 model localidad {
@@ -294,9 +276,6 @@ model mensaje {
   enviado_at          DateTime      @default(now()) @db.Timestamptz(6)
   conversacion        conversacion  @relation(fields: [id_conversacion], references: [id_conversacion], onDelete: NoAction, onUpdate: NoAction, map: "fk_mensaje_conversacion")
   cuenta_acceso       cuenta_acceso @relation(fields: [id_cuenta_remitente], references: [id_cuenta], onDelete: NoAction, onUpdate: NoAction, map: "fk_mensaje_remitente")
-
-  @@index([id_conversacion, enviado_at], map: "idx_mensaje_conversacion_fecha")
-  @@index([id_cuenta_remitente], map: "idx_mensaje_remitente")
 }
 
 model notificacion {
@@ -307,8 +286,6 @@ model notificacion {
   leida             Boolean                @default(false)
   fecha_creacion    DateTime               @default(now()) @db.Timestamptz(6)
   cuenta_acceso     cuenta_acceso          @relation(fields: [id_cuenta_destino], references: [id_cuenta], onDelete: NoAction, onUpdate: NoAction, map: "fk_notificacion_cuenta")
-
-  @@index([id_cuenta_destino, fecha_creacion], map: "idx_notificacion_destino_fecha")
 }
 
 model perfil_estudiante {
@@ -345,8 +322,6 @@ model recuperacion_cuenta {
   usado_at               DateTime?     @db.Timestamptz(6)
   fecha_creacion         DateTime      @default(now()) @db.Timestamptz(6)
   cuenta_acceso          cuenta_acceso @relation(fields: [id_cuenta_acceso], references: [id_cuenta], onDelete: NoAction, onUpdate: NoAction, map: "fk_recuperacion_cuenta")
-
-  @@index([id_cuenta_acceso, usado_at, fecha_creacion], map: "idx_recuperacion_cuenta_activa_fecha")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -364,10 +339,6 @@ model reprogramacion_cita {
   cita                                                                  cita                       @relation(fields: [id_cita], references: [id_cita], onDelete: NoAction, onUpdate: NoAction, map: "fk_reprogramacion_cita")
   cuenta_acceso_reprogramacion_cita_propuesta_por_cuentaTocuenta_acceso cuenta_acceso              @relation("reprogramacion_cita_propuesta_por_cuentaTocuenta_acceso", fields: [propuesta_por_cuenta], references: [id_cuenta], onDelete: NoAction, onUpdate: NoAction, map: "fk_reprogramacion_propuesta")
   cuenta_acceso_reprogramacion_cita_respuesta_por_cuentaTocuenta_acceso cuenta_acceso?             @relation("reprogramacion_cita_respuesta_por_cuentaTocuenta_acceso", fields: [respuesta_por_cuenta], references: [id_cuenta], onDelete: NoAction, onUpdate: NoAction, map: "fk_reprogramacion_respuesta")
-
-  @@index([id_cita], map: "idx_reprogramacion_cita")
-  @@index([propuesta_por_cuenta], map: "idx_reprogramacion_propuesta")
-  @@index([respuesta_por_cuenta], map: "idx_reprogramacion_respuesta")
 }
 
 model sede {
@@ -407,11 +378,6 @@ model solicitud {
   cuenta_acceso        cuenta_acceso?        @relation(fields: [cerrada_por_cuenta], references: [id_cuenta], onDelete: NoAction, onUpdate: NoAction, map: "fk_solicitud_cerrada_por")
   cuenta_estudiante    cuenta_estudiante     @relation(fields: [id_cuenta_estudiante], references: [id_cuenta], onDelete: NoAction, onUpdate: NoAction, map: "fk_solicitud_estudiante")
   cuenta_paciente      cuenta_paciente       @relation(fields: [id_cuenta_paciente], references: [id_cuenta], onDelete: NoAction, onUpdate: NoAction, map: "fk_solicitud_paciente")
-
-  @@index([id_cuenta_paciente, fecha_envio], map: "idx_solicitud_paciente_fecha")
-  @@index([id_cuenta_estudiante, fecha_envio], map: "idx_solicitud_estudiante_fecha")
-  @@index([cerrada_por_cuenta], map: "idx_solicitud_cerrada_por")
-  @@index([estado, fecha_envio], map: "idx_solicitud_estado_fecha")
 }
 
 model tipo_cita {
@@ -466,9 +432,6 @@ model universidad {
   docente_universidad      docente_universidad[]
   sede                     sede[]
   localidad                localidad                 @relation(fields: [id_localidad_principal], references: [id_localidad], onDelete: NoAction, onUpdate: NoAction, map: "fk_universidad_localidad")
-
-  @@index([id_localidad_principal], map: "idx_universidad_localidad")
-  @@index([fecha_creacion], map: "idx_universidad_fecha")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -485,8 +448,6 @@ model valoracion {
   cuenta_acceso_valoracion_id_cuenta_receptorTocuenta_acceso cuenta_acceso @relation("valoracion_id_cuenta_receptorTocuenta_acceso", fields: [id_cuenta_receptor], references: [id_cuenta], onDelete: NoAction, onUpdate: NoAction, map: "fk_valoracion_receptor")
 
   @@unique([id_cita, id_cuenta_emisor], map: "uq_valoracion_cita_emisor")
-  @@index([id_cuenta_receptor, fecha_creacion], map: "idx_valoracion_receptor_fecha")
-  @@index([id_cuenta_emisor, fecha_creacion], map: "idx_valoracion_emisor_fecha")
 }
 
 model verificacion_correo {
@@ -497,8 +458,6 @@ model verificacion_correo {
   usado_at               DateTime?     @db.Timestamptz(6)
   fecha_creacion         DateTime      @default(now()) @db.Timestamptz(6)
   cuenta_acceso          cuenta_acceso @relation(fields: [id_cuenta_acceso], references: [id_cuenta], onDelete: NoAction, onUpdate: NoAction, map: "fk_verificacion_correo_cuenta")
-
-  @@index([id_cuenta_acceso, usado_at, fecha_creacion], map: "idx_verificacion_correo_activa_fecha")
 }
 
 enum cita_estado_enum {
