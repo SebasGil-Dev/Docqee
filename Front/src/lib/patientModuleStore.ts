@@ -1227,6 +1227,13 @@ async function loadRuntimeState(forceRefresh = false) {
       const nextState: PatientStoreState = {
         ...createEmptyRuntimeState(),
         ...payload,
+        conversations: payload.conversations.map((dashboardConv) => {
+          const currentConv = state.conversations.find((c) => c.id === dashboardConv.id);
+          if (currentConv && currentConv.messages.length > dashboardConv.messages.length) {
+            return { ...dashboardConv, messages: currentConv.messages };
+          }
+          return dashboardConv;
+        }),
         errorMessage: null,
         isLoading: false,
         isReady: true,
