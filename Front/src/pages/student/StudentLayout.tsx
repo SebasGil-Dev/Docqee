@@ -13,7 +13,7 @@ import {
 import { useStudentPortalNotifications } from '@/lib/portalNotifications';
 import { useStudentModuleStore } from '@/lib/studentModuleStore';
 
-const NOTIFICATION_POLL_INTERVAL_MS = 30_000;
+const NOTIFICATION_POLL_INTERVAL_MS = 15_000;
 
 export function StudentLayout() {
   const { session } = useAuth();
