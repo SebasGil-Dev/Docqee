@@ -10,6 +10,7 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
+import { AdminConfirmationDialog } from '@/components/admin/AdminConfirmationDialog';
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
@@ -69,6 +70,8 @@ export function AdminUniversitiesPage() {
   const [statusFilter, setStatusFilter] =
     useState<UniversityStatusFilter>('all');
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
+  const [statusConfirmationUniversity, setStatusConfirmationUniversity] =
+    useState<AdminUniversity | null>(null);
   const [pendingStatusUniversityIds, setPendingStatusUniversityIds] = useState<
     string[]
   >([]);
@@ -88,6 +91,25 @@ export function AdminUniversitiesPage() {
     : normalizedSearch || statusFilter !== 'all'
       ? 'No encontramos universidades con los filtros seleccionados.'
       : adminContent.universitiesPage.emptyState;
+  const isStatusConfirmationSubmitting = Boolean(
+    statusConfirmationUniversity &&
+    pendingStatusUniversityIds.includes(statusConfirmationUniversity.id),
+  );
+  const statusConfirmationAction =
+    statusConfirmationUniversity?.status === 'active'
+      ? 'deactivate'
+      : 'activate';
+  const statusConfirmationTitle =
+    statusConfirmationAction === 'deactivate'
+      ? 'Quieres inactivar esta universidad?'
+      : 'Quieres activar esta universidad?';
+  const statusConfirmationDescription = statusConfirmationUniversity
+    ? statusConfirmationAction === 'deactivate'
+      ? `La universidad ${formatDisplayName(statusConfirmationUniversity.name)} quedara inactiva y no podra operar dentro de la plataforma hasta que la actives nuevamente.`
+      : `La universidad ${formatDisplayName(statusConfirmationUniversity.name)} quedara activa y podra operar dentro de la plataforma.`
+    : '';
+  const statusConfirmationConfirmLabel =
+    statusConfirmationAction === 'deactivate' ? 'Si, inactivar' : 'Si, activar';
 
   useEffect(() => {
     if (!successNotice) {
@@ -129,7 +151,21 @@ export function AdminUniversitiesPage() {
     };
   }, [isStatusMenuOpen]);
 
-  function handleToggleUniversityStatus(universityId: string) {
+  function handleCloseStatusConfirmation() {
+    if (isStatusConfirmationSubmitting) {
+      return;
+    }
+
+    setStatusConfirmationUniversity(null);
+  }
+
+  function handleConfirmStatusToggle() {
+    if (!statusConfirmationUniversity) {
+      return;
+    }
+
+    const universityId = statusConfirmationUniversity.id;
+
     if (pendingStatusUniversityIdsRef.current.has(universityId)) {
       return;
     }
@@ -145,6 +181,7 @@ export function AdminUniversitiesPage() {
       setPendingStatusUniversityIds((currentIds) =>
         currentIds.filter((currentId) => currentId !== universityId),
       );
+      setStatusConfirmationUniversity(null);
     });
   }
 
@@ -429,7 +466,7 @@ export function AdminUniversitiesPage() {
                             isLast ? 'pb-3 sm:pb-4' : 'pb-2.5 sm:pb-3.5',
                           )}
                         >
-                          <div className="flex justify-center md:justify-start">
+                          <div className="flex h-7 items-center justify-center sm:h-auto md:justify-start">
                             <AdminStatusBadge
                               entity="university"
                               size="micro-mobile"
@@ -443,58 +480,63 @@ export function AdminUniversitiesPage() {
                             isLast ? 'pb-3 sm:pb-4' : 'pb-2.5 sm:pb-3.5',
                           )}
                         >
-                          {isPending ? (
-                            <span className="inline-flex rounded-full bg-amber-50 px-1.5 py-[0.18rem] text-[0.58rem] font-semibold leading-none text-amber-700 ring-1 ring-inset ring-amber-200 sm:px-2.5 sm:py-1.5 sm:text-[0.72rem] sm:leading-normal">
-                              {adminContent.universitiesPage.pendingActionLabel}
-                            </span>
-                          ) : (
-                            <button
-                              aria-label={
-                                university.status === 'active'
-                                  ? adminContent.universitiesPage.actionLabels
-                                      .deactivate
-                                  : adminContent.universitiesPage.actionLabels
-                                      .activate
-                              }
-                              title={
-                                university.status === 'active'
-                                  ? adminContent.universitiesPage.actionLabels
-                                      .deactivate
-                                  : adminContent.universitiesPage.actionLabels
-                                      .activate
-                              }
-                              className={classNames(
-                                'inline-flex h-7 w-7 items-center justify-center rounded-full text-[0.72rem] font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-65 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-2.5 sm:py-1.5',
-                                university.status === 'active'
-                                  ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
-                                  : 'bg-primary/10 text-primary hover:bg-primary/15',
-                              )}
-                              disabled={isUpdatingStatus}
-                              type="button"
-                              onClick={() => {
-                                handleToggleUniversityStatus(university.id);
-                              }}
-                            >
-                              {university.status === 'active' ? (
-                                <PowerOff
-                                  aria-hidden="true"
-                                  className="h-3 w-3 sm:h-3.5 sm:w-3.5"
-                                />
-                              ) : (
-                                <Power
-                                  aria-hidden="true"
-                                  className="h-3 w-3 sm:h-3.5 sm:w-3.5"
-                                />
-                              )}
-                              <span className="hidden sm:inline">
-                                {university.status === 'active'
-                                  ? adminContent.universitiesPage.actionLabels
-                                      .deactivate
-                                  : adminContent.universitiesPage.actionLabels
-                                      .activate}
+                          <div className="flex h-7 items-center justify-center sm:h-auto md:justify-end">
+                            {isPending ? (
+                              <span className="inline-flex rounded-full bg-amber-50 px-1.5 py-[0.18rem] text-[0.58rem] font-semibold leading-none text-amber-700 ring-1 ring-inset ring-amber-200 sm:px-2.5 sm:py-1.5 sm:text-[0.72rem] sm:leading-normal">
+                                {
+                                  adminContent.universitiesPage
+                                    .pendingActionLabel
+                                }
                               </span>
-                            </button>
-                          )}
+                            ) : (
+                              <button
+                                aria-label={
+                                  university.status === 'active'
+                                    ? adminContent.universitiesPage.actionLabels
+                                        .deactivate
+                                    : adminContent.universitiesPage.actionLabels
+                                        .activate
+                                }
+                                title={
+                                  university.status === 'active'
+                                    ? adminContent.universitiesPage.actionLabels
+                                        .deactivate
+                                    : adminContent.universitiesPage.actionLabels
+                                        .activate
+                                }
+                                className={classNames(
+                                  'inline-flex h-7 w-7 items-center justify-center rounded-full text-[0.72rem] font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-65 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-2.5 sm:py-1.5',
+                                  university.status === 'active'
+                                    ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
+                                    : 'bg-primary/10 text-primary hover:bg-primary/15',
+                                )}
+                                disabled={isUpdatingStatus}
+                                type="button"
+                                onClick={() => {
+                                  setStatusConfirmationUniversity(university);
+                                }}
+                              >
+                                {university.status === 'active' ? (
+                                  <PowerOff
+                                    aria-hidden="true"
+                                    className="h-3 w-3 sm:h-3.5 sm:w-3.5"
+                                  />
+                                ) : (
+                                  <Power
+                                    aria-hidden="true"
+                                    className="h-3 w-3 sm:h-3.5 sm:w-3.5"
+                                  />
+                                )}
+                                <span className="hidden sm:inline">
+                                  {university.status === 'active'
+                                    ? adminContent.universitiesPage.actionLabels
+                                        .deactivate
+                                    : adminContent.universitiesPage.actionLabels
+                                        .activate}
+                                </span>
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );
@@ -511,6 +553,18 @@ export function AdminUniversitiesPage() {
           </div>
         )}
       </AdminPanelCard>
+      <AdminConfirmationDialog
+        cancelLabel="No, cancelar"
+        confirmLabel={statusConfirmationConfirmLabel}
+        description={statusConfirmationDescription}
+        icon={statusConfirmationAction === 'deactivate' ? PowerOff : Power}
+        isOpen={Boolean(statusConfirmationUniversity)}
+        isSubmitting={isStatusConfirmationSubmitting}
+        title={statusConfirmationTitle}
+        tone={statusConfirmationAction === 'deactivate' ? 'danger' : 'primary'}
+        onCancel={handleCloseStatusConfirmation}
+        onConfirm={handleConfirmStatusToggle}
+      />
     </div>
   );
 }
