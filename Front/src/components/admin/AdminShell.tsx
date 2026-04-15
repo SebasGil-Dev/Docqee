@@ -44,6 +44,7 @@ type AdminShellProps = PropsWithChildren<{
   avatarSrc?: string | null;
   content?: AdminShellContent;
   headerNotifications?: AdminShellNotification[];
+  mainScrollMode?: 'page' | 'section';
   notificationsPageTo?: `/${string}`;
   mobileNavigationDensity?: 'regular' | 'compact';
   onMarkAllNotificationsRead?: () => void;
@@ -171,6 +172,7 @@ export function AdminShell({
   children,
   content = adminContent.shell,
   headerNotifications,
+  mainScrollMode = 'page',
   mobileNavigationDensity = 'regular',
   notificationsPageTo,
   onMarkAllNotificationsRead,
@@ -185,8 +187,14 @@ export function AdminShell({
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const isMobileViewport = useIsMobileViewport();
   const notificationsRef = useRef<HTMLDivElement | null>(null);
-  const adminFirstName = overrideName?.firstName || session?.user.firstName || content.adminUser.firstName;
-  const adminLastName = overrideName?.lastName || session?.user.lastName || content.adminUser.lastName;
+  const adminFirstName =
+    overrideName?.firstName ||
+    session?.user.firstName ||
+    content.adminUser.firstName;
+  const adminLastName =
+    overrideName?.lastName ||
+    session?.user.lastName ||
+    content.adminUser.lastName;
   const adminInitials =
     `${adminFirstName.charAt(0)}${adminLastName.charAt(0)}`.toUpperCase();
   const adminFullName = formatDisplayName(`${adminFirstName} ${adminLastName}`);
@@ -202,6 +210,8 @@ export function AdminShell({
   const showHeaderNotifications =
     Array.isArray(headerNotifications) || Boolean(notificationsPageTo);
   const isCompactMobileNavigation = mobileNavigationDensity === 'compact';
+  const shouldConstrainMainScroll =
+    mainScrollMode === 'section' && showMobileBottomNavigation;
   const visibleNotifications = useMemo(
     () =>
       [...(headerNotifications ?? [])]
@@ -214,9 +224,8 @@ export function AdminShell({
     [headerNotifications],
   );
   const unreadNotificationCount =
-    headerNotifications?.filter(
-      (notification) => notification.isRead !== true,
-    ).length ?? 0;
+    headerNotifications?.filter((notification) => notification.isRead !== true)
+      .length ?? 0;
   const hasUnreadNotifications = unreadNotificationCount > 0;
   const notificationButtonLabel = unreadNotificationCount
     ? `Notificaciones (${unreadNotificationCount})`
@@ -280,7 +289,9 @@ export function AdminShell({
                       Docqee
                     </p>
                     <p className="mt-[0.2rem] truncate whitespace-nowrap text-[0.58rem] font-extrabold uppercase leading-none tracking-[0.16em] text-primary sm:text-[0.62rem] sm:tracking-[0.18em]">
-                      <span className="sm:hidden">{content.mobileTitle ?? content.title}</span>
+                      <span className="sm:hidden">
+                        {content.mobileTitle ?? content.title}
+                      </span>
                       <span className="hidden sm:inline">{content.title}</span>
                     </p>
                   </div>
@@ -288,122 +299,141 @@ export function AdminShell({
               </div>
               <div className="inline-flex max-w-full items-center gap-2 self-start sm:self-center">
                 {showHeaderNotifications ? (
-                  <div className="relative -translate-x-1 sm:-translate-x-0.5" ref={notificationsRef}>
-                  <button
-                    aria-controls="admin-header-notifications"
-                    aria-expanded={isNotificationsOpen}
-                    aria-haspopup="dialog"
-                    aria-label={notificationButtonLabel}
-                    className="relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-ink-muted transition-colors duration-200 hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/12 sm:h-7 sm:w-7"
-                    type="button"
-                    onClick={() => setIsNotificationsOpen((currentValue) => !currentValue)}
+                  <div
+                    className="relative -translate-x-1 sm:-translate-x-0.5"
+                    ref={notificationsRef}
                   >
-                    <Bell aria-hidden="true" className="h-4 w-4 sm:h-[0.95rem] sm:w-[0.95rem]" />
-                    {unreadNotificationCount > 0 ? (
-                      <span className="absolute -right-1 -top-1 inline-flex min-h-[1.1rem] min-w-[1.1rem] items-center justify-center rounded-full bg-rose-500 px-1 text-[0.62rem] font-bold leading-none text-white">
-                        {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
-                      </span>
-                    ) : null}
-                  </button>
-                  {isNotificationsOpen ? (
-                    <div
-                      aria-label="Panel de notificaciones"
-                      className="absolute right-0 top-[calc(100%+0.65rem)] z-30 w-[20rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-[1.4rem] border border-slate-200/80 bg-white shadow-[0_24px_60px_-28px_rgba(15,23,42,0.45)]"
-                      id="admin-header-notifications"
-                      role="dialog"
+                    <button
+                      aria-controls="admin-header-notifications"
+                      aria-expanded={isNotificationsOpen}
+                      aria-haspopup="dialog"
+                      aria-label={notificationButtonLabel}
+                      className="relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-ink-muted transition-colors duration-200 hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/12 sm:h-7 sm:w-7"
+                      type="button"
+                      onClick={() =>
+                        setIsNotificationsOpen((currentValue) => !currentValue)
+                      }
                     >
-                      <div className="flex items-center justify-between gap-3 border-b border-slate-200/80 px-4 py-3">
-                        <p className="text-sm font-extrabold tracking-tight text-ink">
-                          Notificaciones
-                        </p>
-                        <div className="flex items-center gap-2">
-                          {onMarkAllNotificationsRead && hasUnreadNotifications ? (
-                            <button
-                              className="text-[0.72rem] font-semibold text-primary transition-colors duration-200 hover:text-primary/80"
-                              type="button"
-                              onClick={onMarkAllNotificationsRead}
-                            >
-                              Marcar todas
-                            </button>
-                          ) : null}
-                          {notificationsPageTo ? (
-                            <Link
-                              className="text-[0.72rem] font-semibold text-primary transition-colors duration-200 hover:text-primary/80"
-                              to={notificationsPageTo}
-                              onClick={() => setIsNotificationsOpen(false)}
-                            >
-                              Ver todas
-                            </Link>
-                          ) : null}
-                        </div>
-                      </div>
-                      {visibleNotifications.length > 0 ? (
-                        <>
-                          {!hasUnreadNotifications ? (
-                            <div className="border-b border-slate-200/80 px-4 py-3 text-[0.78rem] font-medium text-ink-muted">
-                              No tienes notificaciones sin leer.
-                            </div>
-                          ) : null}
-                          <div className="max-h-[22rem] overflow-y-auto">
-                          {visibleNotifications.map((notification) => {
-                            const notificationDestination = notificationsPageTo
-                              ? `${notificationsPageTo}?notification=${encodeURIComponent(notification.id)}`
-                              : notification.to;
-                            const itemContent = (
-                              <div
-                                className={classNames(
-                                  'flex items-start gap-3 px-4 py-3 transition-colors duration-200 hover:bg-slate-50',
-                                  notification.isRead !== true && 'bg-primary/[0.035]',
-                                )}
+                      <Bell
+                        aria-hidden="true"
+                        className="h-4 w-4 sm:h-[0.95rem] sm:w-[0.95rem]"
+                      />
+                      {unreadNotificationCount > 0 ? (
+                        <span className="absolute -right-1 -top-1 inline-flex min-h-[1.1rem] min-w-[1.1rem] items-center justify-center rounded-full bg-rose-500 px-1 text-[0.62rem] font-bold leading-none text-white">
+                          {unreadNotificationCount > 9
+                            ? '9+'
+                            : unreadNotificationCount}
+                        </span>
+                      ) : null}
+                    </button>
+                    {isNotificationsOpen ? (
+                      <div
+                        aria-label="Panel de notificaciones"
+                        className="absolute right-0 top-[calc(100%+0.65rem)] z-30 w-[20rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-[1.4rem] border border-slate-200/80 bg-white shadow-[0_24px_60px_-28px_rgba(15,23,42,0.45)]"
+                        id="admin-header-notifications"
+                        role="dialog"
+                      >
+                        <div className="flex items-center justify-between gap-3 border-b border-slate-200/80 px-4 py-3">
+                          <p className="text-sm font-extrabold tracking-tight text-ink">
+                            Notificaciones
+                          </p>
+                          <div className="flex items-center gap-2">
+                            {onMarkAllNotificationsRead &&
+                            hasUnreadNotifications ? (
+                              <button
+                                className="text-[0.72rem] font-semibold text-primary transition-colors duration-200 hover:text-primary/80"
+                                type="button"
+                                onClick={onMarkAllNotificationsRead}
                               >
-                                <span
-                                  className={classNames(
-                                    'mt-0.5 inline-flex h-2.5 w-2.5 shrink-0 rounded-full',
-                                    getNotificationToneClasses(notification.tone),
-                                  )}
-                                />
-                                <div className="min-w-0 flex-1">
-                                  <div className="flex items-start justify-between gap-2">
-                                    <p className="text-sm font-semibold text-ink">
-                                      {notification.title}
-                                    </p>
-                                    <span className="shrink-0 text-[0.68rem] font-medium text-ink-muted">
-                                      {formatNotificationTimestamp(notification.createdAt)}
-                                    </span>
-                                  </div>
-                                  <p className="mt-1 text-[0.78rem] leading-5 text-ink-muted">
-                                    {notification.description}
-                                  </p>
-                                </div>
-                              </div>
-                            );
-
-                            if (notificationDestination) {
-                              return (
-                                <Link
-                                  key={notification.id}
-                                  to={notificationDestination}
-                                  onClick={() => {
-                                    setIsNotificationsOpen(false);
-                                    onOpenNotification?.(notification.id);
-                                  }}
-                                >
-                                  {itemContent}
-                                </Link>
-                              );
-                            }
-
-                            return <div key={notification.id}>{itemContent}</div>;
-                          })}
+                                Marcar todas
+                              </button>
+                            ) : null}
+                            {notificationsPageTo ? (
+                              <Link
+                                className="text-[0.72rem] font-semibold text-primary transition-colors duration-200 hover:text-primary/80"
+                                to={notificationsPageTo}
+                                onClick={() => setIsNotificationsOpen(false)}
+                              >
+                                Ver todas
+                              </Link>
+                            ) : null}
                           </div>
-                        </>
-                      ) : (
-                        <div className="px-4 py-5 text-sm text-ink-muted">
-                          No tienes notificaciones sin leer.
                         </div>
-                      )}
-                    </div>
-                  ) : null}
+                        {visibleNotifications.length > 0 ? (
+                          <>
+                            {!hasUnreadNotifications ? (
+                              <div className="border-b border-slate-200/80 px-4 py-3 text-[0.78rem] font-medium text-ink-muted">
+                                No tienes notificaciones sin leer.
+                              </div>
+                            ) : null}
+                            <div className="max-h-[22rem] overflow-y-auto">
+                              {visibleNotifications.map((notification) => {
+                                const notificationDestination =
+                                  notificationsPageTo
+                                    ? `${notificationsPageTo}?notification=${encodeURIComponent(notification.id)}`
+                                    : notification.to;
+                                const itemContent = (
+                                  <div
+                                    className={classNames(
+                                      'flex items-start gap-3 px-4 py-3 transition-colors duration-200 hover:bg-slate-50',
+                                      notification.isRead !== true &&
+                                        'bg-primary/[0.035]',
+                                    )}
+                                  >
+                                    <span
+                                      className={classNames(
+                                        'mt-0.5 inline-flex h-2.5 w-2.5 shrink-0 rounded-full',
+                                        getNotificationToneClasses(
+                                          notification.tone,
+                                        ),
+                                      )}
+                                    />
+                                    <div className="min-w-0 flex-1">
+                                      <div className="flex items-start justify-between gap-2">
+                                        <p className="text-sm font-semibold text-ink">
+                                          {notification.title}
+                                        </p>
+                                        <span className="shrink-0 text-[0.68rem] font-medium text-ink-muted">
+                                          {formatNotificationTimestamp(
+                                            notification.createdAt,
+                                          )}
+                                        </span>
+                                      </div>
+                                      <p className="mt-1 text-[0.78rem] leading-5 text-ink-muted">
+                                        {notification.description}
+                                      </p>
+                                    </div>
+                                  </div>
+                                );
+
+                                if (notificationDestination) {
+                                  return (
+                                    <Link
+                                      key={notification.id}
+                                      to={notificationDestination}
+                                      onClick={() => {
+                                        setIsNotificationsOpen(false);
+                                        onOpenNotification?.(notification.id);
+                                      }}
+                                    >
+                                      {itemContent}
+                                    </Link>
+                                  );
+                                }
+
+                                return (
+                                  <div key={notification.id}>{itemContent}</div>
+                                );
+                              })}
+                            </div>
+                          </>
+                        ) : (
+                          <div className="px-4 py-5 text-sm text-ink-muted">
+                            No tienes notificaciones sin leer.
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
                 {optimizedAvatarSrc ? (
@@ -448,7 +478,9 @@ export function AdminShell({
                 <div
                   className={classNames(
                     'flex h-full flex-col overflow-hidden rounded-[2rem] bg-[#ffffff] shadow-none transition-[padding,background-color,box-shadow] duration-300 lg:h-full',
-                    isSidebarCollapsed ? 'p-4 lg:p-3' : 'p-5 sm:p-6 lg:p-4.5 xl:p-5',
+                    isSidebarCollapsed
+                      ? 'p-4 lg:p-3'
+                      : 'p-5 sm:p-6 lg:p-4.5 xl:p-5',
                   )}
                 >
                   <div
@@ -590,9 +622,14 @@ export function AdminShell({
             <div className="min-h-0 min-w-0 flex-1 transition-[width] duration-300">
               <main
                 className={classNames(
-                  'h-full overflow-y-auto pt-1 lg:pt-0',
+                  'h-full pt-1 lg:pt-0',
+                  shouldConstrainMainScroll
+                    ? 'overflow-hidden'
+                    : 'overflow-y-auto',
                   showMobileBottomNavigation &&
-                    (isCompactMobileNavigation ? 'pb-[6.25rem]' : 'pb-[7.75rem]'),
+                    (isCompactMobileNavigation
+                      ? 'pb-[6.25rem]'
+                      : 'pb-[7.75rem]'),
                 )}
                 id="admin-main-content"
                 tabIndex={-1}

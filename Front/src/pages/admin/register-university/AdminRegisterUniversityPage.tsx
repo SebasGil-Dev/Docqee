@@ -1,4 +1,11 @@
-import { ArrowLeft, Building2, Mail, MapPin, Phone, UserRound } from 'lucide-react';
+import {
+  ArrowLeft,
+  Building2,
+  Mail,
+  MapPin,
+  Phone,
+  UserRound,
+} from 'lucide-react';
 import type { FormEvent, Ref } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -87,7 +94,9 @@ function SelectField({
           className="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-ghost"
         />
         <select
-          aria-describedby={error ? `${id}-error` : helpText ? `${id}-help` : undefined}
+          aria-describedby={
+            error ? `${id}-error` : helpText ? `${id}-help` : undefined
+          }
           aria-invalid={Boolean(error)}
           className={classNames(
             'w-full rounded-2xl border bg-surface py-3 pl-11 pr-4 text-sm text-ink transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
@@ -198,7 +207,9 @@ function validateField(
   return undefined;
 }
 
-function validateForm(values: RegisterUniversityFormValues): RegisterUniversityFormErrors {
+function validateForm(
+  values: RegisterUniversityFormValues,
+): RegisterUniversityFormErrors {
   const errors: RegisterUniversityFormErrors = {};
 
   fieldOrder.forEach((field) => {
@@ -215,7 +226,9 @@ function validateForm(values: RegisterUniversityFormValues): RegisterUniversityF
 export function AdminRegisterUniversityPage({
   catalogDataSource = patientRegisterCatalogDataSource,
 }: AdminRegisterUniversityPageProps) {
-  const { errorMessage, isLoading, registerUniversity } = useAdminModuleStore({ autoLoad: false });
+  const { errorMessage, isLoading, registerUniversity } = useAdminModuleStore({
+    autoLoad: false,
+  });
   const navigate = useNavigate();
   const nameRef = useRef<HTMLInputElement>(null);
   const cityRef = useRef<HTMLSelectElement>(null);
@@ -232,25 +245,34 @@ export function AdminRegisterUniversityPage({
     cityId: cityRef,
     mainLocalityId: mainLocalityRef,
     name: nameRef,
-  } satisfies Record<RegisterUniversityFormField, { current: HTMLInputElement | HTMLSelectElement | null }>;
+  } satisfies Record<
+    RegisterUniversityFormField,
+    { current: HTMLInputElement | HTMLSelectElement | null }
+  >;
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<RegisterUniversityFormErrors>({});
   const [citiesState, setCitiesState] = useState<AsyncCatalogState<CityOption>>(
     () => createInitialCatalogState(catalogDataSource.getCities(), 'loading'),
   );
-  const [localitiesState, setLocalitiesState] = useState<AsyncCatalogState<LocalityOption>>(
-    createEmptyCatalogState('idle'),
-  );
+  const [localitiesState, setLocalitiesState] = useState<
+    AsyncCatalogState<LocalityOption>
+  >(createEmptyCatalogState('idle'));
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     let isCancelled = false;
 
     async function loadCities() {
-      setCitiesState(createInitialCatalogState(catalogDataSource.getCities(), 'loading'));
+      setCitiesState(
+        createInitialCatalogState(catalogDataSource.getCities(), 'loading'),
+      );
 
       try {
-        const cities = await resolveCatalogResult(catalogDataSource.loadCities ? catalogDataSource.loadCities() : catalogDataSource.getCities());
+        const cities = await resolveCatalogResult(
+          catalogDataSource.loadCities
+            ? catalogDataSource.loadCities()
+            : catalogDataSource.getCities(),
+        );
 
         if (isCancelled) {
           return;
@@ -294,7 +316,9 @@ export function AdminRegisterUniversityPage({
 
       try {
         const localities = await resolveCatalogResult(
-          catalogDataSource.loadLocalitiesByCity ? catalogDataSource.loadLocalitiesByCity(values.cityId) : catalogDataSource.getLocalitiesByCity(values.cityId),
+          catalogDataSource.loadLocalitiesByCity
+            ? catalogDataSource.loadLocalitiesByCity(values.cityId)
+            : catalogDataSource.getLocalitiesByCity(values.cityId),
         );
 
         if (isCancelled) {
@@ -326,7 +350,10 @@ export function AdminRegisterUniversityPage({
     };
   }, [catalogDataSource, values.cityId]);
 
-  const updateFieldValue = (field: RegisterUniversityFormField, nextValue: string) => {
+  const updateFieldValue = (
+    field: RegisterUniversityFormField,
+    nextValue: string,
+  ) => {
     setValues((currentValues) =>
       field === 'cityId'
         ? {
@@ -446,7 +473,7 @@ export function AdminRegisterUniversityPage({
       : undefined;
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-6 overflow-hidden">
+    <div className="flex h-full min-h-0 flex-col gap-2.5 overflow-hidden sm:gap-6">
       <Seo
         description={adminContent.registerPage.meta.description}
         noIndex
@@ -469,14 +496,24 @@ export function AdminRegisterUniversityPage({
         title={adminContent.registerPage.title}
       />
       {errorMessage ? (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700" role="alert">
+        <div
+          className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700"
+          role="alert"
+        >
           {errorMessage}
         </div>
       ) : null}
-      <AdminPanelCard className="flex flex-1 flex-col" panelClassName="bg-slate-50">
-        <form className="flex min-h-0 flex-1 flex-col overflow-hidden" noValidate onSubmit={handleSubmit}>
-          <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-7">
-            <div className="space-y-8 pb-6">
+      <AdminPanelCard
+        className="flex min-h-0 flex-1 flex-col"
+        panelClassName="bg-slate-50"
+      >
+        <form
+          className="flex min-h-0 flex-1 flex-col overflow-hidden"
+          noValidate
+          onSubmit={handleSubmit}
+        >
+          <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-3 sm:px-7 sm:py-6">
+            <div className="space-y-5 pb-4 sm:space-y-8 sm:pb-6">
               <section className="space-y-5">
                 <div>
                   <h3 className="text-sm font-bold uppercase tracking-[0.22em] text-primary">
@@ -498,7 +535,11 @@ export function AdminRegisterUniversityPage({
                       />
                       <input
                         ref={nameRef}
-                        aria-describedby={errors.name ? 'register-university-name-error' : undefined}
+                        aria-describedby={
+                          errors.name
+                            ? 'register-university-name-error'
+                            : undefined
+                        }
                         aria-invalid={Boolean(errors.name)}
                         className={classNames(
                           'w-full rounded-2xl border bg-surface py-3 pl-11 pr-4 text-sm text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
@@ -508,21 +549,31 @@ export function AdminRegisterUniversityPage({
                         )}
                         id="register-university-name"
                         name="name"
-                        placeholder={adminContent.registerPage.fields.name.placeholder}
+                        placeholder={
+                          adminContent.registerPage.fields.name.placeholder
+                        }
                         type="text"
                         value={values.name}
                         onBlur={() => handleFieldBlur('name')}
-                        onChange={(event) => updateFieldValue('name', event.target.value)}
+                        onChange={(event) =>
+                          updateFieldValue('name', event.target.value)
+                        }
                       />
                     </div>
                     {errors.name ? (
-                      <p className="text-sm text-rose-600" id="register-university-name-error">
+                      <p
+                        className="text-sm text-rose-600"
+                        id="register-university-name-error"
+                      >
                         {errors.name}
                       </p>
                     ) : null}
                   </div>
                   <SelectField
-                    disabled={citiesState.status !== 'ready' || citiesState.options.length === 0}
+                    disabled={
+                      citiesState.status !== 'ready' ||
+                      citiesState.options.length === 0
+                    }
                     error={errors.cityId}
                     helpText={cityHelpText}
                     icon={MapPin}
@@ -553,7 +604,9 @@ export function AdminRegisterUniversityPage({
                     selectRef={mainLocalityRef}
                     value={values.mainLocalityId}
                     onBlur={() => handleFieldBlur('mainLocalityId')}
-                    onChange={(value) => updateFieldValue('mainLocalityId', value)}
+                    onChange={(value) =>
+                      updateFieldValue('mainLocalityId', value)
+                    }
                   />
                 </div>
               </section>
@@ -579,7 +632,9 @@ export function AdminRegisterUniversityPage({
                       <input
                         ref={adminFirstNameRef}
                         aria-describedby={
-                          errors.adminFirstName ? 'register-university-admin-first-name-error' : undefined
+                          errors.adminFirstName
+                            ? 'register-university-admin-first-name-error'
+                            : undefined
                         }
                         aria-invalid={Boolean(errors.adminFirstName)}
                         className={classNames(
@@ -590,11 +645,16 @@ export function AdminRegisterUniversityPage({
                         )}
                         id="register-university-admin-first-name"
                         name="adminFirstName"
-                        placeholder={adminContent.registerPage.fields.adminFirstName.placeholder}
+                        placeholder={
+                          adminContent.registerPage.fields.adminFirstName
+                            .placeholder
+                        }
                         type="text"
                         value={values.adminFirstName}
                         onBlur={() => handleFieldBlur('adminFirstName')}
-                        onChange={(event) => updateFieldValue('adminFirstName', event.target.value)}
+                        onChange={(event) =>
+                          updateFieldValue('adminFirstName', event.target.value)
+                        }
                       />
                     </div>
                     {errors.adminFirstName ? (
@@ -621,7 +681,9 @@ export function AdminRegisterUniversityPage({
                       <input
                         ref={adminLastNameRef}
                         aria-describedby={
-                          errors.adminLastName ? 'register-university-admin-last-name-error' : undefined
+                          errors.adminLastName
+                            ? 'register-university-admin-last-name-error'
+                            : undefined
                         }
                         aria-invalid={Boolean(errors.adminLastName)}
                         className={classNames(
@@ -632,11 +694,16 @@ export function AdminRegisterUniversityPage({
                         )}
                         id="register-university-admin-last-name"
                         name="adminLastName"
-                        placeholder={adminContent.registerPage.fields.adminLastName.placeholder}
+                        placeholder={
+                          adminContent.registerPage.fields.adminLastName
+                            .placeholder
+                        }
                         type="text"
                         value={values.adminLastName}
                         onBlur={() => handleFieldBlur('adminLastName')}
-                        onChange={(event) => updateFieldValue('adminLastName', event.target.value)}
+                        onChange={(event) =>
+                          updateFieldValue('adminLastName', event.target.value)
+                        }
                       />
                     </div>
                     {errors.adminLastName ? (
@@ -663,7 +730,9 @@ export function AdminRegisterUniversityPage({
                       <input
                         ref={adminEmailRef}
                         aria-describedby={
-                          errors.adminEmail ? 'register-university-admin-email-error' : undefined
+                          errors.adminEmail
+                            ? 'register-university-admin-email-error'
+                            : undefined
                         }
                         aria-invalid={Boolean(errors.adminEmail)}
                         className={classNames(
@@ -674,11 +743,16 @@ export function AdminRegisterUniversityPage({
                         )}
                         id="register-university-admin-email"
                         name="adminEmail"
-                        placeholder={adminContent.registerPage.fields.adminEmail.placeholder}
+                        placeholder={
+                          adminContent.registerPage.fields.adminEmail
+                            .placeholder
+                        }
                         type="email"
                         value={values.adminEmail}
                         onBlur={() => handleFieldBlur('adminEmail')}
-                        onChange={(event) => updateFieldValue('adminEmail', event.target.value)}
+                        onChange={(event) =>
+                          updateFieldValue('adminEmail', event.target.value)
+                        }
                       />
                     </div>
                     {errors.adminEmail ? (
@@ -708,11 +782,16 @@ export function AdminRegisterUniversityPage({
                         className="w-full rounded-2xl border border-slate-200 bg-surface py-3 pl-11 pr-4 text-sm text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
                         id="register-university-admin-phone"
                         name="adminPhone"
-                        placeholder={adminContent.registerPage.fields.adminPhone.placeholder}
+                        placeholder={
+                          adminContent.registerPage.fields.adminPhone
+                            .placeholder
+                        }
                         type="tel"
                         value={values.adminPhone}
                         onBlur={() => handleFieldBlur('adminPhone')}
-                        onChange={(event) => updateFieldValue('adminPhone', event.target.value)}
+                        onChange={(event) =>
+                          updateFieldValue('adminPhone', event.target.value)
+                        }
                       />
                     </div>
                   </div>
@@ -724,7 +803,9 @@ export function AdminRegisterUniversityPage({
                   disabled={isSubmitting || isLoading}
                   type="submit"
                 >
-                  {isSubmitting ? 'Registrando...' : adminContent.registerPage.submitLabel}
+                  {isSubmitting
+                    ? 'Registrando...'
+                    : adminContent.registerPage.submitLabel}
                 </button>
               </div>
             </div>

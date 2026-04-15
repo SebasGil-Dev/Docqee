@@ -77,17 +77,25 @@ export function AdminCredentialsPage() {
     sendCredential,
   } = useAdminModuleStore();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<CredentialFilterValue>('all');
+  const [statusFilter, setStatusFilter] =
+    useState<CredentialFilterValue>('all');
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
-  const [editingCredentialId, setEditingCredentialId] = useState<string | null>(null);
+  const [editingCredentialId, setEditingCredentialId] = useState<string | null>(
+    null,
+  );
   const [emailDraft, setEmailDraft] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
-  const [pendingConfirmation, setPendingConfirmation] = useState<PendingCredentialConfirmation | null>(null);
-  const [isConfirmationSubmitting, setIsConfirmationSubmitting] = useState(false);
+  const [pendingConfirmation, setPendingConfirmation] =
+    useState<PendingCredentialConfirmation | null>(null);
+  const [isConfirmationSubmitting, setIsConfirmationSubmitting] =
+    useState(false);
   const filterMenuRef = useRef<HTMLDivElement | null>(null);
   const lastAutoRefreshAtRef = useRef(0);
-  const credentialRows = useMemo<CredentialRow[]>(() => credentials, [credentials]);
+  const credentialRows = useMemo<CredentialRow[]>(
+    () => credentials,
+    [credentials],
+  );
   const generatedCredentialCount = credentialRows.filter(
     (credential) => credential.deliveryStatus === 'generated',
   ).length;
@@ -159,7 +167,9 @@ export function AdminCredentialsPage() {
       setEditingCredentialId(null);
       setEmailDraft('');
       setEmailError(null);
-      setFeedbackMessage(`El correo de ${formattedAdministratorName} se actualizo correctamente.`);
+      setFeedbackMessage(
+        `El correo de ${formattedAdministratorName} se actualizo correctamente.`,
+      );
     })();
   };
 
@@ -172,14 +182,18 @@ export function AdminCredentialsPage() {
 
     void (async () => {
       if (pendingConfirmation.action === 'delete') {
-        const deleted = await deleteCredential(pendingConfirmation.credential.id);
+        const deleted = await deleteCredential(
+          pendingConfirmation.credential.id,
+        );
 
         if (deleted) {
           if (editingCredentialId === pendingConfirmation.credential.id) {
             handleCancelEmailEdit();
           }
 
-          setFeedbackMessage('La credencial pendiente se elimino correctamente.');
+          setFeedbackMessage(
+            'La credencial pendiente se elimino correctamente.',
+          );
         }
       } else {
         const wasProcessed =
@@ -206,7 +220,9 @@ export function AdminCredentialsPage() {
       const sentCount = await sendAllCredentials();
 
       if (sentCount === 0) {
-        setFeedbackMessage('No hay credenciales generadas por enviar en este momento.');
+        setFeedbackMessage(
+          'No hay credenciales generadas por enviar en este momento.',
+        );
         return;
       }
 
@@ -312,7 +328,7 @@ export function AdminCredentialsPage() {
     : '';
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-6 overflow-hidden">
+    <div className="flex h-full min-h-0 flex-col gap-2.5 overflow-hidden sm:gap-6">
       <Seo
         description={adminContent.credentialsPage.meta.description}
         noIndex
@@ -341,14 +357,17 @@ export function AdminCredentialsPage() {
           <p role="alert">{errorMessage}</p>
         </SurfaceCard>
       ) : null}
-      <AdminPanelCard className="flex-1" panelClassName="bg-white">
-        <div className="border-b border-slate-200/80 px-4 py-3.5 sm:px-5 sm:py-4">
+      <AdminPanelCard className="min-h-0 flex-1" panelClassName="bg-white">
+        <div className="border-b border-slate-200/80 px-3 py-2.5 sm:px-5 sm:py-4">
           <div className="flex items-center gap-2 sm:justify-between sm:gap-4">
             <h2 className="hidden whitespace-nowrap font-headline font-extrabold leading-none tracking-tight text-ink sm:block sm:text-left sm:text-[1.45rem]">
               Credenciales pendientes
             </h2>
             <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:w-full sm:max-w-[26rem] sm:flex-none sm:justify-end sm:gap-2.5 xl:max-w-[30rem]">
-              <label className="relative min-w-0 flex-1" htmlFor="admin-credential-search">
+              <label
+                className="relative min-w-0 flex-1"
+                htmlFor="admin-credential-search"
+              >
                 <span className="sr-only">Buscar universidad</span>
                 <Search
                   aria-hidden="true"
@@ -372,7 +391,9 @@ export function AdminCredentialsPage() {
                     statusFilter === 'all'
                       ? 'Filtrar credenciales'
                       : `Filtrar credenciales. Actual: ${
-                          credentialFilterOptions.find((option) => option.value === statusFilter)?.label
+                          credentialFilterOptions.find(
+                            (option) => option.value === statusFilter,
+                          )?.label
                         }`
                   }
                   className={classNames(
@@ -384,7 +405,10 @@ export function AdminCredentialsPage() {
                   type="button"
                   onClick={() => setIsFilterMenuOpen((current) => !current)}
                 >
-                  <SlidersHorizontal aria-hidden="true" className="h-4 w-4 sm:h-[1.05rem] sm:w-[1.05rem]" />
+                  <SlidersHorizontal
+                    aria-hidden="true"
+                    className="h-4 w-4 sm:h-[1.05rem] sm:w-[1.05rem]"
+                  />
                   {statusFilter !== 'all' ? (
                     <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary ring-2 ring-white" />
                   ) : null}
@@ -425,10 +449,15 @@ export function AdminCredentialsPage() {
                             <span
                               className={classNames(
                                 'inline-flex h-5 w-5 items-center justify-center rounded-full',
-                                isSelected ? 'bg-white/18 text-white' : 'bg-white text-slate-300',
+                                isSelected
+                                  ? 'bg-white/18 text-white'
+                                  : 'bg-white text-slate-300',
                               )}
                             >
-                              <Check aria-hidden="true" className="h-3.5 w-3.5" />
+                              <Check
+                                aria-hidden="true"
+                                className="h-3.5 w-3.5"
+                              />
                             </span>
                           </button>
                         );
@@ -443,8 +472,13 @@ export function AdminCredentialsPage() {
                 type="button"
                 onClick={handleSendAll}
               >
-                <Send aria-hidden="true" className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span className="whitespace-nowrap">{adminContent.credentialsPage.actionLabels.sendAll}</span>
+                <Send
+                  aria-hidden="true"
+                  className="h-3.5 w-3.5 sm:h-4 sm:w-4"
+                />
+                <span className="whitespace-nowrap">
+                  {adminContent.credentialsPage.actionLabels.sendAll}
+                </span>
               </button>
             </div>
           </div>
@@ -455,16 +489,27 @@ export function AdminCredentialsPage() {
               <table className="min-w-[63rem] w-full lg:min-w-0 lg:table-fixed">
                 <thead className="sticky top-0 z-10 bg-surface text-left">
                   <tr className="text-xs font-bold uppercase tracking-[0.22em] text-ink-muted">
-                    <th className="px-4 py-3.5 lg:w-[26%] sm:px-5">Universidad</th>
-                    <th className="px-4 py-3.5 lg:w-[16%] lg:pr-7">Administrador</th>
-                    <th className="px-4 py-3.5 lg:w-[26%] lg:pl-7">Correo electronico</th>
-                    <th className="px-4 py-3.5 text-center lg:w-[10%] lg:pl-6">Estado</th>
-                    <th className="px-4 py-3.5 text-center lg:w-[22%] lg:pl-5 sm:px-5">Acciones</th>
+                    <th className="px-4 py-3.5 lg:w-[26%] sm:px-5">
+                      Universidad
+                    </th>
+                    <th className="px-4 py-3.5 lg:w-[16%] lg:pr-7">
+                      Administrador
+                    </th>
+                    <th className="px-4 py-3.5 lg:w-[26%] lg:pl-7">
+                      Correo electronico
+                    </th>
+                    <th className="px-4 py-3.5 text-center lg:w-[10%] lg:pl-6">
+                      Estado
+                    </th>
+                    <th className="px-4 py-3.5 text-center lg:w-[22%] lg:pl-5 sm:px-5">
+                      Acciones
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200/80">
                   {filteredCredentialRows.map((credential, index) => {
-                    const isGenerated = credential.deliveryStatus === 'generated';
+                    const isGenerated =
+                      credential.deliveryStatus === 'generated';
                     const isEditing = editingCredentialId === credential.id;
                     const isLast = index === filteredCredentialRows.length - 1;
 
@@ -481,7 +526,8 @@ export function AdminCredentialsPage() {
                               {formatDisplayName(credential.universityName)}
                             </p>
                             <p className="text-xs text-ink-muted sm:text-[0.82rem]">
-                              Ultimo movimiento: {formatLastSentAt(credential.lastSentAt)}
+                              Ultimo movimiento:{' '}
+                              {formatLastSentAt(credential.lastSentAt)}
                             </p>
                           </div>
                         </td>
@@ -503,8 +549,14 @@ export function AdminCredentialsPage() {
                         >
                           {isEditing ? (
                             <div className="max-w-[20rem] space-y-2">
-                              <label className="sr-only" htmlFor={`credential-email-${credential.id}`}>
-                                Correo electronico de {formatDisplayName(credential.administratorName)}
+                              <label
+                                className="sr-only"
+                                htmlFor={`credential-email-${credential.id}`}
+                              >
+                                Correo electronico de{' '}
+                                {formatDisplayName(
+                                  credential.administratorName,
+                                )}
                               </label>
                               <div className="relative">
                                 <Mail
@@ -523,12 +575,17 @@ export function AdminCredentialsPage() {
                                 />
                               </div>
                               {emailError ? (
-                                <p className="text-xs font-medium text-rose-700">{emailError}</p>
+                                <p className="text-xs font-medium text-rose-700">
+                                  {emailError}
+                                </p>
                               ) : null}
                             </div>
                           ) : (
                             <div className="inline-flex max-w-full items-center gap-2 text-sm text-ink-muted">
-                              <Mail aria-hidden="true" className="h-4 w-4 shrink-0" />
+                              <Mail
+                                aria-hidden="true"
+                                className="h-4 w-4 shrink-0"
+                              />
                               <span
                                 className="block max-w-full overflow-hidden text-ellipsis whitespace-nowrap"
                                 title={credential.administratorEmail}
@@ -545,7 +602,10 @@ export function AdminCredentialsPage() {
                           )}
                         >
                           <div className="flex justify-center">
-                            <AdminStatusBadge entity="credential" status={credential.deliveryStatus} />
+                            <AdminStatusBadge
+                              entity="credential"
+                              status={credential.deliveryStatus}
+                            />
                           </div>
                         </td>
                         <td
@@ -558,17 +618,29 @@ export function AdminCredentialsPage() {
                             {isEditing ? (
                               <>
                                 <button
-                                  aria-label={adminContent.credentialsPage.actionLabels.saveEmail}
+                                  aria-label={
+                                    adminContent.credentialsPage.actionLabels
+                                      .saveEmail
+                                  }
                                   className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition duration-200 hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-auto sm:w-auto sm:min-w-[7.2rem] sm:gap-1.5 sm:px-2.5 sm:py-1.75 sm:text-[0.68rem] sm:font-semibold"
                                   disabled={isLoading}
                                   type="button"
                                   onClick={() =>
-                                    handleSaveEmail(credential.id, credential.administratorName)
+                                    handleSaveEmail(
+                                      credential.id,
+                                      credential.administratorName,
+                                    )
                                   }
                                 >
-                                  <Check aria-hidden="true" className="h-3.5 w-3.5" />
+                                  <Check
+                                    aria-hidden="true"
+                                    className="h-3.5 w-3.5"
+                                  />
                                   <span className="hidden sm:inline">
-                                    {adminContent.credentialsPage.actionLabels.saveEmail}
+                                    {
+                                      adminContent.credentialsPage.actionLabels
+                                        .saveEmail
+                                    }
                                   </span>
                                 </button>
                                 <button
@@ -578,8 +650,13 @@ export function AdminCredentialsPage() {
                                   type="button"
                                   onClick={handleCancelEmailEdit}
                                 >
-                                  <X aria-hidden="true" className="h-3.5 w-3.5" />
-                                  <span className="hidden sm:inline">Cancelar</span>
+                                  <X
+                                    aria-hidden="true"
+                                    className="h-3.5 w-3.5"
+                                  />
+                                  <span className="hidden sm:inline">
+                                    Cancelar
+                                  </span>
                                 </button>
                               </>
                             ) : (
@@ -587,13 +664,17 @@ export function AdminCredentialsPage() {
                                 <button
                                   aria-label={
                                     isGenerated
-                                      ? adminContent.credentialsPage.actionLabels.send
-                                      : adminContent.credentialsPage.actionLabels.resend
+                                      ? adminContent.credentialsPage
+                                          .actionLabels.send
+                                      : adminContent.credentialsPage
+                                          .actionLabels.resend
                                   }
                                   title={
                                     isGenerated
-                                      ? adminContent.credentialsPage.actionLabels.send
-                                      : adminContent.credentialsPage.actionLabels.resend
+                                      ? adminContent.credentialsPage
+                                          .actionLabels.send
+                                      : adminContent.credentialsPage
+                                          .actionLabels.resend
                                   }
                                   className={classNames(
                                     'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
@@ -611,24 +692,47 @@ export function AdminCredentialsPage() {
                                   }}
                                 >
                                   {isGenerated ? (
-                                    <Send aria-hidden="true" className="h-3.5 w-3.5" />
+                                    <Send
+                                      aria-hidden="true"
+                                      className="h-3.5 w-3.5"
+                                    />
                                   ) : (
-                                    <RotateCcw aria-hidden="true" className="h-3.5 w-3.5" />
+                                    <RotateCcw
+                                      aria-hidden="true"
+                                      className="h-3.5 w-3.5"
+                                    />
                                   )}
                                 </button>
                                 <button
-                                  aria-label={adminContent.credentialsPage.actionLabels.editEmail}
-                                  title={adminContent.credentialsPage.actionLabels.editEmail}
+                                  aria-label={
+                                    adminContent.credentialsPage.actionLabels
+                                      .editEmail
+                                  }
+                                  title={
+                                    adminContent.credentialsPage.actionLabels
+                                      .editEmail
+                                  }
                                   className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200"
                                   disabled={isLoading}
                                   type="button"
-                                  onClick={() => handleStartEmailEdit(credential)}
+                                  onClick={() =>
+                                    handleStartEmailEdit(credential)
+                                  }
                                 >
-                                  <PencilLine aria-hidden="true" className="h-3.5 w-3.5" />
+                                  <PencilLine
+                                    aria-hidden="true"
+                                    className="h-3.5 w-3.5"
+                                  />
                                 </button>
                                 <button
-                                  aria-label={adminContent.credentialsPage.actionLabels.delete}
-                                  title={adminContent.credentialsPage.actionLabels.delete}
+                                  aria-label={
+                                    adminContent.credentialsPage.actionLabels
+                                      .delete
+                                  }
+                                  title={
+                                    adminContent.credentialsPage.actionLabels
+                                      .delete
+                                  }
                                   className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-700 transition duration-200 hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200/70"
                                   disabled={isLoading}
                                   type="button"
@@ -639,7 +743,10 @@ export function AdminCredentialsPage() {
                                     });
                                   }}
                                 >
-                                  <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
+                                  <Trash2
+                                    aria-hidden="true"
+                                    className="h-3.5 w-3.5"
+                                  />
                                 </button>
                               </>
                             )}
@@ -654,7 +761,9 @@ export function AdminCredentialsPage() {
           </div>
         ) : (
           <div className="flex flex-1 items-center justify-center px-4 py-8 text-center sm:px-5">
-            <p className="text-sm font-medium text-ink-muted">{emptyStateMessage}</p>
+            <p className="text-sm font-medium text-ink-muted">
+              {emptyStateMessage}
+            </p>
           </div>
         )}
       </AdminPanelCard>

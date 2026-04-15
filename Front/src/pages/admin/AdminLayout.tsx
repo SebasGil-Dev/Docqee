@@ -19,7 +19,9 @@ export function AdminLayout() {
     }
 
     if (session.user.role !== 'PLATFORM_ADMIN') {
-      return <Navigate replace to={getDefaultRouteForRole(session.user.role)} />;
+      return (
+        <Navigate replace to={getDefaultRouteForRole(session.user.role)} />
+      );
     }
 
     if (shouldRequireFirstLoginPasswordChange(session)) {
@@ -28,7 +30,7 @@ export function AdminLayout() {
   }
 
   return (
-    <AdminShell mobileNavigationDensity="compact">
+    <AdminShell mainScrollMode="section" mobileNavigationDensity="compact">
       <Outlet />
     </AdminShell>
   );

@@ -1,4 +1,12 @@
-import { Building2, Check, Plus, Power, PowerOff, Search, SlidersHorizontal } from 'lucide-react';
+import {
+  Building2,
+  Check,
+  Plus,
+  Power,
+  PowerOff,
+  Search,
+  SlidersHorizontal,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
@@ -31,7 +39,9 @@ const universityStatusFilterOptions: Array<{
 ];
 
 function buildAdministratorLabel(university: AdminUniversity) {
-  return formatDisplayName(`${university.adminFirstName} ${university.adminLastName}`);
+  return formatDisplayName(
+    `${university.adminFirstName} ${university.adminLastName}`,
+  );
 }
 
 function getLocationState(locationState: unknown): UniversitiesLocationState {
@@ -43,20 +53,25 @@ function getLocationState(locationState: unknown): UniversitiesLocationState {
 }
 
 export function AdminUniversitiesPage() {
-  const { errorMessage, isLoading, toggleUniversityStatus, universities } = useAdminModuleStore();
+  const { errorMessage, isLoading, toggleUniversityStatus, universities } =
+    useAdminModuleStore();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<UniversityStatusFilter>('all');
+  const [statusFilter, setStatusFilter] =
+    useState<UniversityStatusFilter>('all');
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
-  const [pendingStatusUniversityIds, setPendingStatusUniversityIds] = useState<string[]>([]);
+  const [pendingStatusUniversityIds, setPendingStatusUniversityIds] = useState<
+    string[]
+  >([]);
   const pendingStatusUniversityIdsRef = useRef(new Set<string>());
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const successNotice = getLocationState(location.state)?.successNotice ?? null;
   const normalizedSearch = searchTerm.trim().toLowerCase();
-  const filteredUniversities = universities.filter((university) =>
-    university.name.toLowerCase().includes(normalizedSearch) &&
-    (statusFilter === 'all' || university.status === statusFilter),
+  const filteredUniversities = universities.filter(
+    (university) =>
+      university.name.toLowerCase().includes(normalizedSearch) &&
+      (statusFilter === 'all' || university.status === statusFilter),
   );
   const emptyStateMessage = isLoading
     ? 'Cargando universidades...'
@@ -110,7 +125,10 @@ export function AdminUniversitiesPage() {
     }
 
     pendingStatusUniversityIdsRef.current.add(universityId);
-    setPendingStatusUniversityIds((currentIds) => [...currentIds, universityId]);
+    setPendingStatusUniversityIds((currentIds) => [
+      ...currentIds,
+      universityId,
+    ]);
 
     void toggleUniversityStatus(universityId).finally(() => {
       pendingStatusUniversityIdsRef.current.delete(universityId);
@@ -121,7 +139,7 @@ export function AdminUniversitiesPage() {
   }
 
   return (
-    <div className="mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-4 overflow-hidden 2xl:max-w-[96rem]">
+    <div className="mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-2.5 overflow-hidden sm:gap-4 2xl:max-w-[96rem]">
       <Seo
         description={adminContent.universitiesPage.meta.description}
         noIndex
@@ -163,14 +181,19 @@ export function AdminUniversitiesPage() {
         >
           <div className="flex items-center gap-1.5 px-2.5 py-1.75 sm:gap-2.5 sm:px-3.5 sm:py-2">
             <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/12 text-white sm:h-9 sm:w-9">
-              <Building2 aria-hidden="true" className="h-3.5 w-3.5 sm:h-4.5 sm:w-4.5" />
+              <Building2
+                aria-hidden="true"
+                className="h-3.5 w-3.5 sm:h-4.5 sm:w-4.5"
+              />
             </span>
             <span className="font-headline text-[0.95rem] font-extrabold tracking-tight text-white sm:text-[1.25rem]">
               {universities.length}
             </span>
             <p className="min-w-0 text-[0.7rem] font-semibold leading-none text-white/90 sm:text-[0.78rem]">
               <span className="sm:hidden">Universidades</span>
-              <span className="hidden sm:inline">{adminContent.universitiesPage.summaryLabel}</span>
+              <span className="hidden sm:inline">
+                {adminContent.universitiesPage.summaryLabel}
+              </span>
             </p>
           </div>
         </SurfaceCard>
@@ -179,24 +202,31 @@ export function AdminUniversitiesPage() {
           to={ROUTES.adminRegisterUniversity}
         >
           <Plus aria-hidden="true" className="h-3.5 w-3.5" />
-          <span className="whitespace-nowrap leading-none">{adminContent.universitiesPage.actionLabels.register}</span>
+          <span className="whitespace-nowrap leading-none">
+            {adminContent.universitiesPage.actionLabels.register}
+          </span>
         </Link>
       </div>
-      <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
-        <div className="border-b border-slate-200/80 px-4 py-4 sm:px-5 sm:py-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+      <AdminPanelCard className="min-h-0 flex-1" panelClassName="bg-[#f4f8ff]">
+        <div className="border-b border-slate-200/80 px-3 py-2.5 sm:px-5 sm:py-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <h2 className="whitespace-nowrap text-center font-headline text-[1rem] font-extrabold leading-none tracking-tight text-ink sm:text-left sm:text-[1.45rem]">
               {adminContent.universitiesPage.tableTitle}
             </h2>
             <div className="flex min-w-0 items-center gap-2 sm:w-full sm:max-w-[26rem] sm:justify-end sm:gap-2.5 xl:max-w-[30rem]">
-              <label className="relative min-w-0 flex-1" htmlFor="admin-university-search">
-                <span className="sr-only">{adminContent.universitiesPage.searchLabel}</span>
+              <label
+                className="relative min-w-0 flex-1"
+                htmlFor="admin-university-search"
+              >
+                <span className="sr-only">
+                  {adminContent.universitiesPage.searchLabel}
+                </span>
                 <Search
                   aria-hidden="true"
                   className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ghost sm:left-4 sm:h-4 sm:w-4"
                 />
                 <input
-                  className="h-10 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-8 pr-4 text-[0.77rem] text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-11 sm:pl-11 sm:text-sm"
+                  className="h-9 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-8 pr-4 text-[0.77rem] text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-11 sm:pl-11 sm:text-sm"
                   id="admin-university-search"
                   placeholder={adminContent.universitiesPage.searchPlaceholder}
                   type="search"
@@ -213,11 +243,13 @@ export function AdminUniversitiesPage() {
                     statusFilter === 'all'
                       ? 'Filtrar por estado'
                       : `Filtrar por estado. Actual: ${
-                          universityStatusFilterOptions.find((option) => option.value === statusFilter)?.label
+                          universityStatusFilterOptions.find(
+                            (option) => option.value === statusFilter,
+                          )?.label
                         }`
                   }
                   className={classNames(
-                    'relative inline-flex h-10 w-10 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-11 sm:w-11',
+                    'relative inline-flex h-9 w-9 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-11 sm:w-11',
                     statusFilter === 'all'
                       ? 'border-slate-200/90 hover:border-primary/30 hover:bg-white'
                       : 'border-primary/25 bg-primary/[0.08] text-primary hover:bg-primary/[0.12]',
@@ -225,7 +257,10 @@ export function AdminUniversitiesPage() {
                   type="button"
                   onClick={() => setIsStatusMenuOpen((current) => !current)}
                 >
-                  <SlidersHorizontal aria-hidden="true" className="h-4 w-4 sm:h-[1.05rem] sm:w-[1.05rem]" />
+                  <SlidersHorizontal
+                    aria-hidden="true"
+                    className="h-4 w-4 sm:h-[1.05rem] sm:w-[1.05rem]"
+                  />
                   {statusFilter !== 'all' ? (
                     <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary ring-2 ring-white" />
                   ) : null}
@@ -266,10 +301,15 @@ export function AdminUniversitiesPage() {
                             <span
                               className={classNames(
                                 'inline-flex h-5 w-5 items-center justify-center rounded-full',
-                                isSelected ? 'bg-white/18 text-white' : 'bg-white text-slate-300',
+                                isSelected
+                                  ? 'bg-white/18 text-white'
+                                  : 'bg-white text-slate-300',
                               )}
                             >
-                              <Check aria-hidden="true" className="h-3.5 w-3.5" />
+                              <Check
+                                aria-hidden="true"
+                                className="h-3.5 w-3.5"
+                              />
                             </span>
                           </button>
                         );
@@ -285,7 +325,7 @@ export function AdminUniversitiesPage() {
           <div className="admin-scrollbar min-h-0 flex-1 overflow-x-auto overflow-y-auto overscroll-contain scroll-smooth [scrollbar-gutter:stable] [-webkit-overflow-scrolling:touch]">
             <div className="min-w-[52rem] md:min-w-full">
               <table className="min-w-full table-fixed md:table-auto">
-                <thead className="bg-slate-100 text-left md:sticky md:top-0 md:z-10">
+                <thead className="sticky top-0 z-10 bg-slate-100 text-left">
                   <tr className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-ink-muted">
                     <th className="px-4 py-3 sm:px-5">Universidad</th>
                     <th className="px-4 py-3">Localidad</th>
@@ -298,9 +338,8 @@ export function AdminUniversitiesPage() {
                   {filteredUniversities.map((university, index) => {
                     const isPending = university.status === 'pending';
                     const isLast = index === filteredUniversities.length - 1;
-                    const isUpdatingStatus = pendingStatusUniversityIds.includes(
-                      university.id,
-                    );
+                    const isUpdatingStatus =
+                      pendingStatusUniversityIds.includes(university.id);
 
                     return (
                       <tr key={university.id} className="align-top">
@@ -315,7 +354,10 @@ export function AdminUniversitiesPage() {
                               {formatDisplayName(university.name)}
                             </p>
                             <p className="text-xs text-ink-muted sm:text-[0.82rem]">
-                              Registrada {new Date(university.createdAt).toLocaleDateString('es-CO')}
+                              Registrada{' '}
+                              {new Date(
+                                university.createdAt,
+                              ).toLocaleDateString('es-CO')}
                             </p>
                           </div>
                         </td>
@@ -326,7 +368,9 @@ export function AdminUniversitiesPage() {
                           )}
                         >
                           <div className="space-y-1">
-                            <p className="text-sm font-semibold text-ink">{university.mainCity}</p>
+                            <p className="text-sm font-semibold text-ink">
+                              {university.mainCity}
+                            </p>
                             <p className="text-xs text-ink-muted sm:text-[0.82rem]">
                               {university.mainLocality}
                             </p>
@@ -342,7 +386,9 @@ export function AdminUniversitiesPage() {
                             <p className="text-sm font-semibold text-ink">
                               {buildAdministratorLabel(university)}
                             </p>
-                            <p className="text-xs text-ink-muted sm:text-[0.82rem]">{university.adminEmail}</p>
+                            <p className="text-xs text-ink-muted sm:text-[0.82rem]">
+                              {university.adminEmail}
+                            </p>
                           </div>
                         </td>
                         <td
@@ -351,7 +397,10 @@ export function AdminUniversitiesPage() {
                             isLast ? 'pb-4' : 'pb-3.5',
                           )}
                         >
-                          <AdminStatusBadge entity="university" status={university.status} />
+                          <AdminStatusBadge
+                            entity="university"
+                            status={university.status}
+                          />
                         </td>
                         <td
                           className={classNames(
@@ -378,14 +427,22 @@ export function AdminUniversitiesPage() {
                               }}
                             >
                               {university.status === 'active' ? (
-                                <PowerOff aria-hidden="true" className="h-3.5 w-3.5" />
+                                <PowerOff
+                                  aria-hidden="true"
+                                  className="h-3.5 w-3.5"
+                                />
                               ) : (
-                                <Power aria-hidden="true" className="h-3.5 w-3.5" />
+                                <Power
+                                  aria-hidden="true"
+                                  className="h-3.5 w-3.5"
+                                />
                               )}
                               <span>
                                 {university.status === 'active'
-                                  ? adminContent.universitiesPage.actionLabels.deactivate
-                                  : adminContent.universitiesPage.actionLabels.activate}
+                                  ? adminContent.universitiesPage.actionLabels
+                                      .deactivate
+                                  : adminContent.universitiesPage.actionLabels
+                                      .activate}
                               </span>
                             </button>
                           )}
@@ -399,7 +456,9 @@ export function AdminUniversitiesPage() {
           </div>
         ) : (
           <div className="flex flex-1 items-center justify-center px-4 py-8 text-center sm:px-5">
-            <p className="text-sm font-medium text-ink-muted">{emptyStateMessage}</p>
+            <p className="text-sm font-medium text-ink-muted">
+              {emptyStateMessage}
+            </p>
           </div>
         )}
       </AdminPanelCard>
