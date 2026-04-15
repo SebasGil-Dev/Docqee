@@ -413,7 +413,7 @@ export function StudentAppointmentsPage() {
   };
 
   return (
-    <div className="student-page-compact mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-3 overflow-hidden 2xl:max-w-[96rem]">
+    <div className="student-page-compact flex h-full w-full min-h-0 flex-col gap-3 overflow-hidden">
       <Seo
         description={studentContent.appointmentsPage.meta.description}
         noIndex

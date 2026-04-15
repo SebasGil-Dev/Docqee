@@ -183,7 +183,7 @@ export function AdminUniversitiesPage() {
   }
 
   return (
-    <div className="mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-2.5 overflow-hidden sm:gap-4 2xl:max-w-[96rem]">
+    <div className="flex h-full w-full min-h-0 flex-col gap-2.5 overflow-hidden sm:gap-4">
       <Seo
         description={adminContent.universitiesPage.meta.description}
         noIndex

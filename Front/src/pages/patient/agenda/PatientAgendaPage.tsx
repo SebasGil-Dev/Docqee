@@ -53,7 +53,7 @@ export function PatientAgendaPage() {
   ).length;
 
   return (
-    <div className="mx-auto flex h-full max-w-[90rem] min-h-0 flex-col gap-4 overflow-hidden 2xl:max-w-[98rem]">
+    <div className="flex h-full w-full min-h-0 flex-col gap-4 overflow-hidden">
       <Seo
         description={patientContent.agendaPage.meta.description}
         noIndex

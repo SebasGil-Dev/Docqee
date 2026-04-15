@@ -339,7 +339,7 @@ export function UniversityCredentialsPage() {
     : '';
 
   return (
-    <div className="mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-3 overflow-hidden 2xl:max-w-[96rem]">
+    <div className="flex h-full w-full min-h-0 flex-col gap-3 overflow-hidden">
       <Seo
         description={universityAdminContent.credentialsPage.meta.description}
         noIndex

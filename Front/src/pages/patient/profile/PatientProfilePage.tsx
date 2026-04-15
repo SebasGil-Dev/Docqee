@@ -126,7 +126,7 @@ export function PatientProfilePage() {
   };
 
   return (
-    <div className="mx-auto flex h-full max-w-[88rem] min-h-0 flex-col gap-4 overflow-hidden 2xl:max-w-[96rem]">
+    <div className="flex h-full w-full min-h-0 flex-col gap-4 overflow-hidden">
       <Seo
         description={patientContent.profilePage.meta.description}
         noIndex

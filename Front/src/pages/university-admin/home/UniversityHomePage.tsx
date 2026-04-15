@@ -132,7 +132,7 @@ export function UniversityHomePage() {
   }, [errorMessage]);
 
   return (
-    <div className="mx-auto flex h-full max-w-[90rem] min-h-0 flex-col gap-2.5 overflow-hidden overflow-x-hidden 2xl:max-w-[98rem]">
+    <div className="flex h-full w-full min-h-0 flex-col gap-2.5 overflow-hidden overflow-x-hidden">
       <Seo
         description={universityAdminContent.homePage.meta.description}
         noIndex

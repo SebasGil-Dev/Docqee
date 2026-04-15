@@ -130,7 +130,7 @@ export function PatientHomePage() {
   }, [isReviewRatingMenuOpen]);
 
   return (
-    <div className="mx-auto flex h-full max-w-[90rem] min-h-0 flex-col gap-3 overflow-hidden 2xl:max-w-[98rem]">
+    <div className="flex h-full w-full min-h-0 flex-col gap-3 overflow-hidden">
       <Seo
         description={patientContent.homePage.meta.description}
         noIndex
