@@ -137,7 +137,9 @@ describe('Admin pages', () => {
     ).not.toBeInTheDocument();
 
     await user.clear(screen.getByLabelText(/buscar universidad/i));
-    await user.click(screen.getByRole('button', { name: /filtrar credenciales/i }));
+    await user.click(
+      screen.getByRole('button', { name: /filtrar credenciales/i }),
+    );
     await user.click(screen.getByRole('menuitemradio', { name: /^Enviada$/i }));
 
     expect(
@@ -272,6 +274,12 @@ describe('Admin pages', () => {
     await user.click(
       within(activeRow!).getByRole('button', { name: /inactivar/i }),
     );
+    expect(
+      screen.getByRole('dialog', {
+        name: /quieres inactivar esta universidad/i,
+      }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /si, inactivar/i }));
 
     expect(within(activeRow!).getByText(/^Inactiva$/i)).toBeInTheDocument();
     expect(
@@ -293,6 +301,13 @@ describe('Admin pages', () => {
       name: /^inactivar$/i,
     });
     await user.dblClick(deactivateButton);
+
+    expect(
+      screen.getByRole('dialog', {
+        name: /quieres inactivar esta universidad/i,
+      }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /si, inactivar/i }));
 
     await waitFor(() => {
       expect(
@@ -381,10 +396,14 @@ describe('Admin pages', () => {
     );
 
     expect(
-      await within(credentialRow!).findByText(/nuevo\.correo@universidadpacifico\.edu\.co/i),
+      await within(credentialRow!).findByText(
+        /nuevo\.correo@universidadpacifico\.edu\.co/i,
+      ),
     ).toBeInTheDocument();
 
-    await user.click(within(credentialRow!).getByRole('button', { name: /^Enviar$/i }));
+    await user.click(
+      within(credentialRow!).getByRole('button', { name: /^Enviar$/i }),
+    );
     await user.click(screen.getByRole('button', { name: /si, enviar/i }));
 
     expect(within(credentialRow!).getByText(/^Enviada$/i)).toBeInTheDocument();
@@ -497,7 +516,9 @@ describe('Admin pages', () => {
       }),
     );
 
-    await user.click(screen.getByRole('link', { name: /registrar universidad/i }));
+    await user.click(
+      screen.getByRole('link', { name: /registrar universidad/i }),
+    );
 
     expect(
       await screen.findByLabelText(/nombre de la universidad/i),
@@ -511,7 +532,9 @@ describe('Admin pages', () => {
     });
 
     expect(
-      within(registerNavigation).getByRole('link', { name: /^Universidades$/i }),
+      within(registerNavigation).getByRole('link', {
+        name: /^Universidades$/i,
+      }),
     ).toHaveAttribute('aria-current', 'page');
   });
 });
