@@ -516,7 +516,7 @@ export function AdminRegisterUniversityPage({
             <div className="space-y-5 pb-4 sm:space-y-8 sm:pb-6">
               <section className="space-y-5">
                 <div>
-                  <h3 className="text-sm font-bold uppercase tracking-[0.22em] text-primary">
+                  <h3 className="text-center text-sm font-bold uppercase tracking-[0.22em] text-primary sm:text-left">
                     {adminContent.registerPage.institutionSectionTitle}
                   </h3>
                 </div>
@@ -612,7 +612,7 @@ export function AdminRegisterUniversityPage({
               </section>
               <section className="space-y-5 border-t border-slate-200/80 pt-7">
                 <div>
-                  <h3 className="text-sm font-bold uppercase tracking-[0.22em] text-primary">
+                  <h3 className="text-center text-sm font-bold uppercase tracking-[0.22em] text-primary sm:text-left">
                     {adminContent.registerPage.administratorSectionTitle}
                   </h3>
                 </div>
