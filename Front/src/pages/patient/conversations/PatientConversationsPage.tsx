@@ -535,7 +535,6 @@ export function PatientConversationsPage() {
                             onChange={(event) => {
                               setComposerValue(event.target.value);
                               setComposerError(null);
-                              setSuccessMessage(null);
                             }}
                             onKeyDown={(event) => {
                               if (event.key === 'Enter' && !event.shiftKey) {
