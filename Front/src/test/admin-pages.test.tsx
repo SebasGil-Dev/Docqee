@@ -406,10 +406,10 @@ describe('Admin pages', () => {
     );
 
     expect(
-      await within(credentialRow!).findByText(
+      await within(credentialRow!).findAllByText(
         /nuevo\.correo@universidadpacifico\.edu\.co/i,
       ),
-    ).toBeInTheDocument();
+    ).not.toHaveLength(0);
 
     await user.click(
       within(credentialRow!).getByRole('button', { name: /^Enviar$/i }),
