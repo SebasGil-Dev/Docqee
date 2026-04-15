@@ -281,6 +281,11 @@ describe('Admin pages', () => {
     ).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /si, inactivar/i }));
 
+    expect(
+      screen.queryByRole('dialog', {
+        name: /quieres inactivar esta universidad/i,
+      }),
+    ).not.toBeInTheDocument();
     expect(within(activeRow!).getByText(/^Inactiva$/i)).toBeInTheDocument();
     expect(
       within(activeRow!).getByRole('button', { name: /activar/i }),
@@ -309,6 +314,11 @@ describe('Admin pages', () => {
     ).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /si, inactivar/i }));
 
+    expect(
+      screen.queryByRole('dialog', {
+        name: /quieres inactivar esta universidad/i,
+      }),
+    ).not.toBeInTheDocument();
     await waitFor(() => {
       expect(
         within(activeRow!).getByRole('button', { name: /^activar$/i }),

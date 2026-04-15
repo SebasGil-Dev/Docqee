@@ -152,10 +152,6 @@ export function AdminUniversitiesPage() {
   }, [isStatusMenuOpen]);
 
   function handleCloseStatusConfirmation() {
-    if (isStatusConfirmationSubmitting) {
-      return;
-    }
-
     setStatusConfirmationUniversity(null);
   }
 
@@ -165,6 +161,8 @@ export function AdminUniversitiesPage() {
     }
 
     const universityId = statusConfirmationUniversity.id;
+
+    setStatusConfirmationUniversity(null);
 
     if (pendingStatusUniversityIdsRef.current.has(universityId)) {
       return;
@@ -181,7 +179,6 @@ export function AdminUniversitiesPage() {
       setPendingStatusUniversityIds((currentIds) =>
         currentIds.filter((currentId) => currentId !== universityId),
       );
-      setStatusConfirmationUniversity(null);
     });
   }
 
