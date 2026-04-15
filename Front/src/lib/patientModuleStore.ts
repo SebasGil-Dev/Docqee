@@ -1658,15 +1658,17 @@ async function refreshConversation(conversationId: string) {
     setRuntimeState(
       {
         ...state,
-        conversations: state.conversations.map((c) =>
-          c.id === conversationId
-            ? {
-                ...c,
-                messages: conversation.messages,
-                status: conversation.status,
-              }
-            : c,
-        ),
+        conversations: state.conversations.map((c) => {
+          if (c.id !== conversationId) return c;
+          const optimisticMessages = c.messages.filter((m) =>
+            m.id.startsWith('optimistic-'),
+          );
+          return {
+            ...c,
+            messages: [...conversation.messages, ...optimisticMessages],
+            status: conversation.status,
+          };
+        }),
       },
       {
         persistCache: true,

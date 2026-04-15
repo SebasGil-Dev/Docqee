@@ -1948,11 +1948,17 @@ async function refreshConversation(conversationId: string) {
     const conversation = await getStudentPortalConversation(conversationId);
     updateState({
       ...state,
-      conversations: state.conversations.map((c) =>
-        c.id === conversationId
-          ? { ...c, messages: conversation.messages, status: conversation.status }
-          : c,
-      ),
+      conversations: state.conversations.map((c) => {
+        if (c.id !== conversationId) return c;
+        const optimisticMessages = c.messages.filter((m) =>
+          m.id.startsWith('optimistic-'),
+        );
+        return {
+          ...c,
+          messages: [...conversation.messages, ...optimisticMessages],
+          status: conversation.status,
+        };
+      }),
     });
   } catch {
     // silently ignore - background poll
