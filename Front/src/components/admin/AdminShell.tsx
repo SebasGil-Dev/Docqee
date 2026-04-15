@@ -269,13 +269,41 @@ export function AdminShell({
   }, [isNotificationsOpen]);
 
   return (
-    <div className="admin-shell-density relative h-[100dvh] overflow-hidden overscroll-none bg-[#f4f8ff] lg:h-screen">
+    <div
+      className={classNames(
+        'admin-shell-density overflow-hidden overscroll-none bg-[#f4f8ff]',
+        shouldConstrainMainScroll
+          ? 'fixed inset-0 h-[100dvh] w-full lg:relative lg:inset-auto lg:h-screen'
+          : 'relative h-[100dvh] lg:h-screen',
+      )}
+    >
       <a className="skip-link" href="#admin-main-content">
         Saltar al contenido principal
       </a>
-      <div className="relative mx-auto flex h-full max-w-[98rem] flex-col overflow-hidden px-4 py-4 sm:px-6 lg:px-5 lg:py-3 xl:px-7">
-        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-[2.25rem] bg-[#f4f8ff] p-1 sm:p-1.5 lg:gap-3">
-          <header className="relative z-40 overflow-visible rounded-[1.5rem] bg-[#ffffff] px-4 py-2 shadow-ambient backdrop-blur-sm sm:px-5 sm:py-2.5 lg:px-5 lg:py-2">
+      <div
+        className={classNames(
+          'relative mx-auto flex h-full max-w-[98rem] flex-col overflow-hidden',
+          shouldConstrainMainScroll
+            ? 'px-0 py-0 lg:px-5 lg:py-3 xl:px-7'
+            : 'px-4 py-4 sm:px-6 lg:px-5 lg:py-3 xl:px-7',
+        )}
+      >
+        <div
+          className={classNames(
+            'flex min-h-0 flex-1 flex-col overflow-hidden bg-[#f4f8ff]',
+            shouldConstrainMainScroll
+              ? 'gap-2 rounded-none p-0 lg:gap-3 lg:rounded-[2.25rem] lg:p-1.5'
+              : 'gap-4 rounded-[2.25rem] p-1 sm:p-1.5 lg:gap-3',
+          )}
+        >
+          <header
+            className={classNames(
+              'relative z-40 overflow-visible bg-[#ffffff] px-4 py-2 backdrop-blur-sm sm:px-5 sm:py-2.5 lg:px-5 lg:py-2',
+              shouldConstrainMainScroll
+                ? 'rounded-none shadow-none lg:rounded-[1.5rem] lg:shadow-ambient'
+                : 'rounded-[1.5rem] shadow-ambient',
+            )}
+          >
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="-translate-y-0.5 min-w-0">
                 <Link
@@ -622,7 +650,8 @@ export function AdminShell({
             <div className="min-h-0 min-w-0 flex-1 transition-[width] duration-300">
               <main
                 className={classNames(
-                  'h-full min-h-0 pt-1 lg:pt-0',
+                  'h-full min-h-0 lg:pt-0',
+                  shouldConstrainMainScroll ? 'pt-0' : 'pt-1',
                   shouldConstrainMainScroll
                     ? 'overflow-hidden overscroll-none'
                     : 'overflow-y-auto',
