@@ -218,12 +218,12 @@ export function AdminUniversitiesPage() {
           <p role="alert">{errorMessage}</p>
         </SurfaceCard>
       ) : null}
-      <div className="flex items-stretch gap-2 md:gap-2.5">
+      <div className="grid grid-cols-2 items-stretch gap-2.5 px-3 sm:flex sm:px-0 md:gap-2.5">
         <SurfaceCard
-          className="w-[9.25rem] flex-none overflow-hidden bg-brand-gradient text-white sm:w-auto sm:min-w-0 sm:flex-1 md:flex-[1.75]"
+          className="min-w-0 overflow-hidden bg-brand-gradient text-white sm:w-auto sm:min-w-0 sm:flex-1 md:flex-[1.75]"
           paddingClassName="p-0"
         >
-          <div className="flex items-center gap-1.5 px-2.5 py-1.75 sm:gap-2.5 sm:px-3.5 sm:py-2">
+          <div className="flex items-center justify-center gap-1.5 px-2.5 py-1.75 sm:justify-start sm:gap-2.5 sm:px-3.5 sm:py-2">
             <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/12 text-white sm:h-9 sm:w-9">
               <Building2
                 aria-hidden="true"
@@ -242,7 +242,7 @@ export function AdminUniversitiesPage() {
           </div>
         </SurfaceCard>
         <Link
-          className="inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-[1.2rem] bg-brand-gradient px-2.75 py-1.75 text-[0.7rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 sm:gap-2 sm:px-3.5 sm:py-2 sm:text-[0.82rem] md:min-w-[12.25rem] md:flex-none"
+          className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-[1.2rem] bg-brand-gradient px-2.75 py-1.75 text-[0.7rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 sm:flex-1 sm:gap-2 sm:px-3.5 sm:py-2 sm:text-[0.82rem] md:min-w-[12.25rem] md:flex-none"
           to={ROUTES.adminRegisterUniversity}
         >
           <Plus aria-hidden="true" className="h-3.5 w-3.5" />
