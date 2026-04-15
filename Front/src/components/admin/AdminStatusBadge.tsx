@@ -79,9 +79,13 @@ export function AdminStatusBadge(props: AdminStatusBadgeProps) {
       : props.entity === 'university'
         ? badgeStyles.university[props.status]
         : badgeStyles.person[props.status];
+  const isPendingMicroStatus =
+    props.size === 'micro-mobile' && props.status === 'pending';
   const sizeClassName =
     props.size === 'micro-mobile'
-      ? 'px-1.5 py-[0.18rem] text-[0.58rem] leading-none sm:px-3 sm:py-1 sm:text-xs sm:leading-normal'
+      ? isPendingMicroStatus
+        ? 'px-1 py-[0.12rem] text-[0.5rem] leading-none tracking-[-0.01em] sm:px-3 sm:py-1 sm:text-xs sm:leading-normal sm:tracking-normal'
+        : 'px-1.5 py-[0.18rem] text-[0.58rem] leading-none sm:px-3 sm:py-1 sm:text-xs sm:leading-normal'
       : props.size === 'compact-mobile'
         ? 'px-2.5 py-0.5 text-[0.7rem] sm:px-3 sm:py-1 sm:text-xs'
         : 'px-3 py-1 text-xs';

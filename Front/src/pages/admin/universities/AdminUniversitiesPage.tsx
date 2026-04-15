@@ -479,7 +479,7 @@ export function AdminUniversitiesPage() {
                         >
                           <div className="flex h-7 items-center justify-center sm:h-auto md:justify-end">
                             {isPending ? (
-                              <span className="inline-flex rounded-full bg-amber-50 px-1.5 py-[0.18rem] text-[0.58rem] font-semibold leading-none text-amber-700 ring-1 ring-inset ring-amber-200 sm:px-2.5 sm:py-1.5 sm:text-[0.72rem] sm:leading-normal">
+                              <span className="inline-flex rounded-full bg-amber-50 px-1 py-[0.12rem] text-[0.5rem] font-semibold leading-none tracking-[-0.01em] text-amber-700 ring-1 ring-inset ring-amber-200 sm:px-2.5 sm:py-1.5 sm:text-[0.72rem] sm:leading-normal sm:tracking-normal">
                                 {
                                   adminContent.universitiesPage
                                     .pendingActionLabel
