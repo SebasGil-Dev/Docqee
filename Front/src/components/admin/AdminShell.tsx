@@ -270,30 +270,25 @@ export function AdminShell({
 
   return (
     <div
-      className={classNames(
-        'admin-shell-density overflow-hidden overscroll-none bg-[#f4f8ff]',
-        shouldConstrainMainScroll
-          ? 'fixed inset-0 h-[100dvh] w-full lg:relative lg:inset-auto lg:h-screen'
-          : 'relative h-[100dvh] lg:h-screen',
-      )}
+      className="admin-shell-density fixed inset-0 h-[100dvh] w-full overflow-hidden overscroll-none bg-[#f4f8ff] lg:h-screen"
     >
       <a className="skip-link" href="#admin-main-content">
         Saltar al contenido principal
       </a>
       <div
         className={classNames(
-          'relative mx-auto flex h-full max-w-[98rem] flex-col overflow-hidden',
+          'relative flex h-full w-full flex-col overflow-hidden',
           shouldConstrainMainScroll
-            ? 'px-0 py-0 lg:px-5 lg:py-3 xl:px-7'
-            : 'px-4 py-4 sm:px-6 lg:px-5 lg:py-3 xl:px-7',
+            ? 'px-0 py-0 lg:px-4 lg:py-3 xl:px-5'
+            : 'px-4 py-4 sm:px-6 lg:px-4 lg:py-3 xl:px-5',
         )}
       >
         <div
           className={classNames(
             'flex min-h-0 flex-1 flex-col overflow-hidden bg-[#f4f8ff]',
             shouldConstrainMainScroll
-              ? 'gap-2 rounded-none p-0 lg:gap-3 lg:rounded-[2.25rem] lg:p-1.5'
-              : 'gap-4 rounded-[2.25rem] p-1 sm:p-1.5 lg:gap-3',
+              ? 'gap-2 rounded-none p-0 lg:gap-3'
+              : 'gap-4 rounded-none p-0 lg:gap-3',
           )}
         >
           <header
