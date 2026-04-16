@@ -1002,6 +1002,34 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
           contenido: 'El paciente cancelo una de tus citas agendadas.',
         },
       });
+
+      const studentEmail = updated.solicitud.cuenta_estudiante.cuenta_acceso.correo;
+      const studentName = `${updated.solicitud.cuenta_estudiante.persona.nombres} ${updated.solicitud.cuenta_estudiante.persona.apellidos}`;
+
+      const [patientPerson, patientAccount] = await Promise.all([
+        this.prisma.cuenta_paciente.findUnique({
+          where: { id_cuenta: patientAccountId },
+          include: { persona: true },
+        }),
+        this.prisma.cuenta_acceso.findUnique({
+          where: { id_cuenta: patientAccountId },
+          select: { correo: true },
+        }),
+      ]);
+
+      if (patientPerson && patientAccount) {
+        const patientName = `${patientPerson.persona.nombres} ${patientPerson.persona.apellidos}`;
+        void this.mailService.sendAppointmentCancelledToStudent(
+          studentEmail,
+          studentName,
+          patientName,
+          updated.tipo_cita.nombre,
+          updated.sede.nombre,
+          updated.sede.localidad.ciudad.nombre,
+          updated.fecha_hora_inicio.toISOString(),
+          updated.fecha_hora_fin.toISOString(),
+        );
+      }
     } else if (payload.status === 'ACEPTADA') {
       await this.prisma.notificacion.create({
         data: {

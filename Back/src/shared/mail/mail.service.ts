@@ -225,6 +225,68 @@ export class MailService {
     }
   }
 
+  async sendAppointmentCancelledToPatient(
+    to: string,
+    patientName: string,
+    studentName: string,
+    appointmentType: string,
+    siteName: string,
+    city: string,
+    startAt: string,
+    endAt: string,
+  ) {
+    try {
+      await this.client.transactionalEmails.sendTransacEmail({
+        sender: { email: this.from },
+        to: [{ email: to }],
+        subject: 'Tu cita fue cancelada - Docqee',
+        htmlContent: `
+          <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1a1a2e;">
+            <h2 style="color:#dc2626;">Cita cancelada</h2>
+            <p>Hola <strong>${patientName}</strong>,</p>
+            <p>El estudiante <strong>${studentName}</strong> ha cancelado la siguiente cita:</p>
+            ${this.appointmentDetailsBlock(appointmentType, siteName, city, startAt, endAt)}
+            <p style="color:#666;font-size:13px;">Si tienes dudas, comunícate con el estudiante a través del chat de Docqee.</p>
+          </div>
+        `,
+      });
+      this.logger.log(`Appointment cancellation email sent to patient ${to}`);
+    } catch (error) {
+      this.logger.error(`Failed to send appointment cancellation email to patient ${to}`, error);
+    }
+  }
+
+  async sendAppointmentCancelledToStudent(
+    to: string,
+    studentName: string,
+    patientName: string,
+    appointmentType: string,
+    siteName: string,
+    city: string,
+    startAt: string,
+    endAt: string,
+  ) {
+    try {
+      await this.client.transactionalEmails.sendTransacEmail({
+        sender: { email: this.from },
+        to: [{ email: to }],
+        subject: 'El paciente canceló la cita - Docqee',
+        htmlContent: `
+          <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1a1a2e;">
+            <h2 style="color:#dc2626;">Cita cancelada</h2>
+            <p>Hola <strong>${studentName}</strong>,</p>
+            <p>El paciente <strong>${patientName}</strong> ha cancelado la siguiente cita:</p>
+            ${this.appointmentDetailsBlock(appointmentType, siteName, city, startAt, endAt)}
+            <p style="color:#666;font-size:13px;">Si tienes dudas, comunícate con el paciente a través del chat de Docqee.</p>
+          </div>
+        `,
+      });
+      this.logger.log(`Appointment cancellation email sent to student ${to}`);
+    } catch (error) {
+      this.logger.error(`Failed to send appointment cancellation email to student ${to}`, error);
+    }
+  }
+
   async sendPasswordResetCode(to: string, code: string) {
     try {
       await this.client.transactionalEmails.sendTransacEmail({

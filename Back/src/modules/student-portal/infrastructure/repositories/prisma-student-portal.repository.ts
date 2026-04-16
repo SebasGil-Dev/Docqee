@@ -704,7 +704,8 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
   private buildCitaDateTime(dateStr: string, timeStr: string): Date {
     const [year = 2026, month = 1, day = 1] = dateStr.split('-').map(Number);
     const [hours = 0, minutes = 0] = timeStr.split(':').map(Number);
-    return new Date(year, month - 1, day, hours, minutes, 0, 0);
+    // Input is Bogota time (UTC-5). Add 5 hours to store as UTC.
+    return new Date(Date.UTC(year, month - 1, day, hours + 5, minutes, 0, 0));
   }
 
   private getAppointmentTypeLabel(treatmentNames: string[]): string {
@@ -1012,6 +1013,33 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
           contenido: 'El estudiante cancelo una de tus citas agendadas.',
         },
       });
+
+      const patientAccountId = updated.solicitud.id_cuenta_paciente;
+      const [patientAccount, studentInfo] = await Promise.all([
+        this.prisma.cuenta_acceso.findUnique({
+          where: { id_cuenta: patientAccountId },
+          select: { correo: true },
+        }),
+        this.prisma.cuenta_estudiante.findUnique({
+          where: { id_cuenta: studentAccountId },
+          include: { persona: true },
+        }),
+      ]);
+
+      if (patientAccount && studentInfo) {
+        const patientName = `${updated.solicitud.cuenta_paciente.persona.nombres} ${updated.solicitud.cuenta_paciente.persona.apellidos}`;
+        const studentName = `${studentInfo.persona.nombres} ${studentInfo.persona.apellidos}`;
+        void this.mailService.sendAppointmentCancelledToPatient(
+          patientAccount.correo,
+          patientName,
+          studentName,
+          updated.tipo_cita.nombre,
+          updated.sede.nombre,
+          updated.sede.localidad.ciudad.nombre,
+          updated.fecha_hora_inicio.toISOString(),
+          updated.fecha_hora_fin.toISOString(),
+        );
+      }
     }
 
     return this.toCitaAppointmentDto(updated);
