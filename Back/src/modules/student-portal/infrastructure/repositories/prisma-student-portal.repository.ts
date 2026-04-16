@@ -951,7 +951,8 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       where: { id_cita: appointmentId },
       data: {
         estado: status as any,
-        ...(status === 'CANCELADA' ? { cancelada_por_cuenta: studentAccountId } : {}),
+        ...(status === 'CANCELADA' ? { cancelada_por_cuenta: studentAccountId, respondida_at: new Date() } : {}),
+        ...(status === 'FINALIZADA' ? { finalizada_at: new Date(), respondida_at: new Date() } : {}),
       },
       include: this.getCitaWithRelationsArgs(),
     });
