@@ -255,13 +255,13 @@ function createMockState(): StudentStoreState {
       id: 'student-appointment-1',
       patientName: 'Ana Maria Perez',
       requestId: 'student-request-1',
-      siteId: 'practice-site-1',
+      siteId: 'site-1',
       siteName: 'Sede Norte',
       startAt: '2026-04-06T15:00:00.000Z',
       status: 'PROPUESTA',
       supervisorId: 'student-supervisor-1',
       supervisorName: 'Dra. Catalina Mora',
-      treatmentIds: ['treatment-1'],
+      treatmentIds: ['type-1'],
       treatmentNames: ['Operatoria basica'],
     },
     {
@@ -272,13 +272,13 @@ function createMockState(): StudentStoreState {
       id: 'student-appointment-2',
       patientName: 'Julian Torres',
       requestId: 'student-request-2',
-      siteId: 'practice-site-1',
+      siteId: 'site-1',
       siteName: 'Sede Norte',
       startAt: '2026-04-07T19:00:00.000Z',
       status: 'ACEPTADA',
       supervisorId: 'student-supervisor-1',
       supervisorName: 'Dra. Catalina Mora',
-      treatmentIds: ['treatment-1', 'treatment-2'],
+      treatmentIds: ['type-1', 'type-2'],
       treatmentNames: ['Operatoria basica', 'Promocion y prevencion'],
     },
     {
@@ -289,13 +289,13 @@ function createMockState(): StudentStoreState {
       id: 'student-appointment-3',
       patientName: 'Claudia Moreno',
       requestId: 'student-request-3',
-      siteId: 'practice-site-2',
+      siteId: 'site-2',
       siteName: 'Sede Escuela Clinica',
       startAt: '2026-04-08T16:15:00.000Z',
       status: 'REPROGRAMACION_PENDIENTE',
       supervisorId: 'student-supervisor-2',
       supervisorName: 'Dr. Sergio Pineda',
-      treatmentIds: ['treatment-2'],
+      treatmentIds: ['type-2'],
       treatmentNames: ['Promocion y prevencion'],
     },
     {
@@ -306,13 +306,13 @@ function createMockState(): StudentStoreState {
       id: 'student-appointment-4',
       patientName: 'Ricardo Suarez',
       requestId: 'student-request-4',
-      siteId: 'practice-site-1',
+      siteId: 'site-1',
       siteName: 'Sede Norte',
       startAt: '2026-04-09T14:00:00.000Z',
       status: 'CANCELADA',
       supervisorId: 'student-supervisor-1',
       supervisorName: 'Dra. Catalina Mora',
-      treatmentIds: ['treatment-1'],
+      treatmentIds: ['type-1'],
       treatmentNames: ['Operatoria basica'],
     },
     {
@@ -323,13 +323,13 @@ function createMockState(): StudentStoreState {
       id: 'student-appointment-5',
       patientName: 'Ricardo Suarez',
       requestId: 'student-request-4',
-      siteId: 'practice-site-1',
+      siteId: 'site-1',
       siteName: 'Sede Norte',
       startAt: '2026-04-04T16:45:00.000Z',
       status: 'FINALIZADA',
       supervisorId: 'student-supervisor-2',
       supervisorName: 'Dr. Sergio Pineda',
-      treatmentIds: ['treatment-1', 'treatment-2'],
+      treatmentIds: ['type-1', 'type-2'],
       treatmentNames: ['Operatoria basica', 'Promocion y prevencion'],
     },
   ];
@@ -1160,7 +1160,7 @@ function findAppointmentValidationError(
   }
 
   const site = state.practiceSites.find(
-    (practiceSite) => practiceSite.id === normalized.siteId,
+    (practiceSite) => practiceSite.siteId === normalized.siteId,
   );
   if (!site || site.status !== 'active') {
     return 'Selecciona una sede activa para programar la cita.';
@@ -1178,7 +1178,7 @@ function findAppointmentValidationError(
   }
 
   const selectedTreatments = normalized.treatmentIds.map((treatmentId) =>
-    state.treatments.find((treatment) => treatment.id === treatmentId),
+    state.treatments.find((treatment) => treatment.treatmentTypeId === treatmentId),
   );
   if (selectedTreatments.some((treatment) => !treatment || treatment.status !== 'active')) {
     return 'Todos los tratamientos de la cita deben estar activos.';
@@ -1352,14 +1352,14 @@ function upsertAppointmentMock(
 
   const normalized = normalizeAppointmentInput(values);
   const request = state.requests.find((currentRequest) => currentRequest.id === normalized.requestId);
-  const site = state.practiceSites.find((practiceSite) => practiceSite.id === normalized.siteId);
+  const site = state.practiceSites.find((practiceSite) => practiceSite.siteId === normalized.siteId);
   const supervisor = state.supervisors.find(
     (currentSupervisor) => currentSupervisor.id === normalized.supervisorId,
   );
   const treatmentNames: string[] = normalized.treatmentIds
     .map(
       (treatmentId) =>
-        state.treatments.find((treatment) => treatment.id === treatmentId)?.name ?? '',
+        state.treatments.find((treatment) => treatment.treatmentTypeId === treatmentId)?.name ?? '',
     )
     .filter((treatmentName): treatmentName is string => treatmentName.length > 0);
   const nextAppointment: StudentAgendaAppointment = {

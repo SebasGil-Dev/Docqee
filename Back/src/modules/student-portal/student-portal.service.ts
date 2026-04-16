@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import type { UploadImageFile } from '@/shared/storage/cloudinary.service';
 import { CloudinaryService } from '@/shared/storage/cloudinary.service';
 import type { RequestUser } from '@/shared/types/request-user.type';
+import { UpsertStudentAppointmentDto } from './application/dto/upsert-student-appointment.dto';
 import { UpdateStudentProfileDto } from './application/dto/update-student-profile.dto';
 import { UpdateStudentRequestStatusDto } from './application/dto/update-student-request-status.dto';
 import { UpdateStudentTreatmentsDto } from './application/dto/update-student-treatments.dto';
@@ -76,6 +77,18 @@ export class StudentPortalService {
       avatarSrc: uploadedAvatar.secureUrl,
       publicId: uploadedAvatar.publicId,
     };
+  }
+
+  createAppointment(user: RequestUser, payload: UpsertStudentAppointmentDto) {
+    return this.studentPortalRepository.createAppointment(user.id, payload);
+  }
+
+  updateAppointment(user: RequestUser, appointmentId: number, payload: UpsertStudentAppointmentDto) {
+    return this.studentPortalRepository.updateAppointment(user.id, appointmentId, payload);
+  }
+
+  updateAppointmentStatus(user: RequestUser, appointmentId: number, status: string) {
+    return this.studentPortalRepository.updateAppointmentStatus(user.id, appointmentId, status);
   }
 
   private async resolveAvatarUrl(

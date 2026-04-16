@@ -1,3 +1,4 @@
+import { StudentAgendaAppointmentDto } from '../../application/dto/student-agenda-appointment.dto';
 import { StudentConversationDto } from '../../application/dto/student-conversation.dto';
 import { StudentConversationMessageDto } from '../../application/dto/student-conversation-message.dto';
 import { StudentPortalDashboardDto } from '../../application/dto/student-portal-dashboard.dto';
@@ -9,6 +10,7 @@ import { StudentTreatmentDto } from '../../application/dto/student-treatment.dto
 import { StudentTreatmentTypeDto } from '../../application/dto/student-treatment-type.dto';
 import { UpdateStudentProfileDto } from '../../application/dto/update-student-profile.dto';
 import { UpdateStudentRequestStatusDto } from '../../application/dto/update-student-request-status.dto';
+import { UpsertStudentAppointmentDto } from '../../application/dto/upsert-student-appointment.dto';
 import { UpsertStudentScheduleBlockDto } from '../../application/dto/upsert-student-schedule-block.dto';
 
 export abstract class StudentPortalRepository {
@@ -62,4 +64,21 @@ export abstract class StudentPortalRepository {
     conversationId: number,
     content: string,
   ): Promise<StudentConversationMessageDto>;
+
+  abstract createAppointment(
+    studentAccountId: number,
+    payload: UpsertStudentAppointmentDto,
+  ): Promise<StudentAgendaAppointmentDto>;
+
+  abstract updateAppointment(
+    studentAccountId: number,
+    appointmentId: number,
+    payload: UpsertStudentAppointmentDto,
+  ): Promise<StudentAgendaAppointmentDto>;
+
+  abstract updateAppointmentStatus(
+    studentAccountId: number,
+    appointmentId: number,
+    status: string,
+  ): Promise<StudentAgendaAppointmentDto>;
 }

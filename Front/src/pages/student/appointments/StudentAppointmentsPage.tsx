@@ -750,7 +750,7 @@ export function StudentAppointmentsPage() {
                 label="Sede"
                 name="studentAppointmentSite"
                 options={activePracticeSites.map((practiceSite) => ({
-                  id: practiceSite.id,
+                  id: practiceSite.siteId,
                   label: `${practiceSite.name} · ${practiceSite.city}`,
                 }))}
                 placeholder="Selecciona una sede"
@@ -839,7 +839,7 @@ export function StudentAppointmentsPage() {
               </div>
               <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
                 {activeTreatments.map((treatment) => {
-                  const isSelected = appointmentValues.treatmentIds.includes(treatment.id);
+                  const isSelected = appointmentValues.treatmentIds.includes(treatment.treatmentTypeId);
 
                   return (
                     <button
@@ -851,7 +851,7 @@ export function StudentAppointmentsPage() {
                           : 'border-slate-200/80 bg-white hover:border-primary/20 hover:bg-slate-50',
                       )}
                       type="button"
-                      onClick={() => handleTreatmentToggle(treatment.id)}
+                      onClick={() => handleTreatmentToggle(treatment.treatmentTypeId)}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="space-y-1">

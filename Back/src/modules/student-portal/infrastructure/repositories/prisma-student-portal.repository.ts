@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 
 import { PrismaService } from '@/shared/database/prisma.service';
 import { normalizeText } from '@/shared/utils/front-format.util';
+import { UpsertStudentAppointmentDto } from '../../application/dto/upsert-student-appointment.dto';
 import { UpdateStudentProfileDto } from '../../application/dto/update-student-profile.dto';
 import { StudentAgendaAppointmentDto } from '../../application/dto/student-agenda-appointment.dto';
 import { StudentAppointmentReviewDto } from '../../application/dto/student-appointment-review.dto';
@@ -268,20 +269,19 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       siteName: v.cita.sede.nombre,
     }));
 
-    const supervisorMap = new Map<number, StudentSupervisorDto>();
-    for (const s of solicitudes) {
-      for (const c of s.cita) {
-        const sid = c.id_docente_universidad;
-        if (!supervisorMap.has(sid)) {
-          supervisorMap.set(sid, {
-            id: String(sid),
-            name: `${c.docente_universidad.docente.nombres} ${c.docente_universidad.docente.apellidos}`,
-            status: c.docente_universidad.estado === 'ACTIVO' ? 'active' : 'inactive',
-          });
-        }
-      }
-    }
-    const supervisors: StudentSupervisorDto[] = [...supervisorMap.values()];
+    const docentesUniversidad = student
+      ? await this.prisma.docente_universidad.findMany({
+          where: { id_universidad: student.id_universidad, estado: 'ACTIVO' },
+          include: { docente: true },
+          orderBy: { docente: { apellidos: 'asc' } },
+        })
+      : [];
+
+    const supervisors: StudentSupervisorDto[] = docentesUniversidad.map((du) => ({
+      id: String(du.id_docente_universidad),
+      name: `${du.docente.nombres} ${du.docente.apellidos}`,
+      status: 'active' as const,
+    }));
 
     return {
       appointments,
@@ -693,5 +693,266 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       content: msg.contenido,
       sentAt: msg.enviado_at.toISOString(),
     };
+  }
+
+  private buildCitaDateTime(dateStr: string, timeStr: string): Date {
+    const [year = 2026, month = 1, day = 1] = dateStr.split('-').map(Number);
+    const [hours = 0, minutes = 0] = timeStr.split(':').map(Number);
+    return new Date(year, month - 1, day, hours, minutes, 0, 0);
+  }
+
+  private getAppointmentTypeLabel(treatmentNames: string[]): string {
+    if (treatmentNames.length === 1) return treatmentNames[0] ?? 'Cita clinica';
+    if (treatmentNames.length > 1) return 'Atencion clinica programada';
+    return 'Cita clinica';
+  }
+
+  private toCitaAppointmentDto(
+    cita: {
+      id_cita: number;
+      id_sede: number;
+      informacion_adicional: string | null;
+      fecha_hora_inicio: Date;
+      fecha_hora_fin: Date;
+      estado: string;
+      id_docente_universidad: number;
+      tipo_cita: { nombre: string };
+      sede: { nombre: string; localidad: { ciudad: { nombre: string } } };
+      docente_universidad: { docente: { nombres: string; apellidos: string } };
+      cita_tratamiento: { id_tipo_tratamiento: number; tipo_tratamiento: { nombre: string } }[];
+      solicitud: { id_solicitud: number; cuenta_paciente: { persona: { nombres: string; apellidos: string } } };
+    },
+  ): StudentAgendaAppointmentDto {
+    return {
+      additionalInfo: cita.informacion_adicional ?? null,
+      appointmentType: cita.tipo_cita.nombre,
+      city: cita.sede.localidad.ciudad.nombre,
+      endAt: cita.fecha_hora_fin.toISOString(),
+      id: String(cita.id_cita),
+      patientName: `${cita.solicitud.cuenta_paciente.persona.nombres} ${cita.solicitud.cuenta_paciente.persona.apellidos}`,
+      requestId: String(cita.solicitud.id_solicitud),
+      siteId: String(cita.id_sede),
+      siteName: cita.sede.nombre,
+      startAt: cita.fecha_hora_inicio.toISOString(),
+      status: cita.estado,
+      supervisorId: String(cita.id_docente_universidad),
+      supervisorName: `${cita.docente_universidad.docente.nombres} ${cita.docente_universidad.docente.apellidos}`,
+      treatmentIds: cita.cita_tratamiento.map((ct) => String(ct.id_tipo_tratamiento)),
+      treatmentNames: cita.cita_tratamiento.map((ct) => ct.tipo_tratamiento.nombre),
+    };
+  }
+
+  private getCitaWithRelationsArgs() {
+    return {
+      tipo_cita: true,
+      sede: { include: { localidad: { include: { ciudad: true } } } },
+      docente_universidad: { include: { docente: true } },
+      cita_tratamiento: { include: { tipo_tratamiento: true } },
+      solicitud: { include: { cuenta_paciente: { include: { persona: true } } } },
+    } as const;
+  }
+
+  async createAppointment(
+    studentAccountId: number,
+    payload: UpsertStudentAppointmentDto,
+  ): Promise<StudentAgendaAppointmentDto> {
+    // Verify solicitud belongs to this student and is in ACEPTADA status
+    const solicitud = await this.prisma.solicitud.findFirst({
+      where: { id_solicitud: payload.requestId, id_cuenta_estudiante: studentAccountId },
+    });
+
+    if (!solicitud) {
+      throw new NotFoundException('La solicitud no existe o no te pertenece.');
+    }
+
+    if (solicitud.estado !== 'ACEPTADA') {
+      throw new BadRequestException('Solo puedes programar citas para solicitudes aceptadas.');
+    }
+
+    // Verify supervisor belongs to the student's university
+    const student = await this.prisma.cuenta_estudiante.findUnique({
+      where: { id_cuenta: studentAccountId },
+      select: { id_universidad: true },
+    });
+
+    const docente = await this.prisma.docente_universidad.findFirst({
+      where: {
+        id_docente_universidad: payload.supervisorId,
+        id_universidad: student?.id_universidad,
+        estado: 'ACTIVO',
+      },
+    });
+
+    if (!docente) {
+      throw new NotFoundException('El docente supervisor no existe o no pertenece a tu universidad.');
+    }
+
+    // Verify sede is valid
+    const sede = await this.prisma.sede.findFirst({
+      where: { id_sede: payload.siteId, estado: 'ACTIVO' },
+    });
+
+    if (!sede) {
+      throw new NotFoundException('La sede no existe o no esta activa.');
+    }
+
+    // Verify all treatments exist
+    const tratamientos = await this.prisma.tipo_tratamiento.findMany({
+      where: { id_tipo_tratamiento: { in: payload.treatmentIds } },
+      select: { nombre: true },
+    });
+
+    if (tratamientos.length !== payload.treatmentIds.length) {
+      throw new BadRequestException('Uno o mas tratamientos seleccionados no son validos.');
+    }
+
+    // Find or create the tipo_cita based on treatment names
+    const tipoCitaNombre = this.getAppointmentTypeLabel(tratamientos.map((t) => t.nombre));
+    const tipoCita = await this.prisma.tipo_cita.upsert({
+      where: { nombre: tipoCitaNombre },
+      create: { nombre: tipoCitaNombre },
+      update: {},
+    });
+
+    const startAt = this.buildCitaDateTime(payload.startDate, payload.startTime);
+    const endAt = this.buildCitaDateTime(payload.startDate, payload.endTime);
+
+    const cita = await this.prisma.cita.create({
+      data: {
+        id_solicitud: payload.requestId,
+        id_docente_universidad: payload.supervisorId,
+        id_sede: payload.siteId,
+        id_tipo_cita: tipoCita.id_tipo_cita,
+        fecha_hora_inicio: startAt,
+        fecha_hora_fin: endAt,
+        informacion_adicional: payload.additionalInfo?.trim() || null,
+        estado: 'PROPUESTA',
+        cita_tratamiento: {
+          create: payload.treatmentIds.map((id_tipo_tratamiento) => ({ id_tipo_tratamiento })),
+        },
+      },
+      include: this.getCitaWithRelationsArgs(),
+    });
+
+    return this.toCitaAppointmentDto(cita);
+  }
+
+  async updateAppointment(
+    studentAccountId: number,
+    appointmentId: number,
+    payload: UpsertStudentAppointmentDto,
+  ): Promise<StudentAgendaAppointmentDto> {
+    const cita = await this.prisma.cita.findFirst({
+      where: {
+        id_cita: appointmentId,
+        solicitud: { id_cuenta_estudiante: studentAccountId },
+      },
+    });
+
+    if (!cita) {
+      throw new NotFoundException('La cita no existe o no te pertenece.');
+    }
+
+    if (cita.estado !== 'PROPUESTA') {
+      throw new BadRequestException('Solo puedes editar citas en estado PROPUESTA.');
+    }
+
+    // Verify new sede
+    const sede = await this.prisma.sede.findFirst({
+      where: { id_sede: payload.siteId, estado: 'ACTIVO' },
+    });
+
+    if (!sede) {
+      throw new NotFoundException('La sede no existe o no esta activa.');
+    }
+
+    // Verify supervisor
+    const student = await this.prisma.cuenta_estudiante.findUnique({
+      where: { id_cuenta: studentAccountId },
+      select: { id_universidad: true },
+    });
+
+    const docente = await this.prisma.docente_universidad.findFirst({
+      where: {
+        id_docente_universidad: payload.supervisorId,
+        id_universidad: student?.id_universidad,
+        estado: 'ACTIVO',
+      },
+    });
+
+    if (!docente) {
+      throw new NotFoundException('El docente supervisor no existe o no pertenece a tu universidad.');
+    }
+
+    // Verify treatments
+    const tratamientos = await this.prisma.tipo_tratamiento.findMany({
+      where: { id_tipo_tratamiento: { in: payload.treatmentIds } },
+      select: { nombre: true },
+    });
+
+    if (tratamientos.length !== payload.treatmentIds.length) {
+      throw new BadRequestException('Uno o mas tratamientos seleccionados no son validos.');
+    }
+
+    const tipoCitaNombre = this.getAppointmentTypeLabel(tratamientos.map((t) => t.nombre));
+    const tipoCita = await this.prisma.tipo_cita.upsert({
+      where: { nombre: tipoCitaNombre },
+      create: { nombre: tipoCitaNombre },
+      update: {},
+    });
+
+    const startAt = this.buildCitaDateTime(payload.startDate, payload.startTime);
+    const endAt = this.buildCitaDateTime(payload.startDate, payload.endTime);
+
+    // Delete old treatments and update the cita in a transaction
+    await this.prisma.$transaction([
+      this.prisma.cita_tratamiento.deleteMany({ where: { id_cita: appointmentId } }),
+      this.prisma.cita.update({
+        where: { id_cita: appointmentId },
+        data: {
+          id_docente_universidad: payload.supervisorId,
+          id_sede: payload.siteId,
+          id_tipo_cita: tipoCita.id_tipo_cita,
+          fecha_hora_inicio: startAt,
+          fecha_hora_fin: endAt,
+          informacion_adicional: payload.additionalInfo?.trim() || null,
+          cita_tratamiento: {
+            create: payload.treatmentIds.map((id_tipo_tratamiento) => ({ id_tipo_tratamiento })),
+          },
+        },
+      }),
+    ]);
+
+    const updated = await this.prisma.cita.findUniqueOrThrow({
+      where: { id_cita: appointmentId },
+      include: this.getCitaWithRelationsArgs(),
+    });
+
+    return this.toCitaAppointmentDto(updated);
+  }
+
+  async updateAppointmentStatus(
+    studentAccountId: number,
+    appointmentId: number,
+    status: string,
+  ): Promise<StudentAgendaAppointmentDto> {
+    const cita = await this.prisma.cita.findFirst({
+      where: {
+        id_cita: appointmentId,
+        solicitud: { id_cuenta_estudiante: studentAccountId },
+      },
+    });
+
+    if (!cita) {
+      throw new NotFoundException('La cita no existe o no te pertenece.');
+    }
+
+    const updated = await this.prisma.cita.update({
+      where: { id_cita: appointmentId },
+      data: { estado: status as any },
+      include: this.getCitaWithRelationsArgs(),
+    });
+
+    return this.toCitaAppointmentDto(updated);
   }
 }
