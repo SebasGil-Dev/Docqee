@@ -7,6 +7,7 @@ import {
 import { Prisma } from "@prisma/client";
 
 import { PrismaService } from "@/shared/database/prisma.service";
+import { MailService } from "@/shared/mail/mail.service";
 import { normalizeText } from "@/shared/utils/front-format.util";
 import { CreatePatientRequestDto } from "../../application/dto/create-patient-request.dto";
 import { PatientAppointmentDto } from "../../application/dto/patient-appointment.dto";
@@ -121,7 +122,10 @@ const PATIENT_INITIAL_STUDENT_DIRECTORY_LIMIT = 5;
 
 @Injectable()
 export class PrismaPatientPortalRepository extends PatientPortalRepository {
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
+  ) {
     super();
   }
 
@@ -708,8 +712,10 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         additionalInfo: c.informacion_adicional ?? null,
         appointmentType: c.tipo_cita.nombre,
         city: c.sede.localidad.ciudad.nombre,
+        createdAt: c.fecha_creacion.toISOString(),
         endAt: c.fecha_hora_fin.toISOString(),
         id: String(c.id_cita),
+        respondedAt: c.respondida_at?.toISOString() ?? null,
         siteName: c.sede.nombre,
         startAt: c.fecha_hora_inicio.toISOString(),
         status: c.estado,
@@ -977,7 +983,11 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         solicitud: {
           include: {
             cuenta_estudiante: {
-              include: { persona: true, universidad: true },
+              include: {
+                persona: true,
+                universidad: true,
+                cuenta_acceso: { select: { correo: true } },
+              },
             },
           },
         },
@@ -1000,6 +1010,48 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
           contenido: 'El paciente acepto tu propuesta de cita.',
         },
       });
+
+      // Send confirmation emails to both student and patient
+      const patientAccount = await this.prisma.cuenta_acceso.findUnique({
+        where: { id_cuenta: patientAccountId },
+        select: { correo: true },
+      });
+      const patientPerson = await this.prisma.cuenta_paciente.findUnique({
+        where: { id_cuenta: patientAccountId },
+        include: { persona: true },
+      });
+
+      const studentEmail = updated.solicitud.cuenta_estudiante.cuenta_acceso.correo;
+      const studentName = `${updated.solicitud.cuenta_estudiante.persona.nombres} ${updated.solicitud.cuenta_estudiante.persona.apellidos}`;
+      const appointmentType = updated.tipo_cita.nombre;
+      const siteName = updated.sede.nombre;
+      const city = updated.sede.localidad.ciudad.nombre;
+      const startAt = updated.fecha_hora_inicio.toISOString();
+      const endAt = updated.fecha_hora_fin.toISOString();
+
+      if (patientAccount && patientPerson) {
+        const patientName = `${patientPerson.persona.nombres} ${patientPerson.persona.apellidos}`;
+        void this.mailService.sendAppointmentConfirmedToStudent(
+          studentEmail,
+          studentName,
+          patientName,
+          appointmentType,
+          siteName,
+          city,
+          startAt,
+          endAt,
+        );
+        void this.mailService.sendAppointmentConfirmedToPatient(
+          patientAccount.correo,
+          patientName,
+          studentName,
+          appointmentType,
+          siteName,
+          city,
+          startAt,
+          endAt,
+        );
+      }
     } else if (payload.status === 'RECHAZADA') {
       await this.prisma.notificacion.create({
         data: {
@@ -1014,8 +1066,10 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       additionalInfo: updated.informacion_adicional ?? null,
       appointmentType: updated.tipo_cita.nombre,
       city: updated.sede.localidad.ciudad.nombre,
+      createdAt: updated.fecha_creacion.toISOString(),
       endAt: updated.fecha_hora_fin.toISOString(),
       id: String(updated.id_cita),
+      respondedAt: updated.respondida_at?.toISOString() ?? null,
       siteName: updated.sede.nombre,
       startAt: updated.fecha_hora_inicio.toISOString(),
       status: updated.estado,
