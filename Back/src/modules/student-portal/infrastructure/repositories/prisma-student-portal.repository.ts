@@ -949,7 +949,10 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
 
     const updated = await this.prisma.cita.update({
       where: { id_cita: appointmentId },
-      data: { estado: status as any },
+      data: {
+        estado: status as any,
+        ...(status === 'CANCELADA' ? { cancelada_por_cuenta: studentAccountId } : {}),
+      },
       include: this.getCitaWithRelationsArgs(),
     });
 
