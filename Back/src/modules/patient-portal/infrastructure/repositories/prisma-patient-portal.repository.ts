@@ -955,13 +955,12 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       throw new NotFoundException("La cita no existe o no te pertenece.");
     }
 
-    const isCancellation = payload.status === 'CANCELADA';
-
     const updated = await this.prisma.cita.update({
       where: { id_cita: appointmentId },
       data: {
         estado: payload.status,
-        ...(isCancellation ? { cancelada_por_cuenta: patientAccountId } : {}),
+        ...(payload.status === 'CANCELADA' ? { cancelada_por_cuenta: patientAccountId, respondida_at: new Date() } : {}),
+        ...(payload.status === 'ACEPTADA' || payload.status === 'RECHAZADA' ? { respondida_at: new Date() } : {}),
       },
       include: {
         tipo_cita: true,
