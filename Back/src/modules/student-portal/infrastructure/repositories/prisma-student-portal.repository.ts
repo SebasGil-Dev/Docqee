@@ -951,11 +951,27 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       where: { id_cita: appointmentId },
       data: {
         estado: status as any,
-        ...(status === 'CANCELADA' ? { cancelada_por_cuenta: studentAccountId, respondida_at: new Date() } : {}),
+        ...(status === 'CANCELADA'
+          ? {
+              cancelada_por_cuenta: studentAccountId,
+              respondida_at: new Date(),
+              motivo_cancelacion: 'Cancelada por el estudiante',
+            }
+          : {}),
         ...(status === 'FINALIZADA' ? { finalizada_at: new Date(), respondida_at: new Date() } : {}),
       },
       include: this.getCitaWithRelationsArgs(),
     });
+
+    if (status === 'CANCELADA') {
+      await this.prisma.notificacion.create({
+        data: {
+          id_cuenta_destino: updated.solicitud.id_cuenta_paciente,
+          tipo: 'CANCELACION_CITA',
+          contenido: 'El estudiante cancelo una de tus citas agendadas.',
+        },
+      });
+    }
 
     return this.toCitaAppointmentDto(updated);
   }

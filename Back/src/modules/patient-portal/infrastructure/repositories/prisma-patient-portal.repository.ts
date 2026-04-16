@@ -959,8 +959,16 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       where: { id_cita: appointmentId },
       data: {
         estado: payload.status,
-        ...(payload.status === 'CANCELADA' ? { cancelada_por_cuenta: patientAccountId, respondida_at: new Date() } : {}),
-        ...(payload.status === 'ACEPTADA' || payload.status === 'RECHAZADA' ? { respondida_at: new Date() } : {}),
+        ...(payload.status === 'CANCELADA'
+          ? {
+              cancelada_por_cuenta: patientAccountId,
+              respondida_at: new Date(),
+              motivo_cancelacion: 'Cancelada por el paciente',
+            }
+          : {}),
+        ...(payload.status === 'ACEPTADA' || payload.status === 'RECHAZADA'
+          ? { respondida_at: new Date() }
+          : {}),
       },
       include: {
         tipo_cita: true,
@@ -975,6 +983,32 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         },
       },
     });
+
+    if (payload.status === 'CANCELADA') {
+      await this.prisma.notificacion.create({
+        data: {
+          id_cuenta_destino: updated.solicitud.id_cuenta_estudiante,
+          tipo: 'CANCELACION_CITA',
+          contenido: 'El paciente cancelo una de tus citas agendadas.',
+        },
+      });
+    } else if (payload.status === 'ACEPTADA') {
+      await this.prisma.notificacion.create({
+        data: {
+          id_cuenta_destino: updated.solicitud.id_cuenta_estudiante,
+          tipo: 'RESPUESTA_CITA',
+          contenido: 'El paciente acepto tu propuesta de cita.',
+        },
+      });
+    } else if (payload.status === 'RECHAZADA') {
+      await this.prisma.notificacion.create({
+        data: {
+          id_cuenta_destino: updated.solicitud.id_cuenta_estudiante,
+          tipo: 'RESPUESTA_CITA',
+          contenido: 'El paciente rechazo tu propuesta de cita.',
+        },
+      });
+    }
 
     return {
       additionalInfo: updated.informacion_adicional ?? null,

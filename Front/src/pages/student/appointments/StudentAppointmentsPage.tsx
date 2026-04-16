@@ -233,7 +233,6 @@ export function StudentAppointmentsPage() {
   } = useStudentModuleStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<AppointmentStatusFilter>('all');
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const [isAppointmentDialogOpen, setIsAppointmentDialogOpen] = useState(false);
   const [appointmentErrors, setAppointmentErrors] = useState<StudentAppointmentFormErrors>(
@@ -387,11 +386,6 @@ export function StudentAppointmentsPage() {
         return;
       }
 
-      setSuccessMessage(
-        editingAppointmentId
-          ? 'La cita se actualizo correctamente.'
-          : 'La cita se agendo correctamente como propuesta.',
-      );
       closeAppointmentDialog();
     })();
   };
@@ -407,7 +401,6 @@ export function StudentAppointmentsPage() {
         return;
       }
 
-      setSuccessMessage(`La cita ahora esta ${getStatusLabel(status).toLowerCase()}.`);
       setAppointmentToCancel(null);
     })();
   };
@@ -427,19 +420,6 @@ export function StudentAppointmentsPage() {
         title={studentContent.appointmentsPage.title}
         titleClassName="text-[1.85rem] sm:text-[2.15rem]"
       />
-      {successMessage ? (
-        <SurfaceCard
-          className="border border-emerald-200 bg-emerald-50/90 text-sm font-medium text-emerald-800"
-          paddingClassName="p-3.5"
-        >
-          <p role="status">
-            <span className="font-semibold">
-              {studentContent.appointmentsPage.successNoticePrefix}
-            </span>{' '}
-            {successMessage}
-          </p>
-        </SurfaceCard>
-      ) : null}
       {errorMessage ? (
         <SurfaceCard
           className="border border-rose-200 bg-rose-50/90 text-sm font-medium text-rose-800"
