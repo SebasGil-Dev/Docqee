@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 
 import { PrismaService } from '@/shared/database/prisma.service';
+import { MailService } from '@/shared/mail/mail.service';
 import { normalizeText } from '@/shared/utils/front-format.util';
 import { UpsertStudentAppointmentDto } from '../../application/dto/upsert-student-appointment.dto';
 import { UpdateStudentProfileDto } from '../../application/dto/update-student-profile.dto';
@@ -34,7 +35,10 @@ function normalizeOptionalText(value: string | null | undefined) {
 
 @Injectable()
 export class PrismaStudentPortalRepository extends StudentPortalRepository {
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
+  ) {
     super();
   }
 
@@ -220,10 +224,12 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
         additionalInfo: c.informacion_adicional ?? null,
         appointmentType: c.tipo_cita.nombre,
         city: c.sede.localidad.ciudad.nombre,
+        createdAt: c.fecha_creacion.toISOString(),
         endAt: c.fecha_hora_fin.toISOString(),
         id: String(c.id_cita),
         patientName: `${s.cuenta_paciente.persona.nombres} ${s.cuenta_paciente.persona.apellidos}`,
         requestId: String(s.id_solicitud),
+        respondedAt: c.respondida_at?.toISOString() ?? null,
         siteId: String(c.id_sede),
         siteName: c.sede.nombre,
         startAt: c.fecha_hora_inicio.toISOString(),
@@ -714,6 +720,8 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       informacion_adicional: string | null;
       fecha_hora_inicio: Date;
       fecha_hora_fin: Date;
+      fecha_creacion: Date;
+      respondida_at: Date | null;
       estado: string;
       id_docente_universidad: number;
       tipo_cita: { nombre: string };
@@ -727,10 +735,12 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       additionalInfo: cita.informacion_adicional ?? null,
       appointmentType: cita.tipo_cita.nombre,
       city: cita.sede.localidad.ciudad.nombre,
+      createdAt: cita.fecha_creacion.toISOString(),
       endAt: cita.fecha_hora_fin.toISOString(),
       id: String(cita.id_cita),
       patientName: `${cita.solicitud.cuenta_paciente.persona.nombres} ${cita.solicitud.cuenta_paciente.persona.apellidos}`,
       requestId: String(cita.solicitud.id_solicitud),
+      respondedAt: cita.respondida_at?.toISOString() ?? null,
       siteId: String(cita.id_sede),
       siteName: cita.sede.nombre,
       startAt: cita.fecha_hora_inicio.toISOString(),
@@ -834,7 +844,38 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       include: this.getCitaWithRelationsArgs(),
     });
 
-    return this.toCitaAppointmentDto(cita);
+    const dto = this.toCitaAppointmentDto(cita);
+
+    // Send email notification to patient about the new appointment proposal
+    const patientAccount = await this.prisma.cuenta_acceso.findUnique({
+      where: { id_cuenta: solicitud.id_cuenta_paciente },
+      select: { correo: true },
+    });
+    const patientPerson = await this.prisma.cuenta_paciente.findUnique({
+      where: { id_cuenta: solicitud.id_cuenta_paciente },
+      include: { persona: true },
+    });
+    const studentInfo = await this.prisma.cuenta_estudiante.findUnique({
+      where: { id_cuenta: studentAccountId },
+      include: { persona: true },
+    });
+
+    if (patientAccount && patientPerson && studentInfo) {
+      const patientName = `${patientPerson.persona.nombres} ${patientPerson.persona.apellidos}`;
+      const studentName = `${studentInfo.persona.nombres} ${studentInfo.persona.apellidos}`;
+      void this.mailService.sendAppointmentProposalToPatient(
+        patientAccount.correo,
+        patientName,
+        studentName,
+        dto.appointmentType,
+        dto.siteName,
+        dto.city,
+        dto.startAt,
+        dto.endAt,
+      );
+    }
+
+    return dto;
   }
 
   async updateAppointment(

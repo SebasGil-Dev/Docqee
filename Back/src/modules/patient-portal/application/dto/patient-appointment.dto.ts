@@ -2,8 +2,10 @@ export class PatientAppointmentDto {
   additionalInfo!: string | null;
   appointmentType!: string;
   city!: string;
+  createdAt!: string;
   endAt!: string;
   id!: string;
+  respondedAt!: string | null;
   siteName!: string;
   startAt!: string;
   status!: 'PROPUESTA' | 'ACEPTADA' | 'RECHAZADA' | 'CANCELADA' | 'FINALIZADA';

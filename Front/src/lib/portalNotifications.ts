@@ -183,7 +183,7 @@ function buildStudentAppointmentNotifications(
 
       return [
         {
-          createdAt: appointment.startAt,
+          createdAt: appointment.respondedAt ?? appointment.createdAt,
           description: `${appointment.appointmentType} - ${appointment.siteName}`,
           id: notificationId,
           isRead: readIds.has(notificationId),
@@ -199,7 +199,7 @@ function buildStudentAppointmentNotifications(
 
       return [
         {
-          createdAt: appointment.startAt,
+          createdAt: appointment.respondedAt ?? appointment.createdAt,
           description: `${appointment.patientName} solicito reprogramar ${appointment.appointmentType.toLowerCase()}.`,
           id: notificationId,
           isRead: readIds.has(notificationId),
@@ -215,7 +215,7 @@ function buildStudentAppointmentNotifications(
 
       return [
         {
-          createdAt: appointment.startAt,
+          createdAt: appointment.respondedAt ?? appointment.createdAt,
           description: `${appointment.appointmentType} - ${appointment.siteName}`,
           id: notificationId,
           isRead: readIds.has(notificationId),
@@ -352,7 +352,7 @@ function buildPatientAppointmentNotifications(
 
     const notificationId = `patient-appointment-${appointment.id}-${appointment.status}`;
     const baseNotification = {
-      createdAt: appointment.startAt,
+      createdAt: appointment.respondedAt ?? appointment.createdAt,
       description: `${appointment.studentName} - ${appointment.appointmentType} en ${appointment.siteName}`,
       id: notificationId,
       isRead: readIds.has(notificationId),
