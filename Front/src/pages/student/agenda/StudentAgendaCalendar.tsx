@@ -216,7 +216,15 @@ export function StudentAgendaCalendar({
   showBlockLegend?: boolean;
 }) {
   const todayDateKey = useMemo(() => getTodayDateKey(), []);
-  const [viewMode, setViewMode] = useState<CalendarViewMode>('week');
+  const [viewMode, setViewMode] = useState<CalendarViewMode>(() => {
+    const saved = localStorage.getItem('agenda-view-mode');
+    return saved === 'day' || saved === 'week' || saved === 'month' ? saved : 'week';
+  });
+
+  const handleViewModeChange = (mode: CalendarViewMode) => {
+    localStorage.setItem('agenda-view-mode', mode);
+    setViewMode(mode);
+  };
   const [selectedDateKey, setSelectedDateKey] = useState(() => getTodayDateKey());
   const selectedDate = useMemo(() => fromDateKey(selectedDateKey), [selectedDateKey]);
   const visibleDays = useMemo(() => {
@@ -308,7 +316,7 @@ export function StudentAgendaCalendar({
                       : 'text-ink-muted hover:text-ink',
                   )}
                   type="button"
-                  onClick={() => setViewMode(option)}
+                  onClick={() => handleViewModeChange(option)}
                 >
                   {option === 'day' ? 'Dia' : option === 'week' ? 'Semana' : 'Mes'}
                 </button>
