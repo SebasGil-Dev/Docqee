@@ -799,6 +799,7 @@ export function StudentAppointmentsPage() {
                 icon={Clock3}
                 id="student-appointment-end-time"
                 label="Hora de finalizacion"
+                min={appointmentValues.startTime || undefined}
                 name="studentAppointmentEndTime"
                 placeholder=""
                 type="time"

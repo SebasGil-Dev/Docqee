@@ -366,6 +366,7 @@ export function StudentAgendaCalendar({
               {[
                 ['Pendiente', 'proposal'],
                 ['Aceptada', 'accepted'],
+                ['Finalizada', 'completed'],
                 ['Cancelada', 'cancelled'],
                 ['Reprogramacion', 'reschedule'],
                 ...(showBlockLegend ? [['Bloqueo', 'block']] : []),

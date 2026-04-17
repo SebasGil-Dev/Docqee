@@ -1176,6 +1176,12 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       throw new NotFoundException('La cita no existe o no te pertenece.');
     }
 
+    if (status === 'FINALIZADA' && cita.fecha_hora_fin > new Date()) {
+      throw new BadRequestException(
+        'Solo puedes finalizar una cita cuya hora de finalizacion ya haya pasado.',
+      );
+    }
+
     const updated = await this.prisma.cita.update({
       where: { id_cita: appointmentId },
       data: {
