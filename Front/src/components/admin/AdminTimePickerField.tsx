@@ -85,6 +85,8 @@ export function AdminTimePickerField({
 }: AdminTimePickerFieldProps) {
   const [isOpen, setIsOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const hoursScrollRef = useRef<HTMLDivElement | null>(null);
+  const minutesScrollRef = useRef<HTMLDivElement | null>(null);
   const minTotal = parseMinTotal(min);
 
   const parsed = value ? parseTime(value) : null;
@@ -120,6 +122,32 @@ export function AdminTimePickerField({
       window.removeEventListener('mousedown', handlePointerDown);
       window.removeEventListener('keydown', handleKeyDown);
     };
+  }, [isOpen]);
+
+  // Auto-scroll to first valid option when picker opens
+  useEffect(() => {
+    if (!isOpen) return;
+
+    requestAnimationFrame(() => {
+      if (hoursScrollRef.current) {
+        const firstEnabled = hoursScrollRef.current.querySelector(
+          'button:not(:disabled)',
+        ) as HTMLElement | null;
+        if (firstEnabled) {
+          hoursScrollRef.current.scrollTop =
+            firstEnabled.offsetTop - hoursScrollRef.current.offsetTop;
+        }
+      }
+      if (minutesScrollRef.current) {
+        const firstEnabled = minutesScrollRef.current.querySelector(
+          'button:not(:disabled)',
+        ) as HTMLElement | null;
+        if (firstEnabled) {
+          minutesScrollRef.current.scrollTop =
+            firstEnabled.offsetTop - minutesScrollRef.current.offsetTop;
+        }
+      }
+    });
   }, [isOpen]);
 
   function isPeriodDisabled(period: 'AM' | 'PM') {
@@ -210,11 +238,11 @@ export function AdminTimePickerField({
           aria-haspopup="dialog"
           aria-invalid={Boolean(error)}
           className={classNames(
-            'w-full rounded-2xl border bg-surface py-3 pl-11 pr-4 text-left text-sm text-ink transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
-            disabled ? 'cursor-not-allowed text-ghost' : '',
+            'w-full rounded-[1.45rem] border bg-white/98 py-3 pl-11 pr-4 text-left text-sm shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+            disabled ? 'cursor-not-allowed text-ghost' : 'text-ink',
             error
               ? 'border-rose-300 focus-visible:border-rose-400 focus-visible:ring-rose-200/70'
-              : 'border-slate-200 focus-visible:border-primary',
+              : 'border-slate-200/90 focus-visible:border-primary',
             !value && 'text-ghost/80',
           )}
           disabled={disabled}
@@ -229,7 +257,7 @@ export function AdminTimePickerField({
 
         {isOpen ? (
           <div
-            className="absolute bottom-[calc(100%+0.35rem)] left-1/2 z-20 w-[min(18rem,calc(100%+2rem))] -translate-x-1/2 overflow-hidden rounded-[1rem] border border-slate-200/80 bg-white/98 p-2.5 shadow-[0_-20px_46px_-28px_rgba(15,23,42,0.32),0_20px_46px_-32px_rgba(15,23,42,0.22)] backdrop-blur"
+            className="absolute left-1/2 top-[calc(100%+0.35rem)] z-20 w-[min(18rem,calc(100%+2rem))] -translate-x-1/2 overflow-hidden rounded-[1rem] border border-slate-200/80 bg-white/98 p-2.5 shadow-[0_20px_46px_-28px_rgba(15,23,42,0.32),0_-20px_46px_-32px_rgba(15,23,42,0.22)] backdrop-blur"
             id={`${id}-picker`}
             role="dialog"
           >
@@ -242,7 +270,7 @@ export function AdminTimePickerField({
                 <p className="mb-1 text-center text-[0.65rem] font-bold uppercase tracking-wide text-ink-muted">
                   Hora
                 </p>
-                <div className="admin-scrollbar max-h-[13rem] space-y-0.5 overflow-y-auto pr-0.5">
+                <div className="admin-scrollbar max-h-[13rem] space-y-0.5 overflow-y-auto pr-0.5" ref={hoursScrollRef}>
                   {HOURS.map((h) => {
                     const isDisabled = isHourDisabled(h, selPeriod);
                     const isSelected = selHour === h;
@@ -270,7 +298,7 @@ export function AdminTimePickerField({
                 <p className="mb-1 text-center text-[0.65rem] font-bold uppercase tracking-wide text-ink-muted">
                   Min
                 </p>
-                <div className="admin-scrollbar max-h-[13rem] space-y-0.5 overflow-y-auto pr-0.5">
+                <div className="admin-scrollbar max-h-[13rem] space-y-0.5 overflow-y-auto pr-0.5" ref={minutesScrollRef}>
                   {MINUTES.map((m) => {
                     const isDisabled = isMinuteDisabled(m);
                     const isSelected = selMinute === m;
