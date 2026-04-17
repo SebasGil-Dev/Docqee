@@ -222,6 +222,7 @@ function validateAppointmentForm(values: StudentAppointmentFormValues): StudentA
 export function StudentAppointmentsPage() {
   const {
     appointments,
+    checkAppointmentConflict,
     errorMessage,
     isLoading,
     practiceSites,
@@ -362,6 +363,7 @@ export function StudentAppointmentsPage() {
       delete nextErrors.treatmentIds;
       return nextErrors;
     });
+    setAppointmentApiError(null);
   };
 
   const handleEditAppointment = (appointment: StudentAgendaAppointment) => {
@@ -377,6 +379,16 @@ export function StudentAppointmentsPage() {
     setAppointmentApiError(null);
 
     if (Object.keys(nextErrors).length > 0) {
+      return;
+    }
+
+    const conflictError = checkAppointmentConflict(
+      appointmentValues,
+      editingAppointmentId ?? undefined,
+    );
+
+    if (conflictError) {
+      setAppointmentApiError(conflictError);
       return;
     }
 

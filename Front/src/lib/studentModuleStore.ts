@@ -81,6 +81,10 @@ type StudentModuleActions = {
     values: StudentScheduleBlockFormValues,
     blockId?: string,
   ) => Promise<StudentScheduleBlock | null>;
+  checkAppointmentConflict: (
+    values: StudentAppointmentFormValues,
+    appointmentId?: string,
+  ) => string | null;
 };
 
 type StudentStoreState = StudentModuleState & {
@@ -2146,6 +2150,7 @@ export function useStudentModuleStore(options: UseStudentModuleStoreOptions = {}
     updateProfile,
     upsertAppointment,
     upsertScheduleBlock,
+    checkAppointmentConflict: findAppointmentValidationError,
   };
 
   return {
