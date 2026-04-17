@@ -793,6 +793,7 @@ export function StudentAppointmentsPage() {
                 onChange={(value) => handleAppointmentFieldChange('startTime', value)}
               />
               <AdminTimePickerField
+                disabled={!appointmentValues.startTime}
                 error={appointmentErrors.endTime}
                 id="student-appointment-end-time"
                 label="Hora de finalizacion"
