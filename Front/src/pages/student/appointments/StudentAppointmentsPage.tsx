@@ -21,6 +21,7 @@ import { AdminDropdownField } from '@/components/admin/AdminDropdownField';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
 import { AdminTextField } from '@/components/admin/AdminTextField';
+import { AdminTimePickerField } from '@/components/admin/AdminTimePickerField';
 import { Seo } from '@/components/ui/Seo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { studentContent } from '@/content/studentContent';
@@ -783,26 +784,20 @@ export function StudentAppointmentsPage() {
                 value={appointmentValues.startDate}
                 onChange={(value) => handleAppointmentFieldChange('startDate', value)}
               />
-              <AdminTextField
+              <AdminTimePickerField
                 error={appointmentErrors.startTime}
-                icon={Clock3}
                 id="student-appointment-start-time"
                 label="Hora de inicio"
                 name="studentAppointmentStartTime"
-                placeholder=""
-                type="time"
                 value={appointmentValues.startTime}
                 onChange={(value) => handleAppointmentFieldChange('startTime', value)}
               />
-              <AdminTextField
+              <AdminTimePickerField
                 error={appointmentErrors.endTime}
-                icon={Clock3}
                 id="student-appointment-end-time"
                 label="Hora de finalizacion"
                 min={appointmentValues.startTime || undefined}
                 name="studentAppointmentEndTime"
-                placeholder=""
-                type="time"
                 value={appointmentValues.endTime}
                 onChange={(value) => handleAppointmentFieldChange('endTime', value)}
               />
