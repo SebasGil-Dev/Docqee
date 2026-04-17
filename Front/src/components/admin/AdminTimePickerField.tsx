@@ -128,25 +128,32 @@ export function AdminTimePickerField({
   useEffect(() => {
     if (!isOpen) return;
 
+    // Double rAF: first frame renders the dropdown, second frame has layout data
     requestAnimationFrame(() => {
-      if (hoursScrollRef.current) {
-        const firstEnabled = hoursScrollRef.current.querySelector(
-          'button:not(:disabled)',
-        ) as HTMLElement | null;
-        if (firstEnabled) {
-          hoursScrollRef.current.scrollTop =
-            firstEnabled.offsetTop - hoursScrollRef.current.offsetTop;
+      requestAnimationFrame(() => {
+        if (hoursScrollRef.current) {
+          const container = hoursScrollRef.current;
+          const firstEnabled = container.querySelector(
+            'button:not(:disabled)',
+          ) as HTMLElement | null;
+          if (firstEnabled) {
+            const containerRect = container.getBoundingClientRect();
+            const btnRect = firstEnabled.getBoundingClientRect();
+            container.scrollTop += btnRect.top - containerRect.top;
+          }
         }
-      }
-      if (minutesScrollRef.current) {
-        const firstEnabled = minutesScrollRef.current.querySelector(
-          'button:not(:disabled)',
-        ) as HTMLElement | null;
-        if (firstEnabled) {
-          minutesScrollRef.current.scrollTop =
-            firstEnabled.offsetTop - minutesScrollRef.current.offsetTop;
+        if (minutesScrollRef.current) {
+          const container = minutesScrollRef.current;
+          const firstEnabled = container.querySelector(
+            'button:not(:disabled)',
+          ) as HTMLElement | null;
+          if (firstEnabled) {
+            const containerRect = container.getBoundingClientRect();
+            const btnRect = firstEnabled.getBoundingClientRect();
+            container.scrollTop += btnRect.top - containerRect.top;
+          }
         }
-      }
+      });
     });
   }, [isOpen]);
 
