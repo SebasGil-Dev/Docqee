@@ -251,10 +251,7 @@ export function AdminTimePickerField({
 
   return (
     <div className={classNames('admin-time-picker space-y-1.5', containerClassName)}>
-      <label
-        className="block text-sm font-semibold text-ink"
-        htmlFor={id}
-      >
+      <label className="block text-sm font-semibold text-ink">
         {label}
       </label>
       <div className="relative" ref={rootRef}>
