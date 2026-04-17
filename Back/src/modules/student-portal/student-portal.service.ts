@@ -5,6 +5,7 @@ import type { UploadImageFile } from '@/shared/storage/cloudinary.service';
 import { CloudinaryService } from '@/shared/storage/cloudinary.service';
 import type { RequestUser } from '@/shared/types/request-user.type';
 import { UpsertStudentAppointmentDto } from './application/dto/upsert-student-appointment.dto';
+import { UpsertStudentScheduleBlockDto } from './application/dto/upsert-student-schedule-block.dto';
 import { UpdateStudentProfileDto } from './application/dto/update-student-profile.dto';
 import { UpdateStudentRequestStatusDto } from './application/dto/update-student-request-status.dto';
 import { UpdateStudentTreatmentsDto } from './application/dto/update-student-treatments.dto';
@@ -89,6 +90,22 @@ export class StudentPortalService {
 
   updateAppointmentStatus(user: RequestUser, appointmentId: number, status: string) {
     return this.studentPortalRepository.updateAppointmentStatus(user.id, appointmentId, status);
+  }
+
+  createScheduleBlock(user: RequestUser, payload: UpsertStudentScheduleBlockDto) {
+    return this.studentPortalRepository.createScheduleBlock(user.id, payload);
+  }
+
+  updateScheduleBlock(user: RequestUser, blockId: number, payload: UpsertStudentScheduleBlockDto) {
+    return this.studentPortalRepository.updateScheduleBlock(user.id, blockId, payload);
+  }
+
+  toggleScheduleBlockStatus(user: RequestUser, blockId: number) {
+    return this.studentPortalRepository.toggleScheduleBlockStatus(user.id, blockId);
+  }
+
+  deleteScheduleBlock(user: RequestUser, blockId: number) {
+    return this.studentPortalRepository.deleteScheduleBlock(user.id, blockId);
   }
 
   private async resolveAvatarUrl(

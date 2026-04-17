@@ -81,4 +81,14 @@ export abstract class StudentPortalRepository {
     appointmentId: number,
     status: string,
   ): Promise<StudentAgendaAppointmentDto>;
+
+  abstract toggleScheduleBlockStatus(
+    studentAccountId: number,
+    blockId: number,
+  ): Promise<{ blockId: string; status: 'active' | 'inactive' }>;
+
+  abstract deleteScheduleBlock(
+    studentAccountId: number,
+    blockId: number,
+  ): Promise<{ blockId: string }>;
 }

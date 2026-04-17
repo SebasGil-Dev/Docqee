@@ -4,6 +4,7 @@ import { PrismaService } from '@/shared/database/prisma.service';
 import { MailService } from '@/shared/mail/mail.service';
 import { normalizeText } from '@/shared/utils/front-format.util';
 import { UpsertStudentAppointmentDto } from '../../application/dto/upsert-student-appointment.dto';
+import { UpsertStudentScheduleBlockDto } from '../../application/dto/upsert-student-schedule-block.dto';
 import { UpdateStudentProfileDto } from '../../application/dto/update-student-profile.dto';
 import { StudentAgendaAppointmentDto } from '../../application/dto/student-agenda-appointment.dto';
 import { StudentAppointmentReviewDto } from '../../application/dto/student-appointment-review.dto';
@@ -192,18 +193,9 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       status: sp.estado === 'ACTIVO' ? 'active' : 'inactive',
     }));
 
-    const scheduleBlocks: StudentScheduleBlockDto[] = bloques.map((b) => ({
-      dayOfWeek: b.dia_semana ?? null,
-      endTime: b.hora_fin.toISOString(),
-      id: String(b.id_horario_bloqueado),
-      reason: b.motivo ?? null,
-      recurrenceEndDate: b.fecha_fin_recurrencia?.toISOString().split('T')[0] ?? null,
-      recurrenceStartDate: b.fecha_inicio_recurrencia?.toISOString().split('T')[0] ?? null,
-      specificDate: b.fecha_especifica?.toISOString().split('T')[0] ?? null,
-      startTime: b.hora_inicio.toISOString(),
-      status: b.estado === 'ACTIVO' ? 'active' : 'inactive',
-      type: b.tipo_bloqueo,
-    }));
+    const scheduleBlocks: StudentScheduleBlockDto[] = bloques.map((b) =>
+      this.toScheduleBlockDto(b),
+    );
 
     const requests: StudentRequestDto[] = solicitudes.map((s) => ({
       appointmentsCount: s.cita.length,
@@ -481,12 +473,197 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     }));
   }
 
-  createScheduleBlock(): never {
-    throw new Error('PrismaStudentPortalRepository.createScheduleBlock is pending implementation.');
+  // ─── Schedule block helpers ─────────────────────────────────────────────────
+
+  private formatBlockTime(date: Date): string {
+    return `${String(date.getUTCHours()).padStart(2, '0')}:${String(date.getUTCMinutes()).padStart(2, '0')}`;
   }
 
-  updateScheduleBlock(): never {
-    throw new Error('PrismaStudentPortalRepository.updateScheduleBlock is pending implementation.');
+  private parseBlockTime(timeStr: string): Date {
+    const [h = 0, m = 0] = timeStr.split(':').map(Number);
+    return new Date(Date.UTC(2000, 0, 1, h, m, 0));
+  }
+
+  private toScheduleBlockDto(block: {
+    id_horario_bloqueado: number;
+    tipo_bloqueo: string;
+    fecha_especifica: Date | null;
+    dia_semana: number | null;
+    hora_inicio: Date;
+    hora_fin: Date;
+    fecha_inicio_recurrencia: Date | null;
+    fecha_fin_recurrencia: Date | null;
+    motivo: string | null;
+    estado: string;
+  }): StudentScheduleBlockDto {
+    return {
+      dayOfWeek: block.dia_semana,
+      endTime: this.formatBlockTime(block.hora_fin),
+      id: String(block.id_horario_bloqueado),
+      reason: block.motivo,
+      recurrenceEndDate: block.fecha_fin_recurrencia?.toISOString().split('T')[0] ?? null,
+      recurrenceStartDate: block.fecha_inicio_recurrencia?.toISOString().split('T')[0] ?? null,
+      specificDate: block.fecha_especifica?.toISOString().split('T')[0] ?? null,
+      startTime: this.formatBlockTime(block.hora_inicio),
+      status: block.estado === 'ACTIVO' ? 'active' : 'inactive',
+      type: block.tipo_bloqueo as 'ESPECIFICO' | 'RECURRENTE',
+    };
+  }
+
+  // ─── Appointment conflict detection ────────────────────────────────────────
+
+  private utcToBogota(utcDate: Date): Date {
+    return new Date(utcDate.getTime() - 5 * 60 * 60 * 1000);
+  }
+
+  private async checkAppointmentConflicts(
+    studentAccountId: number,
+    startAt: Date,
+    endAt: Date,
+    excludeAppointmentId?: number,
+  ): Promise<string | null> {
+    const bogotaStart = this.utcToBogota(startAt);
+    const bogotaEnd = this.utcToBogota(endAt);
+    const bogotaStartMin = bogotaStart.getUTCHours() * 60 + bogotaStart.getUTCMinutes();
+    const bogotaEndMin = bogotaEnd.getUTCHours() * 60 + bogotaEnd.getUTCMinutes();
+    const bogotaDateStr = `${bogotaStart.getUTCFullYear()}-${String(bogotaStart.getUTCMonth() + 1).padStart(2, '0')}-${String(bogotaStart.getUTCDate()).padStart(2, '0')}`;
+    const rawDow = bogotaStart.getUTCDay();
+    const bogotaDow = rawDow === 0 ? 7 : rawDow;
+
+    const blocks = await this.prisma.horario_bloqueado.findMany({
+      where: { id_cuenta_estudiante: studentAccountId, estado: 'ACTIVO' },
+    });
+
+    for (const block of blocks) {
+      const blockStartMin = block.hora_inicio.getUTCHours() * 60 + block.hora_inicio.getUTCMinutes();
+      const blockEndMin = block.hora_fin.getUTCHours() * 60 + block.hora_fin.getUTCMinutes();
+      if (bogotaStartMin >= blockEndMin || bogotaEndMin <= blockStartMin) continue;
+
+      if (block.tipo_bloqueo === 'ESPECIFICO' && block.fecha_especifica) {
+        const blockDate = block.fecha_especifica.toISOString().split('T')[0];
+        if (blockDate === bogotaDateStr) {
+          return `La franja seleccionada se encuentra bloqueada en tu agenda${block.motivo ? ` (${block.motivo})` : ''}.`;
+        }
+      } else if (block.tipo_bloqueo === 'RECURRENTE' && block.dia_semana === bogotaDow) {
+        const recStart = block.fecha_inicio_recurrencia?.toISOString().split('T')[0];
+        const recEnd = block.fecha_fin_recurrencia?.toISOString().split('T')[0];
+        const withinRange =
+          (!recStart || bogotaDateStr >= recStart) && (!recEnd || bogotaDateStr <= recEnd);
+        if (withinRange) {
+          return `La franja seleccionada se encuentra bloqueada en tu agenda${block.motivo ? ` (${block.motivo})` : ''}.`;
+        }
+      }
+    }
+
+    const conflicting = await this.prisma.cita.findFirst({
+      where: {
+        solicitud: { id_cuenta_estudiante: studentAccountId },
+        estado: { in: ['PROPUESTA', 'ACEPTADA'] },
+        ...(excludeAppointmentId !== undefined ? { id_cita: { not: excludeAppointmentId } } : {}),
+        fecha_hora_inicio: { lt: endAt },
+        fecha_hora_fin: { gt: startAt },
+      },
+      include: { tipo_cita: true },
+    });
+
+    if (conflicting) {
+      return `Ya tienes una cita (${conflicting.tipo_cita.nombre}) programada para ese horario.`;
+    }
+
+    return null;
+  }
+
+  // ─── Schedule block CRUD ────────────────────────────────────────────────────
+
+  async createScheduleBlock(
+    studentAccountId: number,
+    payload: UpsertStudentScheduleBlockDto,
+  ): Promise<StudentScheduleBlockDto> {
+    const block = await this.prisma.horario_bloqueado.create({
+      data: {
+        id_cuenta_estudiante: studentAccountId,
+        tipo_bloqueo: payload.type,
+        fecha_especifica: payload.specificDate ? new Date(`${payload.specificDate}T00:00:00Z`) : null,
+        dia_semana: payload.dayOfWeek ? parseInt(payload.dayOfWeek, 10) : null,
+        hora_inicio: this.parseBlockTime(payload.startTime),
+        hora_fin: this.parseBlockTime(payload.endTime),
+        fecha_inicio_recurrencia: payload.recurrenceStartDate ? new Date(`${payload.recurrenceStartDate}T00:00:00Z`) : null,
+        fecha_fin_recurrencia: payload.recurrenceEndDate ? new Date(`${payload.recurrenceEndDate}T00:00:00Z`) : null,
+        motivo: payload.reason || null,
+        estado: 'ACTIVO',
+      },
+    });
+
+    return this.toScheduleBlockDto(block);
+  }
+
+  async updateScheduleBlock(
+    studentAccountId: number,
+    blockId: number,
+    payload: UpsertStudentScheduleBlockDto,
+  ): Promise<StudentScheduleBlockDto> {
+    const block = await this.prisma.horario_bloqueado.findFirst({
+      where: { id_horario_bloqueado: blockId, id_cuenta_estudiante: studentAccountId },
+    });
+
+    if (!block) {
+      throw new NotFoundException('El bloqueo no existe o no te pertenece.');
+    }
+
+    const updated = await this.prisma.horario_bloqueado.update({
+      where: { id_horario_bloqueado: blockId },
+      data: {
+        tipo_bloqueo: payload.type,
+        fecha_especifica: payload.specificDate ? new Date(`${payload.specificDate}T00:00:00Z`) : null,
+        dia_semana: payload.dayOfWeek ? parseInt(payload.dayOfWeek, 10) : null,
+        hora_inicio: this.parseBlockTime(payload.startTime),
+        hora_fin: this.parseBlockTime(payload.endTime),
+        fecha_inicio_recurrencia: payload.recurrenceStartDate ? new Date(`${payload.recurrenceStartDate}T00:00:00Z`) : null,
+        fecha_fin_recurrencia: payload.recurrenceEndDate ? new Date(`${payload.recurrenceEndDate}T00:00:00Z`) : null,
+        motivo: payload.reason || null,
+        fecha_actualizacion: new Date(),
+      },
+    });
+
+    return this.toScheduleBlockDto(updated);
+  }
+
+  async toggleScheduleBlockStatus(
+    studentAccountId: number,
+    blockId: number,
+  ): Promise<{ blockId: string; status: 'active' | 'inactive' }> {
+    const block = await this.prisma.horario_bloqueado.findFirst({
+      where: { id_horario_bloqueado: blockId, id_cuenta_estudiante: studentAccountId },
+    });
+
+    if (!block) {
+      throw new NotFoundException('El bloqueo no existe o no te pertenece.');
+    }
+
+    const nextEstado = block.estado === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
+    await this.prisma.horario_bloqueado.update({
+      where: { id_horario_bloqueado: blockId },
+      data: { estado: nextEstado, fecha_actualizacion: new Date() },
+    });
+
+    return { blockId: String(blockId), status: nextEstado === 'ACTIVO' ? 'active' : 'inactive' };
+  }
+
+  async deleteScheduleBlock(
+    studentAccountId: number,
+    blockId: number,
+  ): Promise<{ blockId: string }> {
+    const block = await this.prisma.horario_bloqueado.findFirst({
+      where: { id_horario_bloqueado: blockId, id_cuenta_estudiante: studentAccountId },
+    });
+
+    if (!block) {
+      throw new NotFoundException('El bloqueo no existe o no te pertenece.');
+    }
+
+    await this.prisma.horario_bloqueado.delete({ where: { id_horario_bloqueado: blockId } });
+
+    return { blockId: String(blockId) };
   }
 
   async updateRequestStatus(
@@ -828,6 +1005,11 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     const startAt = this.buildCitaDateTime(payload.startDate, payload.startTime);
     const endAt = this.buildCitaDateTime(payload.startDate, payload.endTime);
 
+    const conflict = await this.checkAppointmentConflicts(studentAccountId, startAt, endAt);
+    if (conflict) {
+      throw new BadRequestException(conflict);
+    }
+
     const cita = await this.prisma.cita.create({
       data: {
         id_solicitud: payload.requestId,
@@ -945,6 +1127,11 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
 
     const startAt = this.buildCitaDateTime(payload.startDate, payload.startTime);
     const endAt = this.buildCitaDateTime(payload.startDate, payload.endTime);
+
+    const conflict = await this.checkAppointmentConflicts(studentAccountId, startAt, endAt, appointmentId);
+    if (conflict) {
+      throw new BadRequestException(conflict);
+    }
 
     // Delete old treatments and update the cita in a transaction
     await this.prisma.$transaction([

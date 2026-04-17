@@ -6,12 +6,13 @@ import { PrismaStudentPortalRepository } from './infrastructure/repositories/pri
 import { StudentAppointmentsController } from './controller/student-appointments.controller';
 import { StudentConversationsController } from './controller/student-conversations.controller';
 import { StudentPortalController } from './controller/student-portal.controller';
+import { StudentScheduleBlocksController } from './controller/student-schedule-blocks.controller';
 import { StudentPortalRepository } from './domain/repositories/student-portal.repository';
 import { StudentPortalService } from './student-portal.service';
 
 @Module({
   imports: [StorageModule, MailModule],
-  controllers: [StudentPortalController, StudentConversationsController, StudentAppointmentsController],
+  controllers: [StudentPortalController, StudentConversationsController, StudentAppointmentsController, StudentScheduleBlocksController],
   providers: [
     StudentPortalService,
     PrismaStudentPortalRepository,
