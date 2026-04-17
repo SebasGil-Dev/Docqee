@@ -124,11 +124,34 @@ export function AdminTimePickerField({
     };
   }, [isOpen]);
 
-  // Auto-scroll to first valid option when picker opens
+  // Auto-select + auto-scroll when picker opens
   useEffect(() => {
     if (!isOpen) return;
 
-    // Double rAF: first frame renders the dropdown, second frame has layout data
+    // If there is a min constraint and no value yet (or current selection is at/before min),
+    // auto-select the first valid time so the user doesn't need to scroll or pick manually.
+    if (minTotal !== -Infinity) {
+      const currentH24 = toH24(selHour, selPeriod);
+      const currentTotal = toTotalMinutes(currentH24, selMinute);
+      if (!value || currentTotal <= minTotal) {
+        outer: for (const period of ['AM', 'PM'] as const) {
+          for (const h of HOURS) {
+            const h24 = toH24(h, period);
+            for (const m of MINUTES) {
+              if (toTotalMinutes(h24, m) > minTotal) {
+                setSelHour(h);
+                setSelMinute(m);
+                setSelPeriod(period);
+                onChange(toValue(h, m, period));
+                break outer;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Double rAF: first frame renders/re-renders the dropdown, second has layout data
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         if (hoursScrollRef.current) {
@@ -155,6 +178,7 @@ export function AdminTimePickerField({
         }
       });
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   function isPeriodDisabled(period: 'AM' | 'PM') {
