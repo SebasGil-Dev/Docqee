@@ -242,6 +242,7 @@ export function StudentAppointmentsPage() {
     initialAppointmentFormValues,
   );
   const [editingAppointmentId, setEditingAppointmentId] = useState<string | null>(null);
+  const [appointmentApiError, setAppointmentApiError] = useState<string | null>(null);
   const [appointmentToCancel, setAppointmentToCancel] =
     useState<StudentAgendaAppointment | null>(null);
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
@@ -316,6 +317,7 @@ export function StudentAppointmentsPage() {
     setEditingAppointmentId(null);
     setAppointmentErrors({});
     setAppointmentValues(initialAppointmentFormValues);
+    setAppointmentApiError(null);
   };
 
   const openCreateDialog = () => {
@@ -341,6 +343,7 @@ export function StudentAppointmentsPage() {
       delete nextErrors[field];
       return nextErrors;
     });
+    setAppointmentApiError(null);
   };
 
   const handleTreatmentToggle = (treatmentId: string) => {
@@ -371,6 +374,7 @@ export function StudentAppointmentsPage() {
   const handleAppointmentSubmit = () => {
     const nextErrors = validateAppointmentForm(appointmentValues);
     setAppointmentErrors(nextErrors);
+    setAppointmentApiError(null);
 
     if (Object.keys(nextErrors).length > 0) {
       return;
@@ -383,6 +387,7 @@ export function StudentAppointmentsPage() {
       );
 
       if (!appointment) {
+        setAppointmentApiError(errorMessage);
         return;
       }
 
@@ -420,7 +425,7 @@ export function StudentAppointmentsPage() {
         title={studentContent.appointmentsPage.title}
         titleClassName="text-[1.85rem] sm:text-[2.15rem]"
       />
-      {errorMessage ? (
+      {errorMessage && !isAppointmentDialogOpen ? (
         <SurfaceCard
           className="border border-rose-200 bg-rose-50/90 text-sm font-medium text-rose-800"
           paddingClassName="p-3.5"
@@ -870,6 +875,11 @@ export function StudentAppointmentsPage() {
                 }
               />
             </div>
+            {appointmentApiError ? (
+              <div className="rounded-[1.1rem] border border-rose-200 bg-rose-50/90 px-3.5 py-3 text-sm font-medium text-rose-800" role="alert">
+                {appointmentApiError}
+              </div>
+            ) : null}
             <div className="flex flex-wrap items-center justify-end gap-2.5">
               <button
                 className="inline-flex items-center justify-center rounded-full bg-slate-100 px-4 py-2.5 text-sm font-semibold text-ink-muted transition duration-200 hover:bg-slate-200"
