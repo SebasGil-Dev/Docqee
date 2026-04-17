@@ -27,7 +27,7 @@ function parseTime(value: string) {
     return { hour: 12, minute: 0, period: 'AM' as const };
   }
 
-  const period = h < 12 ? 'AM' : ('PM' as const);
+  const period: 'AM' | 'PM' = h < 12 ? 'AM' : 'PM';
   const hour = h === 0 ? 12 : h > 12 ? h - 12 : h;
   const minute = Math.round(m / 5) * 5 >= 60 ? 55 : Math.round(m / 5) * 5;
 
