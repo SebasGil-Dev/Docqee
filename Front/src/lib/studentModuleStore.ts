@@ -81,6 +81,10 @@ type StudentModuleActions = {
     values: StudentScheduleBlockFormValues,
     blockId?: string,
   ) => Promise<StudentScheduleBlock | null>;
+  checkAppointmentConflict: (
+    values: StudentAppointmentFormValues,
+    appointmentId?: string,
+  ) => string | null;
 };
 
 type StudentStoreState = StudentModuleState & {
@@ -251,85 +255,95 @@ function createMockState(): StudentStoreState {
       additionalInfo: 'Pendiente de confirmar la propuesta inicial con el paciente.',
       appointmentType: 'Valoracion inicial',
       city: 'Bogota',
+      createdAt: '2026-04-05T10:00:00.000Z',
       endAt: '2026-04-06T15:30:00.000Z',
       id: 'student-appointment-1',
       patientName: 'Ana Maria Perez',
       requestId: 'student-request-1',
-      siteId: 'practice-site-1',
+      respondedAt: null,
+      siteId: 'site-1',
       siteName: 'Sede Norte',
       startAt: '2026-04-06T15:00:00.000Z',
       status: 'PROPUESTA',
       supervisorId: 'student-supervisor-1',
       supervisorName: 'Dra. Catalina Mora',
-      treatmentIds: ['treatment-1'],
+      treatmentIds: ['type-1'],
       treatmentNames: ['Operatoria basica'],
     },
     {
       additionalInfo: 'Control confirmado con docente asignado en sede norte.',
       appointmentType: 'Control restaurativo',
       city: 'Bogota',
+      createdAt: '2026-04-06T09:00:00.000Z',
       endAt: '2026-04-07T20:00:00.000Z',
       id: 'student-appointment-2',
       patientName: 'Julian Torres',
       requestId: 'student-request-2',
-      siteId: 'practice-site-1',
+      respondedAt: '2026-04-07T08:00:00.000Z',
+      siteId: 'site-1',
       siteName: 'Sede Norte',
       startAt: '2026-04-07T19:00:00.000Z',
       status: 'ACEPTADA',
       supervisorId: 'student-supervisor-1',
       supervisorName: 'Dra. Catalina Mora',
-      treatmentIds: ['treatment-1', 'treatment-2'],
+      treatmentIds: ['type-1', 'type-2'],
       treatmentNames: ['Operatoria basica', 'Promocion y prevencion'],
     },
     {
       additionalInfo: 'Reprogramacion solicitada por ajuste de horario del paciente.',
       appointmentType: 'Seguimiento preventivo',
       city: 'Bogota',
+      createdAt: '2026-04-07T10:00:00.000Z',
       endAt: '2026-04-08T17:00:00.000Z',
       id: 'student-appointment-3',
       patientName: 'Claudia Moreno',
       requestId: 'student-request-3',
-      siteId: 'practice-site-2',
+      respondedAt: '2026-04-07T14:00:00.000Z',
+      siteId: 'site-2',
       siteName: 'Sede Escuela Clinica',
       startAt: '2026-04-08T16:15:00.000Z',
       status: 'REPROGRAMACION_PENDIENTE',
       supervisorId: 'student-supervisor-2',
       supervisorName: 'Dr. Sergio Pineda',
-      treatmentIds: ['treatment-2'],
+      treatmentIds: ['type-2'],
       treatmentNames: ['Promocion y prevencion'],
     },
     {
       additionalInfo: 'El paciente cancelo la asistencia y quedo registrado en agenda.',
       appointmentType: 'Revision de sensibilidad',
       city: 'Soacha',
+      createdAt: '2026-04-08T11:00:00.000Z',
       endAt: '2026-04-09T14:45:00.000Z',
       id: 'student-appointment-4',
       patientName: 'Ricardo Suarez',
       requestId: 'student-request-4',
-      siteId: 'practice-site-1',
+      respondedAt: '2026-04-08T13:00:00.000Z',
+      siteId: 'site-1',
       siteName: 'Sede Norte',
       startAt: '2026-04-09T14:00:00.000Z',
       status: 'CANCELADA',
       supervisorId: 'student-supervisor-1',
       supervisorName: 'Dra. Catalina Mora',
-      treatmentIds: ['treatment-1'],
+      treatmentIds: ['type-1'],
       treatmentNames: ['Operatoria basica'],
     },
     {
       additionalInfo: 'Cita completada con valoracion del paciente registrada.',
       appointmentType: 'Seguimiento final',
       city: 'Bogota',
+      createdAt: '2026-04-03T09:00:00.000Z',
       endAt: '2026-04-04T17:30:00.000Z',
       id: 'student-appointment-5',
       patientName: 'Ricardo Suarez',
       requestId: 'student-request-4',
-      siteId: 'practice-site-1',
+      respondedAt: '2026-04-03T10:00:00.000Z',
+      siteId: 'site-1',
       siteName: 'Sede Norte',
       startAt: '2026-04-04T16:45:00.000Z',
       status: 'FINALIZADA',
       supervisorId: 'student-supervisor-2',
       supervisorName: 'Dr. Sergio Pineda',
-      treatmentIds: ['treatment-1', 'treatment-2'],
+      treatmentIds: ['type-1', 'type-2'],
       treatmentNames: ['Operatoria basica', 'Promocion y prevencion'],
     },
   ];
@@ -1160,7 +1174,7 @@ function findAppointmentValidationError(
   }
 
   const site = state.practiceSites.find(
-    (practiceSite) => practiceSite.id === normalized.siteId,
+    (practiceSite) => practiceSite.siteId === normalized.siteId,
   );
   if (!site || site.status !== 'active') {
     return 'Selecciona una sede activa para programar la cita.';
@@ -1178,7 +1192,7 @@ function findAppointmentValidationError(
   }
 
   const selectedTreatments = normalized.treatmentIds.map((treatmentId) =>
-    state.treatments.find((treatment) => treatment.id === treatmentId),
+    state.treatments.find((treatment) => treatment.treatmentTypeId === treatmentId),
   );
   if (selectedTreatments.some((treatment) => !treatment || treatment.status !== 'active')) {
     return 'Todos los tratamientos de la cita deben estar activos.';
@@ -1352,24 +1366,26 @@ function upsertAppointmentMock(
 
   const normalized = normalizeAppointmentInput(values);
   const request = state.requests.find((currentRequest) => currentRequest.id === normalized.requestId);
-  const site = state.practiceSites.find((practiceSite) => practiceSite.id === normalized.siteId);
+  const site = state.practiceSites.find((practiceSite) => practiceSite.siteId === normalized.siteId);
   const supervisor = state.supervisors.find(
     (currentSupervisor) => currentSupervisor.id === normalized.supervisorId,
   );
   const treatmentNames: string[] = normalized.treatmentIds
     .map(
       (treatmentId) =>
-        state.treatments.find((treatment) => treatment.id === treatmentId)?.name ?? '',
+        state.treatments.find((treatment) => treatment.treatmentTypeId === treatmentId)?.name ?? '',
     )
     .filter((treatmentName): treatmentName is string => treatmentName.length > 0);
   const nextAppointment: StudentAgendaAppointment = {
     additionalInfo: normalized.additionalInfo,
     appointmentType: getAppointmentTypeLabel(treatmentNames),
     city: site?.city ?? '',
+    createdAt: new Date().toISOString(),
     endAt: buildDateTime(normalized.startDate, normalized.endTime).toISOString(),
     id: appointmentId ?? `student-appointment-${nextAppointmentSequence}`,
     patientName: request?.patientName ?? '',
     requestId: normalized.requestId,
+    respondedAt: null,
     siteId: normalized.siteId,
     siteName: site?.name ?? '',
     startAt: buildDateTime(normalized.startDate, normalized.startTime).toISOString(),
@@ -1948,11 +1964,27 @@ async function refreshConversation(conversationId: string) {
     const conversation = await getStudentPortalConversation(conversationId);
     updateState({
       ...state,
-      conversations: state.conversations.map((c) =>
-        c.id === conversationId
-          ? { ...c, messages: conversation.messages, status: conversation.status }
-          : c,
-      ),
+      conversations: state.conversations.map((c) => {
+        if (c.id !== conversationId) return c;
+        const optimisticMessages = c.messages.filter((m) =>
+          m.id.startsWith('optimistic-'),
+        );
+        const currentRealMessages = c.messages.filter(
+          (m) => !m.id.startsWith('optimistic-'),
+        );
+        // If we have more confirmed messages than the API returned, keep ours.
+        // This handles the window where a just-sent message hasn't propagated
+        // to the conversation endpoint yet (race between send API and read API).
+        const baseMessages =
+          currentRealMessages.length > conversation.messages.length
+            ? currentRealMessages
+            : conversation.messages;
+        return {
+          ...c,
+          messages: [...baseMessages, ...optimisticMessages],
+          status: conversation.status,
+        };
+      }),
     });
   } catch {
     // silently ignore - background poll
@@ -1967,9 +1999,25 @@ async function sendConversationMessage(
     return sendConversationMessageMock(conversationId, content);
   }
 
-  patchState({
+  const tempId = `optimistic-${Date.now()}`;
+  const optimisticMessage: StudentConversationMessage = {
+    author: 'ESTUDIANTE',
+    authorName: `${state.profile.firstName} ${state.profile.lastName}`,
+    content: content.trim(),
+    id: tempId,
+    sentAt: new Date().toISOString(),
+  };
+
+  const conversationsSnapshot = state.conversations;
+
+  updateState({
+    ...state,
+    conversations: state.conversations.map((conversation) =>
+      conversation.id === conversationId
+        ? { ...conversation, messages: [...conversation.messages, optimisticMessage] }
+        : conversation,
+    ),
     errorMessage: null,
-    isLoading: true,
   });
 
   try {
@@ -1981,7 +2029,7 @@ async function sendConversationMessage(
         conversation.id === conversationId
           ? {
               ...conversation,
-              messages: [...conversation.messages, message],
+              messages: conversation.messages.map((m) => (m.id === tempId ? message : m)),
             }
           : conversation,
       ),
@@ -1992,7 +2040,9 @@ async function sendConversationMessage(
 
     return true;
   } catch (error) {
-    patchState({
+    updateState({
+      ...state,
+      conversations: conversationsSnapshot,
       errorMessage: getErrorMessage(error, 'No pudimos enviar el mensaje.'),
       isLoading: false,
     });
@@ -2100,6 +2150,7 @@ export function useStudentModuleStore(options: UseStudentModuleStoreOptions = {}
     updateProfile,
     upsertAppointment,
     upsertScheduleBlock,
+    checkAppointmentConflict: findAppointmentValidationError,
   };
 
   return {

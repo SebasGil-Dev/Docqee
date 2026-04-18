@@ -79,7 +79,6 @@ export function StudentConversationsPage() {
   const [statusFilter, setStatusFilter] = useState<ConversationStatusFilter>('all');
   const [composerValue, setComposerValue] = useState('');
   const [composerError, setComposerError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
@@ -88,11 +87,17 @@ export function StudentConversationsPage() {
   const selectedConversationId = searchParams.get('conversation');
   const filteredConversations = useMemo(
     () =>
-      conversations.filter((conversation) => {
-        const matchesSearch = conversation.patientName.toLowerCase().includes(normalizedSearch);
+      conversations
+        .filter((conversation) => {
+          const matchesSearch = conversation.patientName.toLowerCase().includes(normalizedSearch);
 
-        return matchesSearch && (statusFilter === 'all' || conversation.status === statusFilter);
-      }),
+          return matchesSearch && (statusFilter === 'all' || conversation.status === statusFilter);
+        })
+        .sort((a, b) => {
+          const aTime = getLastMessage(a)?.sentAt ?? '';
+          const bTime = getLastMessage(b)?.sentAt ?? '';
+          return bTime < aTime ? -1 : bTime > aTime ? 1 : 0;
+        }),
     [conversations, normalizedSearch, statusFilter],
   );
   const selectedConversation = useMemo(
@@ -155,7 +160,6 @@ export function StudentConversationsPage() {
   useEffect(() => {
     setComposerValue('');
     setComposerError(null);
-    setSuccessMessage(null);
   }, [selectedConversation?.id]);
 
   useEffect(() => {
@@ -188,16 +192,15 @@ export function StudentConversationsPage() {
       return;
     }
 
+    setComposerValue('');
+    setComposerError(null);
+
     void (async () => {
       const sent = await sendConversationMessage(selectedConversation.id, normalizedMessage);
 
       if (!sent) {
-        return;
+        setComposerValue(normalizedMessage);
       }
-
-      setComposerValue('');
-      setComposerError(null);
-      setSuccessMessage('Tu mensaje fue enviado correctamente.');
     })();
   };
 
@@ -216,19 +219,6 @@ export function StudentConversationsPage() {
         title={studentContent.conversationsPage.title}
         titleClassName="text-[2rem] sm:text-[2.35rem]"
       />
-      {successMessage ? (
-        <SurfaceCard
-          className="border border-emerald-200 bg-emerald-50/90 text-sm font-medium text-emerald-800"
-          paddingClassName="p-3.5"
-        >
-          <p role="status">
-            <span className="font-semibold">
-              {studentContent.conversationsPage.successNoticePrefix}
-            </span>{' '}
-            {successMessage}
-          </p>
-        </SurfaceCard>
-      ) : null}
       {visibleErrorMessage ? (
         <SurfaceCard
           className="border border-rose-200 bg-rose-50/90 text-sm font-medium text-rose-800"
@@ -544,7 +534,6 @@ export function StudentConversationsPage() {
                             onChange={(event) => {
                               setComposerValue(event.target.value);
                               setComposerError(null);
-                              setSuccessMessage(null);
                             }}
                             onKeyDown={(event) => {
                               if (event.key === 'Enter' && !event.shiftKey) {

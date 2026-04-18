@@ -971,10 +971,12 @@ export type StudentAgendaAppointment = {
   additionalInfo: string | null;
   appointmentType: string;
   city: string;
+  createdAt: string;
   endAt: string;
   id: string;
   patientName: string;
   requestId: string;
+  respondedAt: string | null;
   siteId: string;
   siteName: string;
   startAt: string;
@@ -1214,8 +1216,10 @@ export type PatientAppointment = {
   additionalInfo: string | null;
   appointmentType: string;
   city: string;
+  createdAt: string;
   endAt: string;
   id: string;
+  respondedAt: string | null;
   siteName: string;
   startAt: string;
   status: PatientAppointmentStatus;

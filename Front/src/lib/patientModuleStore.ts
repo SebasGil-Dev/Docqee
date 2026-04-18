@@ -473,8 +473,10 @@ function createMockState(): PatientStoreState {
         'Recuerda llevar radiografia panoramica si la tienes disponible.',
       appointmentType: 'Valoracion inicial',
       city: 'Bogota',
+      createdAt: '2026-04-08T10:00:00.000Z',
       endAt: '2026-04-09T11:30:00.000Z',
       id: 'patient-appointment-1',
+      respondedAt: null,
       siteName: 'Sede Escuela Clinica',
       startAt: '2026-04-09T10:30:00.000Z',
       status: 'PROPUESTA',
@@ -486,8 +488,10 @@ function createMockState(): PatientStoreState {
       additionalInfo: 'Cita confirmada por la clinica universitaria.',
       appointmentType: 'Control restaurativo',
       city: 'Bogota',
+      createdAt: '2026-04-10T09:00:00.000Z',
       endAt: '2026-04-12T15:00:00.000Z',
       id: 'patient-appointment-2',
+      respondedAt: '2026-04-11T08:00:00.000Z',
       siteName: 'Sede Norte',
       startAt: '2026-04-12T14:00:00.000Z',
       status: 'ACEPTADA',
@@ -499,8 +503,10 @@ function createMockState(): PatientStoreState {
       additionalInfo: null,
       appointmentType: 'Seguimiento final',
       city: 'Bogota',
+      createdAt: '2026-03-20T08:00:00.000Z',
       endAt: '2026-03-25T09:30:00.000Z',
       id: 'patient-appointment-3',
+      respondedAt: '2026-03-21T07:00:00.000Z',
       siteName: 'Sede Central',
       startAt: '2026-03-25T08:30:00.000Z',
       status: 'FINALIZADA',
@@ -1227,6 +1233,13 @@ async function loadRuntimeState(forceRefresh = false) {
       const nextState: PatientStoreState = {
         ...createEmptyRuntimeState(),
         ...payload,
+        conversations: payload.conversations.map((dashboardConv) => {
+          const currentConv = state.conversations.find((c) => c.id === dashboardConv.id);
+          if (currentConv && currentConv.messages.length > dashboardConv.messages.length) {
+            return { ...dashboardConv, messages: currentConv.messages };
+          }
+          return dashboardConv;
+        }),
         errorMessage: null,
         isLoading: false,
         isReady: true,
@@ -1658,15 +1671,27 @@ async function refreshConversation(conversationId: string) {
     setRuntimeState(
       {
         ...state,
-        conversations: state.conversations.map((c) =>
-          c.id === conversationId
-            ? {
-                ...c,
-                messages: conversation.messages,
-                status: conversation.status,
-              }
-            : c,
-        ),
+        conversations: state.conversations.map((c) => {
+          if (c.id !== conversationId) return c;
+          const optimisticMessages = c.messages.filter((m) =>
+            m.id.startsWith('optimistic-'),
+          );
+          const currentRealMessages = c.messages.filter(
+            (m) => !m.id.startsWith('optimistic-'),
+          );
+          // If we have more confirmed messages than the API returned, keep ours.
+          // This handles the window where a just-sent message hasn't propagated
+          // to the conversation endpoint yet (race between send API and read API).
+          const baseMessages =
+            currentRealMessages.length > conversation.messages.length
+              ? currentRealMessages
+              : conversation.messages;
+          return {
+            ...c,
+            messages: [...baseMessages, ...optimisticMessages],
+            status: conversation.status,
+          };
+        }),
       },
       {
         persistCache: true,
@@ -1685,16 +1710,32 @@ async function sendConversationMessage(
     return sendConversationMessageMock(conversationId, content);
   }
 
-  patchState({
-    errorMessage: null,
-    isLoading: true,
-  });
+  const tempId = `optimistic-${Date.now()}`;
+  const optimisticMessage: PatientConversationMessage = {
+    author: 'PACIENTE',
+    authorName: `${state.profile.firstName} ${state.profile.lastName}`,
+    content: content.trim(),
+    id: tempId,
+    sentAt: new Date().toISOString(),
+  };
+
+  const conversationsSnapshot = state.conversations;
+
+  setRuntimeState(
+    {
+      ...state,
+      conversations: state.conversations.map((conversation) =>
+        conversation.id === conversationId
+          ? { ...conversation, messages: [...conversation.messages, optimisticMessage] }
+          : conversation,
+      ),
+      errorMessage: null,
+    },
+    { persistCache: false },
+  );
 
   try {
-    const message = await sendPatientPortalConversationMessage(
-      conversationId,
-      content,
-    );
+    const message = await sendPatientPortalConversationMessage(conversationId, content);
 
     setRuntimeState(
       {
@@ -1703,7 +1744,7 @@ async function sendConversationMessage(
           conversation.id === conversationId
             ? {
                 ...conversation,
-                messages: [...conversation.messages, message],
+                messages: conversation.messages.map((m) => (m.id === tempId ? message : m)),
               }
             : conversation,
         ),
@@ -1712,17 +1753,20 @@ async function sendConversationMessage(
         isReady: true,
         shouldRefresh: false,
       },
-      {
-        persistCache: true,
-      },
+      { persistCache: true },
     );
 
     return true;
   } catch (error) {
-    patchState({
-      errorMessage: getErrorMessage(error, 'No pudimos enviar el mensaje.'),
-      isLoading: false,
-    });
+    setRuntimeState(
+      {
+        ...state,
+        conversations: conversationsSnapshot,
+        errorMessage: getErrorMessage(error, 'No pudimos enviar el mensaje.'),
+        isLoading: false,
+      },
+      { persistCache: false },
+    );
     return false;
   }
 }

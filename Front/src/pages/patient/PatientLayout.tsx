@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
 import { useAuth } from '@/app/providers/AuthProvider';
@@ -9,12 +10,14 @@ import { getDefaultRouteForRole } from '@/lib/authRouting';
 import { usePatientPortalNotifications } from '@/lib/portalNotifications';
 import { usePatientModuleStore } from '@/lib/patientModuleStore';
 
+const NOTIFICATION_POLL_INTERVAL_MS = 15_000;
+
 export function PatientLayout() {
   const { session } = useAuth();
   const location = useLocation();
   const shouldAutoLoadPatientModule =
     IS_TEST_MODE || session?.user.role === 'PATIENT';
-  const { appointments, conversations, profile, requests } = usePatientModuleStore({
+  const { appointments, conversations, profile, requests, refresh } = usePatientModuleStore({
     autoLoad: shouldAutoLoadPatientModule,
   });
   const {
@@ -26,6 +29,20 @@ export function PatientLayout() {
     conversations,
     requests,
   });
+
+  useEffect(() => {
+    if (IS_TEST_MODE || !shouldAutoLoadPatientModule) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        void refresh();
+      }
+    }, NOTIFICATION_POLL_INTERVAL_MS);
+
+    return () => clearInterval(interval);
+  }, [shouldAutoLoadPatientModule, refresh]);
 
   if (!IS_TEST_MODE) {
     if (!session) {

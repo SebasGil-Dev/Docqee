@@ -9,7 +9,13 @@ import type {
 } from '@/content/types';
 import { classNames } from '@/lib/classNames';
 
-const DEFAULT_SELECTED_DATE_KEY = '2026-04-06';
+function getTodayDateKey() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = `${today.getMonth() + 1}`.padStart(2, '0');
+  const day = `${today.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
 const dayFormatter = new Intl.DateTimeFormat('es-CO', { weekday: 'short' });
 const monthFormatter = new Intl.DateTimeFormat('es-CO', { month: 'long', year: 'numeric' });
@@ -209,8 +215,17 @@ export function StudentAgendaCalendar({
   onSelectScheduleBlock?: (blockId: string) => void;
   showBlockLegend?: boolean;
 }) {
-  const [viewMode, setViewMode] = useState<CalendarViewMode>('week');
-  const [selectedDateKey, setSelectedDateKey] = useState(DEFAULT_SELECTED_DATE_KEY);
+  const todayDateKey = useMemo(() => getTodayDateKey(), []);
+  const [viewMode, setViewMode] = useState<CalendarViewMode>(() => {
+    const saved = localStorage.getItem('agenda-view-mode');
+    return saved === 'day' || saved === 'week' || saved === 'month' ? saved : 'week';
+  });
+
+  const handleViewModeChange = (mode: CalendarViewMode) => {
+    localStorage.setItem('agenda-view-mode', mode);
+    setViewMode(mode);
+  };
+  const [selectedDateKey, setSelectedDateKey] = useState(() => getTodayDateKey());
   const selectedDate = useMemo(() => fromDateKey(selectedDateKey), [selectedDateKey]);
   const visibleDays = useMemo(() => {
     if (viewMode === 'day') {
@@ -301,7 +316,7 @@ export function StudentAgendaCalendar({
                       : 'text-ink-muted hover:text-ink',
                   )}
                   type="button"
-                  onClick={() => setViewMode(option)}
+                  onClick={() => handleViewModeChange(option)}
                 >
                   {option === 'day' ? 'Dia' : option === 'week' ? 'Semana' : 'Mes'}
                 </button>
@@ -331,7 +346,7 @@ export function StudentAgendaCalendar({
               <button
                 className="inline-flex rounded-full border border-slate-200/90 bg-white/95 px-3 py-1.5 text-[0.8rem] font-semibold text-ink transition duration-200 hover:border-primary/20 hover:bg-white"
                 type="button"
-                onClick={() => setSelectedDateKey(DEFAULT_SELECTED_DATE_KEY)}
+                onClick={() => setSelectedDateKey(getTodayDateKey())}
               >
                 Hoy
               </button>
@@ -351,6 +366,7 @@ export function StudentAgendaCalendar({
               {[
                 ['Pendiente', 'proposal'],
                 ['Aceptada', 'accepted'],
+                ['Finalizada', 'completed'],
                 ['Cancelada', 'cancelled'],
                 ['Reprogramacion', 'reschedule'],
                 ...(showBlockLegend ? [['Bloqueo', 'block']] : []),
@@ -536,7 +552,7 @@ export function StudentAgendaCalendar({
                   <span
                     className={classNames(
                       'inline-flex h-5 w-5 items-center justify-center rounded-full text-[0.74rem] font-bold sm:h-5.5 sm:w-5.5 sm:text-[0.78rem] xl:h-6 xl:w-6 xl:text-[0.82rem]',
-                      dayKey === DEFAULT_SELECTED_DATE_KEY ? 'bg-brand-gradient text-white' : 'text-ink',
+                      dayKey === todayDateKey ? 'bg-brand-gradient text-white' : 'text-ink',
                     )}
                   >
                     {day.getDate()}
