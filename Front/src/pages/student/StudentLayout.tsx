@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
 import { useAuth } from '@/app/providers/AuthProvider';
@@ -12,6 +13,8 @@ import {
 import { useStudentPortalNotifications } from '@/lib/portalNotifications';
 import { useStudentModuleStore } from '@/lib/studentModuleStore';
 
+const NOTIFICATION_POLL_INTERVAL_MS = 15_000;
+
 export function StudentLayout() {
   const { session } = useAuth();
   const location = useLocation();
@@ -19,7 +22,7 @@ export function StudentLayout() {
     IS_TEST_MODE ||
     (session?.user.role === 'STUDENT' &&
       !shouldRequireFirstLoginPasswordChange(session));
-  const { appointments, conversations, profile, requests } = useStudentModuleStore({
+  const { appointments, conversations, profile, requests, refresh } = useStudentModuleStore({
     autoLoad: shouldAutoLoadStudentModule,
   });
   const {
@@ -31,6 +34,20 @@ export function StudentLayout() {
     conversations,
     requests,
   });
+
+  useEffect(() => {
+    if (IS_TEST_MODE || !shouldAutoLoadStudentModule) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        void refresh();
+      }
+    }, NOTIFICATION_POLL_INTERVAL_MS);
+
+    return () => clearInterval(interval);
+  }, [shouldAutoLoadStudentModule, refresh]);
 
   if (!IS_TEST_MODE) {
     if (!session) {

@@ -21,6 +21,7 @@ import { AdminDropdownField } from '@/components/admin/AdminDropdownField';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
 import { AdminTextField } from '@/components/admin/AdminTextField';
+import { AdminTimePickerField } from '@/components/admin/AdminTimePickerField';
 import { Seo } from '@/components/ui/Seo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { studentContent } from '@/content/studentContent';
@@ -222,6 +223,7 @@ function validateAppointmentForm(values: StudentAppointmentFormValues): StudentA
 export function StudentAppointmentsPage() {
   const {
     appointments,
+    checkAppointmentConflict,
     errorMessage,
     isLoading,
     practiceSites,
@@ -233,7 +235,6 @@ export function StudentAppointmentsPage() {
   } = useStudentModuleStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<AppointmentStatusFilter>('all');
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const [isAppointmentDialogOpen, setIsAppointmentDialogOpen] = useState(false);
   const [appointmentErrors, setAppointmentErrors] = useState<StudentAppointmentFormErrors>(
@@ -243,6 +244,7 @@ export function StudentAppointmentsPage() {
     initialAppointmentFormValues,
   );
   const [editingAppointmentId, setEditingAppointmentId] = useState<string | null>(null);
+  const [appointmentApiError, setAppointmentApiError] = useState<string | null>(null);
   const [appointmentToCancel, setAppointmentToCancel] =
     useState<StudentAgendaAppointment | null>(null);
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
@@ -317,6 +319,7 @@ export function StudentAppointmentsPage() {
     setEditingAppointmentId(null);
     setAppointmentErrors({});
     setAppointmentValues(initialAppointmentFormValues);
+    setAppointmentApiError(null);
   };
 
   const openCreateDialog = () => {
@@ -342,6 +345,7 @@ export function StudentAppointmentsPage() {
       delete nextErrors[field];
       return nextErrors;
     });
+    setAppointmentApiError(null);
   };
 
   const handleTreatmentToggle = (treatmentId: string) => {
@@ -360,6 +364,7 @@ export function StudentAppointmentsPage() {
       delete nextErrors.treatmentIds;
       return nextErrors;
     });
+    setAppointmentApiError(null);
   };
 
   const handleEditAppointment = (appointment: StudentAgendaAppointment) => {
@@ -372,8 +377,19 @@ export function StudentAppointmentsPage() {
   const handleAppointmentSubmit = () => {
     const nextErrors = validateAppointmentForm(appointmentValues);
     setAppointmentErrors(nextErrors);
+    setAppointmentApiError(null);
 
     if (Object.keys(nextErrors).length > 0) {
+      return;
+    }
+
+    const conflictError = checkAppointmentConflict(
+      appointmentValues,
+      editingAppointmentId ?? undefined,
+    );
+
+    if (conflictError) {
+      setAppointmentApiError(conflictError);
       return;
     }
 
@@ -384,14 +400,10 @@ export function StudentAppointmentsPage() {
       );
 
       if (!appointment) {
+        setAppointmentApiError(errorMessage);
         return;
       }
 
-      setSuccessMessage(
-        editingAppointmentId
-          ? 'La cita se actualizo correctamente.'
-          : 'La cita se agendo correctamente como propuesta.',
-      );
       closeAppointmentDialog();
     })();
   };
@@ -407,7 +419,6 @@ export function StudentAppointmentsPage() {
         return;
       }
 
-      setSuccessMessage(`La cita ahora esta ${getStatusLabel(status).toLowerCase()}.`);
       setAppointmentToCancel(null);
     })();
   };
@@ -427,20 +438,7 @@ export function StudentAppointmentsPage() {
         title={studentContent.appointmentsPage.title}
         titleClassName="text-[1.85rem] sm:text-[2.15rem]"
       />
-      {successMessage ? (
-        <SurfaceCard
-          className="border border-emerald-200 bg-emerald-50/90 text-sm font-medium text-emerald-800"
-          paddingClassName="p-3.5"
-        >
-          <p role="status">
-            <span className="font-semibold">
-              {studentContent.appointmentsPage.successNoticePrefix}
-            </span>{' '}
-            {successMessage}
-          </p>
-        </SurfaceCard>
-      ) : null}
-      {errorMessage ? (
+      {errorMessage && !isAppointmentDialogOpen ? (
         <SurfaceCard
           className="border border-rose-200 bg-rose-50/90 text-sm font-medium text-rose-800"
           paddingClassName="p-3.5"
@@ -750,7 +748,7 @@ export function StudentAppointmentsPage() {
                 label="Sede"
                 name="studentAppointmentSite"
                 options={activePracticeSites.map((practiceSite) => ({
-                  id: practiceSite.id,
+                  id: practiceSite.siteId,
                   label: `${practiceSite.name} · ${practiceSite.city}`,
                 }))}
                 placeholder="Selecciona una sede"
@@ -786,25 +784,21 @@ export function StudentAppointmentsPage() {
                 value={appointmentValues.startDate}
                 onChange={(value) => handleAppointmentFieldChange('startDate', value)}
               />
-              <AdminTextField
+              <AdminTimePickerField
                 error={appointmentErrors.startTime}
-                icon={Clock3}
                 id="student-appointment-start-time"
                 label="Hora de inicio"
                 name="studentAppointmentStartTime"
-                placeholder=""
-                type="time"
                 value={appointmentValues.startTime}
                 onChange={(value) => handleAppointmentFieldChange('startTime', value)}
               />
-              <AdminTextField
+              <AdminTimePickerField
+                disabled={!appointmentValues.startTime}
                 error={appointmentErrors.endTime}
-                icon={Clock3}
                 id="student-appointment-end-time"
                 label="Hora de finalizacion"
+                min={appointmentValues.startTime || undefined}
                 name="studentAppointmentEndTime"
-                placeholder=""
-                type="time"
                 value={appointmentValues.endTime}
                 onChange={(value) => handleAppointmentFieldChange('endTime', value)}
               />
@@ -839,7 +833,7 @@ export function StudentAppointmentsPage() {
               </div>
               <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
                 {activeTreatments.map((treatment) => {
-                  const isSelected = appointmentValues.treatmentIds.includes(treatment.id);
+                  const isSelected = appointmentValues.treatmentIds.includes(treatment.treatmentTypeId);
 
                   return (
                     <button
@@ -851,7 +845,7 @@ export function StudentAppointmentsPage() {
                           : 'border-slate-200/80 bg-white hover:border-primary/20 hover:bg-slate-50',
                       )}
                       type="button"
-                      onClick={() => handleTreatmentToggle(treatment.id)}
+                      onClick={() => handleTreatmentToggle(treatment.treatmentTypeId)}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="space-y-1">
@@ -890,6 +884,11 @@ export function StudentAppointmentsPage() {
                 }
               />
             </div>
+            {appointmentApiError ? (
+              <div className="rounded-[1.1rem] border border-rose-200 bg-rose-50/90 px-3.5 py-3 text-sm font-medium text-rose-800" role="alert">
+                {appointmentApiError}
+              </div>
+            ) : null}
             <div className="flex flex-wrap items-center justify-end gap-2.5">
               <button
                 className="inline-flex items-center justify-center rounded-full bg-slate-100 px-4 py-2.5 text-sm font-semibold text-ink-muted transition duration-200 hover:bg-slate-200"

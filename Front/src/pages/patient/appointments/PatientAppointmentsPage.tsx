@@ -82,7 +82,6 @@ export function PatientAppointmentsPage() {
     usePatientModuleStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<AppointmentStatusFilter>('all');
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const normalizedSearch = searchTerm.trim().toLowerCase();
@@ -139,13 +138,7 @@ export function PatientAppointmentsPage() {
     status: PatientAppointmentStatus,
   ) => {
     void (async () => {
-      const updated = await updateAppointmentStatus(appointmentId, status);
-
-      if (!updated) {
-        return;
-      }
-
-      setSuccessMessage(`La cita ahora esta ${getStatusLabel(status).toLowerCase()}.`);
+      await updateAppointmentStatus(appointmentId, status);
     })();
   };
 
@@ -160,19 +153,6 @@ export function PatientAppointmentsPage() {
         description={patientContent.appointmentsPage.description}
         title={patientContent.appointmentsPage.title}
       />
-      {successMessage ? (
-        <SurfaceCard
-          className="border border-emerald-200 bg-emerald-50/90 text-sm font-medium text-emerald-800"
-          paddingClassName="p-3.5"
-        >
-          <p role="status">
-            <span className="font-semibold">
-              {patientContent.appointmentsPage.successNoticePrefix}
-            </span>{' '}
-            {successMessage}
-          </p>
-        </SurfaceCard>
-      ) : null}
       {errorMessage ? (
         <SurfaceCard
           className="border border-rose-200 bg-rose-50/90 text-sm font-medium text-rose-800"

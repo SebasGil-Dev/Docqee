@@ -85,7 +85,6 @@ export function AdminDropdownField({
           'admin-dropdown-field__label block text-sm font-semibold text-ink',
           labelClassName,
         )}
-        htmlFor={id}
       >
         {label}
       </label>

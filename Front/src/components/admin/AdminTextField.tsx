@@ -15,6 +15,7 @@ type AdminTextFieldProps = {
   inputRef?: Ref<HTMLInputElement> | undefined;
   label: string;
   labelClassName?: string;
+  min?: string | undefined;
   name: string;
   onBlur?: (() => void) | undefined;
   onChange: (value: string) => void;
@@ -35,6 +36,7 @@ export function AdminTextField({
   inputRef,
   label,
   labelClassName,
+  min,
   name,
   onBlur,
   onChange,
@@ -70,6 +72,7 @@ export function AdminTextField({
           disabled={disabled}
           id={id}
           inputMode={inputMode}
+          min={min}
           name={name}
           placeholder={placeholder}
           type={type}
