@@ -42,7 +42,7 @@ export function HeroSection({ hero }: HeroSectionProps) {
             <ButtonLink cta={hero.secondaryCta} variant="secondary" />
           </div>
         </div>
-        <div className="relative mx-auto -mt-4 w-full max-w-[28rem] sm:mt-0 sm:max-w-[31rem] lg:ml-auto lg:mr-0 lg:max-w-[min(33rem,44vw)] xl:max-w-[min(37rem,42vw)] 2xl:max-w-[min(40rem,40vw)]">
+        <div className="relative mx-auto -mt-4 w-full max-w-[28rem] sm:mt-0 sm:max-w-[31rem] lg:ml-auto lg:mr-0 lg:max-w-[min(31rem,42vw)] xl:max-w-[min(35rem,40vw)] 2xl:max-w-[min(38rem,39vw)]">
           <div
             aria-hidden="true"
             className="absolute -right-6 top-8 hidden h-44 w-44 rounded-full bg-glow/45 blur-3xl sm:block xl:h-48 xl:w-48"
@@ -56,7 +56,7 @@ export function HeroSection({ hero }: HeroSectionProps) {
               <img
                 {...heroImagePriorityProps}
                 alt={hero.image.alt}
-                className="block h-auto w-full rounded-[1.3rem] lg:max-h-[min(29rem,52svh)] xl:max-h-[min(34rem,60svh)] 2xl:max-h-[min(38rem,64svh)]"
+                className="block h-auto w-full rounded-[1.3rem] lg:mx-auto lg:w-auto lg:max-w-full lg:max-h-[min(29rem,52svh)] xl:max-h-[min(34rem,60svh)] 2xl:max-h-[min(38rem,64svh)]"
                 decoding="async"
                 height={hero.image.height}
                 loading="eager"
