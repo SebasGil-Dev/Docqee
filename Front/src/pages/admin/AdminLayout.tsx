@@ -31,10 +31,10 @@ export function AdminLayout() {
 
   return (
     <AdminShell
-      contentBackgroundClassName="bg-transparent"
+      contentBackgroundClassName="bg-[#f4f8ff]"
       mainScrollMode="section"
       mobileNavigationDensity="compact"
-      shellBackgroundClassName="bg-white"
+      shellBackgroundClassName="bg-[#f4f8ff]"
     >
       <Outlet />
     </AdminShell>
