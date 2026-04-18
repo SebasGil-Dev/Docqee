@@ -9,7 +9,7 @@ type SiteFooterProps = {
 export function SiteFooter({ footer }: SiteFooterProps) {
   return (
     <footer className="border-t border-transparent bg-surface-low/75 py-10">
-      <div className="mx-auto flex max-w-layout flex-col gap-8 px-4 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8">
+      <div className="landing-shell mx-auto flex flex-col gap-8 px-4 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8 xl:px-10">
         <div className="max-w-md space-y-4">
           <LogoMark />
           {footer.blurb ? (

@@ -75,6 +75,28 @@
 }
 
 @layer components {
+  .landing-shell {
+    width: min(calc(100% - 1.5rem), 92rem);
+  }
+
+  @media (min-width: 640px) {
+    .landing-shell {
+      width: min(calc(100% - 2.5rem), 92rem);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .landing-shell {
+      width: min(calc(100% - 4rem), 92rem);
+    }
+  }
+
+  @media (min-width: 1536px) {
+    .landing-shell {
+      width: min(calc(100% - 5rem), 96rem);
+    }
+  }
+
   .admin-scrollbar {
     scrollbar-width: thin;
     scrollbar-color: rgba(148, 163, 184, 0.7) rgba(226, 232, 240, 0.55);

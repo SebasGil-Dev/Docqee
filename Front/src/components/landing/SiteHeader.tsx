@@ -56,8 +56,8 @@ export function SiteHeader({ navigation }: SiteHeaderProps) {
 
   return (
     <header className="sticky top-0 z-50">
-      <div className="mx-auto max-w-layout px-4 pt-2 sm:px-6 sm:pt-3 lg:px-8">
-        <div className="rounded-full bg-[#FFFFFF] px-4 py-3 shadow-ambient backdrop-blur-xl sm:px-6">
+      <div className="landing-shell mx-auto px-4 pt-2 sm:px-6 sm:pt-3 lg:px-8 xl:px-10">
+        <div className="rounded-full bg-[#FFFFFF] px-4 py-3 shadow-ambient backdrop-blur-xl sm:px-6 xl:px-7 xl:py-3.5">
           <div className="flex items-center justify-between gap-4">
             <a href="#top">
               <LogoMark />
