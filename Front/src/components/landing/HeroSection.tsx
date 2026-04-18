@@ -42,21 +42,21 @@ export function HeroSection({ hero }: HeroSectionProps) {
             <ButtonLink cta={hero.secondaryCta} variant="secondary" />
           </div>
         </div>
-        <div className="relative mx-auto -mt-4 w-full max-w-[28rem] sm:mt-0 sm:max-w-[31rem] lg:ml-auto lg:mr-0 lg:max-w-[min(31rem,42vw)] xl:max-w-[min(35rem,40vw)] 2xl:max-w-[min(38rem,39vw)]">
+        <div className="relative mx-auto -mt-4 w-full max-w-[28rem] sm:mt-0 sm:max-w-[31rem] lg:ml-auto lg:mr-0 lg:max-w-[min(33rem,44vw)] xl:max-w-[min(37rem,42vw)] 2xl:max-w-[min(40rem,40vw)]">
           <div
             aria-hidden="true"
             className="absolute -right-6 top-8 hidden h-44 w-44 rounded-full bg-glow/45 blur-3xl sm:block xl:h-48 xl:w-48"
           />
-          <div className="relative py-3 sm:py-4 xl:py-4.5">
+          <div className="relative py-2 sm:py-3 xl:py-3.5">
             <div
               aria-hidden="true"
-              className="absolute inset-y-0 left-[2.5%] right-[2.5%] rounded-[2.2rem] bg-surface-card shadow-float xl:rounded-[2.5rem]"
+              className="absolute inset-y-[0.1rem] left-[0.75%] right-[0.75%] rounded-[1.9rem] bg-surface-card shadow-float xl:rounded-[2.15rem]"
             />
-            <div className="relative z-10 mx-auto w-[88%] rounded-[1.85rem] bg-surface-low p-3 sm:w-[86%] sm:p-5 xl:w-[84%] xl:rounded-[2rem] xl:p-[clamp(1rem,1.4vw,1.35rem)]">
+            <div className="relative z-10 mx-auto w-[96%] rounded-[1.6rem] bg-surface-low p-2 sm:w-[95%] sm:p-2.5 xl:w-[94%] xl:rounded-[1.75rem] xl:p-[clamp(0.7rem,0.95vw,0.9rem)]">
               <img
                 {...heroImagePriorityProps}
                 alt={hero.image.alt}
-                className="w-full rounded-[1.45rem] object-contain lg:mx-auto lg:w-auto lg:max-w-full lg:max-h-[min(27rem,48svh)] xl:max-h-[min(31.5rem,55svh)] 2xl:max-h-[min(35.5rem,59svh)]"
+                className="block h-auto w-full rounded-[1.3rem] lg:max-h-[min(29rem,52svh)] xl:max-h-[min(34rem,60svh)] 2xl:max-h-[min(38rem,64svh)]"
                 decoding="async"
                 height={hero.image.height}
                 loading="eager"
