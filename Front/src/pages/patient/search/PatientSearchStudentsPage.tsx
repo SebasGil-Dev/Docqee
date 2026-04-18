@@ -190,35 +190,36 @@ export function PatientSearchStudentsPage() {
   } = usePatientModuleStore();
   const defaultCityFilter = profile.city.trim() || 'all';
   const defaultLocalityFilter = profile.locality.trim() || 'all';
+  // Restore last-used location filters from localStorage, fall back to profile values
+  const savedCity = localStorage.getItem('patient-student-city-filter');
+  const savedLocality = localStorage.getItem('patient-student-locality-filter');
+  const initialCityFilter = savedCity ?? defaultCityFilter;
+  const initialLocalityFilter = savedCity === 'all' ? 'all' : (savedLocality ?? defaultLocalityFilter);
   const [searchTerm, setSearchTerm] = useState('');
   const [hasInteractedWithSearch, setHasInteractedWithSearch] = useState(false);
   const [reason, setReason] = useState('');
   const [reasonError, setReasonError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [treatmentFilter, setTreatmentFilter] = useState<NamedFilter>('all');
-  const [cityFilter, setCityFilter] = useState<NamedFilter>(defaultCityFilter);
-  const [localityFilter, setLocalityFilter] = useState<NamedFilter>(
-    defaultLocalityFilter,
-  );
+  const [cityFilter, setCityFilter] = useState<NamedFilter>(initialCityFilter);
+  const [localityFilter, setLocalityFilter] = useState<NamedFilter>(initialLocalityFilter);
   const [universityFilter, setUniversityFilter] = useState<NamedFilter>('all');
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
     null,
   );
   const latestSearchFiltersRef = useRef({
-    city: defaultCityFilter,
-    locality: defaultLocalityFilter,
+    city: initialCityFilter,
+    locality: initialLocalityFilter,
     search: '',
     treatment: 'all',
     university: 'all',
   });
   const normalizedSearch = searchTerm.trim().toLowerCase();
-  const hasCustomLocationCriteria =
-    cityFilter !== defaultCityFilter ||
-    localityFilter !== defaultLocalityFilter;
   const hasSearchCriteria = Boolean(
     normalizedSearch ||
     treatmentFilter !== 'all' ||
-    hasCustomLocationCriteria ||
+    cityFilter !== 'all' ||
+    localityFilter !== 'all' ||
     universityFilter !== 'all',
   );
   const treatmentOptions = useMemo(
@@ -258,6 +259,10 @@ export function PatientSearchStudentsPage() {
 
   useEffect(() => {
     if (!isReady || hasInteractedWithSearch) {
+      return;
+    }
+    // Only apply profile defaults if the user has no saved filter preference
+    if (localStorage.getItem('patient-student-city-filter') !== null) {
       return;
     }
 
@@ -529,6 +534,8 @@ export function PatientSearchStudentsPage() {
                 value={cityFilter}
                 onChange={(event) => {
                   const nextCity = event.target.value;
+                  localStorage.setItem('patient-student-city-filter', nextCity);
+                  localStorage.setItem('patient-student-locality-filter', 'all');
                   setHasInteractedWithSearch(true);
                   latestSearchFiltersRef.current.city = nextCity;
                   latestSearchFiltersRef.current.locality = 'all';
@@ -559,6 +566,7 @@ export function PatientSearchStudentsPage() {
                 value={localityFilter}
                 onChange={(event) => {
                   const nextLocality = event.target.value;
+                  localStorage.setItem('patient-student-locality-filter', nextLocality);
                   setHasInteractedWithSearch(true);
                   latestSearchFiltersRef.current.locality = nextLocality;
                   setLocalityFilter(nextLocality);

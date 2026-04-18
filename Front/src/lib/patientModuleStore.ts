@@ -1420,11 +1420,9 @@ async function searchStudents(filters: PatientStudentDirectorySearchParams) {
       );
     }
 
-    if (
-      localStudents.length === 0 &&
-      !hasCompleteDirectoryIndex &&
-      hasActiveStudentSearchFilters(filters)
-    ) {
+    if (hasActiveStudentSearchFilters(filters)) {
+      // Always sync with server when filters are active: local index is proximity-sorted
+      // so it may not contain students from other localities even if the index is "complete".
       void refreshStudentSearchFromServer(filters, cacheKey, requestSequence);
     }
 
