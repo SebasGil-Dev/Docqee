@@ -38,13 +38,6 @@
     scrollbar-width: none;
   }
 
-  .app-surface-background {
-    background:
-      radial-gradient(circle at top left, rgba(108, 211, 247, 0.16), transparent 34%),
-      radial-gradient(circle at 88% 10%, rgba(0, 100, 124, 0.08), transparent 26%),
-      rgb(var(--color-surface));
-  }
-
   a {
     color: inherit;
     text-decoration: none;
