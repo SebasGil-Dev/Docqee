@@ -35,6 +35,7 @@ export function AdminLayout() {
       mainScrollMode="section"
       mobileNavigationDensity="compact"
       shellBackgroundClassName="bg-[#f4f8ff]"
+      surfacePaddingMode="inner"
     >
       <Outlet />
     </AdminShell>

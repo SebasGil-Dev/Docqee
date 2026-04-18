@@ -52,6 +52,7 @@ type AdminShellProps = PropsWithChildren<{
   onOpenNotification?: (notificationId: string) => void;
   overrideName?: { firstName: string; lastName: string };
   shellBackgroundClassName?: string;
+  surfacePaddingMode?: 'inner' | 'outer';
 }>;
 
 export type AdminShellNotification = PortalNotification;
@@ -182,6 +183,7 @@ export function AdminShell({
   onOpenNotification,
   overrideName,
   shellBackgroundClassName = 'bg-[#f4f8ff]',
+  surfacePaddingMode = 'outer',
 }: AdminShellProps) {
   const { logout, session } = useAuth();
   const location = useLocation();
@@ -216,6 +218,13 @@ export function AdminShell({
   const isCompactMobileNavigation = mobileNavigationDensity === 'compact';
   const shouldConstrainMainScroll =
     mainScrollMode === 'section' && showMobileBottomNavigation;
+  const surfaceInsetClassName = shouldConstrainMainScroll
+    ? 'px-0 py-0 lg:px-4 lg:py-3 xl:px-5'
+    : 'px-4 py-4 sm:px-6 lg:px-4 lg:py-3 xl:px-5';
+  const outerPaddingClassName =
+    surfacePaddingMode === 'outer' ? surfaceInsetClassName : 'p-0';
+  const innerPaddingClassName =
+    surfacePaddingMode === 'inner' ? surfaceInsetClassName : 'p-0';
   const visibleNotifications = useMemo(
     () =>
       [...(headerNotifications ?? [])]
@@ -285,18 +294,17 @@ export function AdminShell({
       <div
         className={classNames(
           'relative flex h-full w-full flex-col overflow-hidden',
-          shouldConstrainMainScroll
-            ? 'px-0 py-0 lg:px-4 lg:py-3 xl:px-5'
-            : 'px-4 py-4 sm:px-6 lg:px-4 lg:py-3 xl:px-5',
+          outerPaddingClassName,
         )}
       >
         <div
           className={classNames(
-            'flex min-h-0 flex-1 flex-col overflow-hidden',
+            'flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden',
             contentBackgroundClassName,
+            innerPaddingClassName,
             shouldConstrainMainScroll
-              ? 'gap-2 rounded-none p-0 lg:gap-3'
-              : 'gap-4 rounded-none p-0 lg:gap-3',
+              ? 'gap-2 rounded-none lg:gap-3'
+              : 'gap-4 rounded-none lg:gap-3',
           )}
         >
           <header
