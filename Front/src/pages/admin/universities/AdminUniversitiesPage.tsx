@@ -251,7 +251,7 @@ export function AdminUniversitiesPage() {
           </span>
         </Link>
       </div>
-      <AdminPanelCard className="min-h-0 flex-1" panelClassName="bg-[#f4f8ff]">
+      <AdminPanelCard className="min-h-0 flex-1 bg-transparent" panelClassName="bg-white">
         <div className="border-b border-slate-200/80 px-3 py-2.5 sm:px-5 sm:py-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <h2 className="whitespace-nowrap text-center font-headline text-[1rem] font-extrabold leading-none tracking-tight text-ink sm:text-left sm:text-[1.45rem]">

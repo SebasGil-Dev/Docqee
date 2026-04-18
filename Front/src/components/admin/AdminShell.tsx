@@ -43,6 +43,7 @@ type AdminShellProps = PropsWithChildren<{
   avatarKind?: 'logo' | 'photo';
   avatarSrc?: string | null;
   content?: AdminShellContent;
+  contentBackgroundClassName?: string;
   headerNotifications?: AdminShellNotification[];
   mainScrollMode?: 'page' | 'section';
   notificationsPageTo?: `/${string}`;
@@ -50,6 +51,7 @@ type AdminShellProps = PropsWithChildren<{
   onMarkAllNotificationsRead?: () => void;
   onOpenNotification?: (notificationId: string) => void;
   overrideName?: { firstName: string; lastName: string };
+  shellBackgroundClassName?: string;
 }>;
 
 export type AdminShellNotification = PortalNotification;
@@ -171,6 +173,7 @@ export function AdminShell({
   avatarSrc,
   children,
   content = adminContent.shell,
+  contentBackgroundClassName = 'bg-[#f4f8ff]',
   headerNotifications,
   mainScrollMode = 'page',
   mobileNavigationDensity = 'regular',
@@ -178,6 +181,7 @@ export function AdminShell({
   onMarkAllNotificationsRead,
   onOpenNotification,
   overrideName,
+  shellBackgroundClassName = 'bg-[#f4f8ff]',
 }: AdminShellProps) {
   const { logout, session } = useAuth();
   const location = useLocation();
@@ -270,7 +274,10 @@ export function AdminShell({
 
   return (
     <div
-      className="admin-shell-density fixed inset-0 h-[100dvh] w-full overflow-hidden overscroll-none bg-[#f4f8ff] lg:h-screen"
+      className={classNames(
+        'admin-shell-density fixed inset-0 h-[100dvh] w-full overflow-hidden overscroll-none lg:h-screen',
+        shellBackgroundClassName,
+      )}
     >
       <a className="skip-link" href="#admin-main-content">
         Saltar al contenido principal
@@ -285,7 +292,8 @@ export function AdminShell({
       >
         <div
           className={classNames(
-            'flex min-h-0 flex-1 flex-col overflow-hidden bg-[#f4f8ff]',
+            'flex min-h-0 flex-1 flex-col overflow-hidden',
+            contentBackgroundClassName,
             shouldConstrainMainScroll
               ? 'gap-2 rounded-none p-0 lg:gap-3'
               : 'gap-4 rounded-none p-0 lg:gap-3',
