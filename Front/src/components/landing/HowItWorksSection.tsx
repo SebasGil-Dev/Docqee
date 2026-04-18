@@ -18,24 +18,24 @@ const iconMap = {
 export function HowItWorksSection({ steps }: HowItWorksSectionProps) {
   return (
     <section
-      className="scroll-mt-20 bg-surface-low pb-20 pt-8 sm:scroll-mt-24 sm:py-24 lg:scroll-mt-8 xl:py-28 2xl:py-32"
+      className="scroll-mt-20 bg-surface-low pb-20 pt-8 sm:scroll-mt-24 sm:py-24 lg:flex lg:min-h-[calc(100svh-5.75rem)] lg:items-center lg:scroll-mt-8 lg:py-10 xl:min-h-[calc(100svh-6rem)] xl:py-12 2xl:min-h-[calc(100svh-6.25rem)] 2xl:py-14"
       id="how-it-works"
     >
-      <div className="landing-shell mx-auto px-4 sm:px-6 lg:px-8 xl:px-10">
+      <div className="landing-shell mx-auto w-full px-4 sm:px-6 lg:px-8 xl:px-10">
         <SectionHeading
           align="center"
           description="Sigue estos pasos para comenzar tu proceso en Docqee"
           titleClassName="whitespace-nowrap text-[clamp(1.2rem,7vw,2.25rem)] sm:text-4xl xl:text-[2.7rem]"
           title={'\u00BFC\u00F3mo funciona Docqee?'}
         />
-        <div className="mt-8 grid gap-4 sm:mt-10 sm:gap-5 lg:mt-12 lg:grid-cols-3 lg:gap-6 xl:gap-7 2xl:gap-8">
+        <div className="mt-8 grid gap-4 sm:mt-10 sm:gap-5 lg:mt-10 lg:grid-cols-3 lg:gap-6 xl:mt-12 xl:gap-7 2xl:gap-8">
           {steps.map((step, index) => {
             const Icon = iconMap[step.icon];
 
             return (
               <SurfaceCard
                 key={step.title}
-                className="flex h-full flex-col p-5 sm:p-6 lg:p-7 xl:min-h-[18.5rem] xl:p-8 2xl:min-h-[19.5rem]"
+                className="flex h-full flex-col p-5 sm:p-6 lg:p-6 xl:min-h-[16.75rem] xl:p-7 2xl:min-h-[17.5rem]"
                 interactive
               >
                 <div className="flex items-center justify-between gap-4">
@@ -46,10 +46,10 @@ export function HowItWorksSection({ steps }: HowItWorksSectionProps) {
                     0{index + 1}
                   </span>
                 </div>
-                <h3 className="mt-5 font-headline text-[1.22rem] font-extrabold leading-snug text-ink sm:text-[1.35rem] lg:mt-8 lg:text-2xl lg:leading-tight xl:text-[1.7rem]">
+                <h3 className="mt-5 font-headline text-[1.22rem] font-extrabold leading-snug text-ink sm:text-[1.35rem] lg:mt-6 lg:text-[1.7rem] lg:leading-tight xl:mt-7 xl:text-[1.78rem]">
                   {step.title}
                 </h3>
-                <p className="mt-3 text-sm leading-6 text-ink-muted sm:mt-4 sm:text-[0.97rem] sm:leading-6 lg:mt-4 lg:text-base lg:leading-7 xl:text-[1.02rem]">
+                <p className="mt-3 text-sm leading-6 text-ink-muted sm:mt-4 sm:text-[0.97rem] sm:leading-6 lg:mt-3.5 lg:text-[0.97rem] lg:leading-6 xl:text-[1.02rem] xl:leading-7">
                   {step.description}
                 </p>
               </SurfaceCard>
