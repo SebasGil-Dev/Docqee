@@ -34,7 +34,7 @@ export function AdminLayout() {
       contentBackgroundClassName="bg-transparent"
       mainScrollMode="section"
       mobileNavigationDensity="compact"
-      shellBackgroundClassName="bg-transparent"
+      shellBackgroundClassName="bg-white"
     >
       <Outlet />
     </AdminShell>
