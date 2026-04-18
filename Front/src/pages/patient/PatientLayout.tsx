@@ -67,6 +67,7 @@ export function PatientLayout() {
       notificationsPageTo={ROUTES.patientNotifications}
       onMarkAllNotificationsRead={markAllNotificationsAsRead}
       onOpenNotification={markNotificationAsRead}
+      surfacePaddingMode="inner"
       {...(overrideName ? { overrideName } : {})}
     >
       <Outlet />

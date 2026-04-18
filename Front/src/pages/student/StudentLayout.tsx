@@ -76,6 +76,7 @@ export function StudentLayout() {
       notificationsPageTo={ROUTES.studentNotifications}
       onMarkAllNotificationsRead={markAllNotificationsAsRead}
       onOpenNotification={markNotificationAsRead}
+      surfacePaddingMode="inner"
       {...(overrideName ? { overrideName } : {})}
     >
       <Outlet />

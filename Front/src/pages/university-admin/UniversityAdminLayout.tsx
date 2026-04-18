@@ -54,6 +54,7 @@ export function UniversityAdminLayout() {
       avatarKind="logo"
       avatarSrc={currentInstitution.logoSrc}
       content={universityAdminContent.shell}
+      surfacePaddingMode="inner"
       {...(overrideName ? { overrideName } : {})}
     >
       <Outlet />
