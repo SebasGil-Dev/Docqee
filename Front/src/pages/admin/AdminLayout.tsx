@@ -30,7 +30,12 @@ export function AdminLayout() {
   }
 
   return (
-    <AdminShell mainScrollMode="section" mobileNavigationDensity="compact">
+    <AdminShell
+      contentBackgroundClassName="bg-transparent"
+      mainScrollMode="section"
+      mobileNavigationDensity="compact"
+      shellBackgroundClassName="app-surface-background"
+    >
       <Outlet />
     </AdminShell>
   );
