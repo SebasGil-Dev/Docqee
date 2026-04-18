@@ -16,6 +16,7 @@ import { TeachersModule } from './modules/teachers/teachers.module';
 import { CredentialsModule } from './modules/credentials/credentials.module';
 import { PatientPortalModule } from './modules/patient-portal/patient-portal.module';
 import { StudentPortalModule } from './modules/student-portal/student-portal.module';
+import { InstitutionalPartnershipsModule } from './modules/institutional-partnerships/institutional-partnerships.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { StudentPortalModule } from './modules/student-portal/student-portal.mod
     CredentialsModule,
     PatientPortalModule,
     StudentPortalModule,
+    InstitutionalPartnershipsModule,
   ],
 })
 export class AppModule {}

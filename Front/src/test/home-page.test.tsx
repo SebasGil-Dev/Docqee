@@ -61,6 +61,9 @@ describe('HomePage', () => {
     expect(
       screen.getByRole('heading', { level: 2, name: /universidades aliadas/i }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 2, name: /vincula tu universidad a docqee/i }),
+    ).toBeInTheDocument();
   });
 
   it('prepara los enlaces de crear cuenta hacia la ruta de registro', () => {

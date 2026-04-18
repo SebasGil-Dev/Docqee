@@ -27,13 +27,13 @@ export function UniversityPartnersSection({
 }: UniversityPartnersSectionProps) {
   return (
     <section
-      className="py-20 [scroll-margin-top:1.25rem] sm:[scroll-margin-top:0] sm:pt-24 sm:pb-16 lg:flex lg:min-h-[calc(100svh-5.25rem)] lg:items-center lg:py-[clamp(1.25rem,2.2svh,1.95rem)] xl:min-h-[calc(100svh-5.75rem)] xl:py-[clamp(1.5rem,2.45svh,2.2rem)] 2xl:min-h-[calc(100svh-6rem)] 2xl:py-[clamp(1.75rem,2.7svh,2.45rem)]"
+      className="scroll-mt-28 py-20 sm:scroll-mt-32 sm:pt-24 sm:pb-16 lg:flex lg:min-h-[calc(100svh-5.25rem)] lg:items-center lg:scroll-mt-20 lg:py-[clamp(1.25rem,2.2svh,1.95rem)] xl:min-h-[calc(100svh-5.75rem)] xl:py-[clamp(1.5rem,2.45svh,2.2rem)] 2xl:min-h-[calc(100svh-6rem)] 2xl:py-[clamp(1.75rem,2.7svh,2.45rem)]"
       id="universities"
     >
       <div className="landing-shell mx-auto w-full px-4 sm:px-6 lg:px-8 xl:px-10">
         <SectionHeading
           align="center"
-          description="Docqee cuenta con alianzas con diversas universidades, permitiéndote acceder a servicios odontológicos brindados por estudiantes en formación y profesionales calificados."
+          description="Docqee cuenta con alianzas institucionales orientadas a facilitar la conexión entre pacientes voluntarios y estudiantes de odontología en formación clínica, bajo acompañamiento académico y supervisión profesional."
           descriptionClassName="lg:text-[clamp(0.98rem,0.92vw,1.04rem)] lg:leading-7 xl:text-[clamp(1rem,0.96vw,1.08rem)]"
           title="Universidades aliadas"
           titleClassName="lg:text-[clamp(2rem,2.3vw,2.35rem)] xl:text-[clamp(2.15rem,2.45vw,2.65rem)]"

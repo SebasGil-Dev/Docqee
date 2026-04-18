@@ -5,6 +5,7 @@ import { useAuth } from '@/app/providers/AuthProvider';
 import { getLandingRouteForSession } from '@/lib/authRouting';
 import { HeroSection } from '@/components/landing/HeroSection';
 import { HowItWorksSection } from '@/components/landing/HowItWorksSection';
+import { InstitutionalAllianceSection } from '@/components/landing/InstitutionalAllianceSection';
 import { SiteFooter } from '@/components/landing/SiteFooter';
 import { SiteHeader } from '@/components/landing/SiteHeader';
 import { UniversityPartnersSection } from '@/components/landing/UniversityPartnersSection';
@@ -42,6 +43,7 @@ export function HomePage() {
         <HeroSection hero={landingContent.hero} />
         <HowItWorksSection steps={landingContent.steps} />
         <UniversityPartnersSection universities={landingContent.universities} />
+        <InstitutionalAllianceSection content={landingContent.institutionalAlliance} />
       </main>
       <SiteFooter footer={landingContent.footer} />
     </div>

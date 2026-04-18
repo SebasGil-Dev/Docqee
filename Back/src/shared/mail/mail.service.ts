@@ -7,12 +7,25 @@ export class MailService {
   private readonly logger = new Logger(MailService.name);
   private readonly client: BrevoClient;
   private readonly from: string;
+  private readonly institutionalPartnershipEmail: string;
 
   constructor(private readonly configService: ConfigService) {
     this.from = this.configService.get<string>('mail.from') ?? 'no-reply@docqee.com';
+    this.institutionalPartnershipEmail =
+      this.configService.get<string>('mail.institutionalPartnershipEmail') ??
+      'docqeelopcoy@gmail.com';
     this.client = new BrevoClient({
       apiKey: this.configService.get<string>('mail.brevoApiKey') ?? '',
     });
+  }
+
+  private escapeHtml(value: string) {
+    return value
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
   }
 
   async sendVerificationCode(to: string, code: string) {
@@ -307,6 +320,53 @@ export class MailService {
       this.logger.log(`Password reset code sent to ${to}`);
     } catch (error) {
       this.logger.error(`Failed to send password reset code to ${to}`, error);
+    }
+  }
+
+  async sendInstitutionalPartnershipRequest(input: {
+    additionalMessage: string | null;
+    authorizeDataProcessing: boolean;
+    city: string;
+    contactName: string;
+    contactRole: string;
+    institutionalEmail: string;
+    interestTypeLabel: string;
+    phone: string;
+    universityName: string;
+  }) {
+    const additionalMessage = input.additionalMessage ?? 'No registra mensaje adicional.';
+    const subject = 'Vinculaci\u00f3n de universidad con Docqee';
+    try {
+      await this.client.transactionalEmails.sendTransacEmail({
+        sender: { email: this.from },
+        subject,
+        to: [{ email: this.institutionalPartnershipEmail }],
+        htmlContent: `
+          <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1a1a2e;">
+            <h2 style="margin-bottom:24px;">Nueva solicitud de vinculaci&oacute;n institucional con Docqee</h2>
+            <p><strong>Nombre de la universidad:</strong><br />${this.escapeHtml(input.universityName)}</p>
+            <p><strong>Ciudad:</strong><br />${this.escapeHtml(input.city)}</p>
+            <p><strong>Nombre del contacto:</strong><br />${this.escapeHtml(input.contactName)}</p>
+            <p><strong>Cargo:</strong><br />${this.escapeHtml(input.contactRole)}</p>
+            <p><strong>Correo institucional:</strong><br />${this.escapeHtml(input.institutionalEmail)}</p>
+            <p><strong>Tel&eacute;fono:</strong><br />${this.escapeHtml(input.phone)}</p>
+            <p><strong>Tipo de inter&eacute;s:</strong><br />${this.escapeHtml(input.interestTypeLabel)}</p>
+            <p><strong>Mensaje adicional:</strong><br />${this.escapeHtml(additionalMessage)}</p>
+            <p><strong>Autorizaci&oacute;n de tratamiento de datos:</strong><br />${
+              input.authorizeDataProcessing ? 'S&iacute;' : 'No'
+            }</p>
+          </div>
+        `,
+      });
+      this.logger.log(
+        `Institutional partnership request email sent for ${input.universityName}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send institutional partnership request for ${input.universityName}`,
+        error,
+      );
+      throw error;
     }
   }
 }

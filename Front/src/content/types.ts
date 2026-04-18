@@ -41,6 +41,28 @@ export type UniversityItem = {
   supportText: string;
 };
 
+export type InstitutionalAllianceInterestValue =
+  | 'VINCULAR_ESTUDIANTES_ODONTOLOGIA'
+  | 'REALIZAR_CONVENIO_INSTITUCIONAL'
+  | 'RECIBIR_MAS_INFORMACION'
+  | 'OTRO';
+
+export type InstitutionalAllianceInterestOption = {
+  label: string;
+  value: InstitutionalAllianceInterestValue;
+};
+
+export type InstitutionalAllianceContent = {
+  benefits: string[];
+  description: string;
+  formDescription: string;
+  formTitle: string;
+  interestOptions: InstitutionalAllianceInterestOption[];
+  leadQuestion: string;
+  submitLabel: string;
+  title: string;
+};
+
 export type LandingContent = {
   footer: {
     blurb: string;
@@ -63,6 +85,7 @@ export type LandingContent = {
     imagePath: string;
     title: string;
   };
+  institutionalAlliance: InstitutionalAllianceContent;
   navigation: {
     items: NavigationItem[];
     login: CtaTarget;
