@@ -56,7 +56,7 @@ export function HeroSection({ hero }: HeroSectionProps) {
               <img
                 {...heroImagePriorityProps}
                 alt={hero.image.alt}
-                className="aspect-[9/10] w-full rounded-[1.45rem] object-cover lg:max-h-[min(25rem,46svh)] xl:max-h-[min(30rem,52svh)] 2xl:max-h-[min(34rem,56svh)]"
+                className="w-full rounded-[1.45rem] object-contain lg:mx-auto lg:w-auto lg:max-w-full lg:max-h-[min(27rem,48svh)] xl:max-h-[min(31.5rem,55svh)] 2xl:max-h-[min(35.5rem,59svh)]"
                 decoding="async"
                 height={hero.image.height}
                 loading="eager"
