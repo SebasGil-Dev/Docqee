@@ -110,3 +110,14 @@ export function updatePatientPortalAppointmentStatus(
     method: 'PATCH',
   });
 }
+
+export function submitPatientPortalAppointmentReview(
+  appointmentId: string,
+  rating: number,
+  comment?: string,
+) {
+  return apiRequest<PatientAppointment>(`/patient-portal/appointments/${appointmentId}/review`, {
+    body: { comment, rating },
+    method: 'POST',
+  });
+}

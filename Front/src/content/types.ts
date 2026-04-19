@@ -1242,6 +1242,7 @@ export type PatientAppointment = {
   createdAt: string;
   endAt: string;
   id: string;
+  myRating: number | null;
   respondedAt: string | null;
   siteName: string;
   startAt: string;

@@ -6,12 +6,14 @@ import {
   MapPin,
   Search,
   SlidersHorizontal,
+  Star,
   XCircle,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
+import { PatientRatingModal } from '@/components/patient/PatientRatingModal';
 import { Seo } from '@/components/ui/Seo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { patientContent } from '@/content/patientContent';
@@ -77,12 +79,16 @@ function formatDateTimeRange(startAt: string, endAt: string) {
   return `${formatter.format(startDate)} - ${timeFormatter.format(endDate)}`;
 }
 
+type RatingTarget = { appointmentId: string; studentName: string };
+
 export function PatientAppointmentsPage() {
-  const { appointments, errorMessage, isLoading, updateAppointmentStatus } =
+  const { appointments, errorMessage, isLoading, submitAppointmentReview, updateAppointmentStatus } =
     usePatientModuleStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<AppointmentStatusFilter>('all');
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
+  const [ratingTarget, setRatingTarget] = useState<RatingTarget | null>(null);
+  const [isSubmittingRating, setIsSubmittingRating] = useState(false);
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const proposalCount = useMemo(
@@ -139,6 +145,15 @@ export function PatientAppointmentsPage() {
   ) => {
     void (async () => {
       await updateAppointmentStatus(appointmentId, status);
+    })();
+  };
+
+  const handleSubmitRating = (appointmentId: string, rating: number, comment?: string) => {
+    void (async () => {
+      setIsSubmittingRating(true);
+      const success = await submitAppointmentReview(appointmentId, rating, comment);
+      setIsSubmittingRating(false);
+      if (success) setRatingTarget(null);
     })();
   };
 
@@ -380,6 +395,39 @@ export function PatientAppointmentsPage() {
                             <span>{patientContent.appointmentsPage.actionLabels.cancel}</span>
                           </button>
                         </div>
+                      ) : appointment.status === 'FINALIZADA' ? (
+                        <div className="flex justify-end">
+                          {appointment.myRating !== null ? (
+                            <div className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1.5 ring-1 ring-amber-200">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <Star
+                                  key={star}
+                                  aria-hidden="true"
+                                  className={classNames(
+                                    'h-3 w-3',
+                                    star <= appointment.myRating!
+                                      ? 'fill-amber-400 text-amber-400'
+                                      : 'fill-amber-100 text-amber-200',
+                                  )}
+                                />
+                              ))}
+                            </div>
+                          ) : (
+                            <button
+                              className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 ring-1 ring-amber-200 transition duration-200 hover:bg-amber-100"
+                              type="button"
+                              onClick={() =>
+                                setRatingTarget({
+                                  appointmentId: appointment.id,
+                                  studentName: appointment.studentName,
+                                })
+                              }
+                            >
+                              <Star aria-hidden="true" className="h-3.5 w-3.5" />
+                              <span>Valorar</span>
+                            </button>
+                          )}
+                        </div>
                       ) : (
                         <span className="text-xs font-medium text-ink-muted">Sin acciones</span>
                       )}
@@ -397,6 +445,15 @@ export function PatientAppointmentsPage() {
           </div>
         )}
       </AdminPanelCard>
+      {ratingTarget ? (
+        <PatientRatingModal
+          appointmentId={ratingTarget.appointmentId}
+          isSubmitting={isSubmittingRating}
+          studentName={ratingTarget.studentName}
+          onClose={() => setRatingTarget(null)}
+          onSubmit={handleSubmitRating}
+        />
+      ) : null}
     </div>
   );
 }

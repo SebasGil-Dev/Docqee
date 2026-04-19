@@ -17,6 +17,7 @@ import { CurrentUser } from '@/shared/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@/shared/guards/jwt-auth.guard';
 import type { UploadImageFile } from '@/shared/storage/cloudinary.service';
 import type { RequestUser } from '@/shared/types/request-user.type';
+import { CreatePatientAppointmentReviewDto } from '../application/dto/create-patient-appointment-review.dto';
 import { CreatePatientRequestDto } from '../application/dto/create-patient-request.dto';
 import { PatientStudentDirectoryQueryDto } from '../application/dto/patient-student-directory-query.dto';
 import { UpdatePatientAppointmentStatusDto } from '../application/dto/update-patient-appointment-status.dto';
@@ -77,5 +78,14 @@ export class PatientPortalController {
     @Body() body: UpdatePatientAppointmentStatusDto,
   ) {
     return this.patientPortalService.updateAppointmentStatus(user, appointmentId, body);
+  }
+
+  @Post('appointments/:appointmentId/review')
+  createAppointmentReview(
+    @CurrentUser() user: RequestUser,
+    @Param('appointmentId', ParseIntPipe) appointmentId: number,
+    @Body() body: CreatePatientAppointmentReviewDto,
+  ) {
+    return this.patientPortalService.createAppointmentReview(user, appointmentId, body);
   }
 }

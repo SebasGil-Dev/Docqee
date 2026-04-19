@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { CloudinaryService } from '@/shared/storage/cloudinary.service';
 import type { UploadImageFile } from '@/shared/storage/cloudinary.service';
 import type { RequestUser } from '@/shared/types/request-user.type';
+import { CreatePatientAppointmentReviewDto } from './application/dto/create-patient-appointment-review.dto';
 import { UpdatePatientAppointmentStatusDto } from './application/dto/update-patient-appointment-status.dto';
 import { UpdatePatientProfileDto } from './application/dto/update-patient-profile.dto';
 import { UpdatePatientRequestStatusDto } from './application/dto/update-patient-request-status.dto';
@@ -58,6 +59,10 @@ export class PatientPortalService {
 
   updateAppointmentStatus(user: RequestUser, appointmentId: number, payload: UpdatePatientAppointmentStatusDto) {
     return this.patientPortalRepository.updateAppointmentStatus(user.id, appointmentId, payload);
+  }
+
+  createAppointmentReview(user: RequestUser, appointmentId: number, payload: CreatePatientAppointmentReviewDto) {
+    return this.patientPortalRepository.createAppointmentReview(user.id, appointmentId, payload);
   }
 
   getConversation(user: RequestUser, conversationId: number) {

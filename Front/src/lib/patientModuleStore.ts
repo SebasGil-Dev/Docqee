@@ -21,6 +21,7 @@ import {
   getPatientPortalDashboard,
   getPatientPortalStudents,
   sendPatientPortalConversationMessage,
+  submitPatientPortalAppointmentReview,
   type PatientStudentDirectorySearchParams,
   updatePatientPortalAppointmentStatus,
   updatePatientPortalProfile,
@@ -41,6 +42,11 @@ type PatientModuleActions = {
   sendConversationMessage: (
     conversationId: string,
     content: string,
+  ) => Promise<boolean>;
+  submitAppointmentReview: (
+    appointmentId: string,
+    rating: number,
+    comment?: string,
   ) => Promise<boolean>;
   updateAppointmentStatus: (
     appointmentId: string,
@@ -476,6 +482,7 @@ function createMockState(): PatientStoreState {
       createdAt: '2026-04-08T10:00:00.000Z',
       endAt: '2026-04-09T11:30:00.000Z',
       id: 'patient-appointment-1',
+      myRating: null,
       respondedAt: null,
       siteName: 'Sede Escuela Clinica',
       startAt: '2026-04-09T10:30:00.000Z',
@@ -491,6 +498,7 @@ function createMockState(): PatientStoreState {
       createdAt: '2026-04-10T09:00:00.000Z',
       endAt: '2026-04-12T15:00:00.000Z',
       id: 'patient-appointment-2',
+      myRating: null,
       respondedAt: '2026-04-11T08:00:00.000Z',
       siteName: 'Sede Norte',
       startAt: '2026-04-12T14:00:00.000Z',
@@ -506,6 +514,7 @@ function createMockState(): PatientStoreState {
       createdAt: '2026-03-20T08:00:00.000Z',
       endAt: '2026-03-25T09:30:00.000Z',
       id: 'patient-appointment-3',
+      myRating: null,
       respondedAt: '2026-03-21T07:00:00.000Z',
       siteName: 'Sede Central',
       startAt: '2026-03-25T08:30:00.000Z',
@@ -1816,6 +1825,44 @@ async function updateAppointmentStatus(
   }
 }
 
+async function submitAppointmentReview(
+  appointmentId: string,
+  rating: number,
+  comment?: string,
+) {
+  patchState({ errorMessage: null, isLoading: true });
+
+  try {
+    const appointment = await submitPatientPortalAppointmentReview(
+      appointmentId,
+      rating,
+      comment,
+    );
+
+    setRuntimeState(
+      {
+        ...state,
+        appointments: state.appointments.map((current) =>
+          current.id === appointment.id ? appointment : current,
+        ),
+        errorMessage: null,
+        isLoading: false,
+        isReady: true,
+        shouldRefresh: false,
+      },
+      { persistCache: true },
+    );
+
+    return true;
+  } catch (error) {
+    patchState({
+      errorMessage: getErrorMessage(error, 'No pudimos guardar tu valoracion.'),
+      isLoading: false,
+    });
+    return false;
+  }
+}
+
 export function resetPatientModuleState() {
   if (!IS_TEST_MODE) {
     clearPersistedPatientModuleCache();
@@ -1871,6 +1918,7 @@ export function usePatientModuleStore(
     refreshConversation,
     searchStudents,
     sendConversationMessage,
+    submitAppointmentReview,
     updateAppointmentStatus,
     updateProfile,
     updateRequestStatus,

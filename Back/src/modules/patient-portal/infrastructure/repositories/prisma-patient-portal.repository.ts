@@ -9,6 +9,7 @@ import { Prisma } from "@prisma/client";
 import { PrismaService } from "@/shared/database/prisma.service";
 import { MailService } from "@/shared/mail/mail.service";
 import { normalizeText } from "@/shared/utils/front-format.util";
+import { CreatePatientAppointmentReviewDto } from "../../application/dto/create-patient-appointment-review.dto";
 import { CreatePatientRequestDto } from "../../application/dto/create-patient-request.dto";
 import { PatientAppointmentDto } from "../../application/dto/patient-appointment.dto";
 import { PatientAppointmentReviewDto } from "../../application/dto/patient-appointment-review.dto";
@@ -661,6 +662,11 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
                 tipo_cita: true,
                 sede: { include: { localidad: { include: { ciudad: true } } } },
                 docente_universidad: { include: { docente: true } },
+                valoracion: {
+                  where: { id_cuenta_emisor: patientAccountId },
+                  select: { calificacion: true },
+                  take: 1,
+                },
               },
             },
           },
@@ -715,6 +721,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         createdAt: c.fecha_creacion.toISOString(),
         endAt: c.fecha_hora_fin.toISOString(),
         id: String(c.id_cita),
+        myRating: c.valoracion[0]?.calificacion ?? null,
         respondedAt: c.respondida_at?.toISOString() ?? null,
         siteName: c.sede.nombre,
         startAt: c.fecha_hora_inicio.toISOString(),
@@ -1097,6 +1104,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       createdAt: updated.fecha_creacion.toISOString(),
       endAt: updated.fecha_hora_fin.toISOString(),
       id: String(updated.id_cita),
+      myRating: null,
       respondedAt: updated.respondida_at?.toISOString() ?? null,
       siteName: updated.sede.nombre,
       startAt: updated.fecha_hora_inicio.toISOString(),
@@ -1104,6 +1112,71 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       studentName: `${updated.solicitud.cuenta_estudiante.persona.nombres} ${updated.solicitud.cuenta_estudiante.persona.apellidos}`,
       teacherName: `${updated.docente_universidad.docente.nombres} ${updated.docente_universidad.docente.apellidos}`,
       universityName: updated.solicitud.cuenta_estudiante.universidad.nombre,
+    };
+  }
+
+  async createAppointmentReview(
+    patientAccountId: number,
+    appointmentId: number,
+    payload: CreatePatientAppointmentReviewDto,
+  ): Promise<PatientAppointmentDto> {
+    const cita = await this.prisma.cita.findFirst({
+      where: {
+        id_cita: appointmentId,
+        solicitud: { id_cuenta_paciente: patientAccountId },
+        estado: 'FINALIZADA',
+      },
+      include: {
+        tipo_cita: true,
+        sede: { include: { localidad: { include: { ciudad: true } } } },
+        docente_universidad: { include: { docente: true } },
+        solicitud: {
+          include: {
+            cuenta_estudiante: { include: { persona: true, universidad: true } },
+          },
+        },
+        valoracion: {
+          where: { id_cuenta_emisor: patientAccountId },
+          take: 1,
+        },
+      },
+    });
+
+    if (!cita) {
+      throw new NotFoundException('La cita no existe, no esta finalizada o no te pertenece.');
+    }
+
+    if (cita.valoracion.length > 0) {
+      throw new ConflictException('Ya has valorado esta cita.');
+    }
+
+    const comment = payload.comment?.trim() || null;
+
+    await this.prisma.valoracion.create({
+      data: {
+        id_cita: appointmentId,
+        id_cuenta_emisor: patientAccountId,
+        id_cuenta_receptor: cita.solicitud.id_cuenta_estudiante,
+        calificacion: payload.rating,
+        comentario: comment,
+      },
+    });
+
+    return {
+      additionalInfo: cita.informacion_adicional ?? null,
+      appointmentType: cita.tipo_cita.nombre,
+      city: cita.sede.localidad.ciudad.nombre,
+      createdAt: cita.fecha_creacion.toISOString(),
+      endAt: cita.fecha_hora_fin.toISOString(),
+      id: String(cita.id_cita),
+      myRating: payload.rating,
+      respondedAt: cita.respondida_at?.toISOString() ?? null,
+      siteName: cita.sede.nombre,
+      startAt: cita.fecha_hora_inicio.toISOString(),
+      status: cita.estado,
+      studentName: `${cita.solicitud.cuenta_estudiante.persona.nombres} ${cita.solicitud.cuenta_estudiante.persona.apellidos}`,
+      teacherName: `${cita.docente_universidad.docente.nombres} ${cita.docente_universidad.docente.apellidos}`,
+      universityName: cita.solicitud.cuenta_estudiante.universidad.nombre,
     };
   }
 
