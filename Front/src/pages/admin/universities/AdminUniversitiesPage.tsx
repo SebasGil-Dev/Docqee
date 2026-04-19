@@ -55,6 +55,10 @@ function buildCompactAdministratorLabel(university: AdminUniversity) {
   );
 }
 
+function buildLocationLabel(university: AdminUniversity) {
+  return `${formatDisplayName(university.mainCity)} \u00B7 ${formatDisplayName(university.mainLocality)}`;
+}
+
 function getLocationState(locationState: unknown): UniversitiesLocationState {
   if (!locationState || typeof locationState !== 'object') {
     return null;
@@ -371,19 +375,19 @@ export function AdminUniversitiesPage() {
               <table className="w-full table-fixed">
                 <thead className="sticky top-0 z-10 bg-slate-100 text-left">
                   <tr className="text-[0.54rem] font-bold uppercase tracking-[0.035em] text-ink-muted sm:text-[0.68rem] sm:tracking-[0.18em]">
-                    <th className="w-[40%] px-2 py-2.25 sm:px-5 sm:py-3 md:w-auto">
+                    <th className="w-[40%] px-2 py-2.25 sm:px-5 sm:py-3 md:w-[24%]">
                       Universidad
                     </th>
-                    <th className="hidden px-4 py-3 md:table-cell">
+                    <th className="hidden px-4 py-3 md:table-cell md:w-[21%]">
                       Localidad
                     </th>
-                    <th className="w-[32%] px-1.5 py-2.25 sm:px-4 sm:py-3 md:w-auto">
+                    <th className="w-[32%] px-1.5 py-2.25 sm:px-4 sm:py-3 md:w-[24%]">
                       Administrador
                     </th>
-                    <th className="w-[15%] px-0.5 py-2.25 text-center sm:px-4 sm:py-3 md:w-auto md:text-left">
+                    <th className="w-[15%] px-0.5 py-2.25 text-center sm:px-4 sm:py-3 md:w-[15.5%] md:text-left">
                       Estado
                     </th>
-                    <th className="w-[13%] px-0.5 py-2.25 text-center sm:px-5 sm:py-3 md:w-auto md:text-right">
+                    <th className="w-[13%] px-0.5 py-2.25 text-center sm:px-5 sm:py-3 md:w-[15.5%] md:text-right">
                       <span className="sm:hidden">Acción</span>
                       <span className="hidden sm:inline">Acciones</span>
                     </th>
@@ -395,6 +399,7 @@ export function AdminUniversitiesPage() {
                     const isLast = index === filteredUniversities.length - 1;
                     const isUpdatingStatus =
                       pendingStatusUniversityIds.includes(university.id);
+                    const locationLabel = buildLocationLabel(university);
 
                     return (
                       <tr key={university.id} className="align-top">
@@ -425,12 +430,12 @@ export function AdminUniversitiesPage() {
                             isLast ? 'pb-3 sm:pb-4' : 'pb-2.5 sm:pb-3.5',
                           )}
                         >
-                          <div className="space-y-1">
-                            <p className="text-sm font-semibold text-ink">
-                              {university.mainCity}
-                            </p>
-                            <p className="text-xs text-ink-muted sm:text-[0.82rem]">
-                              {university.mainLocality}
+                          <div className="min-w-0">
+                            <p
+                              className="truncate text-sm font-semibold text-ink"
+                              title={locationLabel}
+                            >
+                              {locationLabel}
                             </p>
                           </div>
                         </td>
