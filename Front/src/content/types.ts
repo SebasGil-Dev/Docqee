@@ -981,6 +981,7 @@ export type StudentSupervisor = {
 };
 
 export type StudentAppointmentReview = {
+  appointmentId: string;
   appointmentLabel: string;
   comment: string | null;
   createdAt: string;
