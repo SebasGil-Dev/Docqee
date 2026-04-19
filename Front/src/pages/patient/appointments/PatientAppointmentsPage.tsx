@@ -126,7 +126,7 @@ export function PatientAppointmentsPage() {
     }
 
     return [...filtered].sort(
-      (a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime(),
+      (a, b) => new Date(b.startAt).getTime() - new Date(a.startAt).getTime(),
     );
   }, [appointments, normalizedSearch, sortOrder, statusFilter]);
 
