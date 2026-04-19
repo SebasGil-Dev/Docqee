@@ -52,6 +52,14 @@ const fieldOrder: RegisterUniversityFormField[] = [
   'adminPhone',
 ];
 
+const formFieldWrapperClassName = 'space-y-1';
+const formFieldLabelClassName =
+  'block text-[0.82rem] font-semibold text-ink sm:text-sm';
+const formFieldIconClassName =
+  'pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ghost';
+const formFieldInputClassName =
+  'w-full rounded-2xl border bg-surface py-2.5 pl-10 pr-3.5 text-sm leading-tight text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:py-3';
+
 function SelectField({
   disabled = false,
   error,
@@ -84,14 +92,14 @@ function SelectField({
   const Icon = icon;
 
   return (
-    <div className="space-y-1.5">
-      <label className="block text-sm font-semibold text-ink" htmlFor={id}>
+    <div className={formFieldWrapperClassName}>
+      <label className={formFieldLabelClassName} htmlFor={id}>
         {label}
       </label>
       <div className="relative">
         <Icon
           aria-hidden="true"
-          className="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-ghost"
+          className={formFieldIconClassName}
         />
         <select
           aria-describedby={
@@ -99,7 +107,7 @@ function SelectField({
           }
           aria-invalid={Boolean(error)}
           className={classNames(
-            'w-full rounded-2xl border bg-surface py-3 pl-11 pr-4 text-sm text-ink transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+            formFieldInputClassName,
             disabled ? 'cursor-not-allowed text-ghost' : '',
             error
               ? 'border-rose-300 focus-visible:border-rose-400 focus-visible:ring-rose-200/70'
@@ -473,7 +481,7 @@ export function AdminRegisterUniversityPage({
       : undefined;
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-2.5 overflow-hidden sm:gap-6">
+    <div className="flex h-full min-h-0 flex-col gap-2.5 overflow-hidden sm:gap-4">
       <Seo
         description={adminContent.registerPage.meta.description}
         noIndex
@@ -482,7 +490,7 @@ export function AdminRegisterUniversityPage({
       <AdminPageHeader
         action={
           <Link
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-surface-card px-4 py-3 text-sm font-semibold text-primary shadow-ambient transition duration-300 hover:bg-surface-low focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-4 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
             to={ROUTES.adminUniversities}
           >
             <ArrowLeft aria-hidden="true" className="h-4.5 w-4.5" />
@@ -490,14 +498,15 @@ export function AdminRegisterUniversityPage({
           </Link>
         }
         actionClassName="mx-auto sm:absolute sm:right-0 sm:top-1/2 sm:-translate-y-1/2"
-        className="relative items-center gap-3 sm:min-h-[4rem] sm:justify-center"
+        className="relative items-center gap-2.5 sm:min-h-[3.5rem] sm:justify-center"
         description={adminContent.registerPage.description}
-        titleClassName="mx-auto whitespace-nowrap text-center text-[clamp(1.25rem,6vw,1.85rem)] leading-none sm:mx-0 sm:text-left sm:text-[2.2rem]"
+        headingAlign="center"
+        titleClassName="mx-auto whitespace-nowrap text-center text-[clamp(1.25rem,6vw,1.85rem)] leading-none sm:text-center sm:text-[2.1rem]"
         title={adminContent.registerPage.title}
       />
       {errorMessage ? (
         <div
-          className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700"
+          className="rounded-2xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-sm font-medium text-rose-700"
           role="alert"
         >
           {errorMessage}
@@ -506,24 +515,25 @@ export function AdminRegisterUniversityPage({
       <AdminPanelCard
         className="flex min-h-0 flex-1 flex-col"
         panelClassName="bg-slate-50"
+        shellPaddingClassName="p-[0.18rem] sm:p-[0.25rem]"
       >
         <form
           className="flex min-h-0 flex-1 flex-col overflow-hidden"
           noValidate
           onSubmit={handleSubmit}
         >
-          <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-3 sm:px-7 sm:py-6">
-            <div className="space-y-5 pb-4 sm:space-y-8 sm:pb-6">
-              <section className="space-y-5">
+          <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-2.5 sm:px-5 sm:py-4 lg:px-6">
+            <div className="space-y-4 pb-3 sm:space-y-5 sm:pb-4">
+              <section className="space-y-4">
                 <div>
-                  <h3 className="text-center text-sm font-bold uppercase tracking-[0.22em] text-primary sm:text-left">
+                  <h3 className="text-center text-[0.72rem] font-bold uppercase tracking-[0.2em] text-primary sm:text-left">
                     {adminContent.registerPage.institutionSectionTitle}
                   </h3>
                 </div>
-                <div className="grid gap-5 lg:grid-cols-2">
-                  <div className="space-y-1.5">
+                <div className="grid gap-4 lg:grid-cols-3">
+                  <div className={formFieldWrapperClassName}>
                     <label
-                      className="block text-sm font-semibold text-ink"
+                      className={formFieldLabelClassName}
                       htmlFor="register-university-name"
                     >
                       {adminContent.registerPage.fields.name.label}
@@ -531,7 +541,7 @@ export function AdminRegisterUniversityPage({
                     <div className="relative">
                       <Building2
                         aria-hidden="true"
-                        className="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-ghost"
+                        className={formFieldIconClassName}
                       />
                       <input
                         ref={nameRef}
@@ -542,7 +552,7 @@ export function AdminRegisterUniversityPage({
                         }
                         aria-invalid={Boolean(errors.name)}
                         className={classNames(
-                          'w-full rounded-2xl border bg-surface py-3 pl-11 pr-4 text-sm text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                          formFieldInputClassName,
                           errors.name
                             ? 'border-rose-300 focus-visible:border-rose-400 focus-visible:ring-rose-200/70'
                             : 'border-slate-200 focus-visible:border-primary',
@@ -610,16 +620,16 @@ export function AdminRegisterUniversityPage({
                   />
                 </div>
               </section>
-              <section className="space-y-5 border-t border-slate-200/80 pt-7">
+              <section className="space-y-4 border-t border-slate-200/80 pt-5">
                 <div>
-                  <h3 className="text-center text-sm font-bold uppercase tracking-[0.22em] text-primary sm:text-left">
+                  <h3 className="text-center text-[0.72rem] font-bold uppercase tracking-[0.2em] text-primary sm:text-left">
                     {adminContent.registerPage.administratorSectionTitle}
                   </h3>
                 </div>
-                <div className="grid gap-5 lg:grid-cols-2">
-                  <div className="space-y-1.5">
+                <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
+                  <div className={formFieldWrapperClassName}>
                     <label
-                      className="block text-sm font-semibold text-ink"
+                      className={formFieldLabelClassName}
                       htmlFor="register-university-admin-first-name"
                     >
                       {adminContent.registerPage.fields.adminFirstName.label}
@@ -627,7 +637,7 @@ export function AdminRegisterUniversityPage({
                     <div className="relative">
                       <UserRound
                         aria-hidden="true"
-                        className="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-ghost"
+                        className={formFieldIconClassName}
                       />
                       <input
                         ref={adminFirstNameRef}
@@ -638,7 +648,7 @@ export function AdminRegisterUniversityPage({
                         }
                         aria-invalid={Boolean(errors.adminFirstName)}
                         className={classNames(
-                          'w-full rounded-2xl border bg-surface py-3 pl-11 pr-4 text-sm text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                          formFieldInputClassName,
                           errors.adminFirstName
                             ? 'border-rose-300 focus-visible:border-rose-400 focus-visible:ring-rose-200/70'
                             : 'border-slate-200 focus-visible:border-primary',
@@ -666,9 +676,9 @@ export function AdminRegisterUniversityPage({
                       </p>
                     ) : null}
                   </div>
-                  <div className="space-y-1.5">
+                  <div className={formFieldWrapperClassName}>
                     <label
-                      className="block text-sm font-semibold text-ink"
+                      className={formFieldLabelClassName}
                       htmlFor="register-university-admin-last-name"
                     >
                       {adminContent.registerPage.fields.adminLastName.label}
@@ -676,7 +686,7 @@ export function AdminRegisterUniversityPage({
                     <div className="relative">
                       <UserRound
                         aria-hidden="true"
-                        className="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-ghost"
+                        className={formFieldIconClassName}
                       />
                       <input
                         ref={adminLastNameRef}
@@ -687,7 +697,7 @@ export function AdminRegisterUniversityPage({
                         }
                         aria-invalid={Boolean(errors.adminLastName)}
                         className={classNames(
-                          'w-full rounded-2xl border bg-surface py-3 pl-11 pr-4 text-sm text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                          formFieldInputClassName,
                           errors.adminLastName
                             ? 'border-rose-300 focus-visible:border-rose-400 focus-visible:ring-rose-200/70'
                             : 'border-slate-200 focus-visible:border-primary',
@@ -715,9 +725,9 @@ export function AdminRegisterUniversityPage({
                       </p>
                     ) : null}
                   </div>
-                  <div className="space-y-1.5">
+                  <div className={classNames(formFieldWrapperClassName, 'xl:col-span-2')}>
                     <label
-                      className="block text-sm font-semibold text-ink"
+                      className={formFieldLabelClassName}
                       htmlFor="register-university-admin-email"
                     >
                       {adminContent.registerPage.fields.adminEmail.label}
@@ -725,7 +735,7 @@ export function AdminRegisterUniversityPage({
                     <div className="relative">
                       <Mail
                         aria-hidden="true"
-                        className="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-ghost"
+                        className={formFieldIconClassName}
                       />
                       <input
                         ref={adminEmailRef}
@@ -736,7 +746,7 @@ export function AdminRegisterUniversityPage({
                         }
                         aria-invalid={Boolean(errors.adminEmail)}
                         className={classNames(
-                          'w-full rounded-2xl border bg-surface py-3 pl-11 pr-4 text-sm text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                          formFieldInputClassName,
                           errors.adminEmail
                             ? 'border-rose-300 focus-visible:border-rose-400 focus-visible:ring-rose-200/70'
                             : 'border-slate-200 focus-visible:border-primary',
@@ -764,9 +774,9 @@ export function AdminRegisterUniversityPage({
                       </p>
                     ) : null}
                   </div>
-                  <div className="space-y-1.5">
+                  <div className={formFieldWrapperClassName}>
                     <label
-                      className="block text-sm font-semibold text-ink"
+                      className={formFieldLabelClassName}
                       htmlFor="register-university-admin-phone"
                     >
                       {adminContent.registerPage.fields.adminPhone.label}
@@ -774,12 +784,15 @@ export function AdminRegisterUniversityPage({
                     <div className="relative">
                       <Phone
                         aria-hidden="true"
-                        className="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-ghost"
+                        className={formFieldIconClassName}
                       />
                       <input
                         ref={adminPhoneRef}
                         aria-invalid={Boolean(errors.adminPhone)}
-                        className="w-full rounded-2xl border border-slate-200 bg-surface py-3 pl-11 pr-4 text-sm text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                        className={classNames(
+                          formFieldInputClassName,
+                          'border-slate-200 focus-visible:border-primary',
+                        )}
                         id="register-university-admin-phone"
                         name="adminPhone"
                         placeholder={
@@ -797,9 +810,9 @@ export function AdminRegisterUniversityPage({
                   </div>
                 </div>
               </section>
-              <div className="flex justify-center border-t border-slate-200/80 pt-6">
+              <div className="flex justify-center border-t border-slate-200/80 pt-4">
                 <button
-                  className="inline-flex items-center justify-center rounded-2xl bg-brand-gradient px-5 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-70"
+                  className="inline-flex items-center justify-center rounded-2xl bg-brand-gradient px-5 py-2.75 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-70"
                   disabled={isSubmitting || isLoading}
                   type="submit"
                 >
