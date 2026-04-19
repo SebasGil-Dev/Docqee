@@ -22,6 +22,7 @@ import { classNames } from '@/lib/classNames';
 import { usePatientModuleStore } from '@/lib/patientModuleStore';
 
 type AppointmentStatusFilter = PatientAppointmentStatus | 'all';
+type AppointmentSortOrder = 'arrival' | 'proximity';
 
 const appointmentStatusOptions: Array<{ label: string; value: AppointmentStatusFilter }> = [
   { label: 'Todas', value: 'all' },
@@ -86,6 +87,7 @@ export function PatientAppointmentsPage() {
     usePatientModuleStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<AppointmentStatusFilter>('all');
+  const [sortOrder, setSortOrder] = useState<AppointmentSortOrder>('arrival');
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const [ratingTarget, setRatingTarget] = useState<RatingTarget | null>(null);
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
@@ -99,19 +101,34 @@ export function PatientAppointmentsPage() {
     () => appointments.filter((appointment) => appointment.status === 'ACEPTADA').length,
     [appointments],
   );
-  const filteredAppointments = useMemo(
-    () =>
-      appointments.filter((appointment) => {
-        const matchesSearch =
-          appointment.studentName.toLowerCase().includes(normalizedSearch) ||
-          appointment.universityName.toLowerCase().includes(normalizedSearch) ||
-          appointment.siteName.toLowerCase().includes(normalizedSearch) ||
-          appointment.appointmentType.toLowerCase().includes(normalizedSearch);
+  const filteredAppointments = useMemo(() => {
+    const filtered = appointments.filter((appointment) => {
+      const matchesSearch =
+        appointment.studentName.toLowerCase().includes(normalizedSearch) ||
+        appointment.universityName.toLowerCase().includes(normalizedSearch) ||
+        appointment.siteName.toLowerCase().includes(normalizedSearch) ||
+        appointment.appointmentType.toLowerCase().includes(normalizedSearch);
 
-        return matchesSearch && (statusFilter === 'all' || appointment.status === statusFilter);
-      }),
-    [appointments, normalizedSearch, statusFilter],
-  );
+      return matchesSearch && (statusFilter === 'all' || appointment.status === statusFilter);
+    });
+
+    if (sortOrder === 'proximity') {
+      const now = Date.now();
+      return [...filtered].sort((a, b) => {
+        const aTime = new Date(a.startAt).getTime();
+        const bTime = new Date(b.startAt).getTime();
+        const aFuture = aTime >= now;
+        const bFuture = bTime >= now;
+        if (aFuture && bFuture) return aTime - bTime;
+        if (!aFuture && !bFuture) return bTime - aTime;
+        return aFuture ? -1 : 1;
+      });
+    }
+
+    return [...filtered].sort(
+      (a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime(),
+    );
+  }, [appointments, normalizedSearch, sortOrder, statusFilter]);
 
   useEffect(() => {
     if (!isStatusMenuOpen) {
@@ -246,15 +263,15 @@ export function PatientAppointmentsPage() {
                 }
                 className={classNames(
                   'relative inline-flex h-11 w-11 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
-                  statusFilter === 'all'
-                    ? 'border-slate-200/90 hover:border-primary/30 hover:bg-white'
-                    : 'border-primary/25 bg-primary/[0.08] text-primary hover:bg-primary/[0.12]',
+                  statusFilter !== 'all' || sortOrder !== 'arrival'
+                    ? 'border-primary/25 bg-primary/[0.08] text-primary hover:bg-primary/[0.12]'
+                    : 'border-slate-200/90 hover:border-primary/30 hover:bg-white',
                 )}
                 type="button"
                 onClick={() => setIsStatusMenuOpen((currentValue) => !currentValue)}
               >
                 <SlidersHorizontal aria-hidden="true" className="h-[1.05rem] w-[1.05rem]" />
-                {statusFilter !== 'all' ? (
+                {statusFilter !== 'all' || sortOrder !== 'arrival' ? (
                   <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary ring-2 ring-white" />
                 ) : null}
               </button>
@@ -287,6 +304,47 @@ export function PatientAppointmentsPage() {
                           type="button"
                           onClick={() => {
                             setStatusFilter(option.value);
+                            setIsStatusMenuOpen(false);
+                          }}
+                        >
+                          <span>{option.label}</span>
+                          <span
+                            className={classNames(
+                              'inline-flex h-5 w-5 items-center justify-center rounded-full',
+                              isSelected ? 'bg-white/18 text-white' : 'bg-white text-slate-300',
+                            )}
+                          >
+                            <Check aria-hidden="true" className="h-3.5 w-3.5" />
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-2 border-t border-slate-100 px-2.5 pb-1 pt-2.5">
+                    <p className="text-[0.7rem] font-bold uppercase tracking-[0.24em] text-primary/75">
+                      Ordenar por
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    {([
+                      { label: 'Orden de llegada', value: 'arrival' as AppointmentSortOrder },
+                      { label: 'Proximas primero', value: 'proximity' as AppointmentSortOrder },
+                    ]).map((option) => {
+                      const isSelected = sortOrder === option.value;
+                      return (
+                        <button
+                          key={option.value}
+                          aria-checked={isSelected}
+                          className={classNames(
+                            'flex w-full items-center justify-between rounded-[1rem] px-3 py-2.5 text-left text-sm font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                            isSelected
+                              ? 'bg-primary text-white shadow-[0_14px_30px_-20px_rgba(22,78,99,0.9)]'
+                              : 'bg-slate-50/70 text-ink hover:bg-slate-100',
+                          )}
+                          role="menuitemradio"
+                          type="button"
+                          onClick={() => {
+                            setSortOrder(option.value);
                             setIsStatusMenuOpen(false);
                           }}
                         >
