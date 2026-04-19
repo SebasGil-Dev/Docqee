@@ -258,6 +258,7 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       });
 
     const reviews: StudentAppointmentReviewDto[] = valoraciones.map((v) => ({
+      appointmentId: String(v.id_cita),
       appointmentLabel: v.cita.tipo_cita.nombre,
       comment: v.comentario ?? null,
       createdAt: v.fecha_creacion.toISOString(),

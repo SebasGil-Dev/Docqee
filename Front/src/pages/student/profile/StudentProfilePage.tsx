@@ -8,6 +8,7 @@ import {
   RotateCcw,
   Save,
   School,
+  Star,
   Trash2,
 } from 'lucide-react';
 import type { ChangeEvent, FormEvent } from 'react';
@@ -83,7 +84,11 @@ function getLinkTypeLabel(type: StudentProfessionalLinkType) {
 }
 
 export function StudentProfilePage() {
-  const { errorMessage, isLoading, nextLinkId, practiceSites, profile, getUniversitySites, updatePracticeSites, updateProfile } = useStudentModuleStore();
+  const { errorMessage, isLoading, nextLinkId, practiceSites, profile, reviews, getUniversitySites, updatePracticeSites, updateProfile } = useStudentModuleStore();
+  const averageRating = useMemo(() => {
+    if (reviews.length === 0) return null;
+    return reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+  }, [reviews]);
   const [values, setValues] = useState<StudentProfileFormValues>(() => getInitialValues(profile));
   const [errors, setErrors] = useState<StudentProfileFormErrors>({});
   const [linkDraft, setLinkDraft] = useState<StudentLinkDraft>(initialLinkDraft);
@@ -287,6 +292,39 @@ export function StudentProfilePage() {
                       <p className="font-medium text-white/90">
                         {studentContent.profilePage.helperText}
                       </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 rounded-[1.25rem] bg-white/10 px-4 py-3">
+                    <Star aria-hidden="true" className="mt-0.5 h-4.5 w-4.5 shrink-0 text-white" />
+                    <div className="min-w-0">
+                      <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white/65">
+                        Calificacion
+                      </p>
+                      {averageRating !== null ? (
+                        <div className="mt-1 flex items-center gap-2">
+                          <div className="flex items-center gap-0.5">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star
+                                key={star}
+                                aria-hidden="true"
+                                className={
+                                  star <= Math.round(averageRating)
+                                    ? 'h-3.5 w-3.5 fill-amber-300 text-amber-300'
+                                    : 'h-3.5 w-3.5 fill-white/20 text-white/30'
+                                }
+                              />
+                            ))}
+                          </div>
+                          <span className="text-sm font-bold text-white">
+                            {averageRating.toFixed(1)}
+                          </span>
+                          <span className="text-xs text-white/65">
+                            ({reviews.length} {reviews.length === 1 ? 'valoracion' : 'valoraciones'})
+                          </span>
+                        </div>
+                      ) : (
+                        <p className="font-medium text-white/90">Sin valoraciones aun</p>
+                      )}
                     </div>
                   </div>
                 </div>

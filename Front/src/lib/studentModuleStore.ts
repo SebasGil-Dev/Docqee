@@ -467,6 +467,7 @@ function createMockState(): StudentStoreState {
 
   const reviews: StudentAppointmentReview[] = [
     {
+      appointmentId: 'student-appointment-3',
       appointmentLabel: 'Control restaurativo',
       comment:
         'Me senti muy bien acompanado durante la cita. Todo fue claro, ordenado y con mucha paciencia.',
@@ -477,6 +478,7 @@ function createMockState(): StudentStoreState {
       siteName: 'Sede Norte',
     },
     {
+      appointmentId: 'student-appointment-4',
       appointmentLabel: 'Valoracion inicial',
       comment:
         'Explico muy bien el proceso y resolvio mis dudas antes de comenzar la atencion.',
@@ -487,9 +489,9 @@ function createMockState(): StudentStoreState {
       siteName: 'Sede Escuela Clinica',
     },
     {
+      appointmentId: 'student-appointment-5',
       appointmentLabel: 'Seguimiento preventivo',
-      comment:
-        'La atencion fue amable y profesional. Me gusto que me indicara los siguientes pasos con claridad.',
+      comment: null,
       createdAt: '2026-03-15T09:40:00.000Z',
       id: 'student-review-3',
       patientName: 'Claudia Moreno',

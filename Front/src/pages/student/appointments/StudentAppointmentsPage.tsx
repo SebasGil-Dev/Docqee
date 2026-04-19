@@ -6,6 +6,7 @@ import {
   Clock3,
   GraduationCap,
   MapPin,
+  MessageSquare,
   PencilLine,
   Plus,
   Search,
@@ -30,6 +31,7 @@ import type {
   StudentAgendaAppointmentStatus,
   StudentAppointmentFormErrors,
   StudentAppointmentFormValues,
+  StudentAppointmentReview,
 } from '@/content/types';
 import { classNames } from '@/lib/classNames';
 import { useStudentModuleStore } from '@/lib/studentModuleStore';
@@ -228,6 +230,7 @@ export function StudentAppointmentsPage() {
     isLoading,
     practiceSites,
     requests,
+    reviews,
     supervisors,
     treatments,
     updateAppointmentStatus,
@@ -246,6 +249,8 @@ export function StudentAppointmentsPage() {
   const [editingAppointmentId, setEditingAppointmentId] = useState<string | null>(null);
   const [appointmentApiError, setAppointmentApiError] = useState<string | null>(null);
   const [appointmentToCancel, setAppointmentToCancel] =
+    useState<StudentAgendaAppointment | null>(null);
+  const [commentsAppointment, setCommentsAppointment] =
     useState<StudentAgendaAppointment | null>(null);
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const normalizedSearch = searchTerm.trim().toLowerCase();
@@ -702,6 +707,17 @@ export function StudentAppointmentsPage() {
                             <span>{studentContent.appointmentsPage.actionLabels.cancel}</span>
                           </button>
                         </div>
+                      ) : appointment.status === 'FINALIZADA' ? (
+                        <div className="flex justify-end">
+                          <button
+                            className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
+                            type="button"
+                            onClick={() => setCommentsAppointment(appointment)}
+                          >
+                            <MessageSquare aria-hidden="true" className="h-3.5 w-3.5" />
+                            <span>Ver comentarios</span>
+                          </button>
+                        </div>
                       ) : (
                         <span className="text-xs font-medium text-ink-muted">Sin acciones</span>
                       )}
@@ -935,6 +951,93 @@ export function StudentAppointmentsPage() {
           handleStatusChange(appointmentToCancel.id, 'CANCELADA');
         }}
       />
+      {commentsAppointment ? (
+        <AppointmentCommentsModal
+          appointment={commentsAppointment}
+          reviews={reviews.filter((r) => r.appointmentId === commentsAppointment.id)}
+          onClose={() => setCommentsAppointment(null)}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function AppointmentCommentsModal({
+  appointment,
+  reviews,
+  onClose,
+}: {
+  appointment: StudentAgendaAppointment;
+  reviews: StudentAppointmentReview[];
+  onClose: () => void;
+}) {
+  const overlayRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') onClose();
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  return (
+    <div
+      ref={overlayRef}
+      aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/30 p-4 backdrop-blur-sm"
+      role="dialog"
+      onClick={(event) => {
+        if (event.target === overlayRef.current) onClose();
+      }}
+    >
+      <div className="w-full max-w-md overflow-hidden rounded-[1.4rem] border border-slate-200/80 bg-white shadow-[0_32px_80px_-24px_rgba(15,23,42,0.38)]">
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+          <div>
+            <p className="text-[0.6rem] font-bold uppercase tracking-[0.18em] text-primary/70">
+              Comentarios de la sesion
+            </p>
+            <p className="mt-0.5 text-sm font-semibold text-ink">{appointment.patientName}</p>
+            <p className="text-xs text-ink-muted">{appointment.appointmentType}</p>
+          </div>
+          <button
+            aria-label="Cerrar"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-ghost transition duration-150 hover:bg-slate-100 hover:text-ink"
+            type="button"
+            onClick={onClose}
+          >
+            <X aria-hidden="true" className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="admin-scrollbar max-h-[28rem] overflow-y-auto px-5 py-4">
+          {reviews.length === 0 ? (
+            <p className="py-4 text-center text-sm text-ink-muted">
+              El paciente aun no ha dejado comentarios para esta cita.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {reviews.map((review) => (
+                <div
+                  key={review.id}
+                  className="rounded-[1rem] border border-slate-200/80 bg-slate-50 px-4 py-3.5"
+                >
+                  <div className="mb-2 flex items-center justify-between">
+                    <p className="text-xs font-semibold text-ink">{review.patientName}</p>
+                    <p className="text-[0.68rem] text-ink-muted">
+                      {new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(review.createdAt))}
+                    </p>
+                  </div>
+                  {review.comment ? (
+                    <p className="text-sm leading-6 text-ink-muted">{review.comment}</p>
+                  ) : (
+                    <p className="text-sm italic text-ink-muted/70">Sin comentario escrito.</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
