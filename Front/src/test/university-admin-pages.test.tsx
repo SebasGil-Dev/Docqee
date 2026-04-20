@@ -404,7 +404,7 @@ describe('University admin pages', () => {
       'university-student-mobile-summary-student-1',
     );
 
-    expect(studentSummary).toHaveTextContent(/Valentina Rios/i);
+    expect(studentSummary).toHaveTextContent(/Valentina Rios.*Semestre 8/i);
     expect(studentSummary).toHaveTextContent(/CC 1092384122/i);
     expect(studentSummary).toHaveTextContent(
       /valentina\.rios@clinicadelnorte\.edu\.co/i,

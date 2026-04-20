@@ -376,10 +376,10 @@ export function UniversityStudentsPage() {
             <div className="w-full min-w-0">
               <table className="w-full table-fixed">
               <colgroup>
-                <col className="w-[45%] sm:w-[21%]" />
+                <col className="w-[56%] sm:w-[21%]" />
                 <col className="hidden sm:table-column sm:w-[17%]" />
                 <col className="hidden sm:table-column sm:w-[22%]" />
-                <col className="w-[11%] sm:w-[9%]" />
+                <col className="hidden sm:table-column sm:w-[9%]" />
                 <col className="w-[18%] sm:w-[13%]" />
                 <col className="w-[26%] sm:w-[18%]" />
               </colgroup>
@@ -394,7 +394,7 @@ export function UniversityStudentsPage() {
                   <th className="hidden px-2.5 py-2 sm:table-cell sm:px-3.5 sm:py-2.5">
                     Correo
                   </th>
-                  <th className="px-2 py-2 text-center sm:px-3 sm:py-2.5">
+                  <th className="hidden px-2 py-2 text-center sm:table-cell sm:px-3 sm:py-2.5">
                     Semestre
                   </th>
                   <th className="px-2 py-2 text-center sm:px-3 sm:py-2.5">
@@ -439,12 +439,15 @@ export function UniversityStudentsPage() {
                               ·
                             </span>
                             <p className="text-[0.68rem] font-semibold leading-tight text-ink-muted sm:hidden">
-                              {formatDocumentLabel(
-                                student.documentTypeCode,
-                                student.documentNumber,
-                              )}
+                              Semestre {student.semester}
                             </p>
                           </div>
+                          <p className="text-[0.68rem] font-semibold leading-tight text-ink-muted sm:hidden">
+                            {formatDocumentLabel(
+                              student.documentTypeCode,
+                              student.documentNumber,
+                            )}
+                          </p>
                           <p
                             className="break-all text-[0.68rem] leading-tight text-ink-muted sm:hidden"
                             title={student.email}
@@ -492,7 +495,7 @@ export function UniversityStudentsPage() {
                       </td>
                       <td
                         className={classNames(
-                          'px-2 pt-2.5 text-center sm:px-3 sm:pt-3.5',
+                          'hidden px-2 pt-2.5 text-center sm:table-cell sm:px-3 sm:pt-3.5',
                           isLast ? 'pb-3 sm:pb-4' : 'pb-2.5 sm:pb-3.5',
                         )}
                       >
@@ -518,7 +521,7 @@ export function UniversityStudentsPage() {
                       </td>
                       <td
                         className={classNames(
-                          'overflow-hidden px-2.5 text-center sm:px-4',
+                          'overflow-hidden px-1.5 text-center sm:px-4',
                           displayStatus === 'pending'
                             ? 'pt-2.5 sm:pt-3'
                             : 'pt-2.5 sm:pt-3.5',
@@ -541,7 +544,7 @@ export function UniversityStudentsPage() {
                           ) : (
                             <button
                               className={classNames(
-                                'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[0.7rem] font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-65 sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs',
+                                'inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[0.62rem] font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-65 sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs',
                                 student.status === 'active'
                                   ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
                                   : 'bg-primary/10 text-primary hover:bg-primary/15',
@@ -555,12 +558,12 @@ export function UniversityStudentsPage() {
                               {student.status === 'active' ? (
                                 <PowerOff
                                   aria-hidden="true"
-                                  className="h-3.25 w-3.25 sm:h-3.5 sm:w-3.5"
+                                  className="h-3 w-3 sm:h-3.5 sm:w-3.5"
                                 />
                               ) : (
                                 <Power
                                   aria-hidden="true"
-                                  className="h-3.25 w-3.25 sm:h-3.5 sm:w-3.5"
+                                  className="h-3 w-3 sm:h-3.5 sm:w-3.5"
                                 />
                               )}
                               <span>
