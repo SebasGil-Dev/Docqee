@@ -96,7 +96,7 @@ describe('Admin pages', () => {
       screen.getByRole('link', { name: /^Universidades$/i }),
     ).toHaveAttribute('aria-current', 'page');
     expect(
-      screen.getByRole('link', { name: /Envío de credenciales/i }),
+      screen.getByRole('link', { name: /Env[i\u00ed]o de credenciales/i }),
     ).not.toHaveAttribute('aria-current');
 
     firstRender.unmount();
@@ -177,7 +177,7 @@ describe('Admin pages', () => {
       screen.getByLabelText(/nombre de la universidad/i),
       'Universidad Nova',
     );
-    await screen.findByRole('option', { name: /^(Bogota|Bogotá)$/i });
+    await screen.findByRole('option', { name: /^(Bogota|Bogot\u00e1)$/i });
     await user.selectOptions(screen.getByLabelText(/^ciudad$/i), 'city-bogota');
     await screen.findByRole('option', { name: /^Suba$/i });
     await user.selectOptions(
@@ -215,7 +215,7 @@ describe('Admin pages', () => {
 
     expect(localitySelect).toBeDisabled();
 
-    await screen.findByRole('option', { name: /^(Medellin|Medellín)$/i });
+    await screen.findByRole('option', { name: /^(Medellin|Medell\u00edn)$/i });
     await user.selectOptions(citySelect, 'city-medellin');
 
     await screen.findByRole('option', { name: /Laureles/i });
@@ -251,7 +251,7 @@ describe('Admin pages', () => {
     ).not.toHaveLength(0);
 
     await user.click(
-      screen.getByRole('link', { name: /Envío de credenciales/i }),
+      screen.getByRole('link', { name: /Env[i\u00ed]o de credenciales/i }),
     );
 
     const credentialRow = (
@@ -280,7 +280,7 @@ describe('Admin pages', () => {
       }),
     ).toBeInTheDocument();
     await user.click(
-      screen.getByRole('button', { name: /s[ií], inactivar/i }),
+      screen.getByRole('button', { name: /s[i\u00ed], inactivar/i }),
     );
 
     expect(
@@ -315,7 +315,7 @@ describe('Admin pages', () => {
       }),
     ).toBeInTheDocument();
     await user.click(
-      screen.getByRole('button', { name: /s[ií], inactivar/i }),
+      screen.getByRole('button', { name: /s[i\u00ed], inactivar/i }),
     );
 
     expect(
@@ -346,7 +346,7 @@ describe('Admin pages', () => {
     await user.click(
       within(credentialRow!).getByRole('button', { name: /^Enviar$/i }),
     );
-    await user.click(screen.getByRole('button', { name: /s[ií], enviar/i }));
+    await user.click(screen.getByRole('button', { name: /s[i\u00ed], enviar/i }));
 
     expect(within(credentialRow!).getByText(/^Enviada$/i)).toBeInTheDocument();
     expect(
@@ -418,7 +418,7 @@ describe('Admin pages', () => {
     await user.click(
       within(credentialRow!).getByRole('button', { name: /^Enviar$/i }),
     );
-    await user.click(screen.getByRole('button', { name: /s[ií], enviar/i }));
+    await user.click(screen.getByRole('button', { name: /s[i\u00ed], enviar/i }));
 
     expect(within(credentialRow!).getByText(/^Enviada$/i)).toBeInTheDocument();
   });
@@ -437,7 +437,7 @@ describe('Admin pages', () => {
       within(credentialRow!).getByRole('button', { name: /eliminar/i }),
     );
     await user.click(
-      screen.getByRole('button', { name: /s[ií], eliminar/i }),
+      screen.getByRole('button', { name: /s[i\u00ed], eliminar/i }),
     );
 
     expect(
@@ -464,7 +464,7 @@ describe('Admin pages', () => {
       within(credentialRow!).getByRole('button', { name: /eliminar/i }),
     );
     await user.click(
-      screen.getByRole('button', { name: /s[ií], eliminar/i }),
+      screen.getByRole('button', { name: /s[i\u00ed], eliminar/i }),
     );
     expect(
       screen.queryByText(/Corporacion Oral del Caribe/i),
@@ -498,21 +498,34 @@ describe('Admin pages', () => {
     ).toHaveAttribute('aria-current', 'page');
     expect(
       within(mobileNavigation).getByRole('link', {
-        name: /Envío de credenciales/i,
+        name: /Env[i\u00ed]o de credenciales/i,
       }),
     ).toBeInTheDocument();
     expect(
-      within(mobileNavigation).getByRole('button', { name: /cerrar sesión/i }),
+      within(mobileNavigation).queryByRole('button', {
+        name: /cerrar sesi[o\u00f3]n/i,
+      }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /abrir men[u\u00fa] de cuenta/i }),
+    ).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole('button', { name: /abrir men[u\u00fa] de cuenta/i }),
+    );
+
+    expect(
+      screen.getByRole('button', { name: /cerrar sesi[o\u00f3]n/i }),
     ).toBeInTheDocument();
 
     await user.click(
       within(mobileNavigation).getByRole('link', {
-        name: /Envío de credenciales/i,
+        name: /Env[i\u00ed]o de credenciales/i,
       }),
     );
 
     expect(
-      await screen.findByRole('heading', { name: /Envío de credenciales/i }),
+      await screen.findByRole('heading', { name: /Env[i\u00ed]o de credenciales/i }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /cerrar menu lateral/i }),
@@ -524,7 +537,7 @@ describe('Admin pages', () => {
 
     expect(
       within(credentialsNavigation).getByRole('link', {
-        name: /Envío de credenciales/i,
+        name: /Env[i\u00ed]o de credenciales/i,
       }),
     ).toHaveAttribute('aria-current', 'page');
 
