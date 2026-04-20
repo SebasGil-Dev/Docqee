@@ -357,20 +357,26 @@ export function UniversityTeachersPage() {
         </div>
         {filteredTeachers.length > 0 ? (
           <div className="admin-scrollbar min-h-0 flex-1 overflow-x-auto overflow-y-auto">
-            <div className="w-full lg:min-w-[52rem]">
+            <div className="w-full lg:min-w-[54rem]">
               <table className="w-full table-fixed">
+              <colgroup>
+                <col className="w-[39%]" />
+                <col className="w-[24%]" />
+                <col className="w-[17%]" />
+                <col className="w-[20%]" />
+              </colgroup>
               <thead className="sticky top-0 z-10 bg-slate-100 text-left">
                 <tr className="text-[0.6rem] font-bold uppercase tracking-[0.14em] text-ink-muted sm:text-[0.64rem] sm:tracking-[0.16em]">
-                  <th className="w-[43%] px-3 py-2 sm:px-5 sm:py-2.5 lg:w-[39%]">
+                  <th className="px-3 py-2 sm:px-5 sm:py-2.5">
                     Docente
                   </th>
-                  <th className="w-[23%] px-3 py-2 text-center sm:px-4 sm:py-2.5 lg:w-[22%]">
+                  <th className="px-3 py-2 text-center sm:px-4 sm:py-2.5">
                     Documento
                   </th>
-                  <th className="w-[15%] px-3 py-2 text-center sm:px-4 sm:py-2.5 lg:w-[17%]">
+                  <th className="px-3 py-2 text-center sm:px-4 sm:py-2.5">
                     Estado
                   </th>
-                  <th className="w-[19%] px-3 py-2 text-center sm:px-5 sm:py-2.5 lg:w-[22%]">
+                  <th className="px-3 py-2 text-center sm:px-5 sm:py-2.5">
                     Acciones
                   </th>
                 </tr>

@@ -523,20 +523,26 @@ export function UniversityCredentialsPage() {
         </div>
         {filteredCredentialRows.length > 0 ? (
           <div className="admin-scrollbar min-h-0 flex-1 overflow-x-auto overflow-y-auto">
-            <div className="w-full lg:min-w-[58rem]">
+            <div className="w-full lg:min-w-[60rem]">
               <table className="w-full table-fixed">
+              <colgroup>
+                <col className="w-[30%]" />
+                <col className="w-[35%]" />
+                <col className="w-[15%]" />
+                <col className="w-[20%]" />
+              </colgroup>
               <thead className="sticky top-0 z-10 bg-slate-100 text-left">
                 <tr className="text-[0.6rem] font-bold uppercase tracking-[0.14em] text-ink-muted sm:text-[0.64rem] sm:tracking-[0.16em]">
-                  <th className="w-[32%] px-3 py-2 sm:px-5 sm:py-2.5 lg:w-[29%]">
+                  <th className="px-3 py-2 sm:px-5 sm:py-2.5">
                     Estudiante
                   </th>
-                  <th className="w-[38%] px-3 py-2 sm:px-4 sm:py-2.5 lg:w-[39%]">
+                  <th className="px-3 py-2 sm:px-4 sm:py-2.5">
                     Correo electrónico
                   </th>
-                  <th className="w-[12%] px-3 py-2 text-center sm:px-4 sm:py-2.5 lg:w-[14%]">
+                  <th className="px-3 py-2 text-center sm:px-4 sm:py-2.5">
                     Estado
                   </th>
-                  <th className="w-[18%] px-3 py-2 text-center sm:px-5 sm:py-2.5 lg:w-[18%]">
+                  <th className="px-3 py-2 text-center sm:px-5 sm:py-2.5">
                     Acciones
                   </th>
                 </tr>
