@@ -222,7 +222,7 @@ export function UniversityCredentialsPage() {
           }
 
           setFeedbackMessage(
-            `La credencial de ${pendingConfirmation.credential.studentName} se elimino correctamente.`,
+            `La credencial de ${pendingConfirmation.credential.studentName} se eliminó correctamente.`,
           );
         }
       } else {
@@ -234,8 +234,8 @@ export function UniversityCredentialsPage() {
         if (updated) {
           setFeedbackMessage(
             pendingConfirmation.action === 'send'
-              ? `La credencial de ${pendingConfirmation.credential.studentName} quedo enviada correctamente.`
-              : `La credencial de ${pendingConfirmation.credential.studentName} se reenvio correctamente.`,
+              ? `La credencial de ${pendingConfirmation.credential.studentName} quedó enviada correctamente.`
+              : `La credencial de ${pendingConfirmation.credential.studentName} se reenvió correctamente.`,
           );
         }
       }
@@ -318,24 +318,24 @@ export function UniversityCredentialsPage() {
 
   const confirmationTitle =
     pendingConfirmation?.action === 'delete'
-      ? 'Quieres eliminar esta credencial?'
+      ? '¿Quieres eliminar esta credencial?'
       : pendingConfirmation?.action === 'send'
-        ? 'Quieres enviar la credencial?'
-        : 'Quieres reenviar la credencial?';
+        ? '¿Deseas enviar la credencial?'
+        : '¿Deseas reenviar la credencial?';
 
   const confirmationConfirmLabel =
     pendingConfirmation?.action === 'delete'
-      ? 'Si, eliminar'
+      ? 'Sí, eliminar'
       : pendingConfirmation?.action === 'send'
-        ? 'Si, enviar'
-        : 'Si, reenviar';
+        ? 'Sí, enviar'
+        : 'Sí, reenviar';
 
   const confirmationDescription = pendingConfirmation
     ? pendingConfirmation.action === 'delete'
-      ? `Se eliminara la credencial de ${pendingConfirmation.credential.studentName}.`
+      ? `Se eliminará la credencial de ${pendingConfirmation.credential.studentName}.`
       : pendingConfirmation.action === 'send'
-        ? `Se enviara la credencial al correo ${pendingConfirmation.credential.studentEmail}.`
-        : `Se reenviara la credencial al correo ${pendingConfirmation.credential.studentEmail}.`
+        ? `La credencial será enviada al correo ${pendingConfirmation.credential.studentEmail}`
+        : `La credencial será reenviada al correo ${pendingConfirmation.credential.studentEmail}`
     : '';
 
   return (

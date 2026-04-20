@@ -10,6 +10,7 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
+import { AdminConfirmationDialog } from '@/components/admin/AdminConfirmationDialog';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
@@ -17,7 +18,7 @@ import { Seo } from '@/components/ui/Seo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { ROUTES } from '@/constants/routes';
 import { universityAdminContent } from '@/content/universityAdminContent';
-import type { PersonOperationalStatus } from '@/content/types';
+import type { PersonOperationalStatus, UniversityStudent } from '@/content/types';
 import { classNames } from '@/lib/classNames';
 import { formatDisplayName } from '@/lib/formatDisplayName';
 import { useUniversityAdminStudentRecordsStore } from '@/lib/universityAdminStudentRecordsStore';
@@ -27,6 +28,7 @@ type StudentsLocationState = {
 } | null;
 
 type StudentStatusFilter = PersonOperationalStatus | 'all' | 'pending';
+type StudentStatusConfirmationAction = 'activate' | 'deactivate';
 
 function getLocationState(locationState: unknown): StudentsLocationState {
   if (!locationState || typeof locationState !== 'object') {
@@ -51,6 +53,8 @@ export function UniversityStudentsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<StudentStatusFilter>('all');
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
+  const [statusConfirmationStudent, setStatusConfirmationStudent] =
+    useState<UniversityStudent | null>(null);
   const [pendingStatusStudentIds, setPendingStatusStudentIds] = useState<
     string[]
   >([]);
@@ -89,6 +93,26 @@ export function UniversityStudentsPage() {
       (statusFilter === 'all' || derivedStatus === statusFilter)
     );
   });
+  const isStatusConfirmationSubmitting = Boolean(
+    statusConfirmationStudent &&
+    pendingStatusStudentIds.includes(statusConfirmationStudent.id),
+  );
+  const statusConfirmationAction: StudentStatusConfirmationAction =
+    statusConfirmationStudent?.status === 'active' ? 'deactivate' : 'activate';
+  const statusConfirmationTitle =
+    statusConfirmationAction === 'deactivate'
+      ? '¿Quieres inactivar este estudiante?'
+      : '¿Quieres activar este estudiante?';
+  const statusConfirmationDescription = statusConfirmationStudent
+    ? statusConfirmationAction === 'deactivate'
+      ? `El estudiante ${formatDisplayName(`${statusConfirmationStudent.firstName} ${statusConfirmationStudent.lastName}`)} quedará inactivo y no podrá operar dentro de la plataforma hasta que lo actives nuevamente.`
+      : `El estudiante ${formatDisplayName(`${statusConfirmationStudent.firstName} ${statusConfirmationStudent.lastName}`)} quedará activo y podrá operar dentro de la plataforma.`
+    : '';
+  const statusConfirmationConfirmLabel =
+    statusConfirmationAction === 'deactivate'
+      ? 'Sí, inactivar'
+      : 'Sí, activar';
+
   useEffect(() => {
     if (!successNotice) {
       return undefined;
@@ -129,6 +153,10 @@ export function UniversityStudentsPage() {
     };
   }, [isStatusMenuOpen]);
 
+  function handleCloseStatusConfirmation() {
+    setStatusConfirmationStudent(null);
+  }
+
   function handleToggleStudentStatus(studentId: string) {
     if (pendingStatusStudentIdsRef.current.has(studentId)) {
       return;
@@ -143,6 +171,17 @@ export function UniversityStudentsPage() {
         currentIds.filter((currentId) => currentId !== studentId),
       );
     });
+  }
+
+  function handleConfirmStatusToggle() {
+    if (!statusConfirmationStudent) {
+      return;
+    }
+
+    const studentId = statusConfirmationStudent.id;
+
+    setStatusConfirmationStudent(null);
+    handleToggleStudentStatus(studentId);
   }
 
   return (
@@ -467,7 +506,7 @@ export function UniversityStudentsPage() {
                               disabled={isUpdatingStatus}
                               type="button"
                               onClick={() => {
-                                handleToggleStudentStatus(student.id);
+                                setStatusConfirmationStudent(student);
                               }}
                             >
                               {student.status === 'active' ? (
@@ -510,6 +549,18 @@ export function UniversityStudentsPage() {
           </div>
         )}
       </AdminPanelCard>
+      <AdminConfirmationDialog
+        cancelLabel="No, cancelar"
+        confirmLabel={statusConfirmationConfirmLabel}
+        description={statusConfirmationDescription}
+        icon={statusConfirmationAction === 'deactivate' ? PowerOff : Power}
+        isOpen={Boolean(statusConfirmationStudent)}
+        isSubmitting={isStatusConfirmationSubmitting}
+        title={statusConfirmationTitle}
+        tone={statusConfirmationAction === 'deactivate' ? 'danger' : 'primary'}
+        onCancel={handleCloseStatusConfirmation}
+        onConfirm={handleConfirmStatusToggle}
+      />
     </div>
   );
 }

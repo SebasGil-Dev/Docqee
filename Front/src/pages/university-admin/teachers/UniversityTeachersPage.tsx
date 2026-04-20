@@ -10,6 +10,7 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
+import { AdminConfirmationDialog } from '@/components/admin/AdminConfirmationDialog';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
@@ -17,7 +18,7 @@ import { Seo } from '@/components/ui/Seo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { ROUTES } from '@/constants/routes';
 import { universityAdminContent } from '@/content/universityAdminContent';
-import type { PersonOperationalStatus } from '@/content/types';
+import type { PersonOperationalStatus, UniversityTeacher } from '@/content/types';
 import { classNames } from '@/lib/classNames';
 import { formatDisplayName } from '@/lib/formatDisplayName';
 import { useUniversityAdminTeacherRecordsStore } from '@/lib/universityAdminTeacherRecordsStore';
@@ -27,6 +28,7 @@ type TeachersLocationState = {
 } | null;
 
 type TeacherStatusFilter = PersonOperationalStatus | 'all';
+type TeacherStatusConfirmationAction = 'activate' | 'deactivate';
 
 function getLocationState(locationState: unknown): TeachersLocationState {
   if (!locationState || typeof locationState !== 'object') {
@@ -46,6 +48,8 @@ export function UniversityTeachersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<TeacherStatusFilter>('all');
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
+  const [statusConfirmationTeacher, setStatusConfirmationTeacher] =
+    useState<UniversityTeacher | null>(null);
   const [pendingStatusTeacherIds, setPendingStatusTeacherIds] = useState<
     string[]
   >([]);
@@ -73,6 +77,26 @@ export function UniversityTeachersPage() {
       (statusFilter === 'all' || teacher.status === statusFilter)
     );
   });
+  const isStatusConfirmationSubmitting = Boolean(
+    statusConfirmationTeacher &&
+    pendingStatusTeacherIds.includes(statusConfirmationTeacher.id),
+  );
+  const statusConfirmationAction: TeacherStatusConfirmationAction =
+    statusConfirmationTeacher?.status === 'active' ? 'deactivate' : 'activate';
+  const statusConfirmationTitle =
+    statusConfirmationAction === 'deactivate'
+      ? '¿Quieres inactivar este docente?'
+      : '¿Quieres activar este docente?';
+  const statusConfirmationDescription = statusConfirmationTeacher
+    ? statusConfirmationAction === 'deactivate'
+      ? `El docente ${formatDisplayName(`${statusConfirmationTeacher.firstName} ${statusConfirmationTeacher.lastName}`)} quedará inactivo y no podrá operar dentro de la plataforma hasta que lo actives nuevamente.`
+      : `El docente ${formatDisplayName(`${statusConfirmationTeacher.firstName} ${statusConfirmationTeacher.lastName}`)} quedará activo y podrá operar dentro de la plataforma.`
+    : '';
+  const statusConfirmationConfirmLabel =
+    statusConfirmationAction === 'deactivate'
+      ? 'Sí, inactivar'
+      : 'Sí, activar';
+
   useEffect(() => {
     if (!isStatusMenuOpen) {
       return undefined;
@@ -113,6 +137,10 @@ export function UniversityTeachersPage() {
     };
   }, [location.pathname, navigate, successNotice]);
 
+  function handleCloseStatusConfirmation() {
+    setStatusConfirmationTeacher(null);
+  }
+
   function handleToggleTeacherStatus(teacherId: string) {
     if (pendingStatusTeacherIdsRef.current.has(teacherId)) {
       return;
@@ -127,6 +155,17 @@ export function UniversityTeachersPage() {
         currentIds.filter((currentId) => currentId !== teacherId),
       );
     });
+  }
+
+  function handleConfirmStatusToggle() {
+    if (!statusConfirmationTeacher) {
+      return;
+    }
+
+    const teacherId = statusConfirmationTeacher.id;
+
+    setStatusConfirmationTeacher(null);
+    handleToggleTeacherStatus(teacherId);
   }
 
   return (
@@ -404,7 +443,7 @@ export function UniversityTeachersPage() {
                             disabled={isUpdatingStatus}
                             type="button"
                             onClick={() => {
-                              handleToggleTeacherStatus(teacher.id);
+                              setStatusConfirmationTeacher(teacher);
                             }}
                           >
                             {teacher.status === 'active' ? (
@@ -446,6 +485,18 @@ export function UniversityTeachersPage() {
           </div>
         )}
       </AdminPanelCard>
+      <AdminConfirmationDialog
+        cancelLabel="No, cancelar"
+        confirmLabel={statusConfirmationConfirmLabel}
+        description={statusConfirmationDescription}
+        icon={statusConfirmationAction === 'deactivate' ? PowerOff : Power}
+        isOpen={Boolean(statusConfirmationTeacher)}
+        isSubmitting={isStatusConfirmationSubmitting}
+        title={statusConfirmationTitle}
+        tone={statusConfirmationAction === 'deactivate' ? 'danger' : 'primary'}
+        onCancel={handleCloseStatusConfirmation}
+        onConfirm={handleConfirmStatusToggle}
+      />
     </div>
   );
 }

@@ -305,7 +305,46 @@ describe('University admin pages', () => {
     ).toHaveAttribute('title', 'Envia la credencial primero');
   });
 
-  it('evita revertir el estado del estudiante cuando se hace doble clic en activar o inactivar', async () => {
+  it('solicita confirmacion antes de cambiar el estado del estudiante', async () => {
+    const user = userEvent.setup();
+
+    renderUniversityApp([ROUTES.universityStudents]);
+
+    const studentRow = screen.getByText(/Tomas Herrera/i).closest('tr');
+    expect(studentRow).not.toBeNull();
+
+    await user.click(
+      within(studentRow!).getByRole('button', {
+        name: /^inactivar$/i,
+      }),
+    );
+
+    expect(
+      screen.getByRole('heading', {
+        name: /quieres inactivar este estudiante/i,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/el estudiante tomas herrera quedar[aá] inactivo/i),
+    ).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole('button', {
+        name: /s[i\u00ed], inactivar/i,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(
+        within(studentRow!).getByRole('button', { name: /^activar$/i }),
+      ).toBeInTheDocument();
+    });
+    expect(
+      within(studentRow!).queryByRole('button', { name: /^inactivar$/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('no cambia el estado del estudiante hasta confirmar la advertencia', async () => {
     const user = userEvent.setup();
 
     renderUniversityApp([ROUTES.universityStudents]);
@@ -318,14 +357,25 @@ describe('University admin pages', () => {
     });
     await user.dblClick(deactivateButton);
 
-    await waitFor(() => {
-      expect(
-        within(studentRow!).getByRole('button', { name: /^activar$/i }),
-      ).toBeInTheDocument();
-    });
     expect(
-      within(studentRow!).queryByRole('button', { name: /^inactivar$/i }),
+      screen.getByRole('heading', {
+        name: /quieres inactivar este estudiante/i,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      within(studentRow!).getByRole('button', { name: /^inactivar$/i }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /no, cancelar/i }));
+
+    expect(
+      screen.queryByRole('heading', {
+        name: /quieres inactivar este estudiante/i,
+      }),
     ).not.toBeInTheDocument();
+    expect(
+      within(studentRow!).getByRole('button', { name: /^inactivar$/i }),
+    ).toBeInTheDocument();
   });
 
   it('centra y muestra los textos corregidos en registrar estudiante', async () => {
@@ -415,12 +465,23 @@ describe('University admin pages', () => {
     await user.click(
       within(teacherRow!).getByRole('button', { name: /inactivar/i }),
     );
+    expect(
+      screen.getByRole('heading', {
+        name: /quieres inactivar este docente/i,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/el docente andres villamizar quedar[aá] inactivo/i),
+    ).toBeInTheDocument();
+    await user.click(
+      screen.getByRole('button', { name: /s[i\u00ed], inactivar/i }),
+    );
     await waitFor(() => {
       expect(screen.queryByText(/Andres Villamizar/i)).not.toBeInTheDocument();
     });
   });
 
-  it('evita revertir el estado del docente cuando se hace doble clic en activar o inactivar', async () => {
+  it('no cambia el estado del docente hasta confirmar la advertencia', async () => {
     const user = userEvent.setup();
 
     renderUniversityApp([ROUTES.universityTeachers]);
@@ -433,14 +494,25 @@ describe('University admin pages', () => {
     });
     await user.dblClick(deactivateButton);
 
-    await waitFor(() => {
-      expect(
-        within(teacherRow!).getByRole('button', { name: /^activar$/i }),
-      ).toBeInTheDocument();
-    });
     expect(
-      within(teacherRow!).queryByRole('button', { name: /^inactivar$/i }),
+      screen.getByRole('heading', {
+        name: /quieres inactivar este docente/i,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      within(teacherRow!).getByRole('button', { name: /^inactivar$/i }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /no, cancelar/i }));
+
+    expect(
+      screen.queryByRole('heading', {
+        name: /quieres inactivar este docente/i,
+      }),
     ).not.toBeInTheDocument();
+    expect(
+      within(teacherRow!).getByRole('button', { name: /^inactivar$/i }),
+    ).toBeInTheDocument();
   });
 
   it('muestra el formulario de registrar docente con textos corregidos', async () => {
@@ -606,7 +678,12 @@ describe('University admin pages', () => {
     await user.click(
       within(generatedRow!).getByRole('button', { name: /^Enviar$/i }),
     );
-    await user.click(screen.getByRole('button', { name: /si, enviar/i }));
+    expect(
+      screen.getByRole('heading', { name: /deseas enviar la credencial/i }),
+    ).toBeInTheDocument();
+    await user.click(
+      screen.getByRole('button', { name: /s[i\u00ed], enviar/i }),
+    );
     expect(within(generatedRow!).getByText(/^Enviada$/i)).toBeInTheDocument();
     await user.click(screen.getByRole('link', { name: /^Estudiantes$/i }));
     const activatedStudentRow = screen
@@ -627,9 +704,19 @@ describe('University admin pages', () => {
     await user.click(
       within(sentRow!).getByRole('button', { name: /reenviar/i }),
     );
-    await user.click(screen.getByRole('button', { name: /si, reenviar/i }));
+    expect(
+      screen.getByRole('heading', { name: /deseas reenviar la credencial/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /la credencial ser[aá] reenviada al correo tomas\.herrera@clinicadelnorte\.edu\.co/i,
+      ),
+    ).toBeInTheDocument();
+    await user.click(
+      screen.getByRole('button', { name: /s[i\u00ed], reenviar/i }),
+    );
     expect(await screen.findByRole('status')).toHaveTextContent(
-      /se reenvio correctamente/i,
+      /se reenv[i\u00ed][o\u00f3] correctamente/i,
     );
 
     await user.click(
@@ -642,7 +729,12 @@ describe('University admin pages', () => {
     await user.click(
       within(removableRow!).getByRole('button', { name: /eliminar/i }),
     );
-    await user.click(screen.getByRole('button', { name: /si, eliminar/i }));
+    expect(
+      screen.getByRole('heading', { name: /quieres eliminar esta credencial/i }),
+    ).toBeInTheDocument();
+    await user.click(
+      screen.getByRole('button', { name: /s[i\u00ed], eliminar/i }),
+    );
     expect(
       within(screen.getByRole('table')).queryByText(/Camila Vega/i),
     ).not.toBeInTheDocument();
