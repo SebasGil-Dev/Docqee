@@ -497,10 +497,11 @@ describe('University admin pages', () => {
     expect(documentInput).toHaveValue('1032');
     await user.clear(documentInput);
 
-    await user.click(
+await user.click(
       screen.getByRole('button', { name: /^registrar$/i }),
     );
 
+    expect(document.querySelector('.admin-scrollbar')).toBeInTheDocument();
     expect(
       await screen.findByText(/el número de documento es obligatorio/i),
     ).toBeInTheDocument();
