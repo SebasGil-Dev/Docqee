@@ -516,7 +516,7 @@ describe('University admin pages', () => {
 
     await fillTeacherForm(user);
     await user.click(
-      screen.getByRole('button', { name: /registrar docente/i }),
+      screen.getByRole('button', { name: /^registrar$/i }),
     );
 
     expect(await screen.findByText(/Patricia Mendoza/i)).toBeInTheDocument();
@@ -601,7 +601,7 @@ describe('University admin pages', () => {
     expect(teacherRow).not.toBeNull();
     expect(
       within(teacherRow!).getByRole('button', { name: /^inactivar$/i }),
-    ).toHaveClass('text-[0.66rem]');
+    ).toHaveClass('text-[0.68rem]');
   });
 
   it('no cambia el estado del docente hasta confirmar la advertencia', async () => {
@@ -647,6 +647,15 @@ describe('University admin pages', () => {
       screen.getByRole('heading', { name: /registrar docente/i }),
     ).toBeInTheDocument();
     expect(
+      screen.getByRole('link', { name: /volver a docentes/i }),
+    ).toHaveClass('bg-brand-gradient');
+    expect(screen.getByRole('button', { name: /^registrar$/i })).toHaveClass(
+      'bg-brand-gradient',
+    );
+    expect(
+      document.querySelector('.admin-scrollbar'),
+    ).not.toBeInTheDocument();
+    expect(
       screen.queryByText(
         /completa el formulario para registrar un nuevo docente dentro de la universidad/i,
       ),
@@ -662,7 +671,7 @@ describe('University admin pages', () => {
     await user.clear(documentInput);
 
     await user.click(
-      screen.getByRole('button', { name: /registrar docente/i }),
+      screen.getByRole('button', { name: /^registrar$/i }),
     );
 
     expect(

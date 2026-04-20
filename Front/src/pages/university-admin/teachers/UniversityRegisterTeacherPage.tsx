@@ -201,7 +201,7 @@ export function UniversityRegisterTeacherPage({
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-6 overflow-hidden">
+    <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden sm:gap-5">
       <Seo
         description={universityAdminContent.registerTeacherPage.meta.description}
         noIndex
@@ -210,14 +210,14 @@ export function UniversityRegisterTeacherPage({
       <AdminPageHeader
         action={
           <Link
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-surface-card px-4 py-3 text-sm font-semibold text-primary shadow-ambient transition duration-300 hover:bg-surface-low focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-4 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
             to={ROUTES.universityTeachers}
           >
             <ArrowLeft aria-hidden="true" className="h-4.5 w-4.5" />
             <span>{universityAdminContent.registerTeacherPage.backLabel}</span>
           </Link>
         }
-        actionClassName="sm:absolute sm:right-0 sm:top-1/2 sm:-translate-y-1/2"
+        actionClassName="self-end sm:absolute sm:right-0 sm:top-1/2 sm:-translate-y-1/2"
         className="relative gap-2.5 sm:min-h-[4rem] sm:justify-center"
         description=""
         headingAlign="center"
@@ -229,10 +229,10 @@ export function UniversityRegisterTeacherPage({
           {errorMessage}
         </div>
       ) : null}
-      <AdminPanelCard className="flex-1" panelClassName="bg-slate-50">
-        <form className="flex min-h-0 flex-1 flex-col overflow-hidden" noValidate onSubmit={handleSubmit}>
-          <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-7">
-            <div className="grid gap-5 pb-6 lg:grid-cols-2">
+      <AdminPanelCard panelClassName="h-auto bg-slate-50">
+        <form className="flex flex-col" noValidate onSubmit={handleSubmit}>
+          <div className="px-6 py-5 sm:px-7 sm:py-6">
+            <div className="grid gap-4 sm:gap-5 lg:grid-cols-2">
               <AdminTextField
                 error={errors.firstName}
                 icon={UserRound}

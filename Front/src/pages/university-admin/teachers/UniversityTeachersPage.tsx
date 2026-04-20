@@ -460,7 +460,7 @@ export function UniversityTeachersPage() {
                         <div className="flex items-center justify-center sm:mt-0.5">
                           <button
                             className={classNames(
-                              'inline-flex items-center rounded-full px-2 py-0.5 text-[0.66rem] font-semibold leading-none transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-65 sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs sm:leading-normal',
+                              'inline-flex items-center gap-0.5 rounded-full px-2.25 py-0.5 text-[0.68rem] font-semibold leading-none transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-65 sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs sm:leading-normal',
                               teacher.status === 'active'
                                 ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
                                 : 'bg-primary/10 text-primary hover:bg-primary/15',
@@ -474,12 +474,12 @@ export function UniversityTeachersPage() {
                             {teacher.status === 'active' ? (
                               <PowerOff
                                 aria-hidden="true"
-                                className="hidden h-3.25 w-3.25 sm:block sm:h-3.5 sm:w-3.5"
+                                className="h-3 w-3 sm:h-3.5 sm:w-3.5"
                               />
                             ) : (
                               <Power
                                 aria-hidden="true"
-                                className="hidden h-3.25 w-3.25 sm:block sm:h-3.5 sm:w-3.5"
+                                className="h-3 w-3 sm:h-3.5 sm:w-3.5"
                               />
                             )}
                             <span>

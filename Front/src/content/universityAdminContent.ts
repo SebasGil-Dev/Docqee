@@ -125,7 +125,7 @@ export const universityAdminContent = {
         'Registra docentes dentro del modulo universitario de Docqee.',
       title: 'Docqee | Registrar Docente',
     },
-    submitLabel: 'Registrar docente',
+    submitLabel: 'Registrar',
     successMessage: 'El docente se registro correctamente.',
     title: 'Registrar docente',
   },
