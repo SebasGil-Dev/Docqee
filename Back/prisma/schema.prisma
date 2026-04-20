@@ -23,6 +23,7 @@ model cita {
   respondida_at          DateTime?             @db.Timestamptz(6)
   motivo_cancelacion     String?
   finalizada_at          DateTime?             @db.Timestamptz(6)
+  recordatorio_24h_enviado Boolean             @default(false)
   fecha_creacion         DateTime              @default(now()) @db.Timestamptz(6)
   fecha_actualizacion    DateTime              @default(now()) @db.Timestamptz(6)
   cuenta_acceso          cuenta_acceso?        @relation(fields: [cancelada_por_cuenta], references: [id_cuenta], onDelete: NoAction, onUpdate: NoAction, map: "fk_cita_cancelada_por")

@@ -41,6 +41,7 @@ import {
   updateStudentPortalProfile,
   updateStudentPortalRequestStatus,
   updateStudentPortalScheduleBlock,
+  submitStudentPortalAppointmentReview,
 } from '@/lib/studentApi';
 
 type StudentModuleActions = {
@@ -85,6 +86,11 @@ type StudentModuleActions = {
     values: StudentAppointmentFormValues,
     appointmentId?: string,
   ) => string | null;
+  submitAppointmentReview: (
+    appointmentId: string,
+    rating: number,
+    comment?: string,
+  ) => Promise<boolean>;
 };
 
 type StudentStoreState = StudentModuleState & {
@@ -1824,6 +1830,34 @@ async function upsertScheduleBlock(
   }
 }
 
+async function submitAppointmentReview(
+  appointmentId: string,
+  rating: number,
+  comment?: string,
+) {
+  patchState({ errorMessage: null, isLoading: true });
+
+  try {
+    const appointment = await submitStudentPortalAppointmentReview(appointmentId, rating, comment);
+
+    updateState({
+      ...state,
+      appointments: state.appointments.map((a) => (a.id === appointmentId ? appointment : a)),
+      errorMessage: null,
+      isLoading: false,
+      isReady: true,
+    });
+
+    return true;
+  } catch (error) {
+    patchState({
+      errorMessage: getErrorMessage(error, 'No pudimos guardar la valoracion.'),
+      isLoading: false,
+    });
+    return false;
+  }
+}
+
 async function updateAppointmentStatus(
   appointmentId: string,
   status: StudentAgendaAppointmentStatus,
@@ -2153,6 +2187,7 @@ export function useStudentModuleStore(options: UseStudentModuleStoreOptions = {}
     upsertAppointment,
     upsertScheduleBlock,
     checkAppointmentConflict: findAppointmentValidationError,
+    submitAppointmentReview,
   };
 
   return {
