@@ -150,6 +150,32 @@ export const universityAdminContent = {
         to: ROUTES.universityBulkUpload,
       },
     ],
+    mobileBottomNavigationItems: [
+      {
+        icon: 'house',
+        label: 'Inicio',
+        matchPrefix: ROUTES.universityHome,
+        to: ROUTES.universityHome,
+      },
+      {
+        icon: 'graduation-cap',
+        label: 'Estudiantes',
+        matchPrefix: ROUTES.universityStudents,
+        to: ROUTES.universityStudents,
+      },
+      {
+        icon: 'presentation',
+        label: 'Docentes',
+        matchPrefix: ROUTES.universityTeachers,
+        to: ROUTES.universityTeachers,
+      },
+      {
+        icon: 'key-round',
+        label: 'Credenciales',
+        matchPrefix: ROUTES.universityCredentials,
+        to: ROUTES.universityCredentials,
+      },
+    ],
     logoutCta: {
       label: 'Cerrar sesión',
       to: ROUTES.login,

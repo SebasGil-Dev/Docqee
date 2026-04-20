@@ -251,6 +251,8 @@ export function AdminShell({
     ? 'Cerrar menú de cuenta'
     : 'Abrir menú de cuenta';
   const mobileAccountMenuItems = content.mobileAccountMenuItems ?? [];
+  const mobileBottomNavigationItems =
+    content.mobileBottomNavigationItems ?? content.navigation;
 
   useEffect(() => {
     try {
@@ -766,7 +768,7 @@ export function AdminShell({
         <AdminMobileBottomNavigation
           activePathname={location.pathname}
           density={mobileNavigationDensity}
-          items={content.navigation}
+          items={mobileBottomNavigationItems}
         />
       ) : null}
     </div>

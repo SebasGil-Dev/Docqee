@@ -671,6 +671,7 @@ export type AdminShellContent = {
   };
   homePath?: `/${string}`;
   mobileAccountMenuItems?: readonly AdminShellNavigationItem[];
+  mobileBottomNavigationItems?: readonly AdminShellNavigationItem[];
   mobileTitle?: string;
   logoutCta: {
     label: string;

@@ -55,6 +55,22 @@ function renderUniversityApp(
   );
 }
 
+function mockUniversityAdminViewport(matches: boolean) {
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    value: () => ({
+      addEventListener: () => undefined,
+      addListener: () => undefined,
+      dispatchEvent: () => false,
+      matches,
+      media: '(max-width: 1023px)',
+      onchange: null,
+      removeEventListener: () => undefined,
+      removeListener: () => undefined,
+    }),
+  });
+}
+
 async function fillStudentForm(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText(/^Nombres$/i), 'Juliana');
   await user.type(screen.getByLabelText(/^Apellidos$/i), 'Marin');
@@ -105,6 +121,7 @@ function createWorkbookFile(
 describe('University admin pages', () => {
   beforeEach(() => {
     window.localStorage.clear();
+    mockUniversityAdminViewport(false);
     resetUniversityAdminModuleState();
   });
 
@@ -134,6 +151,7 @@ describe('University admin pages', () => {
   it('muestra accesos universitarios dentro del menu hamburguesa movil', async () => {
     const user = userEvent.setup();
 
+    mockUniversityAdminViewport(true);
     renderUniversityApp([ROUTES.universityHome]);
 
     await user.click(screen.getByRole('button', { name: /abrir menú de cuenta/i }));
@@ -147,6 +165,30 @@ describe('University admin pages', () => {
     ).toHaveAttribute('href', ROUTES.universityBulkUpload);
     expect(
       within(menu).getByRole('menuitem', { name: /cerrar sesión/i }),
+    ).toBeInTheDocument();
+
+    const bottomNavigation = screen.getByRole('navigation', {
+      name: /navegacion inferior administrativa/i,
+    });
+    expect(
+      within(bottomNavigation).queryByRole('link', {
+        name: /información institucional/i,
+      }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(bottomNavigation).queryByRole('link', { name: /carga masiva/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(bottomNavigation).getByRole('link', { name: /^inicio$/i }),
+    ).toBeInTheDocument();
+    expect(
+      within(bottomNavigation).getByRole('link', { name: /estudiantes/i }),
+    ).toBeInTheDocument();
+    expect(
+      within(bottomNavigation).getByRole('link', { name: /docentes/i }),
+    ).toBeInTheDocument();
+    expect(
+      within(bottomNavigation).getByRole('link', { name: /credenciales/i }),
     ).toBeInTheDocument();
   });
 
