@@ -596,6 +596,12 @@ describe('University admin pages', () => {
     expect(teacherSummary).toHaveTextContent(/Mariana Beltran/i);
     expect(teacherSummary).toHaveTextContent(/CC 80124590/i);
     expect(teacherSummary).toHaveTextContent(/Registro del docente/i);
+
+    const teacherRow = screen.getByText(/Mariana Beltran/i).closest('tr');
+    expect(teacherRow).not.toBeNull();
+    expect(
+      within(teacherRow!).getByRole('button', { name: /^inactivar$/i }),
+    ).toHaveClass('text-[0.66rem]');
   });
 
   it('no cambia el estado del docente hasta confirmar la advertencia', async () => {
