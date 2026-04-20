@@ -522,27 +522,27 @@ export function UniversityCredentialsPage() {
           ) : null}
         </div>
         {filteredCredentialRows.length > 0 ? (
-          <div className="admin-scrollbar min-h-0 flex-1 overflow-x-auto overflow-y-auto">
-            <div className="w-full lg:min-w-[60rem]">
+          <div className="admin-scrollbar min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+            <div className="w-full min-w-0">
               <table className="w-full table-fixed">
               <colgroup>
+                <col className="w-[27%]" />
+                <col className="w-[29%]" />
+                <col className="w-[14%]" />
                 <col className="w-[30%]" />
-                <col className="w-[35%]" />
-                <col className="w-[15%]" />
-                <col className="w-[20%]" />
               </colgroup>
               <thead className="sticky top-0 z-10 bg-slate-100 text-left">
                 <tr className="text-[0.6rem] font-bold uppercase tracking-[0.14em] text-ink-muted sm:text-[0.64rem] sm:tracking-[0.16em]">
-                  <th className="px-3 py-2 sm:px-5 sm:py-2.5">
+                  <th className="px-2.5 py-2 sm:px-4 sm:py-2.5">
                     Estudiante
                   </th>
-                  <th className="px-3 py-2 sm:px-4 sm:py-2.5">
+                  <th className="px-2.5 py-2 sm:px-3 sm:py-2.5">
                     Correo electrónico
                   </th>
-                  <th className="px-3 py-2 text-center sm:px-4 sm:py-2.5">
+                  <th className="px-2 py-2 text-center sm:px-3 sm:py-2.5">
                     Estado
                   </th>
-                  <th className="px-3 py-2 text-center sm:px-5 sm:py-2.5">
+                  <th className="px-2.5 py-2 text-center sm:px-3.5 sm:py-2.5">
                     Acciones
                   </th>
                 </tr>
@@ -557,7 +557,7 @@ export function UniversityCredentialsPage() {
                     <tr key={credential.id} className="align-top">
                       <td
                         className={classNames(
-                          'overflow-hidden px-3 pt-2.5 sm:px-5 sm:pt-3',
+                          'overflow-hidden px-2.5 pt-2.5 sm:px-4 sm:pt-3',
                           isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
                         )}
                       >
@@ -575,7 +575,7 @@ export function UniversityCredentialsPage() {
                       </td>
                       <td
                         className={classNames(
-                          'overflow-hidden px-3 pt-2.5 sm:px-4 sm:pt-3',
+                          'overflow-hidden px-2.5 pt-2.5 sm:px-3 sm:pt-3',
                           isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
                         )}
                       >
@@ -610,7 +610,7 @@ export function UniversityCredentialsPage() {
                             ) : null}
                           </div>
                         ) : (
-                          <div className="flex min-w-0 items-center gap-1.5 text-[0.76rem] text-ink-muted sm:gap-2 sm:text-[0.82rem]">
+                          <div className="flex min-w-0 items-center gap-1.5 text-[0.76rem] text-ink-muted sm:gap-1.5 sm:text-[0.82rem]">
                             <Mail
                               aria-hidden="true"
                               className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4"
@@ -626,7 +626,7 @@ export function UniversityCredentialsPage() {
                       </td>
                       <td
                         className={classNames(
-                          'px-3 pt-2.5 text-center sm:px-4 sm:pt-3',
+                          'px-2 pt-2.5 text-center sm:px-3 sm:pt-3',
                           isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
                         )}
                       >
@@ -640,11 +640,11 @@ export function UniversityCredentialsPage() {
                       </td>
                       <td
                         className={classNames(
-                          'overflow-hidden px-3 pt-2.5 text-center sm:px-5 sm:pt-3',
+                          'px-2.5 pt-2.5 text-center sm:px-3.5 sm:pt-3',
                           isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
                         )}
                       >
-                        <div className="mt-0.5 flex flex-nowrap items-center justify-center gap-1 sm:gap-2">
+                        <div className="mt-0.5 flex flex-wrap items-center justify-center gap-1 sm:gap-1.5">
                           {isEditing ? (
                             <>
                               <button
@@ -652,7 +652,7 @@ export function UniversityCredentialsPage() {
                                   universityAdminContent.credentialsPage
                                     .actionLabels.saveEmail
                                 }
-                                className="inline-flex h-[1.875rem] w-[1.875rem] shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition duration-200 hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs sm:font-semibold"
+                                className="inline-flex h-[1.875rem] w-[1.875rem] shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition duration-200 hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-auto sm:w-auto sm:gap-1 sm:px-2.5 sm:py-1 sm:text-xs sm:font-semibold"
                                 disabled={isLoading}
                                 type="button"
                                 onClick={() =>
@@ -672,7 +672,7 @@ export function UniversityCredentialsPage() {
                               </button>
                               <button
                                 aria-label="Cancelar"
-                                className="inline-flex h-[1.875rem] w-[1.875rem] shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs sm:font-semibold"
+                                className="inline-flex h-[1.875rem] w-[1.875rem] shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 sm:h-auto sm:w-auto sm:gap-1 sm:px-2.5 sm:py-1 sm:text-xs sm:font-semibold"
                                 disabled={isLoading}
                                 type="button"
                                 onClick={handleCancelEmailEdit}
@@ -701,7 +701,7 @@ export function UniversityCredentialsPage() {
                                         .actionLabels.resend
                                 }
                                 className={classNames(
-                                  'inline-flex h-[1.875rem] w-[1.875rem] shrink-0 items-center justify-center rounded-full transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs sm:font-semibold',
+                                  'inline-flex h-[1.875rem] w-[1.875rem] shrink-0 items-center justify-center rounded-full transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-auto sm:w-auto sm:gap-1 sm:px-2.5 sm:py-1 sm:text-xs sm:font-semibold',
                                   isGenerated
                                     ? 'bg-primary/10 text-primary hover:bg-primary/15'
                                     : 'bg-sky-50 text-sky-700 hover:bg-sky-100',
@@ -743,7 +743,7 @@ export function UniversityCredentialsPage() {
                                   universityAdminContent.credentialsPage
                                     .actionLabels.editEmail
                                 }
-                                className="inline-flex h-[1.875rem] w-[1.875rem] shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs sm:font-semibold"
+                                className="inline-flex h-[1.875rem] w-[1.875rem] shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 sm:h-auto sm:w-auto sm:gap-1 sm:px-2.5 sm:py-1 sm:text-xs sm:font-semibold"
                                 disabled={isLoading}
                                 type="button"
                                 onClick={() => handleStartEmailEdit(credential)}
@@ -768,7 +768,7 @@ export function UniversityCredentialsPage() {
                                   universityAdminContent.credentialsPage
                                     .actionLabels.delete
                                 }
-                                className="inline-flex h-[1.875rem] w-[1.875rem] shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-700 transition duration-200 hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200/70 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs sm:font-semibold"
+                                className="inline-flex h-[1.875rem] w-[1.875rem] shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-700 transition duration-200 hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200/70 sm:h-auto sm:w-auto sm:gap-1 sm:px-2.5 sm:py-1 sm:text-xs sm:font-semibold"
                                 disabled={isLoading}
                                 type="button"
                                 onClick={() => {
