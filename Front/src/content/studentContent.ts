@@ -123,21 +123,21 @@ export const studentContent = {
     homePath: ROUTES.home,
     mobileTitle: 'Portal estudiante',
     logoutCta: {
-      label: 'Cerrar sesion',
+      label: 'Cerrar sesión',
       to: ROUTES.login,
     },
     navigation: [
       {
         icon: 'house',
-        label: 'Inicio estudiante',
+        label: 'Inicio',
         matchPrefix: ROUTES.studentTreatments,
         to: ROUTES.studentTreatments,
       },
       {
-        icon: 'calendar-days',
-        label: 'Agenda',
-        matchPrefix: ROUTES.studentAgenda,
-        to: ROUTES.studentAgenda,
+        icon: 'clipboard-list',
+        label: 'Solicitudes',
+        matchPrefix: ROUTES.studentRequests,
+        to: ROUTES.studentRequests,
       },
       {
         icon: 'calendar-check-2',
@@ -146,10 +146,10 @@ export const studentContent = {
         to: ROUTES.studentAppointments,
       },
       {
-        icon: 'clipboard-list',
-        label: 'Solicitudes',
-        matchPrefix: ROUTES.studentRequests,
-        to: ROUTES.studentRequests,
+        icon: 'calendar-days',
+        label: 'Agenda',
+        matchPrefix: ROUTES.studentAgenda,
+        to: ROUTES.studentAgenda,
       },
       {
         icon: 'message-square-more',
