@@ -225,7 +225,7 @@ export function UniversityStudentsPage() {
           className="min-w-0 flex-1 overflow-hidden bg-brand-gradient text-white md:flex-[1.6]"
           paddingClassName="p-0"
         >
-          <div className="flex h-full items-center gap-2 px-2.25 py-1.25 sm:gap-2.5 sm:px-3.5 sm:py-2">
+          <div className="flex h-full items-center gap-2 py-1.25 pl-3.5 pr-2.25 sm:gap-2.5 sm:px-3.5 sm:py-2">
             <span className="inline-flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded-[0.75rem] bg-white/12 text-white ring-1 ring-white/20 sm:h-7 sm:w-7 sm:rounded-[0.75rem]">
               <GraduationCap
                 aria-hidden="true"
