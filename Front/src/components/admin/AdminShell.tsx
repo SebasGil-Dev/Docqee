@@ -46,6 +46,7 @@ type AdminShellProps = PropsWithChildren<{
   content?: AdminShellContent;
   contentBackgroundClassName?: string;
   headerNotifications?: AdminShellNotification[];
+  hideHeaderNotificationsOnMobile?: boolean;
   mainScrollMode?: 'page' | 'section';
   notificationsPageTo?: `/${string}`;
   mobileNavigationDensity?: 'regular' | 'compact';
@@ -177,6 +178,7 @@ export function AdminShell({
   content = adminContent.shell,
   contentBackgroundClassName = 'bg-[#f4f8ff]',
   headerNotifications,
+  hideHeaderNotificationsOnMobile = false,
   mainScrollMode = 'page',
   mobileNavigationDensity = 'regular',
   notificationsPageTo,
@@ -217,8 +219,9 @@ export function AdminShell({
     avatarKind === 'logo'
       ? getOptimizedLogoUrl(avatarSrc, 320, 320)
       : getOptimizedAvatarUrl(avatarSrc, 96);
-  const showHeaderNotifications =
-    Array.isArray(headerNotifications) || Boolean(notificationsPageTo);
+  const mobileAccountMenuItems = content.mobileAccountMenuItems ?? [];
+  const mobileBottomNavigationItems =
+    content.mobileBottomNavigationItems ?? content.navigation;
   const isCompactMobileNavigation = mobileNavigationDensity === 'compact';
   const shouldConstrainMainScroll =
     mainScrollMode === 'section' && showMobileBottomNavigation;
@@ -244,15 +247,17 @@ export function AdminShell({
     headerNotifications?.filter((notification) => notification.isRead !== true)
       .length ?? 0;
   const hasUnreadNotifications = unreadNotificationCount > 0;
+  const showHeaderNotifications =
+    (Array.isArray(headerNotifications) || Boolean(notificationsPageTo)) &&
+    !(isMobileViewport && hideHeaderNotificationsOnMobile);
+  const showAccountMenuNotificationBadge =
+    isMobileViewport && hideHeaderNotificationsOnMobile && hasUnreadNotifications;
   const notificationButtonLabel = unreadNotificationCount
     ? `Notificaciones (${unreadNotificationCount})`
     : 'Notificaciones';
   const accountMenuButtonLabel = isAccountMenuOpen
     ? 'Cerrar menú de cuenta'
     : 'Abrir menú de cuenta';
-  const mobileAccountMenuItems = content.mobileAccountMenuItems ?? [];
-  const mobileBottomNavigationItems =
-    content.mobileBottomNavigationItems ?? content.navigation;
 
   useEffect(() => {
     try {
@@ -523,7 +528,7 @@ export function AdminShell({
                     aria-expanded={isAccountMenuOpen}
                     aria-haspopup="menu"
                     aria-label={accountMenuButtonLabel}
-                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-ink-muted transition-colors duration-200 hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/12"
+                    className="relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-ink-muted transition-colors duration-200 hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/12"
                     type="button"
                     onClick={() => {
                       setIsNotificationsOpen(false);
@@ -531,6 +536,13 @@ export function AdminShell({
                     }}
                   >
                     <Menu aria-hidden="true" className="h-4 w-4" />
+                    {showAccountMenuNotificationBadge ? (
+                      <span className="absolute -right-1 -top-1 inline-flex min-h-[1.1rem] min-w-[1.1rem] items-center justify-center rounded-full bg-rose-500 px-1 text-[0.62rem] font-bold leading-none text-white">
+                        {unreadNotificationCount > 9
+                          ? '9+'
+                          : unreadNotificationCount}
+                      </span>
+                    ) : null}
                   </button>
                   {isAccountMenuOpen ? (
                     <div

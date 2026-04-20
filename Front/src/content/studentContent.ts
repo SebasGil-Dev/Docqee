@@ -121,6 +121,52 @@ export const studentContent = {
       lastName: 'Rios',
     },
     homePath: ROUTES.home,
+    mobileAccountMenuItems: [
+      {
+        icon: 'bell',
+        label: 'Notificaciones',
+        matchPrefix: ROUTES.studentNotifications,
+        to: ROUTES.studentNotifications,
+      },
+      {
+        icon: 'user-round',
+        label: 'Perfil',
+        matchPrefix: ROUTES.studentProfile,
+        to: ROUTES.studentProfile,
+      },
+    ],
+    mobileBottomNavigationItems: [
+      {
+        icon: 'house',
+        label: 'Inicio',
+        matchPrefix: ROUTES.studentTreatments,
+        to: ROUTES.studentTreatments,
+      },
+      {
+        icon: 'clipboard-list',
+        label: 'Solicitudes',
+        matchPrefix: ROUTES.studentRequests,
+        to: ROUTES.studentRequests,
+      },
+      {
+        icon: 'calendar-check-2',
+        label: 'Citas',
+        matchPrefix: ROUTES.studentAppointments,
+        to: ROUTES.studentAppointments,
+      },
+      {
+        icon: 'calendar-days',
+        label: 'Agenda',
+        matchPrefix: ROUTES.studentAgenda,
+        to: ROUTES.studentAgenda,
+      },
+      {
+        icon: 'message-square-more',
+        label: 'Chat',
+        matchPrefix: ROUTES.studentConversations,
+        to: ROUTES.studentConversations,
+      },
+    ],
     mobileTitle: 'Portal estudiante',
     logoutCta: {
       label: 'Cerrar sesión',

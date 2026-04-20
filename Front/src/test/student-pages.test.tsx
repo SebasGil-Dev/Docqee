@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { MemoryRouterProps } from 'react-router-dom';
 import { MemoryRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ROUTES } from '@/constants/routes';
 import { resetStudentModuleState } from '@/lib/studentModuleStore';
@@ -49,9 +49,27 @@ function renderStudentApp(
   );
 }
 
+function mockStudentViewport(matches: boolean) {
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+      addEventListener: vi.fn(),
+      addListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+      matches,
+      media: query,
+      onchange: null,
+      removeEventListener: vi.fn(),
+      removeListener: vi.fn(),
+    })),
+  });
+}
+
 describe('Student pages', () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
     window.localStorage.clear();
+    mockStudentViewport(false);
     resetStudentModuleState();
   });
 
@@ -105,6 +123,54 @@ describe('Student pages', () => {
     expect(screen.getByText(/julian torres acepto la cita/i)).toBeInTheDocument();
     expect(screen.getByText(/solicitud de reprogramacion/i)).toBeInTheDocument();
     expect(screen.getByText(/ricardo suarez cancelo la cita/i)).toBeInTheDocument();
+  });
+
+  it('mueve notificaciones y perfil al menu hamburguesa en movil', async () => {
+    mockStudentViewport(true);
+    const user = userEvent.setup();
+
+    renderStudentApp([ROUTES.studentTreatments]);
+
+    const mobileNavigation = screen.getByRole('navigation', {
+      name: /navegacion inferior administrativa/i,
+    });
+
+    expect(
+      within(mobileNavigation).getByRole('link', { name: /^Inicio$/i }),
+    ).toHaveAttribute('aria-current', 'page');
+    expect(
+      within(mobileNavigation).getByRole('link', { name: /^Solicitudes$/i }),
+    ).toBeInTheDocument();
+    expect(
+      within(mobileNavigation).getByRole('link', { name: /^Citas$/i }),
+    ).toBeInTheDocument();
+    expect(
+      within(mobileNavigation).getByRole('link', { name: /^Agenda$/i }),
+    ).toBeInTheDocument();
+    expect(
+      within(mobileNavigation).getByRole('link', { name: /^Chat$/i }),
+    ).toBeInTheDocument();
+    expect(
+      within(mobileNavigation).queryByRole('link', { name: /notificaciones/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(mobileNavigation).queryByRole('link', { name: /perfil/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /^Notificaciones(?: \(\d+\))?$/i }),
+    ).not.toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole('button', { name: /abrir men[u\u00fa] de cuenta/i }),
+    );
+
+    expect(
+      screen.getByRole('menuitem', { name: /notificaciones/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /perfil/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('menuitem', { name: /cerrar sesi[o\u00f3]n/i }),
+    ).toBeInTheDocument();
   });
 
   it('muestra un mensaje cuando ya no quedan notificaciones sin leer en el header', async () => {

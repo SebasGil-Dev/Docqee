@@ -73,6 +73,7 @@ export function StudentLayout() {
       avatarSrc={profile.avatarSrc}
       content={studentContent.shell}
       headerNotifications={notifications}
+      hideHeaderNotificationsOnMobile
       notificationsPageTo={ROUTES.studentNotifications}
       onMarkAllNotificationsRead={markAllNotificationsAsRead}
       onOpenNotification={markNotificationAsRead}
