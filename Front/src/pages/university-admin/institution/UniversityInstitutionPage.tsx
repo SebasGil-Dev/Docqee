@@ -89,6 +89,8 @@ const passwordRuleOrder = [
 const UNIVERSITY_CAMPUSES_SECTION_ID = 'university-campuses-section';
 const compactFieldContainerClassName = 'space-y-1';
 const compactFieldLabelClassName = 'text-[0.74rem] sm:text-sm';
+const institutionSectionTitleClassName =
+  'text-center font-headline text-[0.92rem] font-extrabold tracking-tight text-ink sm:text-[1.15rem]';
 const compactTextFieldInputClassName =
   'rounded-lg py-2 pl-10 pr-2.5 text-[0.76rem] sm:rounded-2xl sm:py-3 sm:pl-11 sm:pr-4 sm:text-sm';
 const compactSelectFieldClassName =
@@ -1242,7 +1244,7 @@ export function UniversityInstitutionPage({
                 <div className="space-y-2 sm:space-y-4">
                   <div className="space-y-2 rounded-[1rem] border border-slate-200/80 bg-slate-50/80 p-2 sm:space-y-4 sm:rounded-[1.6rem] sm:p-5">
                     <div>
-                      <h2 className="text-center font-headline text-[0.92rem] font-extrabold tracking-tight text-ink sm:text-[1.15rem]">
+                      <h2 className={institutionSectionTitleClassName}>
                         {
                           universityAdminContent.institutionPage.sectionTitles
                             .institution
@@ -1441,7 +1443,7 @@ export function UniversityInstitutionPage({
                       ref={campusesSectionRef}
                     >
                       <div className="w-full">
-                        <h3 className="text-center font-headline text-[0.9rem] font-extrabold tracking-tight text-ink sm:text-[1rem]">
+                        <h3 className={institutionSectionTitleClassName}>
                           Sedes de la universidad
                         </h3>
                       </div>
@@ -1602,7 +1604,7 @@ export function UniversityInstitutionPage({
                       </button>
                     </div>
                     <div className="mt-5 sm:mt-6">
-                      <h4 className="text-center font-headline text-[0.92rem] font-extrabold tracking-tight text-ink sm:text-[1.12rem]">
+                      <h4 className={institutionSectionTitleClassName}>
                         Lista de sedes
                       </h4>
                     </div>
@@ -1707,7 +1709,7 @@ export function UniversityInstitutionPage({
 
                   <div className="space-y-2 rounded-[1rem] border border-slate-200/80 bg-slate-50/80 p-2 sm:space-y-4 sm:rounded-[1.6rem] sm:p-5">
                     <div>
-                      <h2 className="text-center font-headline text-[0.92rem] font-extrabold tracking-tight text-ink sm:text-[1.15rem]">
+                      <h2 className={institutionSectionTitleClassName}>
                         {
                           universityAdminContent.institutionPage.sectionTitles
                             .administrator
