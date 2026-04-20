@@ -479,7 +479,7 @@ export function AdminRegisterUniversityPage({
       <AdminPageHeader
         action={
           <Link
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-4 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-3.5 py-2.5 text-[0.82rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 sm:px-4 sm:py-3 sm:text-sm"
             to={ROUTES.adminUniversities}
           >
             <ArrowLeft aria-hidden="true" className="h-4.5 w-4.5" />

@@ -13,6 +13,7 @@ import {
   House,
   KeyRound,
   LogOut,
+  Menu,
   MessageSquareMore,
   Presentation,
   Search,
@@ -20,7 +21,7 @@ import {
   Upload,
   UserRound,
 } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import { useAuth } from '@/app/providers/AuthProvider';
 import { AdminMobileBottomNavigation } from '@/components/admin/AdminMobileBottomNavigation';
@@ -187,12 +188,15 @@ export function AdminShell({
 }: AdminShellProps) {
   const { logout, session } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(
     getStoredSidebarState,
   );
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const isMobileViewport = useIsMobileViewport();
   const notificationsRef = useRef<HTMLDivElement | null>(null);
+  const accountMenuRef = useRef<HTMLDivElement | null>(null);
   const adminFirstName =
     overrideName?.firstName ||
     session?.user.firstName ||
@@ -243,6 +247,9 @@ export function AdminShell({
   const notificationButtonLabel = unreadNotificationCount
     ? `Notificaciones (${unreadNotificationCount})`
     : 'Notificaciones';
+  const accountMenuButtonLabel = isAccountMenuOpen
+    ? 'Cerrar menú de cuenta'
+    : 'Abrir menú de cuenta';
 
   useEffect(() => {
     try {
@@ -256,19 +263,26 @@ export function AdminShell({
   }, [isSidebarCollapsed]);
 
   useEffect(() => {
-    if (!isNotificationsOpen) {
+    if (!isNotificationsOpen && !isAccountMenuOpen) {
       return undefined;
     }
 
     function handlePointerDown(event: MouseEvent) {
-      if (!notificationsRef.current?.contains(event.target as Node)) {
+      const target = event.target as Node;
+
+      if (isNotificationsOpen && !notificationsRef.current?.contains(target)) {
         setIsNotificationsOpen(false);
+      }
+
+      if (isAccountMenuOpen && !accountMenuRef.current?.contains(target)) {
+        setIsAccountMenuOpen(false);
       }
     }
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         setIsNotificationsOpen(false);
+        setIsAccountMenuOpen(false);
       }
     }
 
@@ -279,7 +293,12 @@ export function AdminShell({
       window.removeEventListener('mousedown', handlePointerDown);
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isNotificationsOpen]);
+  }, [isAccountMenuOpen, isNotificationsOpen]);
+
+  useEffect(() => {
+    setIsNotificationsOpen(false);
+    setIsAccountMenuOpen(false);
+  }, [location.pathname]);
 
   return (
     <div
@@ -349,9 +368,12 @@ export function AdminShell({
                       aria-label={notificationButtonLabel}
                       className="relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-ink-muted transition-colors duration-200 hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/12 sm:h-7 sm:w-7"
                       type="button"
-                      onClick={() =>
-                        setIsNotificationsOpen((currentValue) => !currentValue)
-                      }
+                      onClick={() => {
+                        setIsAccountMenuOpen(false);
+                        setIsNotificationsOpen(
+                          (currentValue) => !currentValue,
+                        );
+                      }}
                     >
                       <Bell
                         aria-hidden="true"
@@ -492,6 +514,45 @@ export function AdminShell({
                     {adminInitials}
                   </span>
                 )}
+                <div className="relative lg:hidden" ref={accountMenuRef}>
+                  <button
+                    aria-controls="admin-header-account-menu"
+                    aria-expanded={isAccountMenuOpen}
+                    aria-haspopup="menu"
+                    aria-label={accountMenuButtonLabel}
+                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-ink-muted transition-colors duration-200 hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/12"
+                    type="button"
+                    onClick={() => {
+                      setIsNotificationsOpen(false);
+                      setIsAccountMenuOpen((currentValue) => !currentValue);
+                    }}
+                  >
+                    <Menu aria-hidden="true" className="h-4 w-4" />
+                  </button>
+                  {isAccountMenuOpen ? (
+                    <div
+                      className="absolute right-0 top-[calc(100%+0.65rem)] z-30 w-[13.5rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-[1.35rem] border border-slate-200/80 bg-white p-2 shadow-[0_20px_44px_-26px_rgba(15,23,42,0.32)]"
+                      id="admin-header-account-menu"
+                      role="menu"
+                    >
+                      <button
+                        className="flex w-full items-center gap-2.5 rounded-[1rem] px-3.5 py-3 text-left text-sm font-semibold text-ink transition-colors duration-200 hover:bg-surface hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/12"
+                        type="button"
+                        onClick={() => {
+                          setIsAccountMenuOpen(false);
+                          logout();
+                          navigate(content.logoutCta.to);
+                        }}
+                      >
+                        <LogOut
+                          aria-hidden="true"
+                          className="h-4.5 w-4.5 shrink-0"
+                        />
+                        <span>{content.logoutCta.label}</span>
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
                 <p className="hidden truncate text-[0.78rem] font-semibold text-ink sm:block sm:text-[0.82rem]">
                   {adminFullName}
                 </p>
@@ -685,9 +746,6 @@ export function AdminShell({
           activePathname={location.pathname}
           density={mobileNavigationDensity}
           items={content.navigation}
-          logoutLabel={content.logoutCta.label}
-          logoutTo={content.logoutCta.to}
-          onLogout={logout}
         />
       ) : null}
     </div>
