@@ -119,8 +119,7 @@ export function UniversityRegisterStudentPage({
   const emailRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
   const semesterRef = useRef<HTMLSelectElement>(null);
-  const continueSubmitButtonRef = useRef<HTMLButtonElement>(null);
-  const [successNotice, setSuccessNotice] = useState<string | null>(null);
+  const submitButtonRef = useRef<HTMLButtonElement>(null);
 
   const fieldRefs = useMemo(
     () =>
@@ -168,10 +167,6 @@ export function UniversityRegisterStudentPage({
   }, []);
 
   const updateFieldValue = (field: RegisterStudentFormField, nextValue: string) => {
-    if (successNotice) {
-      setSuccessNotice(null);
-    }
-
     setValues((currentValues) => ({
       ...currentValues,
       [field]: nextValue,
@@ -201,7 +196,7 @@ export function UniversityRegisterStudentPage({
     const nextField = fieldOrder[currentFieldIndex + 1];
 
     if (!nextField) {
-      continueSubmitButtonRef.current?.focus();
+      submitButtonRef.current?.focus();
       return;
     }
 
@@ -219,7 +214,7 @@ export function UniversityRegisterStudentPage({
     event.preventDefault();
 
     if (field === 'semester') {
-      event.currentTarget.form?.requestSubmit(continueSubmitButtonRef.current ?? undefined);
+      event.currentTarget.form?.requestSubmit(submitButtonRef.current ?? undefined);
       return;
     }
 
@@ -245,9 +240,6 @@ export function UniversityRegisterStudentPage({
     event.preventDefault();
 
     const nextErrors: RegisterStudentFormErrors = {};
-    const submitEvent = event.nativeEvent as SubmitEvent;
-    const submitter = submitEvent.submitter as HTMLButtonElement | null;
-    const shouldContinue = submitter?.dataset.submitMode === 'continue';
 
     fieldOrder.forEach((field) => {
       const nextFieldError = validateField(field, values[field]);
@@ -275,28 +267,6 @@ export function UniversityRegisterStudentPage({
         return;
       }
 
-      if (shouldContinue) {
-        const preservedDocumentTypeId = values.documentTypeId;
-        const preservedSemester = values.semester;
-
-        setValues({
-          ...initialValues,
-          documentTypeId: preservedDocumentTypeId,
-          semester: preservedSemester,
-        });
-        setErrors({});
-        setSuccessNotice(
-          universityAdminContent.registerStudentPage.continueSuccessMessage,
-        );
-        setIsSubmitting(false);
-
-        window.requestAnimationFrame(() => {
-          firstNameRef.current?.focus();
-        });
-
-        return;
-      }
-
       navigate(ROUTES.universityStudents, {
         state: {
           successNotice: universityAdminContent.registerStudentPage.successMessage,
@@ -315,7 +285,7 @@ export function UniversityRegisterStudentPage({
       <AdminPageHeader
         action={
           <Link
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-surface-card px-4 py-3 text-sm font-semibold text-primary shadow-ambient transition duration-300 hover:bg-surface-low focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-4 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
             to={ROUTES.universityStudents}
           >
             <ArrowLeft aria-hidden="true" className="h-4.5 w-4.5" />
@@ -332,14 +302,6 @@ export function UniversityRegisterStudentPage({
       {errorMessage ? (
         <SurfaceCard className="border border-rose-200 bg-rose-50/90 text-sm text-rose-800 shadow-none" paddingClassName="p-4">
           <p role="alert">{errorMessage}</p>
-        </SurfaceCard>
-      ) : null}
-      {successNotice ? (
-        <SurfaceCard
-          className="border border-emerald-200 bg-emerald-50/90 text-sm text-emerald-800 shadow-none"
-          paddingClassName="p-4"
-        >
-          <p role="status">{successNotice}</p>
         </SurfaceCard>
       ) : null}
       <AdminPanelCard
@@ -482,18 +444,8 @@ export function UniversityRegisterStudentPage({
           <div className="flex flex-wrap items-center justify-center gap-3 border-t border-slate-200/80 bg-white px-5 py-3 sm:px-7 sm:py-3 lg:py-2.5">
             <button
               className="inline-flex items-center justify-center rounded-2xl bg-brand-gradient px-5 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-70"
-              data-submit-mode="continue"
               disabled={isSubmitting || isLoading}
-              ref={continueSubmitButtonRef}
-              type="submit"
-            >
-              {isSubmitting
-                ? 'Registrando...'
-                : universityAdminContent.registerStudentPage.continueLabel}
-            </button>
-            <button
-              className="inline-flex items-center justify-center rounded-2xl bg-surface-card px-5 py-3 text-sm font-semibold text-primary shadow-ambient transition duration-300 hover:bg-surface-low focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-70"
-              disabled={isSubmitting || isLoading}
+              ref={submitButtonRef}
               type="submit"
             >
               {isSubmitting ? 'Registrando...' : universityAdminContent.registerStudentPage.submitLabel}
