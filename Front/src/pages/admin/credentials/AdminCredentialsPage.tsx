@@ -341,24 +341,24 @@ export function AdminCredentialsPage() {
 
   const confirmationTitle =
     pendingConfirmation?.action === 'delete'
-      ? 'Quieres eliminar esta credencial?'
+      ? '¿Quieres eliminar esta credencial?'
       : pendingConfirmation?.action === 'send'
-        ? 'Quieres enviar la credencial?'
-        : 'Quieres reenviar la credencial?';
+        ? '¿Deseas enviar la credencial?'
+        : '¿Deseas reenviar la credencial?';
 
   const confirmationConfirmLabel =
     pendingConfirmation?.action === 'delete'
-      ? 'Si, eliminar'
+      ? 'Sí, eliminar'
       : pendingConfirmation?.action === 'send'
-        ? 'Si, enviar'
-        : 'Si, reenviar';
+        ? 'Sí, enviar'
+        : 'Sí, reenviar';
 
   const confirmationDescription = pendingConfirmation
     ? pendingConfirmation.action === 'delete'
-      ? `Se eliminara la credencial pendiente de ${formatDisplayName(pendingConfirmation.credential.universityName)}.`
+      ? `Se eliminará la credencial pendiente de ${formatDisplayName(pendingConfirmation.credential.universityName)}.`
       : pendingConfirmation.action === 'send'
-        ? `Se enviara la credencial al correo ${pendingConfirmation.credential.administratorEmail}.`
-        : `Se reenviara la credencial al correo ${pendingConfirmation.credential.administratorEmail}.`
+        ? `La credencial será enviada al correo ${pendingConfirmation.credential.administratorEmail}`
+        : `La credencial será reenviada al correo ${pendingConfirmation.credential.administratorEmail}`
     : '';
 
   return (

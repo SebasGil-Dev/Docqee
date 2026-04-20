@@ -279,7 +279,9 @@ describe('Admin pages', () => {
         name: /quieres inactivar esta universidad/i,
       }),
     ).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: /si, inactivar/i }));
+    await user.click(
+      screen.getByRole('button', { name: /s[ií], inactivar/i }),
+    );
 
     expect(
       screen.queryByRole('dialog', {
@@ -312,7 +314,9 @@ describe('Admin pages', () => {
         name: /quieres inactivar esta universidad/i,
       }),
     ).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: /si, inactivar/i }));
+    await user.click(
+      screen.getByRole('button', { name: /s[ií], inactivar/i }),
+    );
 
     expect(
       screen.queryByRole('dialog', {
@@ -342,7 +346,7 @@ describe('Admin pages', () => {
     await user.click(
       within(credentialRow!).getByRole('button', { name: /^Enviar$/i }),
     );
-    await user.click(screen.getByRole('button', { name: /si, enviar/i }));
+    await user.click(screen.getByRole('button', { name: /s[ií], enviar/i }));
 
     expect(within(credentialRow!).getByText(/^Enviada$/i)).toBeInTheDocument();
     expect(
@@ -414,7 +418,7 @@ describe('Admin pages', () => {
     await user.click(
       within(credentialRow!).getByRole('button', { name: /^Enviar$/i }),
     );
-    await user.click(screen.getByRole('button', { name: /si, enviar/i }));
+    await user.click(screen.getByRole('button', { name: /s[ií], enviar/i }));
 
     expect(within(credentialRow!).getByText(/^Enviada$/i)).toBeInTheDocument();
   });
@@ -432,7 +436,9 @@ describe('Admin pages', () => {
     await user.click(
       within(credentialRow!).getByRole('button', { name: /eliminar/i }),
     );
-    await user.click(screen.getByRole('button', { name: /si, eliminar/i }));
+    await user.click(
+      screen.getByRole('button', { name: /s[ií], eliminar/i }),
+    );
 
     expect(
       screen.queryByText(/Corporacion Oral del Caribe/i),
@@ -457,7 +463,9 @@ describe('Admin pages', () => {
     await user.click(
       within(credentialRow!).getByRole('button', { name: /eliminar/i }),
     );
-    await user.click(screen.getByRole('button', { name: /si, eliminar/i }));
+    await user.click(
+      screen.getByRole('button', { name: /s[ií], eliminar/i }),
+    );
     expect(
       screen.queryByText(/Corporacion Oral del Caribe/i),
     ).not.toBeInTheDocument();
