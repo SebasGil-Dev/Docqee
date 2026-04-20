@@ -26,6 +26,11 @@ import type {
 import { classNames } from '@/lib/classNames';
 import { IS_TEST_MODE } from '@/lib/apiClient';
 import { registerPatient as registerPatientRequest } from '@/lib/authApi';
+import {
+  DOCUMENT_NUMBER_DIGITS_MESSAGE,
+  isDigitsOnly,
+  keepOnlyDigits,
+} from '@/lib/documentNumber';
 import { patientRegisterCatalogDataSource } from '@/lib/patientRegisterCatalogDataSource';
 import {
   persistPendingVerificationEmail,
@@ -547,6 +552,16 @@ function validateRequiredText(value: string, message: string) {
   return value.trim().length === 0 ? message : undefined;
 }
 
+function validateDocumentNumber(value: string, requiredMessage: string) {
+  const requiredError = validateRequiredText(value, requiredMessage);
+
+  if (requiredError) {
+    return requiredError;
+  }
+
+  return isDigitsOnly(value) ? undefined : DOCUMENT_NUMBER_DIGITS_MESSAGE;
+}
+
 function validateRequiredSelection(value: string, message: string) {
   return value.trim().length === 0 ? message : undefined;
 }
@@ -596,7 +611,7 @@ function validateRegisterForm(values: RegisterFormValues, today: Date): Register
     values.documentTypeId,
     content.patientFields.documentType.requiredMessage,
   );
-  const documentNumberError = validateRequiredText(
+  const documentNumberError = validateDocumentNumber(
     values.documentNumber,
     content.patientFields.documentNumber.requiredMessage,
   );
@@ -704,7 +719,7 @@ function validateRegisterForm(values: RegisterFormValues, today: Date): Register
       values.tutorDocumentTypeId,
       content.tutorFields.documentType.requiredMessage,
     );
-    const tutorDocumentNumberError = validateRequiredText(
+    const tutorDocumentNumberError = validateDocumentNumber(
       values.tutorDocumentNumber,
       content.tutorFields.documentNumber.requiredMessage,
     );
@@ -1258,7 +1273,7 @@ export function RegisterPage({
         placeholder={content.patientFields.documentNumber.placeholder}
         value={formState.values.documentNumber}
         onBlur={() => handleFieldBlur('documentNumber')}
-        onChange={(value) => updateFieldValue('documentNumber', value.replace(/\D/g, ''))}
+        onChange={(value) => updateFieldValue('documentNumber', keepOnlyDigits(value))}
       />
     </div>
   );
@@ -1444,7 +1459,7 @@ export function RegisterPage({
         placeholder={content.tutorFields.documentNumber.placeholder}
         value={formState.values.tutorDocumentNumber}
         onBlur={() => handleFieldBlur('tutorDocumentNumber')}
-        onChange={(value) => updateFieldValue('tutorDocumentNumber', value)}
+        onChange={(value) => updateFieldValue('tutorDocumentNumber', keepOnlyDigits(value))}
       />
       <TextField
         autoComplete="email"
@@ -1832,7 +1847,7 @@ export function RegisterPage({
                   placeholder={content.patientFields.documentNumber.placeholder}
                   value={formState.values.documentNumber}
                   onBlur={() => handleFieldBlur('documentNumber')}
-                  onChange={(value) => updateFieldValue('documentNumber', value.replace(/\D/g, ''))}
+                  onChange={(value) => updateFieldValue('documentNumber', keepOnlyDigits(value))}
                 />
                 <SelectField
                   error={formState.errors.sex}
@@ -2028,7 +2043,7 @@ export function RegisterPage({
                     placeholder={content.tutorFields.documentNumber.placeholder}
                     value={formState.values.tutorDocumentNumber}
                     onBlur={() => handleFieldBlur('tutorDocumentNumber')}
-                    onChange={(value) => updateFieldValue('tutorDocumentNumber', value.replace(/\D/g, ''))}
+                    onChange={(value) => updateFieldValue('tutorDocumentNumber', keepOnlyDigits(value))}
                   />
                   <TextField
                     autoComplete="email"

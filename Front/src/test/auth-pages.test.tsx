@@ -509,6 +509,29 @@ describe('Auth pages', () => {
     expect(localitySelect).toHaveDisplayValue('Selecciona una ciudad primero');
   });
 
+  it('solo permite números en los documentos del paciente y del tutor', async () => {
+    const user = userEvent.setup();
+
+    renderAuthApp({
+      initialEntries: [ROUTES.register],
+      registerPageProps: { today: new Date('2026-04-03T12:00:00.000Z') },
+    });
+
+    await waitForRegisterCatalogs();
+
+    const patientDocumentInput = screen.getByLabelText(/n.mero de documento$/i);
+    await user.type(patientDocumentInput, '12ab-34');
+    expect(patientDocumentInput).toHaveValue('1234');
+
+    fireEvent.change(screen.getByLabelText(/fecha de nacimiento/i), {
+      target: { value: '2010-04-04' },
+    });
+
+    const tutorDocumentInput = screen.getByLabelText(/n.mero de documento del tutor/i);
+    await user.type(tutorDocumentInput, '98x76-5');
+    expect(tutorDocumentInput).toHaveValue('98765');
+  });
+
   it('renderiza exactamente las opciones de sexo esperadas', () => {
     renderAuthApp({ initialEntries: [ROUTES.register] });
 

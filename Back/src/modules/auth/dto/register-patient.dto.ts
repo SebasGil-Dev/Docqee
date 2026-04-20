@@ -5,6 +5,7 @@ import {
   IsEnum,
   IsOptional,
   IsString,
+  Matches,
   MinLength,
   ValidateNested,
 } from 'class-validator';
@@ -26,6 +27,7 @@ class PatientPayloadDto {
   cityId!: string;
 
   @IsString()
+  @Matches(/^\d+$/, { message: 'El número de documento solo debe contener números.' })
   documentNumber!: string;
 
   @IsString()
@@ -56,6 +58,7 @@ class PatientPayloadDto {
 
 class TutorPayloadDto {
   @IsString()
+  @Matches(/^\d+$/, { message: 'El número de documento del tutor solo debe contener números.' })
   documentNumber!: string;
 
   @IsString()

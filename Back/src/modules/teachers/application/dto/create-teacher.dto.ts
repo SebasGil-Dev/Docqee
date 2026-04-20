@@ -1,4 +1,4 @@
-import { IsEnum, IsString } from 'class-validator';
+import { IsEnum, IsString, Matches } from 'class-validator';
 
 export class CreateTeacherDto {
   @IsString()
@@ -11,5 +11,6 @@ export class CreateTeacherDto {
   documentType!: 'CC' | 'CE' | 'TI' | 'PASSPORT';
 
   @IsString()
+  @Matches(/^\d+$/, { message: 'El número de documento solo debe contener números.' })
   documentNumber!: string;
 }

@@ -1,4 +1,4 @@
-import { IsEmail, IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { IsEmail, IsEnum, IsInt, IsOptional, IsString, Matches, Min } from 'class-validator';
 
 export class CreateStudentDto {
   @IsString()
@@ -11,6 +11,7 @@ export class CreateStudentDto {
   documentType!: 'CC' | 'CE' | 'TI' | 'PASSPORT';
 
   @IsString()
+  @Matches(/^\d+$/, { message: 'El número de documento solo debe contener números.' })
   documentNumber!: string;
 
   @IsEmail()
