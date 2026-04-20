@@ -1,3 +1,9 @@
+import { webcrypto } from 'crypto';
+
+if (!globalThis.crypto) {
+  (globalThis as unknown as { crypto: typeof webcrypto }).crypto = webcrypto;
+}
+
 import { NestFactory } from '@nestjs/core';
 import compression from 'compression';
 import { json, urlencoded } from 'express';

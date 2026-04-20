@@ -1,8 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 
 import { PrismaService } from '@/shared/database/prisma.service';
 import { MailService } from '@/shared/mail/mail.service';
 import { normalizeText } from '@/shared/utils/front-format.util';
+import { CreateStudentAppointmentReviewDto } from '../../application/dto/create-student-appointment-review.dto';
 import { UpsertStudentAppointmentDto } from '../../application/dto/upsert-student-appointment.dto';
 import { UpsertStudentScheduleBlockDto } from '../../application/dto/upsert-student-schedule-block.dto';
 import { UpdateStudentProfileDto } from '../../application/dto/update-student-profile.dto';
@@ -143,6 +144,11 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
               sede: { include: { localidad: { include: { ciudad: true } } } },
               docente_universidad: { include: { docente: true } },
               cita_tratamiento: { include: { tipo_tratamiento: true } },
+              valoracion: {
+                where: { id_cuenta_emisor: studentAccountId },
+                select: { calificacion: true },
+                take: 1,
+              },
             },
           },
         },
@@ -219,6 +225,7 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
         createdAt: c.fecha_creacion.toISOString(),
         endAt: c.fecha_hora_fin.toISOString(),
         id: String(c.id_cita),
+        myRating: c.valoracion[0]?.calificacion ?? null,
         patientName: `${s.cuenta_paciente.persona.nombres} ${s.cuenta_paciente.persona.apellidos}`,
         requestId: String(s.id_solicitud),
         respondedAt: c.respondida_at?.toISOString() ?? null,
@@ -258,6 +265,7 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       });
 
     const reviews: StudentAppointmentReviewDto[] = valoraciones.map((v) => ({
+      appointmentId: String(v.id_cita),
       appointmentLabel: v.cita.tipo_cita.nombre,
       comment: v.comentario ?? null,
       createdAt: v.fecha_creacion.toISOString(),
@@ -916,6 +924,7 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       createdAt: cita.fecha_creacion.toISOString(),
       endAt: cita.fecha_hora_fin.toISOString(),
       id: String(cita.id_cita),
+      myRating: null,
       patientName: `${cita.solicitud.cuenta_paciente.persona.nombres} ${cita.solicitud.cuenta_paciente.persona.apellidos}`,
       requestId: String(cita.solicitud.id_solicitud),
       respondedAt: cita.respondida_at?.toISOString() ?? null,
@@ -1236,5 +1245,69 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     }
 
     return this.toCitaAppointmentDto(updated);
+  }
+
+  async createAppointmentReview(
+    studentAccountId: number,
+    appointmentId: number,
+    payload: CreateStudentAppointmentReviewDto,
+  ): Promise<StudentAgendaAppointmentDto> {
+    const cita = await this.prisma.cita.findFirst({
+      where: {
+        id_cita: appointmentId,
+        solicitud: { id_cuenta_estudiante: studentAccountId },
+        estado: 'FINALIZADA',
+      },
+      include: {
+        tipo_cita: true,
+        sede: { include: { localidad: { include: { ciudad: true } } } },
+        docente_universidad: { include: { docente: true } },
+        cita_tratamiento: { include: { tipo_tratamiento: true } },
+        solicitud: { include: { cuenta_paciente: { include: { persona: true } } } },
+        valoracion: {
+          where: { id_cuenta_emisor: studentAccountId },
+          take: 1,
+        },
+      },
+    });
+
+    if (!cita) {
+      throw new NotFoundException('La cita no existe, no esta finalizada o no te pertenece.');
+    }
+
+    if (cita.valoracion.length > 0) {
+      throw new ConflictException('Ya has valorado esta cita.');
+    }
+
+    await this.prisma.valoracion.create({
+      data: {
+        id_cita: appointmentId,
+        id_cuenta_emisor: studentAccountId,
+        id_cuenta_receptor: cita.solicitud.id_cuenta_paciente,
+        calificacion: payload.rating,
+        comentario: payload.comment?.trim() || null,
+      },
+    });
+
+    return {
+      additionalInfo: cita.informacion_adicional ?? null,
+      appointmentType: cita.tipo_cita.nombre,
+      city: cita.sede.localidad.ciudad.nombre,
+      createdAt: cita.fecha_creacion.toISOString(),
+      endAt: cita.fecha_hora_fin.toISOString(),
+      id: String(cita.id_cita),
+      myRating: payload.rating,
+      patientName: `${cita.solicitud.cuenta_paciente.persona.nombres} ${cita.solicitud.cuenta_paciente.persona.apellidos}`,
+      requestId: String(cita.solicitud.id_solicitud),
+      respondedAt: cita.respondida_at?.toISOString() ?? null,
+      siteId: String(cita.id_sede),
+      siteName: cita.sede.nombre,
+      startAt: cita.fecha_hora_inicio.toISOString(),
+      status: cita.estado,
+      supervisorId: String(cita.id_docente_universidad),
+      supervisorName: `${cita.docente_universidad.docente.nombres} ${cita.docente_universidad.docente.apellidos}`,
+      treatmentIds: cita.cita_tratamiento.map((ct) => String(ct.id_tipo_tratamiento)),
+      treatmentNames: cita.cita_tratamiento.map((ct) => ct.tipo_tratamiento.nombre),
+    };
   }
 }

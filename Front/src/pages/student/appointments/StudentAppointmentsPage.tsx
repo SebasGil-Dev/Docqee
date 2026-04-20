@@ -6,10 +6,12 @@ import {
   Clock3,
   GraduationCap,
   MapPin,
+  MessageSquare,
   PencilLine,
   Plus,
   Search,
   SlidersHorizontal,
+  Star,
   Stethoscope,
   UserRound,
   X,
@@ -17,6 +19,7 @@ import {
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { AdminConfirmationDialog } from '@/components/admin/AdminConfirmationDialog';
+import { StudentRatingModal } from '@/components/student/StudentRatingModal';
 import { AdminDropdownField } from '@/components/admin/AdminDropdownField';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
@@ -30,11 +33,13 @@ import type {
   StudentAgendaAppointmentStatus,
   StudentAppointmentFormErrors,
   StudentAppointmentFormValues,
+  StudentAppointmentReview,
 } from '@/content/types';
 import { classNames } from '@/lib/classNames';
 import { useStudentModuleStore } from '@/lib/studentModuleStore';
 
 type AppointmentStatusFilter = StudentAgendaAppointmentStatus | 'all';
+type AppointmentSortOrder = 'arrival' | 'proximity';
 
 const appointmentStatusOptions: Array<{ label: string; value: AppointmentStatusFilter }> = [
   { label: 'Todas', value: 'all' },
@@ -228,13 +233,16 @@ export function StudentAppointmentsPage() {
     isLoading,
     practiceSites,
     requests,
+    reviews,
     supervisors,
     treatments,
     updateAppointmentStatus,
     upsertAppointment,
+    submitAppointmentReview,
   } = useStudentModuleStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<AppointmentStatusFilter>('all');
+  const [sortOrder, setSortOrder] = useState<AppointmentSortOrder>('arrival');
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const [isAppointmentDialogOpen, setIsAppointmentDialogOpen] = useState(false);
   const [appointmentErrors, setAppointmentErrors] = useState<StudentAppointmentFormErrors>(
@@ -247,6 +255,10 @@ export function StudentAppointmentsPage() {
   const [appointmentApiError, setAppointmentApiError] = useState<string | null>(null);
   const [appointmentToCancel, setAppointmentToCancel] =
     useState<StudentAgendaAppointment | null>(null);
+  const [commentsAppointment, setCommentsAppointment] =
+    useState<StudentAgendaAppointment | null>(null);
+  const [ratingTarget, setRatingTarget] = useState<{ appointmentId: string; patientName: string } | null>(null);
+  const [isSubmittingRating, setIsSubmittingRating] = useState(false);
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const pendingCount = useMemo(
@@ -277,15 +289,29 @@ export function StudentAppointmentsPage() {
     () => treatments.filter((treatment) => treatment.status === 'active'),
     [treatments],
   );
-  const filteredAppointments = useMemo(
-    () =>
-      appointments.filter((appointment) => {
-        const matchesSearch = appointment.patientName.toLowerCase().includes(normalizedSearch);
+  const filteredAppointments = useMemo(() => {
+    const filtered = appointments.filter((appointment) => {
+      const matchesSearch = appointment.patientName.toLowerCase().includes(normalizedSearch);
+      return matchesSearch && (statusFilter === 'all' || appointment.status === statusFilter);
+    });
 
-        return matchesSearch && (statusFilter === 'all' || appointment.status === statusFilter);
-      }),
-    [appointments, normalizedSearch, statusFilter],
-  );
+    if (sortOrder === 'proximity') {
+      const now = Date.now();
+      return [...filtered].sort((a, b) => {
+        const aTime = new Date(a.startAt).getTime();
+        const bTime = new Date(b.startAt).getTime();
+        const aFuture = aTime >= now;
+        const bFuture = bTime >= now;
+        if (aFuture && bFuture) return aTime - bTime;
+        if (!aFuture && !bFuture) return bTime - aTime;
+        return aFuture ? -1 : 1;
+      });
+    }
+
+    return [...filtered].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
+  }, [appointments, normalizedSearch, sortOrder, statusFilter]);
   const selectedRequest =
     acceptedRequests.find((request) => request.id === appointmentValues.requestId) ?? null;
 
@@ -526,15 +552,15 @@ export function StudentAppointmentsPage() {
                   }
                   className={classNames(
                     'relative inline-flex h-11 w-11 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
-                    statusFilter === 'all'
-                      ? 'border-slate-200/90 hover:border-primary/30 hover:bg-white'
-                      : 'border-primary/25 bg-primary/[0.08] text-primary hover:bg-primary/[0.12]',
+                    statusFilter !== 'all' || sortOrder !== 'arrival'
+                      ? 'border-primary/25 bg-primary/[0.08] text-primary hover:bg-primary/[0.12]'
+                      : 'border-slate-200/90 hover:border-primary/30 hover:bg-white',
                   )}
                   type="button"
                   onClick={() => setIsStatusMenuOpen((currentValue) => !currentValue)}
                 >
                   <SlidersHorizontal aria-hidden="true" className="h-[1.05rem] w-[1.05rem]" />
-                  {statusFilter !== 'all' ? (
+                  {statusFilter !== 'all' || sortOrder !== 'arrival' ? (
                     <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary ring-2 ring-white" />
                   ) : null}
                 </button>
@@ -567,6 +593,47 @@ export function StudentAppointmentsPage() {
                             type="button"
                             onClick={() => {
                               setStatusFilter(option.value);
+                              setIsStatusMenuOpen(false);
+                            }}
+                          >
+                            <span>{option.label}</span>
+                            <span
+                              className={classNames(
+                                'inline-flex h-5 w-5 items-center justify-center rounded-full',
+                                isSelected ? 'bg-white/18 text-white' : 'bg-white text-slate-300',
+                              )}
+                            >
+                              <Check aria-hidden="true" className="h-3.5 w-3.5" />
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-2 border-t border-slate-100 px-2.5 pb-1 pt-2.5">
+                      <p className="text-[0.7rem] font-bold uppercase tracking-[0.24em] text-primary/75">
+                        Ordenar por
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      {([
+                        { label: 'Orden de llegada', value: 'arrival' as AppointmentSortOrder },
+                        { label: 'Proximas primero', value: 'proximity' as AppointmentSortOrder },
+                      ]).map((option) => {
+                        const isSelected = sortOrder === option.value;
+                        return (
+                          <button
+                            key={option.value}
+                            aria-checked={isSelected}
+                            className={classNames(
+                              'flex w-full items-center justify-between rounded-[1rem] px-3 py-2.5 text-left text-sm font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                              isSelected
+                                ? 'bg-primary text-white shadow-[0_14px_30px_-20px_rgba(22,78,99,0.9)]'
+                                : 'bg-slate-50/70 text-ink hover:bg-slate-100',
+                            )}
+                            role="menuitemradio"
+                            type="button"
+                            onClick={() => {
+                              setSortOrder(option.value);
                               setIsStatusMenuOpen(false);
                             }}
                           >
@@ -700,6 +767,32 @@ export function StudentAppointmentsPage() {
                           >
                             <Ban aria-hidden="true" className="h-3.5 w-3.5" />
                             <span>{studentContent.appointmentsPage.actionLabels.cancel}</span>
+                          </button>
+                        </div>
+                      ) : appointment.status === 'FINALIZADA' ? (
+                        <div className="flex flex-wrap justify-end gap-2">
+                          {!appointment.myRating ? (
+                            <button
+                              className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 transition duration-200 hover:bg-amber-100"
+                              type="button"
+                              onClick={() => setRatingTarget({ appointmentId: appointment.id, patientName: appointment.patientName })}
+                            >
+                              <Star aria-hidden="true" className="h-3.5 w-3.5" />
+                              <span>Calificar paciente</span>
+                            </button>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-600">
+                              <Star aria-hidden="true" className="h-3 w-3 fill-amber-400 text-amber-400" />
+                              {appointment.myRating}/5
+                            </span>
+                          )}
+                          <button
+                            className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
+                            type="button"
+                            onClick={() => setCommentsAppointment(appointment)}
+                          >
+                            <MessageSquare aria-hidden="true" className="h-3.5 w-3.5" />
+                            <span>Ver comentarios</span>
                           </button>
                         </div>
                       ) : (
@@ -935,6 +1028,109 @@ export function StudentAppointmentsPage() {
           handleStatusChange(appointmentToCancel.id, 'CANCELADA');
         }}
       />
+      {commentsAppointment ? (
+        <AppointmentCommentsModal
+          appointment={commentsAppointment}
+          reviews={reviews.filter((r) => r.appointmentId === commentsAppointment.id)}
+          onClose={() => setCommentsAppointment(null)}
+        />
+      ) : null}
+      {ratingTarget ? (
+        <StudentRatingModal
+          appointmentId={ratingTarget.appointmentId}
+          isSubmitting={isSubmittingRating}
+          patientName={ratingTarget.patientName}
+          onClose={() => setRatingTarget(null)}
+          onSubmit={(appointmentId, rating, comment) => {
+            void (async () => {
+              setIsSubmittingRating(true);
+              const success = await submitAppointmentReview(appointmentId, rating, comment);
+              setIsSubmittingRating(false);
+              if (success) setRatingTarget(null);
+            })();
+          }}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function AppointmentCommentsModal({
+  appointment,
+  reviews,
+  onClose,
+}: {
+  appointment: StudentAgendaAppointment;
+  reviews: StudentAppointmentReview[];
+  onClose: () => void;
+}) {
+  const overlayRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') onClose();
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  return (
+    <div
+      ref={overlayRef}
+      aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/30 p-4 backdrop-blur-sm"
+      role="dialog"
+      onClick={(event) => {
+        if (event.target === overlayRef.current) onClose();
+      }}
+    >
+      <div className="w-full max-w-md overflow-hidden rounded-[1.4rem] border border-slate-200/80 bg-white shadow-[0_32px_80px_-24px_rgba(15,23,42,0.38)]">
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+          <div>
+            <p className="text-[0.6rem] font-bold uppercase tracking-[0.18em] text-primary/70">
+              Comentarios de la sesion
+            </p>
+            <p className="mt-0.5 text-sm font-semibold text-ink">{appointment.patientName}</p>
+            <p className="text-xs text-ink-muted">{appointment.appointmentType}</p>
+          </div>
+          <button
+            aria-label="Cerrar"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-ghost transition duration-150 hover:bg-slate-100 hover:text-ink"
+            type="button"
+            onClick={onClose}
+          >
+            <X aria-hidden="true" className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="admin-scrollbar max-h-[28rem] overflow-y-auto px-5 py-4">
+          {reviews.length === 0 ? (
+            <p className="py-4 text-center text-sm text-ink-muted">
+              El paciente aun no ha dejado comentarios para esta cita.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {reviews.map((review) => (
+                <div
+                  key={review.id}
+                  className="rounded-[1rem] border border-slate-200/80 bg-slate-50 px-4 py-3.5"
+                >
+                  <div className="mb-2 flex items-center justify-between">
+                    <p className="text-xs font-semibold text-ink">{review.patientName}</p>
+                    <p className="text-[0.68rem] text-ink-muted">
+                      {new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(review.createdAt))}
+                    </p>
+                  </div>
+                  {review.comment ? (
+                    <p className="text-sm leading-6 text-ink-muted">{review.comment}</p>
+                  ) : (
+                    <p className="text-sm italic text-ink-muted/70">Sin comentario escrito.</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

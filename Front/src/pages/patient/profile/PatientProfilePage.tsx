@@ -6,6 +6,7 @@ import {
   Phone,
   RotateCcw,
   Save,
+  Star,
   UserRound,
 } from 'lucide-react';
 import type { ChangeEvent } from 'react';
@@ -57,7 +58,11 @@ function validateProfile(values: PatientProfileFormValues): PatientProfileFormEr
 }
 
 export function PatientProfilePage() {
-  const { errorMessage, isLoading, profile, updateProfile } = usePatientModuleStore();
+  const { errorMessage, isLoading, profile, reviews, updateProfile } = usePatientModuleStore();
+  const averageRating = useMemo(() => {
+    if (reviews.length === 0) return null;
+    return reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+  }, [reviews]);
   const [values, setValues] = useState<PatientProfileFormValues>(() => getInitialValues(profile));
   const [errors, setErrors] = useState<PatientProfileFormErrors>({});
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
@@ -215,6 +220,22 @@ export function PatientProfilePage() {
                       </p>
                     </div>
                   </div>
+                  {averageRating !== null ? (
+                    <div className="flex items-start gap-3 rounded-[1.25rem] bg-white/10 px-4 py-3">
+                      <Star aria-hidden="true" className="mt-0.5 h-4.5 w-4.5 shrink-0 fill-amber-300 text-amber-300" />
+                      <div className="min-w-0">
+                        <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white/65">
+                          Calificacion promedio
+                        </p>
+                        <p className="truncate font-semibold text-white">
+                          {averageRating.toFixed(1)} / 5{' '}
+                          <span className="text-xs font-normal text-white/70">
+                            ({reviews.length} {reviews.length === 1 ? 'valoracion' : 'valoraciones'})
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </SurfaceCard>

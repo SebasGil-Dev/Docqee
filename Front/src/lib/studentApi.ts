@@ -194,3 +194,17 @@ export function sendStudentPortalConversationMessage(
     },
   );
 }
+
+export function submitStudentPortalAppointmentReview(
+  appointmentId: string,
+  rating: number,
+  comment?: string,
+) {
+  return apiRequest<StudentAgendaAppointment>(
+    `/student-portal/appointments/${appointmentId}/review`,
+    {
+      body: { rating, comment },
+      method: 'POST',
+    },
+  );
+}

@@ -41,6 +41,7 @@ import {
   updateStudentPortalProfile,
   updateStudentPortalRequestStatus,
   updateStudentPortalScheduleBlock,
+  submitStudentPortalAppointmentReview,
 } from '@/lib/studentApi';
 
 type StudentModuleActions = {
@@ -85,6 +86,11 @@ type StudentModuleActions = {
     values: StudentAppointmentFormValues,
     appointmentId?: string,
   ) => string | null;
+  submitAppointmentReview: (
+    appointmentId: string,
+    rating: number,
+    comment?: string,
+  ) => Promise<boolean>;
 };
 
 type StudentStoreState = StudentModuleState & {
@@ -264,6 +270,7 @@ function createMockState(): StudentStoreState {
       siteId: 'site-1',
       siteName: 'Sede Norte',
       startAt: '2026-04-06T15:00:00.000Z',
+      myRating: null,
       status: 'PROPUESTA',
       supervisorId: 'student-supervisor-1',
       supervisorName: 'Dra. Catalina Mora',
@@ -283,6 +290,7 @@ function createMockState(): StudentStoreState {
       siteId: 'site-1',
       siteName: 'Sede Norte',
       startAt: '2026-04-07T19:00:00.000Z',
+      myRating: null,
       status: 'ACEPTADA',
       supervisorId: 'student-supervisor-1',
       supervisorName: 'Dra. Catalina Mora',
@@ -302,6 +310,7 @@ function createMockState(): StudentStoreState {
       siteId: 'site-2',
       siteName: 'Sede Escuela Clinica',
       startAt: '2026-04-08T16:15:00.000Z',
+      myRating: null,
       status: 'REPROGRAMACION_PENDIENTE',
       supervisorId: 'student-supervisor-2',
       supervisorName: 'Dr. Sergio Pineda',
@@ -321,6 +330,7 @@ function createMockState(): StudentStoreState {
       siteId: 'site-1',
       siteName: 'Sede Norte',
       startAt: '2026-04-09T14:00:00.000Z',
+      myRating: null,
       status: 'CANCELADA',
       supervisorId: 'student-supervisor-1',
       supervisorName: 'Dra. Catalina Mora',
@@ -340,6 +350,7 @@ function createMockState(): StudentStoreState {
       siteId: 'site-1',
       siteName: 'Sede Norte',
       startAt: '2026-04-04T16:45:00.000Z',
+      myRating: null,
       status: 'FINALIZADA',
       supervisorId: 'student-supervisor-2',
       supervisorName: 'Dr. Sergio Pineda',
@@ -467,6 +478,7 @@ function createMockState(): StudentStoreState {
 
   const reviews: StudentAppointmentReview[] = [
     {
+      appointmentId: 'student-appointment-3',
       appointmentLabel: 'Control restaurativo',
       comment:
         'Me senti muy bien acompanado durante la cita. Todo fue claro, ordenado y con mucha paciencia.',
@@ -477,6 +489,7 @@ function createMockState(): StudentStoreState {
       siteName: 'Sede Norte',
     },
     {
+      appointmentId: 'student-appointment-4',
       appointmentLabel: 'Valoracion inicial',
       comment:
         'Explico muy bien el proceso y resolvio mis dudas antes de comenzar la atencion.',
@@ -487,9 +500,9 @@ function createMockState(): StudentStoreState {
       siteName: 'Sede Escuela Clinica',
     },
     {
+      appointmentId: 'student-appointment-5',
       appointmentLabel: 'Seguimiento preventivo',
-      comment:
-        'La atencion fue amable y profesional. Me gusto que me indicara los siguientes pasos con claridad.',
+      comment: null,
       createdAt: '2026-03-15T09:40:00.000Z',
       id: 'student-review-3',
       patientName: 'Claudia Moreno',
@@ -1393,6 +1406,7 @@ function upsertAppointmentMock(
       ? state.appointments.find((appointment) => appointment.id === appointmentId)?.status ??
         'PROPUESTA'
       : 'PROPUESTA',
+    myRating: null,
     supervisorId: normalized.supervisorId,
     supervisorName: supervisor?.name ?? '',
     treatmentIds: normalized.treatmentIds,
@@ -1822,6 +1836,34 @@ async function upsertScheduleBlock(
   }
 }
 
+async function submitAppointmentReview(
+  appointmentId: string,
+  rating: number,
+  comment?: string,
+) {
+  patchState({ errorMessage: null, isLoading: true });
+
+  try {
+    const appointment = await submitStudentPortalAppointmentReview(appointmentId, rating, comment);
+
+    updateState({
+      ...state,
+      appointments: state.appointments.map((a) => (a.id === appointmentId ? appointment : a)),
+      errorMessage: null,
+      isLoading: false,
+      isReady: true,
+    });
+
+    return true;
+  } catch (error) {
+    patchState({
+      errorMessage: getErrorMessage(error, 'No pudimos guardar la valoracion.'),
+      isLoading: false,
+    });
+    return false;
+  }
+}
+
 async function updateAppointmentStatus(
   appointmentId: string,
   status: StudentAgendaAppointmentStatus,
@@ -2151,6 +2193,7 @@ export function useStudentModuleStore(options: UseStudentModuleStoreOptions = {}
     upsertAppointment,
     upsertScheduleBlock,
     checkAppointmentConflict: findAppointmentValidationError,
+    submitAppointmentReview,
   };
 
   return {

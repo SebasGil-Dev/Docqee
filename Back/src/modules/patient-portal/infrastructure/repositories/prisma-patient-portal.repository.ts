@@ -108,6 +108,8 @@ type StudentDirectoryRow = {
       }[]
     | null;
   treatments: string[] | null;
+  average_rating: number | null;
+  reviews_count: number;
 };
 
 const STUDENT_DIRECTORY_FILTERS_CACHE_MS = 5 * 60 * 1000;
@@ -216,7 +218,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       avatarSrc: student.foto_url ?? null,
       availabilityGeneral: student.disponibilidad_general ?? "",
       availabilityStatus: "available",
-      averageRating: null,
+      averageRating: student.average_rating !== null ? Number(student.average_rating) : null,
       biography: student.descripcion ?? "",
       city: student.city,
       firstName: student.nombres,
@@ -225,7 +227,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       locality: student.locality,
       practiceSite: student.practice_site ?? "",
       practiceSites: student.practice_sites ?? [],
-      reviewsCount: 0,
+      reviewsCount: Number(student.reviews_count),
       semester: String(student.semestre),
       treatments: student.treatments ?? [],
       universityCity: student.university_city,
@@ -543,7 +545,9 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         practice.locality AS locality,
         practice.practice_site,
         COALESCE(practice_sites.practice_sites, '[]'::jsonb) AS practice_sites,
-        COALESCE(treatments.treatments, ARRAY[]::text[]) AS treatments
+        COALESCE(treatments.treatments, ARRAY[]::text[]) AS treatments,
+        rating_agg.average_rating,
+        COALESCE(rating_agg.reviews_count, 0) AS reviews_count
       FROM cuenta_estudiante ce
       INNER JOIN cuenta_acceso ca ON ca.id_cuenta = ce.id_cuenta
       INNER JOIN persona p ON p.id_persona = ce.id_persona
@@ -606,6 +610,13 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         WHERE et.id_cuenta_estudiante = ce.id_cuenta
           AND et.estado = 'ACTIVO'::estado_simple_enum
       ) treatments ON TRUE
+      LEFT JOIN LATERAL (
+        SELECT
+          ROUND(AVG(v.calificacion)::numeric, 1) AS average_rating,
+          COUNT(v.id_valoracion) AS reviews_count
+        FROM valoracion v
+        WHERE v.id_cuenta_receptor = ce.id_cuenta
+      ) rating_agg ON TRUE
       WHERE ${Prisma.join(conditions, " AND ")}
       ORDER BY ${initialRelevanceOrder} ce.fecha_creacion DESC
       LIMIT ${candidateLimit}

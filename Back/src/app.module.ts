@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 
 import appConfig from './config/app.config';
 import authConfig from './config/auth.config';
@@ -17,6 +18,7 @@ import { CredentialsModule } from './modules/credentials/credentials.module';
 import { PatientPortalModule } from './modules/patient-portal/patient-portal.module';
 import { StudentPortalModule } from './modules/student-portal/student-portal.module';
 import { InstitutionalPartnershipsModule } from './modules/institutional-partnerships/institutional-partnerships.module';
+import { TasksModule } from './shared/tasks/tasks.module';
 
 @Module({
   imports: [
@@ -24,6 +26,7 @@ import { InstitutionalPartnershipsModule } from './modules/institutional-partner
       isGlobal: true,
       load: [appConfig, authConfig, cloudinaryConfig, databaseConfig, mailConfig],
     }),
+    ScheduleModule.forRoot(),
     PrismaModule,
     AuthModule,
     CatalogsModule,
@@ -35,6 +38,7 @@ import { InstitutionalPartnershipsModule } from './modules/institutional-partner
     PatientPortalModule,
     StudentPortalModule,
     InstitutionalPartnershipsModule,
+    TasksModule,
   ],
 })
 export class AppModule {}

@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import type { UploadImageFile } from '@/shared/storage/cloudinary.service';
 import { CloudinaryService } from '@/shared/storage/cloudinary.service';
 import type { RequestUser } from '@/shared/types/request-user.type';
+import { CreateStudentAppointmentReviewDto } from './application/dto/create-student-appointment-review.dto';
 import { UpsertStudentAppointmentDto } from './application/dto/upsert-student-appointment.dto';
 import { UpsertStudentScheduleBlockDto } from './application/dto/upsert-student-schedule-block.dto';
 import { UpdateStudentProfileDto } from './application/dto/update-student-profile.dto';
@@ -106,6 +107,10 @@ export class StudentPortalService {
 
   deleteScheduleBlock(user: RequestUser, blockId: number) {
     return this.studentPortalRepository.deleteScheduleBlock(user.id, blockId);
+  }
+
+  createAppointmentReview(user: RequestUser, appointmentId: number, payload: CreateStudentAppointmentReviewDto) {
+    return this.studentPortalRepository.createAppointmentReview(user.id, appointmentId, payload);
   }
 
   private async resolveAvatarUrl(
