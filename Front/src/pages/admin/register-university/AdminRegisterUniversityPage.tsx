@@ -177,15 +177,6 @@ function createInitialCatalogState<T>(
   return createEmptyCatalogState(emptyStatus);
 }
 
-function getDependentFields(field: RegisterUniversityFormField) {
-  switch (field) {
-    case 'cityId':
-      return ['mainLocalityId'] satisfies RegisterUniversityFormField[];
-    default:
-      return [] as RegisterUniversityFormField[];
-  }
-}
-
 function validateField(
   field: RegisterUniversityFormField,
   value: string,
@@ -388,16 +379,17 @@ export function AdminRegisterUniversityPage({
               [field]: nextValue,
             };
       const nextErrors = { ...currentErrors };
+      const nextFieldError = validateField(field, nextValues[field]);
 
-      [field, ...getDependentFields(field)].forEach((fieldName) => {
-        const nextFieldError = validateField(fieldName, nextValues[fieldName]);
+      if (nextFieldError) {
+        nextErrors[field] = nextFieldError;
+      } else {
+        delete nextErrors[field];
+      }
 
-        if (nextFieldError) {
-          nextErrors[fieldName] = nextFieldError;
-        } else {
-          delete nextErrors[fieldName];
-        }
-      });
+      if (field === 'cityId') {
+        delete nextErrors.mainLocalityId;
+      }
 
       return nextErrors;
     });
@@ -406,16 +398,13 @@ export function AdminRegisterUniversityPage({
   const handleFieldBlur = (field: RegisterUniversityFormField) => {
     setErrors((currentErrors) => {
       const nextErrors = { ...currentErrors };
+      const nextFieldError = validateField(field, values[field]);
 
-      [field, ...getDependentFields(field)].forEach((fieldName) => {
-        const nextFieldError = validateField(fieldName, values[fieldName]);
-
-        if (nextFieldError) {
-          nextErrors[fieldName] = nextFieldError;
-        } else {
-          delete nextErrors[fieldName];
-        }
-      });
+      if (nextFieldError) {
+        nextErrors[field] = nextFieldError;
+      } else {
+        delete nextErrors[field];
+      }
 
       return nextErrors;
     });
@@ -812,7 +801,7 @@ export function AdminRegisterUniversityPage({
               </section>
               <div className="flex justify-center border-t border-slate-200/80 pt-4">
                 <button
-                  className="inline-flex items-center justify-center rounded-2xl bg-brand-gradient px-5 py-2.75 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-70"
+                  className="inline-flex items-center justify-center rounded-2xl bg-brand-gradient px-5 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-70"
                   disabled={isSubmitting || isLoading}
                   type="submit"
                 >
