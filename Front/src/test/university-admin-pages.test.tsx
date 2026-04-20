@@ -314,7 +314,7 @@ describe('University admin pages', () => {
 
     expect(await screen.findByText(/Juliana Marin/i)).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent(
-      /credencial inicial quedo generada/i,
+      /el estudiante fue registrado correctamente\.\s*su credencial inicial est[aá] pendiente de env[ií]o/i,
     );
 
     await user.click(screen.getByRole('link', { name: /^Credenciales$/i }));
@@ -521,7 +521,7 @@ describe('University admin pages', () => {
 
     expect(await screen.findByText(/Patricia Mendoza/i)).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent(
-      /docente se registro correctamente/i,
+      /el docente fue registrado correctamente/i,
     );
 
     await user.click(screen.getByRole('link', { name: /^Credenciales$/i }));
@@ -866,6 +866,9 @@ describe('University admin pages', () => {
     await user.click(
       screen.getByRole('button', { name: /s[i\u00ed], enviar/i }),
     );
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      /se envi[oó] correctamente la credencial al usuario/i,
+    );
     expect(within(generatedRow!).getByText(/^Enviada$/i)).toBeInTheDocument();
     await user.click(screen.getByRole('link', { name: /^Estudiantes$/i }));
     const activatedStudentRow = screen
@@ -905,6 +908,12 @@ describe('University admin pages', () => {
       screen.getAllByRole('button', { name: /enviar todas/i })[0]!,
     );
     expect(screen.queryByText(/^Generada$/i)).not.toBeInTheDocument();
+    await user.click(
+      screen.getAllByRole('button', { name: /enviar todas/i })[0]!,
+    );
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      /no hay credenciales pendientes por enviar en este momento/i,
+    );
 
     const removableRow = screen.getByText(/Camila Vega/i).closest('tr');
     expect(removableRow).not.toBeNull();

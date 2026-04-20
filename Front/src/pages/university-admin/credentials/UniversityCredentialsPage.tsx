@@ -198,7 +198,7 @@ export function UniversityCredentialsPage() {
       setFeedbackMessage(
         sentCount > 0
           ? `Se enviaron ${sentCount} credenciales pendientes.`
-          : 'No hay credenciales generated por enviar en este momento.',
+          : 'No hay credenciales pendientes por enviar en este momento.',
       );
     })();
   };
@@ -234,7 +234,7 @@ export function UniversityCredentialsPage() {
         if (updated) {
           setFeedbackMessage(
             pendingConfirmation.action === 'send'
-              ? `La credencial de ${pendingConfirmation.credential.studentName} quedó enviada correctamente.`
+              ? 'Se envió correctamente la credencial al usuario'
               : `La credencial de ${pendingConfirmation.credential.studentName} se reenvió correctamente.`,
           );
         }
@@ -352,7 +352,7 @@ export function UniversityCredentialsPage() {
         titleClassName="text-center text-[1.7rem] sm:text-[2rem]"
       />
       <button
-        className="inline-flex min-h-11 self-end items-center justify-center gap-2 rounded-xl bg-brand-gradient px-4.5 py-3 text-[0.8rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 sm:hidden"
+        className="inline-flex min-h-11 w-full max-w-[14.5rem] self-center items-center justify-center gap-2 rounded-xl bg-brand-gradient px-4.5 py-3 text-[0.8rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 sm:hidden"
         disabled={isLoading}
         type="button"
         onClick={handleSendAll}

@@ -113,7 +113,7 @@ export const universityAdminContent = {
     },
     submitLabel: 'Registrar',
     successMessage:
-      'El estudiante se registro correctamente y su credencial inicial quedo generada.',
+      'El estudiante fue registrado correctamente. Su credencial inicial está pendiente de envío',
     title: 'Registrar estudiante',
   },
   registerTeacherPage: {
@@ -126,7 +126,7 @@ export const universityAdminContent = {
       title: 'Docqee | Registrar Docente',
     },
     submitLabel: 'Registrar',
-    successMessage: 'El docente se registro correctamente.',
+    successMessage: 'El docente fue registrado correctamente',
     title: 'Registrar docente',
   },
   shell: {
