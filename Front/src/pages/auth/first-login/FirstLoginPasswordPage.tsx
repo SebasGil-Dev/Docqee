@@ -151,7 +151,7 @@ export function FirstLoginPasswordPage({
         setGeneralError(
           error instanceof Error
             ? error.message
-            : 'No pudimos actualizar la contrasena. Intentalo nuevamente.',
+            : 'No pudimos actualizar la contraseña. Inténtalo nuevamente.',
         );
       } finally {
         setIsSubmitting(false);
@@ -162,7 +162,7 @@ export function FirstLoginPasswordPage({
   return (
     <AuthShell mainClassName="items-start px-2.5 py-4 sm:px-6 sm:py-7 lg:px-8">
       <Seo
-        description="Docqee solicita actualizar la contrasena temporal durante el primer ingreso."
+        description="Docqee solicita actualizar la contraseña temporal durante el primer ingreso."
         noIndex
         title="Docqee | Primer ingreso"
       />
@@ -174,7 +174,7 @@ export function FirstLoginPasswordPage({
             </div>
             <div className="space-y-2">
               <h1 className="font-headline text-[1.95rem] font-extrabold tracking-tight text-ink sm:text-[2.15rem]">
-                Actualiza tu contrasena
+                Actualiza tu contraseña
               </h1>
               <p className="text-sm leading-7 text-ink-muted">
                 Este es tu primer ingreso en Docqee. Antes de continuar, crea una
@@ -194,6 +194,9 @@ export function FirstLoginPasswordPage({
                 </p>
                 <div className="flex min-w-0 items-center gap-2">
                   <p className="shrink-0 text-sm font-semibold text-ink">{roleLabel}</p>
+                  <span aria-hidden="true" className="shrink-0 text-sm text-ink-muted">
+                    ·
+                  </span>
                   <p className="min-w-0 break-all text-sm text-ink-muted">{session.user.email}</p>
                 </div>
               </div>
@@ -209,7 +212,7 @@ export function FirstLoginPasswordPage({
               inputRef={passwordInputRef}
               label={authContent.register.password.label}
               name="password"
-              placeholder="Crea una nueva contrasena"
+              placeholder="Crea una nueva contraseña"
               showPassword={showPassword}
               showPasswordLabel={authContent.register.password.showPasswordLabel}
               value={password}
