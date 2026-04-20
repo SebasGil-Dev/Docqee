@@ -105,15 +105,17 @@ export function AdminUniversitiesPage() {
       : 'activate';
   const statusConfirmationTitle =
     statusConfirmationAction === 'deactivate'
-      ? 'Quieres inactivar esta universidad?'
-      : 'Quieres activar esta universidad?';
+      ? '¿Quieres inactivar esta universidad?'
+      : '¿Quieres activar esta universidad?';
   const statusConfirmationDescription = statusConfirmationUniversity
     ? statusConfirmationAction === 'deactivate'
-      ? `La universidad ${formatDisplayName(statusConfirmationUniversity.name)} quedara inactiva y no podra operar dentro de la plataforma hasta que la actives nuevamente.`
-      : `La universidad ${formatDisplayName(statusConfirmationUniversity.name)} quedara activa y podra operar dentro de la plataforma.`
+      ? `La universidad ${formatDisplayName(statusConfirmationUniversity.name)} quedará inactiva y no podrá operar dentro de la plataforma hasta que la actives nuevamente.`
+      : `La universidad ${formatDisplayName(statusConfirmationUniversity.name)} quedará activa y podrá operar dentro de la plataforma.`
     : '';
   const statusConfirmationConfirmLabel =
-    statusConfirmationAction === 'deactivate' ? 'Si, inactivar' : 'Si, activar';
+    statusConfirmationAction === 'deactivate'
+      ? 'Sí, inactivar'
+      : 'Sí, activar';
 
   useEffect(() => {
     if (!successNotice) {
