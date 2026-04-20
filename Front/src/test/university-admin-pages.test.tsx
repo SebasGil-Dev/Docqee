@@ -309,7 +309,7 @@ describe('University admin pages', () => {
 
     await fillStudentForm(user);
     await user.click(
-      screen.getByRole('button', { name: /registrar estudiante/i }),
+      screen.getByRole('button', { name: /^registrar$/i }),
     );
 
     expect(await screen.findByText(/Juliana Marin/i)).toBeInTheDocument();
@@ -324,32 +324,25 @@ describe('University admin pages', () => {
     expect(within(credentialRow!).getByText(/^Generada$/i)).toBeInTheDocument();
   });
 
-  it('permite guardar y continuar para registrar varios estudiantes mas rapido', async () => {
-    const user = userEvent.setup();
-
+  it('muestra solo el boton Registrar con el color principal', () => {
     renderUniversityApp([ROUTES.universityRegisterStudent]);
 
-    await fillStudentForm(user);
-    await user.click(
-      screen.getByRole('button', { name: /guardar y continuar/i }),
-    );
-
-    expect(await screen.findByRole('status')).toHaveTextContent(
-      /puedes continuar con el siguiente registro/i,
-    );
-    expect(
-      screen.getByRole('heading', { name: /registrar estudiante/i }),
-    ).toBeInTheDocument();
-    expect(screen.getByLabelText(/^Nombres$/i)).toHaveValue('');
-    expect(screen.getByLabelText(/^Apellidos$/i)).toHaveValue('');
-    expect(screen.getByLabelText(/tipo de documento/i)).toHaveValue(
-      'document-cc',
-    );
-    expect(screen.getByLabelText(/^Semestre$/i)).toHaveValue('7');
-
-    await waitFor(() => {
-      expect(document.activeElement).toBe(screen.getByLabelText(/^Nombres$/i));
+    const registerButton = screen.getByRole('button', {
+      name: /^registrar$/i,
     });
+    const backLink = screen.getByRole('link', {
+      name: /volver a estudiantes/i,
+    });
+
+    expect(registerButton).toBeInTheDocument();
+    expect(registerButton).toHaveClass('bg-brand-gradient');
+    expect(backLink).toHaveClass('bg-brand-gradient');
+    expect(
+      screen.queryByRole('button', { name: /guardar y continuar/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /registrar estudiante/i }),
+    ).not.toBeInTheDocument();
   });
 
   it('filtra estudiantes por estado derivado y por busqueda', async () => {
@@ -505,7 +498,7 @@ describe('University admin pages', () => {
     await user.clear(documentInput);
 
     await user.click(
-      screen.getByRole('button', { name: /registrar estudiante/i }),
+      screen.getByRole('button', { name: /^registrar$/i }),
     );
 
     expect(

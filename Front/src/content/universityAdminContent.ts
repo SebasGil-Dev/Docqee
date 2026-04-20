@@ -111,7 +111,7 @@ export const universityAdminContent = {
         'Registra estudiantes dentro del modulo universitario de Docqee.',
       title: 'Docqee | Registrar Estudiante',
     },
-    submitLabel: 'Registrar estudiante',
+    submitLabel: 'Registrar',
     successMessage:
       'El estudiante se registro correctamente y su credencial inicial quedo generada.',
     title: 'Registrar estudiante',
