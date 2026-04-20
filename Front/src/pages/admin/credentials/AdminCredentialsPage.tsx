@@ -519,23 +519,23 @@ export function AdminCredentialsPage() {
         </div>
         {filteredCredentialRows.length > 0 ? (
           <div className="admin-scrollbar min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain scroll-smooth lg:overflow-x-auto lg:[scrollbar-gutter:stable] [-webkit-overflow-scrolling:touch]">
-            <div className="w-full lg:min-w-[63rem]">
+            <div className="w-full lg:min-w-[60rem]">
               <table className="w-full table-fixed">
                 <thead className="sticky top-0 z-10 bg-surface text-left">
                   <tr className="text-[0.54rem] font-bold uppercase tracking-[0.035em] text-ink-muted sm:text-[0.68rem] sm:tracking-[0.18em] lg:text-xs lg:tracking-[0.22em]">
-                    <th className="w-[34%] px-2 py-2.25 sm:px-5 sm:py-3.5 lg:w-[26%]">
+                    <th className="w-[34%] px-2 py-2.25 sm:px-5 sm:py-3.5 lg:w-[23%]">
                       Universidad
                     </th>
-                    <th className="w-[27%] px-1.5 py-2.25 sm:px-4 sm:py-3.5 lg:w-[16%] lg:pr-7">
+                    <th className="w-[27%] px-1.5 py-2.25 sm:px-4 sm:py-3.5 lg:w-[20%]">
                       Administrador
                     </th>
-                    <th className="hidden px-4 py-3.5 lg:table-cell lg:w-[26%] lg:pl-7">
+                    <th className="hidden px-4 py-3.5 lg:table-cell lg:w-[25%]">
                       Correo electronico
                     </th>
-                    <th className="w-[15%] px-0.5 py-2.25 text-center sm:px-4 sm:py-3.5 lg:w-[10%] lg:pl-6">
+                    <th className="w-[15%] px-0.5 py-2.25 text-center sm:px-4 sm:py-3.5 lg:w-[14%]">
                       Estado
                     </th>
-                    <th className="w-[24%] px-0.5 py-2.25 text-center sm:px-5 sm:py-3.5 lg:w-[22%] lg:pl-5">
+                    <th className="w-[24%] px-0.5 py-2.25 text-center sm:px-5 sm:py-3.5 lg:w-[18%]">
                       <span className="sm:hidden">Accion</span>
                       <span className="hidden sm:inline">Acciones</span>
                     </th>
@@ -576,7 +576,7 @@ export function AdminCredentialsPage() {
                         </td>
                         <td
                           className={classNames(
-                            'overflow-hidden px-1.5 pt-2.5 sm:px-4 sm:pt-3.5 lg:pr-7',
+                            'overflow-hidden px-1.5 pt-2.5 sm:px-4 sm:pt-3.5',
                             isLast ? 'pb-3 sm:pb-4' : 'pb-2.5 sm:pb-3.5',
                           )}
                         >
@@ -633,7 +633,7 @@ export function AdminCredentialsPage() {
                         </td>
                         <td
                           className={classNames(
-                            'hidden px-4 pt-3.5 lg:table-cell lg:pl-7',
+                            'hidden px-4 pt-3.5 lg:table-cell',
                             isLast ? 'pb-4' : 'pb-3.5',
                           )}
                         >
@@ -687,7 +687,7 @@ export function AdminCredentialsPage() {
                         </td>
                         <td
                           className={classNames(
-                            'overflow-hidden px-1 pt-2.5 text-center sm:px-4 sm:pt-3.5 lg:pl-6',
+                            'overflow-hidden px-1 pt-2.5 text-center sm:px-4 sm:pt-3.5',
                             isLast ? 'pb-3 sm:pb-4' : 'pb-2.5 sm:pb-3.5',
                           )}
                         >
@@ -701,7 +701,7 @@ export function AdminCredentialsPage() {
                         </td>
                         <td
                           className={classNames(
-                            'overflow-hidden px-1 pt-2.5 text-center sm:px-5 sm:pt-3.5 lg:pl-5',
+                            'overflow-hidden px-1 pt-2.5 text-center sm:px-5 sm:pt-3.5',
                             isLast ? 'pb-3 sm:pb-4' : 'pb-2.5 sm:pb-3.5',
                           )}
                         >
