@@ -178,7 +178,7 @@ export function FirstLoginPasswordPage({
               </h1>
               <p className="text-sm leading-7 text-ink-muted">
                 Este es tu primer ingreso en Docqee. Antes de continuar, crea una
-                contrasena personal y segura.
+                contraseña personal y segura.
               </p>
             </div>
           </div>
@@ -192,8 +192,10 @@ export function FirstLoginPasswordPage({
                 <p className="text-[11px] font-black uppercase tracking-[0.24em] text-primary">
                   Primer ingreso
                 </p>
-                <p className="text-sm font-semibold text-ink">{roleLabel}</p>
-                <p className="break-all text-sm text-ink-muted">{session.user.email}</p>
+                <div className="flex min-w-0 items-center gap-2">
+                  <p className="shrink-0 text-sm font-semibold text-ink">{roleLabel}</p>
+                  <p className="min-w-0 break-all text-sm text-ink-muted">{session.user.email}</p>
+                </div>
               </div>
             </div>
           </div>
