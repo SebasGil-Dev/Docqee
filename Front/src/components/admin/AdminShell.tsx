@@ -752,8 +752,8 @@ export function AdminShell({
                     : 'overflow-y-auto',
                   showMobileBottomNavigation &&
                     (isCompactMobileNavigation
-                      ? 'pb-[6.25rem]'
-                      : 'pb-[7.75rem]'),
+                      ? 'pb-[4.75rem]'
+                      : 'pb-[5.75rem]'),
                 )}
                 id="admin-main-content"
                 tabIndex={-1}
