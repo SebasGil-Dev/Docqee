@@ -309,7 +309,7 @@ export function StudentAppointmentsPage() {
     }
 
     return [...filtered].sort(
-      (a, b) => new Date(b.startAt).getTime() - new Date(a.startAt).getTime(),
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     );
   }, [appointments, normalizedSearch, sortOrder, statusFilter]);
   const selectedRequest =
