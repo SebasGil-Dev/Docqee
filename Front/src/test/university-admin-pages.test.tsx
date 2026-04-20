@@ -397,6 +397,21 @@ describe('University admin pages', () => {
     ).toHaveAttribute('title', 'Envia la credencial primero');
   });
 
+  it('compacta la informacion del estudiante para la vista movil', () => {
+    renderUniversityApp([ROUTES.universityStudents]);
+
+    const studentSummary = screen.getByTestId(
+      'university-student-mobile-summary-student-1',
+    );
+
+    expect(studentSummary).toHaveTextContent(/Valentina Rios/i);
+    expect(studentSummary).toHaveTextContent(/CC 1092384122/i);
+    expect(studentSummary).toHaveTextContent(
+      /valentina\.rios@clinicadelnorte\.edu\.co/i,
+    );
+    expect(studentSummary).toHaveTextContent(/Registro del estudiante/i);
+  });
+
   it('solicita confirmacion antes de cambiar el estado del estudiante', async () => {
     const user = userEvent.setup();
 
@@ -793,8 +808,9 @@ describe('University admin pages', () => {
 
     await user.click(screen.getByRole('link', { name: /^Estudiantes$/i }));
     expect(
-      screen.getByText(/valentina.actualizada@clinicadelnorte.edu.co/i),
-    ).toBeInTheDocument();
+      screen.getAllByText(/valentina.actualizada@clinicadelnorte.edu.co/i)
+        .length,
+    ).toBeGreaterThan(0);
   });
 
   it('permite enviar, reenviar, enviar todas y eliminar sin borrar al estudiante', async () => {
