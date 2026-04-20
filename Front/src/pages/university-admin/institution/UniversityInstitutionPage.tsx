@@ -1570,7 +1570,7 @@ export function UniversityInstitutionPage({
                         )}
                       </div>
                     </div>
-                    <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:mt-[30px] sm:gap-3">
+                    <div className="mt-5 flex flex-wrap items-center justify-center gap-2 sm:mt-10 sm:gap-3">
                       {editingCampusId ? (
                         <button
                           className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[0.76rem] font-semibold text-ink transition duration-300 hover:bg-slate-100 sm:gap-2 sm:rounded-xl sm:px-3.5 sm:py-2.5 sm:text-[0.82rem]"
@@ -1601,7 +1601,12 @@ export function UniversityInstitutionPage({
                         </span>
                       </button>
                     </div>
-                    <div className="mt-3 grid gap-1.5 sm:mt-[30px] sm:gap-2.5">
+                    <div className="mt-5 sm:mt-6">
+                      <h4 className="text-center font-headline text-[0.92rem] font-extrabold tracking-tight text-ink sm:text-[1.12rem]">
+                        Lista de sedes
+                      </h4>
+                    </div>
+                    <div className="mt-3 grid gap-1.5 sm:mt-4 sm:gap-2.5">
                       {values.campuses.length > 0 ? (
                         <div className="hidden gap-2.5 px-3 text-[0.66rem] font-extrabold uppercase tracking-[0.14em] text-ink md:grid md:grid-cols-[minmax(7rem,1fr)_minmax(8rem,1.15fr)_minmax(7rem,0.85fr)_minmax(7rem,0.85fr)_minmax(5.5rem,0.55fr)_minmax(6.5rem,0.55fr)] md:items-center">
                           <span>Nombre</span>
