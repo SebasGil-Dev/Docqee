@@ -323,6 +323,68 @@ export class MailService {
     }
   }
 
+  async sendAppointmentReminderToStudent(
+    to: string,
+    studentName: string,
+    patientName: string,
+    appointmentType: string,
+    siteName: string,
+    city: string,
+    startAt: string,
+    endAt: string,
+  ) {
+    try {
+      await this.client.transactionalEmails.sendTransacEmail({
+        sender: { email: this.from },
+        to: [{ email: to }],
+        subject: 'Recordatorio: tu cita es mañana - Docqee',
+        htmlContent: `
+          <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1a1a2e;">
+            <h2 style="color:#2563eb;">Recordatorio de cita</h2>
+            <p>Hola <strong>${studentName}</strong>,</p>
+            <p>Te recordamos que mañana tienes una cita con el paciente <strong>${patientName}</strong>.</p>
+            ${this.appointmentDetailsBlock(appointmentType, siteName, city, startAt, endAt)}
+            <p style="color:#666;font-size:13px;">Asegurate de estar disponible y preparado para la sesion.</p>
+          </div>
+        `,
+      });
+      this.logger.log(`Appointment reminder sent to student ${to}`);
+    } catch (error) {
+      this.logger.error(`Failed to send appointment reminder to student ${to}`, error);
+    }
+  }
+
+  async sendAppointmentReminderToPatient(
+    to: string,
+    patientName: string,
+    studentName: string,
+    appointmentType: string,
+    siteName: string,
+    city: string,
+    startAt: string,
+    endAt: string,
+  ) {
+    try {
+      await this.client.transactionalEmails.sendTransacEmail({
+        sender: { email: this.from },
+        to: [{ email: to }],
+        subject: 'Recordatorio: tu cita es mañana - Docqee',
+        htmlContent: `
+          <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1a1a2e;">
+            <h2 style="color:#2563eb;">Recordatorio de cita</h2>
+            <p>Hola <strong>${patientName}</strong>,</p>
+            <p>Te recordamos que mañana tienes una cita con el estudiante <strong>${studentName}</strong>.</p>
+            ${this.appointmentDetailsBlock(appointmentType, siteName, city, startAt, endAt)}
+            <p style="color:#666;font-size:13px;">Si necesitas mas informacion, contacta al estudiante por el chat de Docqee.</p>
+          </div>
+        `,
+      });
+      this.logger.log(`Appointment reminder sent to patient ${to}`);
+    } catch (error) {
+      this.logger.error(`Failed to send appointment reminder to patient ${to}`, error);
+    }
+  }
+
   async sendInstitutionalPartnershipRequest(input: {
     additionalMessage: string | null;
     authorizeDataProcessing: boolean;

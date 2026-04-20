@@ -36,6 +36,7 @@ export function PatientAgendaPage() {
         siteId: appointment.id,
         siteName: appointment.siteName,
         startAt: appointment.startAt,
+        myRating: null,
         status: getAgendaStatus(appointment.status),
         supervisorId: appointment.id,
         supervisorName: appointment.teacherName,

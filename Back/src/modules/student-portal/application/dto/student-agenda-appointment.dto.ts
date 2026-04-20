@@ -5,6 +5,7 @@ export class StudentAgendaAppointmentDto {
   createdAt!: string;
   endAt!: string;
   id!: string;
+  myRating!: number | null;
   patientName!: string;
   requestId!: string;
   respondedAt!: string | null;
