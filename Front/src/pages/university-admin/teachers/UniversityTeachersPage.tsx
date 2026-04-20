@@ -209,7 +209,7 @@ export function UniversityTeachersPage() {
           className="min-w-0 flex-1 overflow-hidden bg-brand-gradient text-white md:flex-[1.6]"
           paddingClassName="p-0"
         >
-          <div className="flex h-full items-center gap-2 px-2.25 py-1.25 sm:gap-2.5 sm:px-3.5 sm:py-2">
+          <div className="flex h-full items-center gap-2 py-1.25 pl-3.5 pr-2.25 sm:gap-2.5 sm:px-3.5 sm:py-2">
             <span className="inline-flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded-[0.75rem] bg-white/12 text-white ring-1 ring-white/20 sm:h-7 sm:w-7 sm:rounded-[0.75rem]">
               <Presentation
                 aria-hidden="true"
@@ -360,17 +360,17 @@ export function UniversityTeachersPage() {
             <div className="w-full min-w-0">
               <table className="w-full table-fixed">
               <colgroup>
-                <col className="w-[35%]" />
-                <col className="w-[21%]" />
-                <col className="w-[16%]" />
-                <col className="w-[28%]" />
+                <col className="w-[56%] sm:w-[35%]" />
+                <col className="hidden sm:table-column sm:w-[21%]" />
+                <col className="w-[18%] sm:w-[16%]" />
+                <col className="w-[26%] sm:w-[28%]" />
               </colgroup>
               <thead className="sticky top-0 z-10 bg-slate-100 text-left">
                 <tr className="text-[0.6rem] font-bold uppercase tracking-[0.14em] text-ink-muted sm:text-[0.64rem] sm:tracking-[0.16em]">
                   <th className="px-2.5 py-2 sm:px-4 sm:py-2.5">
                     Docente
                   </th>
-                  <th className="px-2.5 py-2 sm:px-3 sm:py-2.5">
+                  <th className="hidden px-2.5 py-2 sm:table-cell sm:px-3 sm:py-2.5">
                     Documento
                   </th>
                   <th className="px-2 py-2 text-center sm:px-3 sm:py-2.5">
@@ -396,14 +396,28 @@ export function UniversityTeachersPage() {
                           isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
                         )}
                       >
-                        <div className="min-w-0 space-y-0.5 sm:space-y-1">
+                        <div
+                          className="min-w-0 space-y-1 sm:space-y-1"
+                          data-testid={`university-teacher-mobile-summary-${teacher.id}`}
+                        >
                           <p className="break-words text-[0.78rem] font-semibold leading-tight text-ink sm:text-[0.83rem]">
                             {formatDisplayName(
                               `${teacher.firstName} ${teacher.lastName}`,
                             )}
                           </p>
-                          <p className="text-[0.68rem] text-ink-muted sm:text-[0.76rem]">
-                            Registrado{' '}
+                          <p className="text-[0.68rem] font-semibold leading-tight text-ink-muted sm:hidden">
+                            {formatDocumentLabel(
+                              teacher.documentTypeCode,
+                              teacher.documentNumber,
+                            )}
+                          </p>
+                          <p className="text-[0.68rem] leading-tight text-ink-muted sm:text-[0.76rem]">
+                            <span className="sm:hidden">
+                              Registro del docente{' '}
+                            </span>
+                            <span className="hidden sm:inline">
+                              Registrado{' '}
+                            </span>
                             {new Date(teacher.createdAt).toLocaleDateString(
                               'es-CO',
                             )}
@@ -412,7 +426,7 @@ export function UniversityTeachersPage() {
                       </td>
                       <td
                         className={classNames(
-                          'px-2.5 pt-2.5 sm:px-3 sm:pt-3',
+                          'hidden px-2.5 pt-2.5 sm:table-cell sm:px-3 sm:pt-3',
                           isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
                         )}
                       >

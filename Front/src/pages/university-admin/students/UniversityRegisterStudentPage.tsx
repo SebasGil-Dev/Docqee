@@ -292,7 +292,7 @@ export function UniversityRegisterStudentPage({
             <span>{universityAdminContent.registerStudentPage.backLabel}</span>
           </Link>
         }
-        actionClassName="sm:absolute sm:right-0 sm:top-1/2 sm:-translate-y-1/2"
+        actionClassName="self-end sm:absolute sm:right-0 sm:top-1/2 sm:-translate-y-1/2"
         className="relative gap-2.5 sm:min-h-[4rem] sm:justify-center"
         description=""
         headingAlign="center"

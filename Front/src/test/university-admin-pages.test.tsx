@@ -586,6 +586,18 @@ describe('University admin pages', () => {
     });
   });
 
+  it('compacta la informacion del docente para la vista movil', () => {
+    renderUniversityApp([ROUTES.universityTeachers]);
+
+    const teacherSummary = screen.getByTestId(
+      'university-teacher-mobile-summary-teacher-1',
+    );
+
+    expect(teacherSummary).toHaveTextContent(/Mariana Beltran/i);
+    expect(teacherSummary).toHaveTextContent(/CC 80124590/i);
+    expect(teacherSummary).toHaveTextContent(/Registro del docente/i);
+  });
+
   it('no cambia el estado del docente hasta confirmar la advertencia', async () => {
     const user = userEvent.setup();
 
