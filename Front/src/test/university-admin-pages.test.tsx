@@ -650,7 +650,7 @@ describe('University admin pages', () => {
       within(credentialRow!).getByRole('button', { name: /editar correo/i }),
     );
     const emailInput = within(credentialRow!).getByLabelText(
-      /correo electronico de valentina rios/i,
+      /correo electr[oó]nico de valentina rios/i,
     );
     await user.clear(emailInput);
     await user.type(emailInput, 'valentina.actualizada@clinicadelnorte.edu.co');

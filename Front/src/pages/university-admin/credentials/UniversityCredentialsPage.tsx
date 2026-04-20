@@ -523,17 +523,20 @@ export function UniversityCredentialsPage() {
         </div>
         {filteredCredentialRows.length > 0 ? (
           <div className="admin-scrollbar min-h-0 flex-1 overflow-x-auto overflow-y-auto">
-            <table className="min-w-full">
+            <div className="w-full lg:min-w-[58rem]">
+              <table className="w-full table-fixed">
               <thead className="sticky top-0 z-10 bg-slate-100 text-left">
                 <tr className="text-[0.6rem] font-bold uppercase tracking-[0.14em] text-ink-muted sm:text-[0.64rem] sm:tracking-[0.16em]">
-                  <th className="px-3 py-2 sm:px-5 sm:py-2.5">Estudiante</th>
-                  <th className="px-3 py-2 sm:px-4 sm:py-2.5">
-                    Correo electronico
+                  <th className="w-[32%] px-3 py-2 sm:px-5 sm:py-2.5 lg:w-[29%]">
+                    Estudiante
                   </th>
-                  <th className="px-3 py-2 text-center sm:px-4 sm:py-2.5">
+                  <th className="w-[38%] px-3 py-2 sm:px-4 sm:py-2.5 lg:w-[39%]">
+                    Correo electrónico
+                  </th>
+                  <th className="w-[12%] px-3 py-2 text-center sm:px-4 sm:py-2.5 lg:w-[14%]">
                     Estado
                   </th>
-                  <th className="px-3 py-2 text-center sm:px-5 sm:py-2.5">
+                  <th className="w-[18%] px-3 py-2 text-center sm:px-5 sm:py-2.5 lg:w-[18%]">
                     Acciones
                   </th>
                 </tr>
@@ -548,12 +551,12 @@ export function UniversityCredentialsPage() {
                     <tr key={credential.id} className="align-top">
                       <td
                         className={classNames(
-                          'px-3 pt-2.5 sm:px-5 sm:pt-3',
+                          'overflow-hidden px-3 pt-2.5 sm:px-5 sm:pt-3',
                           isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
                         )}
                       >
-                        <div className="space-y-0.5 sm:space-y-1">
-                          <p className="text-[0.78rem] font-semibold text-ink sm:text-[0.83rem]">
+                        <div className="min-w-0 space-y-0.5 sm:space-y-1">
+                          <p className="break-words text-[0.78rem] font-semibold leading-tight text-ink sm:text-[0.83rem]">
                             {credential.studentName}
                           </p>
                           <p className="text-[0.68rem] text-ink-muted sm:text-[0.76rem]">
@@ -566,17 +569,17 @@ export function UniversityCredentialsPage() {
                       </td>
                       <td
                         className={classNames(
-                          'px-3 pt-2.5 sm:px-4 sm:pt-3',
+                          'overflow-hidden px-3 pt-2.5 sm:px-4 sm:pt-3',
                           isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
                         )}
                       >
                         {isEditing ? (
-                          <div className="max-w-[20rem] space-y-1.5">
+                          <div className="max-w-full space-y-1.5">
                             <label
                               className="sr-only"
                               htmlFor={`credential-email-${credential.id}`}
                             >
-                              Correo electronico de {credential.studentName}
+                              Correo electrónico de {credential.studentName}
                             </label>
                             <div className="relative">
                               <Mail
@@ -601,12 +604,17 @@ export function UniversityCredentialsPage() {
                             ) : null}
                           </div>
                         ) : (
-                          <div className="inline-flex items-center gap-1.5 text-[0.76rem] text-ink-muted sm:gap-2 sm:text-[0.82rem]">
+                          <div className="flex min-w-0 items-center gap-1.5 text-[0.76rem] text-ink-muted sm:gap-2 sm:text-[0.82rem]">
                             <Mail
                               aria-hidden="true"
                               className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4"
                             />
-                            <span>{credential.studentEmail}</span>
+                            <span
+                              className="min-w-0 truncate"
+                              title={credential.studentEmail}
+                            >
+                              {credential.studentEmail}
+                            </span>
                           </div>
                         )}
                       </td>
@@ -626,7 +634,7 @@ export function UniversityCredentialsPage() {
                       </td>
                       <td
                         className={classNames(
-                          'px-3 pt-2.5 text-center sm:px-5 sm:pt-3',
+                          'overflow-hidden px-3 pt-2.5 text-center sm:px-5 sm:pt-3',
                           isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
                         )}
                       >
@@ -783,7 +791,8 @@ export function UniversityCredentialsPage() {
                   );
                 })}
               </tbody>
-            </table>
+              </table>
+            </div>
           </div>
         ) : (
           <div className="flex flex-1 items-center justify-center px-4 py-8 text-center sm:px-5">

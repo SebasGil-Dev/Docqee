@@ -373,19 +373,26 @@ export function UniversityStudentsPage() {
         </div>
         {filteredStudents.length > 0 ? (
           <div className="admin-scrollbar min-h-0 flex-1 overflow-x-auto overflow-y-auto">
-            <table className="min-w-full">
+            <div className="w-full lg:min-w-[68rem]">
+              <table className="w-full table-fixed">
               <thead className="sticky top-0 z-10 bg-slate-100 text-left">
                 <tr className="text-[0.6rem] font-bold uppercase tracking-[0.14em] text-ink-muted sm:text-[0.64rem] sm:tracking-[0.16em]">
-                  <th className="px-3 py-2 sm:px-5 sm:py-2.5">Estudiante</th>
-                  <th className="px-3 py-2 sm:px-4 sm:py-2.5">Documento</th>
-                  <th className="px-3 py-2 sm:px-4 sm:py-2.5">Correo</th>
-                  <th className="px-3 py-2 text-center sm:px-4 sm:py-2.5">
+                  <th className="w-[27%] px-3 py-2 sm:px-5 sm:py-2.5 lg:w-[23%]">
+                    Estudiante
+                  </th>
+                  <th className="w-[16%] px-3 py-2 text-center sm:px-4 sm:py-2.5 lg:w-[16%]">
+                    Documento
+                  </th>
+                  <th className="w-[24%] px-3 py-2 sm:px-4 sm:py-2.5 lg:w-[25%]">
+                    Correo
+                  </th>
+                  <th className="w-[11%] px-3 py-2 text-center sm:px-4 sm:py-2.5 lg:w-[11%]">
                     Semestre
                   </th>
-                  <th className="px-3 py-2 text-center sm:px-4 sm:py-2.5">
+                  <th className="w-[10.5%] px-3 py-2 text-center sm:px-4 sm:py-2.5 lg:w-[11.5%]">
                     Estado
                   </th>
-                  <th className="px-3 py-2 text-center sm:px-5 sm:py-2.5">
+                  <th className="w-[11.5%] px-3 py-2 text-center sm:px-5 sm:py-2.5 lg:w-[13.5%]">
                     Acciones
                   </th>
                 </tr>
@@ -406,12 +413,12 @@ export function UniversityStudentsPage() {
                     <tr key={student.id} className="align-top">
                       <td
                         className={classNames(
-                          'px-3 pt-2.5 sm:px-5 sm:pt-3',
+                          'overflow-hidden px-3 pt-2.5 sm:px-5 sm:pt-3',
                           isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
                         )}
                       >
-                        <div className="space-y-0.5 sm:space-y-1">
-                          <p className="text-[0.78rem] font-semibold text-ink sm:text-[0.83rem]">
+                        <div className="min-w-0 space-y-0.5 sm:space-y-1">
+                          <p className="break-words text-[0.78rem] font-semibold leading-tight text-ink sm:text-[0.83rem]">
                             {formatDisplayName(
                               `${student.firstName} ${student.lastName}`,
                             )}
@@ -426,7 +433,7 @@ export function UniversityStudentsPage() {
                       </td>
                       <td
                         className={classNames(
-                          'px-3 pt-2.5 sm:px-4 sm:pt-3',
+                          'px-3 pt-2.5 text-center sm:px-4 sm:pt-3',
                           isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
                         )}
                       >
@@ -439,11 +446,14 @@ export function UniversityStudentsPage() {
                       </td>
                       <td
                         className={classNames(
-                          'px-3 pt-2.5 sm:px-4 sm:pt-3',
+                          'overflow-hidden px-3 pt-2.5 sm:px-4 sm:pt-3',
                           isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
                         )}
                       >
-                        <p className="text-[0.76rem] text-ink-muted sm:text-sm">
+                        <p
+                          className="block truncate text-[0.76rem] text-ink-muted sm:text-sm"
+                          title={student.email}
+                        >
                           {student.email}
                         </p>
                       </td>
@@ -475,7 +485,7 @@ export function UniversityStudentsPage() {
                       </td>
                       <td
                         className={classNames(
-                          'px-3 text-center sm:px-5',
+                          'overflow-hidden px-3 text-center sm:px-5',
                           displayStatus === 'pending'
                             ? 'pt-2.5 sm:pt-3'
                             : 'pt-2.5 sm:pt-3.5',
@@ -535,7 +545,8 @@ export function UniversityStudentsPage() {
                   );
                 })}
               </tbody>
-            </table>
+              </table>
+            </div>
           </div>
         ) : (
           <div className="flex flex-1 items-center justify-center px-4 py-8 text-center sm:px-5">
