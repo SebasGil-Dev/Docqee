@@ -229,9 +229,13 @@ export function UniversityRegisterTeacherPage({
           {errorMessage}
         </div>
       ) : null}
-      <AdminPanelCard panelClassName="h-auto bg-slate-50">
-        <form className="flex flex-col" noValidate onSubmit={handleSubmit}>
-          <div className="px-6 py-5 sm:px-7 sm:py-6">
+      <AdminPanelCard className="flex-1" panelClassName="bg-slate-50">
+        <form
+          className="flex min-h-0 flex-1 flex-col"
+          noValidate
+          onSubmit={handleSubmit}
+        >
+          <div className="flex-1 px-6 py-5 sm:px-7 sm:py-6">
             <div className="grid gap-4 sm:gap-5 lg:grid-cols-2">
               <AdminTextField
                 error={errors.firstName}

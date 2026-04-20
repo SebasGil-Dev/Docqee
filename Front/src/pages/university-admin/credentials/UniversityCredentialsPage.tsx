@@ -352,7 +352,7 @@ export function UniversityCredentialsPage() {
         titleClassName="text-center text-[1.7rem] sm:text-[2rem]"
       />
       <button
-        className="inline-flex self-center items-center justify-center gap-2 rounded-xl bg-brand-gradient px-4 py-2.25 text-[0.8rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 sm:hidden"
+        className="inline-flex min-h-11 self-end items-center justify-center gap-2 rounded-xl bg-brand-gradient px-4.5 py-3 text-[0.8rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 sm:hidden"
         disabled={isLoading}
         type="button"
         onClick={handleSendAll}
@@ -406,7 +406,7 @@ export function UniversityCredentialsPage() {
                   className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ghost sm:left-3.5 sm:h-4 sm:w-4"
                 />
                 <input
-                  className="h-9 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-8.5 pr-3 text-[0.78rem] text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-10 sm:pl-10 sm:pr-4 sm:text-[0.82rem]"
+                  className="h-9 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-10 pr-3 text-[0.78rem] text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-10 sm:pl-10 sm:pr-4 sm:text-[0.82rem]"
                   placeholder="Buscar por nombres, documento o correo"
                   type="search"
                   value={searchTerm}
@@ -526,23 +526,23 @@ export function UniversityCredentialsPage() {
             <div className="w-full min-w-0">
               <table className="w-full table-fixed">
               <colgroup>
-                <col className="w-[27%]" />
-                <col className="w-[29%]" />
-                <col className="w-[14%]" />
-                <col className="w-[30%]" />
+                <col className="w-[50%] sm:w-[27%]" />
+                <col className="hidden sm:table-column sm:w-[29%]" />
+                <col className="w-[20%] sm:w-[14%]" />
+                <col className="w-[30%] sm:w-[30%]" />
               </colgroup>
               <thead className="sticky top-0 z-10 bg-slate-100 text-left">
                 <tr className="text-[0.6rem] font-bold uppercase tracking-[0.14em] text-ink-muted sm:text-[0.64rem] sm:tracking-[0.16em]">
                   <th className="px-2.5 py-2 sm:px-4 sm:py-2.5">
                     Estudiante
                   </th>
-                  <th className="px-2.5 py-2 sm:px-3 sm:py-2.5">
+                  <th className="hidden px-2.5 py-2 sm:table-cell sm:px-3 sm:py-2.5">
                     Correo electrónico
                   </th>
-                  <th className="px-2 py-2 text-center sm:px-3 sm:py-2.5">
+                  <th className="py-2 pl-1 pr-3 text-center sm:px-3 sm:py-2.5">
                     Estado
                   </th>
-                  <th className="px-2.5 py-2 text-center sm:px-3.5 sm:py-2.5">
+                  <th className="py-2 pl-3 pr-1.5 text-center sm:px-3.5 sm:py-2.5">
                     Acciones
                   </th>
                 </tr>
@@ -561,13 +561,54 @@ export function UniversityCredentialsPage() {
                           isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
                         )}
                       >
-                        <div className="min-w-0 space-y-0.5 sm:space-y-1">
+                        <div
+                          className="min-w-0 space-y-1 sm:space-y-1"
+                          data-testid={`university-credential-mobile-summary-${credential.id}`}
+                        >
                           <p className="break-words text-[0.78rem] font-semibold leading-tight text-ink sm:text-[0.83rem]">
                             {credential.studentName}
                           </p>
                           <p className="text-[0.68rem] text-ink-muted sm:text-[0.76rem]">
                             {credential.studentDocument}
                           </p>
+                          {isEditing ? (
+                            <div className="max-w-full space-y-1.5 sm:hidden">
+                              <label
+                                className="sr-only"
+                                htmlFor={`credential-email-mobile-${credential.id}`}
+                              >
+                                Correo electrÃ³nico de {credential.studentName}
+                              </label>
+                              <div className="relative">
+                                <Mail
+                                  aria-hidden="true"
+                                  className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ghost"
+                                />
+                                <input
+                                  className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-8.5 pr-3 text-[0.78rem] text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:border-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                                  id={`credential-email-mobile-${credential.id}`}
+                                  type="email"
+                                  value={emailDraft}
+                                  onChange={(event) => {
+                                    setEmailDraft(event.target.value);
+                                    setEmailError(null);
+                                  }}
+                                />
+                              </div>
+                              {emailError ? (
+                                <p className="text-xs font-medium text-rose-700">
+                                  {emailError}
+                                </p>
+                              ) : null}
+                            </div>
+                          ) : (
+                            <p
+                              className="break-all text-[0.68rem] leading-tight text-ink-muted sm:hidden"
+                              title={credential.studentEmail}
+                            >
+                              {credential.studentEmail}
+                            </p>
+                          )}
                           <p className="text-[0.68rem] text-ink-muted sm:text-[0.76rem]">
                             {formatLastSentAt(credential.lastSentAt)}
                           </p>
@@ -575,7 +616,7 @@ export function UniversityCredentialsPage() {
                       </td>
                       <td
                         className={classNames(
-                          'overflow-hidden px-2.5 pt-2.5 sm:px-3 sm:pt-3',
+                          'hidden overflow-hidden px-2.5 pt-2.5 sm:table-cell sm:px-3 sm:pt-3',
                           isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
                         )}
                       >
@@ -626,7 +667,7 @@ export function UniversityCredentialsPage() {
                       </td>
                       <td
                         className={classNames(
-                          'px-2 pt-2.5 text-center sm:px-3 sm:pt-3',
+                          'pt-2.5 pl-1 pr-3 text-center sm:px-3 sm:pt-3',
                           isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
                         )}
                       >
@@ -640,7 +681,7 @@ export function UniversityCredentialsPage() {
                       </td>
                       <td
                         className={classNames(
-                          'px-2.5 pt-2.5 text-center sm:px-3.5 sm:pt-3',
+                          'pt-2.5 pl-3 pr-1.5 text-center sm:px-3.5 sm:pt-3',
                           isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
                         )}
                       >

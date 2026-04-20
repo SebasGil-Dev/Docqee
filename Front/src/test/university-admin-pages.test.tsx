@@ -601,7 +601,24 @@ describe('University admin pages', () => {
     expect(teacherRow).not.toBeNull();
     expect(
       within(teacherRow!).getByRole('button', { name: /^inactivar$/i }),
-    ).toHaveClass('text-[0.68rem]');
+    ).toHaveClass('text-[0.62rem]');
+  });
+
+  it('compacta la informacion de credenciales para la vista movil', () => {
+    renderUniversityApp([ROUTES.universityCredentials]);
+
+    const credentialSummary = screen.getByTestId(
+      'university-credential-mobile-summary-student-cred-1',
+    );
+
+    expect(credentialSummary).toHaveTextContent(/Valentina Rios/i);
+    expect(credentialSummary).toHaveTextContent(/CC 1092384122/i);
+    expect(credentialSummary).toHaveTextContent(
+      /valentina\.rios@clinicadelnorte\.edu\.co/i,
+    );
+    expect(screen.getByText(/correo electr[oó]nico/i).closest('th')).toHaveClass(
+      'hidden',
+    );
   });
 
   it('no cambia el estado del docente hasta confirmar la advertencia', async () => {
