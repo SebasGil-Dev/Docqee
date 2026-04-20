@@ -131,6 +131,25 @@ describe('University admin pages', () => {
     ).toBeInTheDocument();
   });
 
+  it('muestra accesos universitarios dentro del menu hamburguesa movil', async () => {
+    const user = userEvent.setup();
+
+    renderUniversityApp([ROUTES.universityHome]);
+
+    await user.click(screen.getByRole('button', { name: /abrir menú de cuenta/i }));
+
+    const menu = screen.getByRole('menu');
+    expect(
+      within(menu).getByRole('menuitem', { name: /información institucional/i }),
+    ).toHaveAttribute('href', ROUTES.universityInstitution);
+    expect(
+      within(menu).getByRole('menuitem', { name: /carga masiva/i }),
+    ).toHaveAttribute('href', ROUTES.universityBulkUpload);
+    expect(
+      within(menu).getByRole('menuitem', { name: /cerrar sesión/i }),
+    ).toBeInTheDocument();
+  });
+
   it('muestra el inicio con el resumen operativo de la universidad', async () => {
     renderUniversityApp([ROUTES.universityHome]);
 
