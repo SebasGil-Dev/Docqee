@@ -18,6 +18,11 @@ import type {
   RegisterTeacherFormValues,
 } from '@/content/types';
 import { patientRegisterCatalogDataSource } from '@/lib/patientRegisterCatalogDataSource';
+import {
+  DOCUMENT_NUMBER_DIGITS_MESSAGE,
+  isDigitsOnly,
+  keepOnlyDigits,
+} from '@/lib/documentNumber';
 import { useUniversityAdminModuleStore } from '@/lib/universityAdminModuleStore';
 
 type UniversityRegisterTeacherPageProps = {
@@ -52,6 +57,10 @@ function validateField(
       default:
         return undefined;
     }
+  }
+
+  if (field === 'documentNumber' && !isDigitsOnly(value)) {
+    return DOCUMENT_NUMBER_DIGITS_MESSAGE;
   }
 
   return undefined;
@@ -265,13 +274,14 @@ export function UniversityRegisterTeacherPage({
                 error={errors.documentNumber}
                 icon={IdCard}
                 id="register-teacher-document-number"
+                inputMode="numeric"
                 inputRef={documentNumberRef}
                 label="Número de documento"
                 name="documentNumber"
                 placeholder="Ingresa el número de documento"
                 value={values.documentNumber}
                 onBlur={() => handleFieldBlur('documentNumber')}
-                onChange={(value) => updateFieldValue('documentNumber', value)}
+                onChange={(value) => updateFieldValue('documentNumber', keepOnlyDigits(value))}
               />
             </div>
           </div>

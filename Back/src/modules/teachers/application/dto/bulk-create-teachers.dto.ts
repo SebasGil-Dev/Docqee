@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsString, Matches, ValidateNested } from 'class-validator';
 
 export class BulkTeacherRowDto {
   @IsString()
@@ -12,6 +12,7 @@ export class BulkTeacherRowDto {
   tipo_documento!: string;
 
   @IsString()
+  @Matches(/^\d+$/, { message: 'El número de documento solo debe contener números.' })
   numero_documento!: string;
 }
 

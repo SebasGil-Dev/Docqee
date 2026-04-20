@@ -23,6 +23,7 @@ import type {
 } from '@/content/types';
 import { IS_TEST_MODE } from '@/lib/apiClient';
 import { classNames } from '@/lib/classNames';
+import { isDigitsOnly } from '@/lib/documentNumber';
 import { useUniversityAdminModuleStore } from '@/lib/universityAdminModuleStore';
 
 type SpreadsheetLibrary = typeof import('xlsx');
@@ -88,7 +89,7 @@ function col(row: (string | number)[], idx: number): string {
   return String(row[idx] ?? '').trim();
 }
 
-function validateStudentRows(rows: (string | number)[][]): {
+export function validateStudentRows(rows: (string | number)[][]): {
   errors: string[];
   parsed: BulkStudentRow[];
 } {
@@ -126,10 +127,15 @@ function validateStudentRows(rows: (string | number)[][]): {
       );
     }
 
-    if (!numero_documento)
+    if (!numero_documento) {
       rowErrors.push(
         `Fila ${rowNum}, columna "numero_documento": campo obligatorio vacío.`,
       );
+    } else if (!isDigitsOnly(numero_documento)) {
+      rowErrors.push(
+        `Fila ${rowNum}, columna "numero_documento": solo se aceptan números.`,
+      );
+    }
 
     if (!correo) {
       rowErrors.push(
@@ -179,7 +185,7 @@ function validateStudentRows(rows: (string | number)[][]): {
   return { errors, parsed };
 }
 
-function validateTeacherRows(rows: (string | number)[][]): {
+export function validateTeacherRows(rows: (string | number)[][]): {
   errors: string[];
   parsed: BulkTeacherRow[];
 } {
@@ -214,10 +220,15 @@ function validateTeacherRows(rows: (string | number)[][]): {
       );
     }
 
-    if (!numero_documento)
+    if (!numero_documento) {
       rowErrors.push(
         `Fila ${rowNum}, columna "numero_documento": campo obligatorio vacío.`,
       );
+    } else if (!isDigitsOnly(numero_documento)) {
+      rowErrors.push(
+        `Fila ${rowNum}, columna "numero_documento": solo se aceptan números.`,
+      );
+    }
 
     if (rowErrors.length > 0) {
       errors.push(...rowErrors);

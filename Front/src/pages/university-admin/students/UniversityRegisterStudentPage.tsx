@@ -19,6 +19,11 @@ import type {
   RegisterStudentFormValues,
 } from '@/content/types';
 import { patientRegisterCatalogDataSource } from '@/lib/patientRegisterCatalogDataSource';
+import {
+  DOCUMENT_NUMBER_DIGITS_MESSAGE,
+  isDigitsOnly,
+  keepOnlyDigits,
+} from '@/lib/documentNumber';
 import { useUniversityAdminModuleStore } from '@/lib/universityAdminModuleStore';
 
 type UniversityRegisterStudentPageProps = {
@@ -83,6 +88,10 @@ function validateField(
       default:
         return undefined;
     }
+  }
+
+  if (field === 'documentNumber' && !isDigitsOnly(normalizedValue)) {
+    return DOCUMENT_NUMBER_DIGITS_MESSAGE;
   }
 
   if (field === 'email' && !isValidEmail(normalizedValue)) {
@@ -410,7 +419,7 @@ export function UniversityRegisterStudentPage({
                   value={values.documentNumber}
                   onKeyDown={(event) => handleInputKeyDown(event, 'documentNumber')}
                   onBlur={() => handleFieldBlur('documentNumber')}
-                  onChange={(value) => updateFieldValue('documentNumber', value.replace(/\D/g, ''))}
+                  onChange={(value) => updateFieldValue('documentNumber', keepOnlyDigits(value))}
                 />
                 <AdminTextField
                   autoCapitalize="none"

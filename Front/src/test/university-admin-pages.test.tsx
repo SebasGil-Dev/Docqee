@@ -8,7 +8,11 @@ import * as XLSX from 'xlsx';
 import { ROUTES } from '@/constants/routes';
 import { resetUniversityAdminModuleState } from '@/lib/universityAdminModuleStore';
 import { UniversityAdminLayout } from '@/pages/university-admin/UniversityAdminLayout';
-import { UniversityBulkUploadPage } from '@/pages/university-admin/bulk-upload/UniversityBulkUploadPage';
+import {
+  UniversityBulkUploadPage,
+  validateStudentRows,
+  validateTeacherRows,
+} from '@/pages/university-admin/bulk-upload/UniversityBulkUploadPage';
 import { UniversityCredentialsPage } from '@/pages/university-admin/credentials/UniversityCredentialsPage';
 import { UniversityHomePage } from '@/pages/university-admin/home/UniversityHomePage';
 import { UniversityInstitutionPage } from '@/pages/university-admin/institution/UniversityInstitutionPage';
@@ -419,6 +423,11 @@ describe('University admin pages', () => {
     );
     expect(screen.getByLabelText(/correo electr[oó]nico/i)).toBeInTheDocument();
 
+    const documentInput = screen.getByLabelText(/n[uú]mero de documento/i);
+    await user.type(documentInput, '10a-32x');
+    expect(documentInput).toHaveValue('1032');
+    await user.clear(documentInput);
+
     await user.click(
       screen.getByRole('button', { name: /registrar estudiante/i }),
     );
@@ -560,6 +569,11 @@ describe('University admin pages', () => {
       'Ingresa el número de documento',
     );
 
+    const documentInput = screen.getByLabelText(/n[uú]mero de documento/i);
+    await user.type(documentInput, '80a-11b222');
+    expect(documentInput).toHaveValue('8011222');
+    await user.clear(documentInput);
+
     await user.click(
       screen.getByRole('button', { name: /registrar docente/i }),
     );
@@ -664,6 +678,33 @@ describe('University admin pages', () => {
     await user.click(screen.getByRole('link', { name: /^Docentes$/i }));
     expect(screen.getByText(/Jorge Parra/i)).toBeInTheDocument();
   }, 15000);
+
+  it('rechaza documentos con letras en la carga masiva', () => {
+    const { errors, parsed } = validateStudentRows([
+      [
+        'Juliana',
+        'Marin',
+        'CC',
+        '10324A6789',
+        'juliana.marin@clinicadelnorte.edu.co',
+        '3002223344',
+        7,
+      ],
+    ]);
+
+    const teacherResult = validateTeacherRows([
+      ['Patricia', 'Mendoza', 'CC', '80A11222'],
+    ]);
+
+    expect(parsed).toHaveLength(0);
+    expect(errors).toContain(
+      'Fila 2, columna "numero_documento": solo se aceptan números.',
+    );
+    expect(teacherResult.parsed).toHaveLength(0);
+    expect(teacherResult.errors).toContain(
+      'Fila 2, columna "numero_documento": solo se aceptan números.',
+    );
+  });
 
   it('editar el correo en credenciales tambien actualiza al estudiante', async () => {
     const user = userEvent.setup();
