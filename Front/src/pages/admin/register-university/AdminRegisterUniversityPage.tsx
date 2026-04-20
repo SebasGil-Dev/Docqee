@@ -626,7 +626,7 @@ export function AdminRegisterUniversityPage({
                     {adminContent.registerPage.administratorSectionTitle}
                   </h3>
                 </div>
-                <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
+                <div className="grid gap-4 md:grid-cols-2">
                   <div className={formFieldWrapperClassName}>
                     <label
                       className={formFieldLabelClassName}
@@ -725,7 +725,7 @@ export function AdminRegisterUniversityPage({
                       </p>
                     ) : null}
                   </div>
-                  <div className={classNames(formFieldWrapperClassName, 'xl:col-span-2')}>
+                  <div className={formFieldWrapperClassName}>
                     <label
                       className={formFieldLabelClassName}
                       htmlFor="register-university-admin-email"
