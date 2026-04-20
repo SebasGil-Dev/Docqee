@@ -60,6 +60,25 @@ function renderStars(
 type StudentAvailabilityFilter = PersonOperationalStatus | 'all';
 type StudentReviewRatingFilter = 'all' | 1 | 2 | 3 | 4 | 5;
 
+function getFirstNamePart(value: string) {
+  return value.trim().split(/\s+/)[0] ?? '';
+}
+
+export function getStudentDisplayName(firstName: string, lastName: string) {
+  const fullName = `${firstName} ${lastName}`.replace(/\s+/g, ' ').trim();
+  const compactName = [
+    getFirstNamePart(firstName),
+    getFirstNamePart(lastName),
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  return {
+    compactName: compactName || fullName,
+    fullName,
+  };
+}
+
 export function StudentTreatmentsPage() {
   const {
     errorMessage,
@@ -111,6 +130,10 @@ export function StudentTreatmentsPage() {
   );
   const studentInitials = useMemo(
     () => `${profile.firstName.charAt(0)}${profile.lastName.charAt(0)}`.toUpperCase(),
+    [profile.firstName, profile.lastName],
+  );
+  const studentDisplayName = useMemo(
+    () => getStudentDisplayName(profile.firstName, profile.lastName),
     [profile.firstName, profile.lastName],
   );
   const dashboardErrorMessage = useMemo(() => {
@@ -241,8 +264,19 @@ export function StudentTreatmentsPage() {
             )}
             <div className="flex min-w-0 flex-col gap-1.5">
               <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-2.5">
-                <h2 className="max-w-[14rem] truncate font-headline text-[1.05rem] font-extrabold tracking-tight text-white sm:max-w-[16rem] sm:text-[1.18rem] xl:max-w-[20rem]">
-                  Bienvenido, {profile.firstName} {profile.lastName}
+                <h2 className="max-w-[14rem] truncate font-headline text-[1.05rem] font-extrabold tracking-tight text-white sm:max-w-[16rem] sm:text-[1.18rem] lg:max-w-none lg:whitespace-normal lg:overflow-visible xl:max-w-none">
+                  {studentDisplayName.compactName === studentDisplayName.fullName ? (
+                    <>Bienvenido, {studentDisplayName.fullName}</>
+                  ) : (
+                    <>
+                      <span className="lg:hidden">
+                        Bienvenido, {studentDisplayName.compactName}
+                      </span>
+                      <span className="hidden lg:inline">
+                        Bienvenido, {studentDisplayName.fullName}
+                      </span>
+                    </>
+                  )}
                 </h2>
               </div>
               <div className="flex min-w-0 flex-wrap items-center gap-2">

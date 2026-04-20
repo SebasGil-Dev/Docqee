@@ -24,7 +24,7 @@ export const ROUTES = {
   studentProfile: '/estudiante/mi-perfil',
   studentRequests: '/estudiante/solicitudes',
   studentRoot: '/estudiante',
-  studentTreatments: '/estudiante/tratamientos-y-sedes',
+  studentTreatments: '/estudiante/inicio',
   universityBulkUpload: '/universidad/carga-masiva',
   universityCredentials: '/universidad/credenciales',
   universityHome: '/universidad/inicio',

@@ -270,12 +270,18 @@ export const router = createBrowserRouter([
         },
       },
       {
-        path: 'tratamientos-y-sedes',
+        path: 'inicio',
         lazy: async () => {
           const { StudentTreatmentsPage } = await import(
             '@/pages/student/treatments/StudentTreatmentsPage'
           );
           return { Component: StudentTreatmentsPage };
+        },
+      },
+      {
+        path: 'tratamientos-y-sedes',
+        Component: function StudentTreatmentsLegacyRedirect() {
+          return <Navigate replace to={ROUTES.studentTreatments} />;
         },
       },
       {

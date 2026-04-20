@@ -129,7 +129,7 @@ export const studentContent = {
     navigation: [
       {
         icon: 'house',
-        label: 'Inicio',
+        label: 'Inicio estudiante',
         matchPrefix: ROUTES.studentTreatments,
         to: ROUTES.studentTreatments,
       },
@@ -183,8 +183,8 @@ export const studentContent = {
     meta: {
       description:
         'Consulta el panel principal del estudiante con tratamientos, sedes, citas y comentarios dentro de Docqee.',
-      title: 'Docqee | Inicio del Estudiante',
+      title: 'Docqee | Inicio estudiante',
     },
-    title: 'Inicio',
+    title: 'Inicio estudiante',
   },
 } as const;

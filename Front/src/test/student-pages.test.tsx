@@ -13,7 +13,10 @@ import { StudentLayout } from '@/pages/student/StudentLayout';
 import { StudentNotificationsPage } from '@/pages/student/notifications/StudentNotificationsPage';
 import { StudentProfilePage } from '@/pages/student/profile/StudentProfilePortalPage';
 import { StudentRequestsPage } from '@/pages/student/requests/StudentRequestsPage';
-import { StudentTreatmentsPage } from '@/pages/student/treatments/StudentTreatmentsPage';
+import {
+  getStudentDisplayName,
+  StudentTreatmentsPage,
+} from '@/pages/student/treatments/StudentTreatmentsPage';
 
 function renderStudentApp(
   initialEntries: MemoryRouterProps['initialEntries'] = [ROUTES.studentProfile],
@@ -23,12 +26,16 @@ function renderStudentApp(
       <Routes>
         <Route element={<StudentLayout />} path={ROUTES.studentRoot}>
           <Route
-            element={<Navigate replace to={ROUTES.studentProfile} />}
+            element={<Navigate replace to={ROUTES.studentTreatments} />}
             index
           />
           <Route element={<StudentProfilePage />} path="mi-perfil" />
           <Route
             element={<StudentTreatmentsPage />}
+            path="inicio"
+          />
+          <Route
+            element={<Navigate replace to={ROUTES.studentTreatments} />}
             path="tratamientos-y-sedes"
           />
           <Route element={<StudentAgendaPage />} path="agenda" />
@@ -46,6 +53,13 @@ describe('Student pages', () => {
   beforeEach(() => {
     window.localStorage.clear();
     resetStudentModuleState();
+  });
+
+  it('formatea el nombre del estudiante segun el tamano de pantalla', () => {
+    expect(getStudentDisplayName('Carlos Andres', 'Gomez Cardona')).toEqual({
+      compactName: 'Carlos Gomez',
+      fullName: 'Carlos Andres Gomez Cardona',
+    });
   });
 
   it('permite actualizar el perfil y agregar un enlace profesional', async () => {
@@ -130,6 +144,7 @@ describe('Student pages', () => {
 
     renderStudentApp([ROUTES.studentTreatments]);
 
+    expect(screen.getByRole('link', { name: /inicio estudiante/i })).toBeInTheDocument();
     expect(screen.getByText(/bienvenido, valentina rios/i)).toBeInTheDocument();
     expect(screen.getByText(/4.7 de 5 en 3 valoraciones/i)).toBeInTheDocument();
     expect(screen.getByText(/comentarios de tus citas/i)).toBeInTheDocument();
