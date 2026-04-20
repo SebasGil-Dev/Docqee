@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import type { ReactNode, Ref } from 'react';
+import type { KeyboardEvent as ReactKeyboardEvent, ReactNode, Ref } from 'react';
 
 import { classNames } from '@/lib/classNames';
 
@@ -21,6 +21,7 @@ type AdminSelectFieldProps = {
   name: string;
   onBlur?: (() => void) | undefined;
   onChange: (value: string) => void;
+  onKeyDown?: ((event: ReactKeyboardEvent<HTMLSelectElement>) => void) | undefined;
   options: SelectOption[];
   placeholder: string;
   selectClassName?: string;
@@ -41,6 +42,7 @@ export function AdminSelectField({
   name,
   onBlur,
   onChange,
+  onKeyDown,
   options,
   placeholder,
   selectClassName,
@@ -84,6 +86,7 @@ export function AdminSelectField({
           value={value}
           onBlur={onBlur}
           onChange={(event) => onChange(event.target.value)}
+          onKeyDown={onKeyDown}
         >
           <option disabled value="">
             {placeholder}

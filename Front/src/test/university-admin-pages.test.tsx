@@ -67,8 +67,7 @@ async function fillStudentForm(user: ReturnType<typeof userEvent.setup>) {
     'juliana.marin@clinicadelnorte.edu.co',
   );
   await user.type(screen.getByLabelText(/^Celular$/i), '3002223344');
-  await user.click(screen.getByRole('button', { name: /semestre/i }));
-  await user.click(screen.getByRole('option', { name: /Semestre 7/i }));
+  await user.selectOptions(screen.getByLabelText(/^Semestre$/i), '7');
 }
 
 async function fillTeacherForm(user: ReturnType<typeof userEvent.setup>) {
@@ -258,6 +257,34 @@ describe('University admin pages', () => {
     const credentialRow = screen.getByText(/Juliana Marin/i).closest('tr');
     expect(credentialRow).not.toBeNull();
     expect(within(credentialRow!).getByText(/^Generada$/i)).toBeInTheDocument();
+  });
+
+  it('permite guardar y continuar para registrar varios estudiantes mas rapido', async () => {
+    const user = userEvent.setup();
+
+    renderUniversityApp([ROUTES.universityRegisterStudent]);
+
+    await fillStudentForm(user);
+    await user.click(
+      screen.getByRole('button', { name: /guardar y continuar/i }),
+    );
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      /puedes continuar con el siguiente registro/i,
+    );
+    expect(
+      screen.getByRole('heading', { name: /registrar estudiante/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Nombres$/i)).toHaveValue('');
+    expect(screen.getByLabelText(/^Apellidos$/i)).toHaveValue('');
+    expect(screen.getByLabelText(/tipo de documento/i)).toHaveValue(
+      'document-cc',
+    );
+    expect(screen.getByLabelText(/^Semestre$/i)).toHaveValue('7');
+
+    await waitFor(() => {
+      expect(document.activeElement).toBe(screen.getByLabelText(/^Nombres$/i));
+    });
   });
 
   it('filtra estudiantes por estado derivado y por busqueda', async () => {

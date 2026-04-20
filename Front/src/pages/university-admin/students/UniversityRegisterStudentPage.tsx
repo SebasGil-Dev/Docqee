@@ -1,9 +1,8 @@
 import { ArrowLeft, GraduationCap, IdCard, Mail, Phone, UserRound } from 'lucide-react';
-import type { FormEvent } from 'react';
+import type { FormEvent, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-import { AdminDropdownField } from '@/components/admin/AdminDropdownField';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
 import { AdminSelectField } from '@/components/admin/AdminSelectField';
@@ -40,6 +39,16 @@ const semesterOptions = Array.from({ length: 10 }, (_, index) => ({
   id: `${index + 1}`,
   label: `Semestre ${index + 1}`,
 }));
+
+const fieldOrder: RegisterStudentFormField[] = [
+  'firstName',
+  'lastName',
+  'documentTypeId',
+  'documentNumber',
+  'email',
+  'phone',
+  'semester',
+];
 
 function resolveCatalogResult<T>(result: Promise<T[]> | T[]) {
   return Promise.resolve(result);
@@ -100,7 +109,9 @@ export function UniversityRegisterStudentPage({
   const documentNumberRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
-  const semesterRef = useRef<HTMLButtonElement>(null);
+  const semesterRef = useRef<HTMLSelectElement>(null);
+  const continueSubmitButtonRef = useRef<HTMLButtonElement>(null);
+  const [successNotice, setSuccessNotice] = useState<string | null>(null);
 
   const fieldRefs = useMemo(
     () =>
@@ -114,7 +125,7 @@ export function UniversityRegisterStudentPage({
         semester: semesterRef,
       }) satisfies Record<
         RegisterStudentFormField,
-        { current: HTMLInputElement | HTMLSelectElement | HTMLButtonElement | null }
+        { current: HTMLInputElement | HTMLSelectElement | null }
       >,
     [],
   );
@@ -143,7 +154,15 @@ export function UniversityRegisterStudentPage({
     };
   }, [catalogDataSource]);
 
+  useEffect(() => {
+    firstNameRef.current?.focus();
+  }, []);
+
   const updateFieldValue = (field: RegisterStudentFormField, nextValue: string) => {
+    if (successNotice) {
+      setSuccessNotice(null);
+    }
+
     setValues((currentValues) => ({
       ...currentValues,
       [field]: nextValue,
@@ -161,6 +180,41 @@ export function UniversityRegisterStudentPage({
 
       return nextErrors;
     });
+  };
+
+  const focusNextField = (field: RegisterStudentFormField) => {
+    const currentFieldIndex = fieldOrder.indexOf(field);
+
+    if (currentFieldIndex === -1) {
+      return;
+    }
+
+    const nextField = fieldOrder[currentFieldIndex + 1];
+
+    if (!nextField) {
+      continueSubmitButtonRef.current?.focus();
+      return;
+    }
+
+    fieldRefs[nextField].current?.focus();
+  };
+
+  const handleInputKeyDown = (
+    event: ReactKeyboardEvent<HTMLInputElement | HTMLSelectElement>,
+    field: RegisterStudentFormField,
+  ) => {
+    if (event.key !== 'Enter') {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (field === 'semester') {
+      event.currentTarget.form?.requestSubmit(continueSubmitButtonRef.current ?? undefined);
+      return;
+    }
+
+    focusNextField(field);
   };
 
   const handleFieldBlur = (field: RegisterStudentFormField) => {
@@ -182,15 +236,9 @@ export function UniversityRegisterStudentPage({
     event.preventDefault();
 
     const nextErrors: RegisterStudentFormErrors = {};
-    const fieldOrder: RegisterStudentFormField[] = [
-      'firstName',
-      'lastName',
-      'documentTypeId',
-      'documentNumber',
-      'email',
-      'phone',
-      'semester',
-    ];
+    const submitEvent = event.nativeEvent as SubmitEvent;
+    const submitter = submitEvent.submitter as HTMLButtonElement | null;
+    const shouldContinue = submitter?.dataset.submitMode === 'continue';
 
     fieldOrder.forEach((field) => {
       const nextFieldError = validateField(field, values[field]);
@@ -215,6 +263,28 @@ export function UniversityRegisterStudentPage({
 
       if (!result) {
         setIsSubmitting(false);
+        return;
+      }
+
+      if (shouldContinue) {
+        const preservedDocumentTypeId = values.documentTypeId;
+        const preservedSemester = values.semester;
+
+        setValues({
+          ...initialValues,
+          documentTypeId: preservedDocumentTypeId,
+          semester: preservedSemester,
+        });
+        setErrors({});
+        setSuccessNotice(
+          universityAdminContent.registerStudentPage.continueSuccessMessage,
+        );
+        setIsSubmitting(false);
+
+        window.requestAnimationFrame(() => {
+          firstNameRef.current?.focus();
+        });
+
         return;
       }
 
@@ -255,6 +325,14 @@ export function UniversityRegisterStudentPage({
           <p role="alert">{errorMessage}</p>
         </SurfaceCard>
       ) : null}
+      {successNotice ? (
+        <SurfaceCard
+          className="border border-emerald-200 bg-emerald-50/90 text-sm text-emerald-800 shadow-none"
+          paddingClassName="p-4"
+        >
+          <p role="status">{successNotice}</p>
+        </SurfaceCard>
+      ) : null}
       <AdminPanelCard
         className="flex-1 lg:-mt-1 lg:mr-2 lg:w-auto lg:flex-none lg:overflow-visible xl:mr-3"
         panelClassName="bg-slate-50 lg:h-auto lg:overflow-visible"
@@ -268,6 +346,8 @@ export function UniversityRegisterStudentPage({
             <div className="space-y-4 pb-4 sm:space-y-5 sm:pb-5 lg:pb-1">
               <div className="grid gap-4 sm:gap-5 lg:grid-cols-2">
                 <AdminTextField
+                  autoCapitalize="words"
+                  autoComplete="given-name"
                   containerClassName="space-y-1"
                   error={errors.firstName}
                   icon={UserRound}
@@ -278,10 +358,13 @@ export function UniversityRegisterStudentPage({
                   name="firstName"
                   placeholder="Ingresa los nombres"
                   value={values.firstName}
+                  onKeyDown={(event) => handleInputKeyDown(event, 'firstName')}
                   onBlur={() => handleFieldBlur('firstName')}
                   onChange={(value) => updateFieldValue('firstName', value)}
                 />
                 <AdminTextField
+                  autoCapitalize="words"
+                  autoComplete="family-name"
                   containerClassName="space-y-1"
                   error={errors.lastName}
                   icon={UserRound}
@@ -292,6 +375,7 @@ export function UniversityRegisterStudentPage({
                   name="lastName"
                   placeholder="Ingresa los apellidos"
                   value={values.lastName}
+                  onKeyDown={(event) => handleInputKeyDown(event, 'lastName')}
                   onBlur={() => handleFieldBlur('lastName')}
                   onChange={(value) => updateFieldValue('lastName', value)}
                 />
@@ -307,10 +391,12 @@ export function UniversityRegisterStudentPage({
                   selectClassName="py-2.5 sm:py-3"
                   selectRef={documentTypeRef}
                   value={values.documentTypeId}
+                  onKeyDown={(event) => handleInputKeyDown(event, 'documentTypeId')}
                   onBlur={() => handleFieldBlur('documentTypeId')}
                   onChange={(value) => updateFieldValue('documentTypeId', value)}
                 />
                 <AdminTextField
+                  autoComplete="off"
                   containerClassName="space-y-1"
                   error={errors.documentNumber}
                   icon={IdCard}
@@ -322,10 +408,14 @@ export function UniversityRegisterStudentPage({
                   name="documentNumber"
                   placeholder="Ingresa el número de documento"
                   value={values.documentNumber}
+                  onKeyDown={(event) => handleInputKeyDown(event, 'documentNumber')}
                   onBlur={() => handleFieldBlur('documentNumber')}
                   onChange={(value) => updateFieldValue('documentNumber', value.replace(/\D/g, ''))}
                 />
                 <AdminTextField
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  autoCorrect="off"
                   containerClassName="space-y-1"
                   error={errors.email}
                   icon={Mail}
@@ -337,10 +427,12 @@ export function UniversityRegisterStudentPage({
                   placeholder="estudiante@universidad.edu.co"
                   type="email"
                   value={values.email}
+                  onKeyDown={(event) => handleInputKeyDown(event, 'email')}
                   onBlur={() => handleFieldBlur('email')}
                   onChange={(value) => updateFieldValue('email', value)}
                 />
                 <AdminTextField
+                  autoComplete="tel"
                   containerClassName="space-y-1"
                   error={errors.phone}
                   icon={Phone}
@@ -353,11 +445,12 @@ export function UniversityRegisterStudentPage({
                   placeholder="3001234567"
                   type="tel"
                   value={values.phone}
+                  onKeyDown={(event) => handleInputKeyDown(event, 'phone')}
                   onBlur={() => handleFieldBlur('phone')}
                   onChange={(value) => updateFieldValue('phone', value.replace(/\D/g, ''))}
                 />
                 <div className="lg:col-span-2">
-                  <AdminDropdownField
+                  <AdminSelectField
                     containerClassName="space-y-1"
                     error={errors.semester}
                     icon={GraduationCap}
@@ -366,9 +459,10 @@ export function UniversityRegisterStudentPage({
                     name="semester"
                     options={semesterOptions}
                     placeholder="Selecciona un semestre"
-                    triggerClassName="py-2.25 sm:py-2.5"
-                    triggerRef={semesterRef}
+                    selectClassName="py-2.5 sm:py-3"
+                    selectRef={semesterRef}
                     value={values.semester}
+                    onKeyDown={(event) => handleInputKeyDown(event, 'semester')}
                     onBlur={() => handleFieldBlur('semester')}
                     onChange={(value) => updateFieldValue('semester', value)}
                   />
@@ -379,6 +473,17 @@ export function UniversityRegisterStudentPage({
           <div className="flex flex-wrap items-center justify-center gap-3 border-t border-slate-200/80 bg-white px-5 py-3 sm:px-7 sm:py-3 lg:py-2.5">
             <button
               className="inline-flex items-center justify-center rounded-2xl bg-brand-gradient px-5 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-70"
+              data-submit-mode="continue"
+              disabled={isSubmitting || isLoading}
+              ref={continueSubmitButtonRef}
+              type="submit"
+            >
+              {isSubmitting
+                ? 'Registrando...'
+                : universityAdminContent.registerStudentPage.continueLabel}
+            </button>
+            <button
+              className="inline-flex items-center justify-center rounded-2xl bg-surface-card px-5 py-3 text-sm font-semibold text-primary shadow-ambient transition duration-300 hover:bg-surface-low focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-70"
               disabled={isSubmitting || isLoading}
               type="submit"
             >

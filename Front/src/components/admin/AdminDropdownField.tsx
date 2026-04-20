@@ -1,5 +1,12 @@
 import { Check, ChevronDown, type LucideIcon } from 'lucide-react';
-import { type Ref, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  type KeyboardEvent as ReactKeyboardEvent,
+  type Ref,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { classNames } from '@/lib/classNames';
 
@@ -20,6 +27,7 @@ type AdminDropdownFieldProps = {
   name: string;
   onBlur?: (() => void) | undefined;
   onChange: (value: string) => void;
+  onKeyDown?: ((event: ReactKeyboardEvent<HTMLButtonElement>) => void) | undefined;
   options: SelectOption[];
   placeholder: string;
   triggerClassName?: string;
@@ -39,6 +47,7 @@ export function AdminDropdownField({
   name,
   onBlur,
   onChange,
+  onKeyDown,
   options,
   placeholder,
   triggerClassName,
@@ -126,6 +135,7 @@ export function AdminDropdownField({
               setIsOpen((current) => !current);
             }
           }}
+          onKeyDown={onKeyDown}
         >
           <span className={classNames(!selectedOption && 'text-ghost')}>
             {selectedOption?.label ?? placeholder}

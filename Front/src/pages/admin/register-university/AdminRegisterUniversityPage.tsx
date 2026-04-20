@@ -6,7 +6,7 @@ import {
   Phone,
   UserRound,
 } from 'lucide-react';
-import type { FormEvent, Ref } from 'react';
+import type { FormEvent, KeyboardEvent as ReactKeyboardEvent, Ref } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -68,6 +68,7 @@ function SelectField({
   id,
   label,
   name,
+  onKeyDown,
   onBlur,
   onChange,
   options,
@@ -82,6 +83,7 @@ function SelectField({
   id: string;
   label: string;
   name: string;
+  onKeyDown?: ((event: ReactKeyboardEvent<HTMLSelectElement>) => void) | undefined;
   onBlur: () => void;
   onChange: (value: string) => void;
   options: { id: string; label: string }[];
@@ -116,6 +118,7 @@ function SelectField({
           disabled={disabled}
           id={id}
           name={name}
+          onKeyDown={onKeyDown}
           ref={selectRef}
           value={value}
           onBlur={onBlur}
@@ -257,6 +260,11 @@ export function AdminRegisterUniversityPage({
     AsyncCatalogState<LocalityOption>
   >(createEmptyCatalogState('idle'));
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [shouldFocusLocality, setShouldFocusLocality] = useState(false);
+
+  useEffect(() => {
+    nameRef.current?.focus();
+  }, []);
 
   useEffect(() => {
     let isCancelled = false;
@@ -349,10 +357,63 @@ export function AdminRegisterUniversityPage({
     };
   }, [catalogDataSource, values.cityId]);
 
+  useEffect(() => {
+    if (localitiesState.status !== 'ready' || !values.cityId) {
+      return;
+    }
+
+    if (!values.mainLocalityId && localitiesState.options.length === 1) {
+      const [onlyLocality] = localitiesState.options;
+
+      if (!onlyLocality) {
+        return;
+      }
+
+      setValues((currentValues) => ({
+        ...currentValues,
+        mainLocalityId: onlyLocality.id,
+      }));
+      setErrors((currentErrors) => {
+        const nextErrors = { ...currentErrors };
+        delete nextErrors.mainLocalityId;
+        return nextErrors;
+      });
+      setShouldFocusLocality(false);
+
+      window.requestAnimationFrame(() => {
+        adminFirstNameRef.current?.focus();
+      });
+
+      return;
+    }
+
+    if (
+      shouldFocusLocality &&
+      !values.mainLocalityId &&
+      localitiesState.options.length > 0
+    ) {
+      setShouldFocusLocality(false);
+
+      window.requestAnimationFrame(() => {
+        mainLocalityRef.current?.focus();
+      });
+    }
+  }, [
+    localitiesState.options,
+    localitiesState.status,
+    shouldFocusLocality,
+    values.cityId,
+    values.mainLocalityId,
+  ]);
+
   const updateFieldValue = (
     field: RegisterUniversityFormField,
     nextValue: string,
   ) => {
+    if (field === 'cityId') {
+      setShouldFocusLocality(Boolean(nextValue));
+    }
+
     setValues((currentValues) =>
       field === 'cityId'
         ? {
@@ -393,6 +454,61 @@ export function AdminRegisterUniversityPage({
 
       return nextErrors;
     });
+  };
+
+  const focusNextField = (field: RegisterUniversityFormField) => {
+    const currentFieldIndex = fieldOrder.indexOf(field);
+
+    if (currentFieldIndex === -1) {
+      return;
+    }
+
+    for (
+      let nextFieldIndex = currentFieldIndex + 1;
+      nextFieldIndex < fieldOrder.length;
+      nextFieldIndex += 1
+    ) {
+      const nextField = fieldOrder[nextFieldIndex];
+
+      if (!nextField) {
+        continue;
+      }
+
+      if (
+        nextField === 'mainLocalityId' &&
+        (!values.cityId ||
+          localitiesState.status !== 'ready' ||
+          localitiesState.options.length === 0)
+      ) {
+        continue;
+      }
+
+      fieldRefs[nextField].current?.focus();
+      return;
+    }
+  };
+
+  const handleInputKeyDown = (
+    event: ReactKeyboardEvent<HTMLInputElement | HTMLSelectElement>,
+    field: RegisterUniversityFormField,
+  ) => {
+    if (event.key !== 'Enter') {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (field === 'adminPhone') {
+      event.currentTarget.form?.requestSubmit();
+      return;
+    }
+
+    if (field === 'mainLocalityId') {
+      adminFirstNameRef.current?.focus();
+      return;
+    }
+
+    focusNextField(field);
   };
 
   const handleFieldBlur = (field: RegisterUniversityFormField) => {
@@ -533,6 +649,7 @@ export function AdminRegisterUniversityPage({
                         className={formFieldIconClassName}
                       />
                       <input
+                        autoComplete="organization"
                         ref={nameRef}
                         aria-describedby={
                           errors.name
@@ -553,6 +670,7 @@ export function AdminRegisterUniversityPage({
                         }
                         type="text"
                         value={values.name}
+                        onKeyDown={(event) => handleInputKeyDown(event, 'name')}
                         onBlur={() => handleFieldBlur('name')}
                         onChange={(event) =>
                           updateFieldValue('name', event.target.value)
@@ -602,6 +720,9 @@ export function AdminRegisterUniversityPage({
                     placeholder={localityPlaceholder}
                     selectRef={mainLocalityRef}
                     value={values.mainLocalityId}
+                    onKeyDown={(event) =>
+                      handleInputKeyDown(event, 'mainLocalityId')
+                    }
                     onBlur={() => handleFieldBlur('mainLocalityId')}
                     onChange={(value) =>
                       updateFieldValue('mainLocalityId', value)
@@ -629,6 +750,8 @@ export function AdminRegisterUniversityPage({
                         className={formFieldIconClassName}
                       />
                       <input
+                        autoCapitalize="words"
+                        autoComplete="given-name"
                         ref={adminFirstNameRef}
                         aria-describedby={
                           errors.adminFirstName
@@ -650,6 +773,9 @@ export function AdminRegisterUniversityPage({
                         }
                         type="text"
                         value={values.adminFirstName}
+                        onKeyDown={(event) =>
+                          handleInputKeyDown(event, 'adminFirstName')
+                        }
                         onBlur={() => handleFieldBlur('adminFirstName')}
                         onChange={(event) =>
                           updateFieldValue('adminFirstName', event.target.value)
@@ -678,6 +804,8 @@ export function AdminRegisterUniversityPage({
                         className={formFieldIconClassName}
                       />
                       <input
+                        autoCapitalize="words"
+                        autoComplete="family-name"
                         ref={adminLastNameRef}
                         aria-describedby={
                           errors.adminLastName
@@ -699,6 +827,9 @@ export function AdminRegisterUniversityPage({
                         }
                         type="text"
                         value={values.adminLastName}
+                        onKeyDown={(event) =>
+                          handleInputKeyDown(event, 'adminLastName')
+                        }
                         onBlur={() => handleFieldBlur('adminLastName')}
                         onChange={(event) =>
                           updateFieldValue('adminLastName', event.target.value)
@@ -727,6 +858,10 @@ export function AdminRegisterUniversityPage({
                         className={formFieldIconClassName}
                       />
                       <input
+                        autoCapitalize="none"
+                        autoComplete="email"
+                        autoCorrect="off"
+                        inputMode="email"
                         ref={adminEmailRef}
                         aria-describedby={
                           errors.adminEmail
@@ -748,6 +883,9 @@ export function AdminRegisterUniversityPage({
                         }
                         type="email"
                         value={values.adminEmail}
+                        onKeyDown={(event) =>
+                          handleInputKeyDown(event, 'adminEmail')
+                        }
                         onBlur={() => handleFieldBlur('adminEmail')}
                         onChange={(event) =>
                           updateFieldValue('adminEmail', event.target.value)
@@ -776,6 +914,8 @@ export function AdminRegisterUniversityPage({
                         className={formFieldIconClassName}
                       />
                       <input
+                        autoComplete="tel"
+                        inputMode="tel"
                         ref={adminPhoneRef}
                         aria-invalid={Boolean(errors.adminPhone)}
                         className={classNames(
@@ -790,6 +930,9 @@ export function AdminRegisterUniversityPage({
                         }
                         type="tel"
                         value={values.adminPhone}
+                        onKeyDown={(event) =>
+                          handleInputKeyDown(event, 'adminPhone')
+                        }
                         onBlur={() => handleFieldBlur('adminPhone')}
                         onChange={(event) =>
                           updateFieldValue('adminPhone', event.target.value)

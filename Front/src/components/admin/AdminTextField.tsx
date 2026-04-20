@@ -1,9 +1,17 @@
 import type { LucideIcon } from 'lucide-react';
-import type { HTMLInputTypeAttribute, Ref } from 'react';
+import type {
+  HTMLInputAutoCompleteAttribute,
+  HTMLInputTypeAttribute,
+  KeyboardEvent as ReactKeyboardEvent,
+  Ref,
+} from 'react';
 
 import { classNames } from '@/lib/classNames';
 
 type AdminTextFieldProps = {
+  autoCapitalize?: string | undefined;
+  autoComplete?: HTMLInputAutoCompleteAttribute | undefined;
+  autoCorrect?: string | undefined;
   containerClassName?: string;
   disabled?: boolean;
   error?: string | undefined;
@@ -19,12 +27,16 @@ type AdminTextFieldProps = {
   name: string;
   onBlur?: (() => void) | undefined;
   onChange: (value: string) => void;
+  onKeyDown?: ((event: ReactKeyboardEvent<HTMLInputElement>) => void) | undefined;
   placeholder: string;
   type?: HTMLInputTypeAttribute;
   value: string;
 };
 
 export function AdminTextField({
+  autoCapitalize,
+  autoComplete,
+  autoCorrect,
   containerClassName,
   disabled = false,
   error,
@@ -40,6 +52,7 @@ export function AdminTextField({
   name,
   onBlur,
   onChange,
+  onKeyDown,
   placeholder,
   type = 'text',
   value,
@@ -59,6 +72,9 @@ export function AdminTextField({
         />
         <input
           ref={inputRef}
+          autoCapitalize={autoCapitalize}
+          autoComplete={autoComplete}
+          autoCorrect={autoCorrect}
           aria-describedby={error ? `${id}-error` : helpText ? `${id}-help` : undefined}
           aria-invalid={Boolean(error)}
           className={classNames(
@@ -79,6 +95,7 @@ export function AdminTextField({
           value={value}
           onBlur={onBlur}
           onChange={(event) => onChange(event.target.value)}
+          onKeyDown={onKeyDown}
         />
       </div>
       {error ? (

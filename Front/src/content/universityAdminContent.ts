@@ -101,8 +101,11 @@ export const universityAdminContent = {
   },
   registerStudentPage: {
     backLabel: 'Volver a estudiantes',
+    continueLabel: 'Guardar y continuar',
     credentialNotice: '',
     description: '',
+    continueSuccessMessage:
+      'El estudiante se registró correctamente. Puedes continuar con el siguiente registro.',
     meta: {
       description:
         'Registra estudiantes dentro del modulo universitario de Docqee.',
