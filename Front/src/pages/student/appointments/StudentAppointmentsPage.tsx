@@ -11,6 +11,7 @@ import {
   Plus,
   Search,
   SlidersHorizontal,
+  Star,
   Stethoscope,
   UserRound,
   X,
@@ -18,6 +19,7 @@ import {
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { AdminConfirmationDialog } from '@/components/admin/AdminConfirmationDialog';
+import { StudentRatingModal } from '@/components/student/StudentRatingModal';
 import { AdminDropdownField } from '@/components/admin/AdminDropdownField';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
@@ -236,6 +238,7 @@ export function StudentAppointmentsPage() {
     treatments,
     updateAppointmentStatus,
     upsertAppointment,
+    submitAppointmentReview,
   } = useStudentModuleStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<AppointmentStatusFilter>('all');
@@ -254,6 +257,8 @@ export function StudentAppointmentsPage() {
     useState<StudentAgendaAppointment | null>(null);
   const [commentsAppointment, setCommentsAppointment] =
     useState<StudentAgendaAppointment | null>(null);
+  const [ratingTarget, setRatingTarget] = useState<{ appointmentId: string; patientName: string } | null>(null);
+  const [isSubmittingRating, setIsSubmittingRating] = useState(false);
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const pendingCount = useMemo(
@@ -765,7 +770,22 @@ export function StudentAppointmentsPage() {
                           </button>
                         </div>
                       ) : appointment.status === 'FINALIZADA' ? (
-                        <div className="flex justify-end">
+                        <div className="flex flex-wrap justify-end gap-2">
+                          {!appointment.myRating ? (
+                            <button
+                              className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 transition duration-200 hover:bg-amber-100"
+                              type="button"
+                              onClick={() => setRatingTarget({ appointmentId: appointment.id, patientName: appointment.patientName })}
+                            >
+                              <Star aria-hidden="true" className="h-3.5 w-3.5" />
+                              <span>Calificar paciente</span>
+                            </button>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-600">
+                              <Star aria-hidden="true" className="h-3 w-3 fill-amber-400 text-amber-400" />
+                              {appointment.myRating}/5
+                            </span>
+                          )}
                           <button
                             className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
                             type="button"
@@ -1013,6 +1033,22 @@ export function StudentAppointmentsPage() {
           appointment={commentsAppointment}
           reviews={reviews.filter((r) => r.appointmentId === commentsAppointment.id)}
           onClose={() => setCommentsAppointment(null)}
+        />
+      ) : null}
+      {ratingTarget ? (
+        <StudentRatingModal
+          appointmentId={ratingTarget.appointmentId}
+          isSubmitting={isSubmittingRating}
+          patientName={ratingTarget.patientName}
+          onClose={() => setRatingTarget(null)}
+          onSubmit={(appointmentId, rating, comment) => {
+            void (async () => {
+              setIsSubmittingRating(true);
+              const success = await submitAppointmentReview(appointmentId, rating, comment);
+              setIsSubmittingRating(false);
+              if (success) setRatingTarget(null);
+            })();
+          }}
         />
       ) : null}
     </div>

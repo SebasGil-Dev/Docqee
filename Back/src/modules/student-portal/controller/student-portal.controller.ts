@@ -16,6 +16,7 @@ import { CurrentUser } from '@/shared/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@/shared/guards/jwt-auth.guard';
 import type { UploadImageFile } from '@/shared/storage/cloudinary.service';
 import type { RequestUser } from '@/shared/types/request-user.type';
+import { CreateStudentAppointmentReviewDto } from '../application/dto/create-student-appointment-review.dto';
 import { UpdatePracticeSitesDto } from '../application/dto/update-practice-sites.dto';
 import { UpdateStudentProfileDto } from '../application/dto/update-student-profile.dto';
 import { UpdateStudentRequestStatusDto } from '../application/dto/update-student-request-status.dto';
@@ -77,5 +78,14 @@ export class StudentPortalController {
     @UploadedFile() avatarFile: UploadImageFile | undefined,
   ) {
     return this.studentPortalService.uploadProfileAvatar(user, avatarFile);
+  }
+
+  @Post('appointments/:appointmentId/review')
+  createAppointmentReview(
+    @CurrentUser() user: RequestUser,
+    @Param('appointmentId', ParseIntPipe) appointmentId: number,
+    @Body() body: CreateStudentAppointmentReviewDto,
+  ) {
+    return this.studentPortalService.createAppointmentReview(user, appointmentId, body);
   }
 }

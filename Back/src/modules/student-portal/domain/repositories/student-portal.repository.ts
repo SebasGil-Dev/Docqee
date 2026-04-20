@@ -1,3 +1,4 @@
+import { CreateStudentAppointmentReviewDto } from '../../application/dto/create-student-appointment-review.dto';
 import { StudentAgendaAppointmentDto } from '../../application/dto/student-agenda-appointment.dto';
 import { StudentConversationDto } from '../../application/dto/student-conversation.dto';
 import { StudentConversationMessageDto } from '../../application/dto/student-conversation-message.dto';
@@ -91,4 +92,10 @@ export abstract class StudentPortalRepository {
     studentAccountId: number,
     blockId: number,
   ): Promise<{ blockId: string }>;
+
+  abstract createAppointmentReview(
+    studentAccountId: number,
+    appointmentId: number,
+    payload: CreateStudentAppointmentReviewDto,
+  ): Promise<StudentAgendaAppointmentDto>;
 }
