@@ -628,7 +628,7 @@ export function UniversityBulkUploadPage() {
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-2.5 overflow-hidden sm:gap-4">
+    <div className="flex h-full min-h-0 flex-col gap-2.5 overflow-hidden sm:gap-4 lg:gap-2.5">
       <Seo
         description={universityAdminContent.bulkUploadPage.meta.description}
         noIndex
@@ -638,7 +638,7 @@ export function UniversityBulkUploadPage() {
         description=""
         headingAlign="center"
         title={universityAdminContent.bulkUploadPage.title}
-        titleClassName="text-center text-[1.45rem] sm:text-[2rem]"
+        titleClassName="text-center text-[1.45rem] sm:text-[2rem] lg:text-[1.65rem] xl:text-[1.75rem]"
       />
       {errorMessage ? (
         <SurfaceCard
@@ -649,19 +649,19 @@ export function UniversityBulkUploadPage() {
         </SurfaceCard>
       ) : null}
       <AdminPanelCard className="flex-1 w-full" panelClassName="bg-[#f4f8ff]">
-        <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-3 sm:px-5 sm:py-4 xl:px-6 xl:py-5 2xl:px-7">
-          <div className="grid min-h-0 gap-3 sm:gap-4 xl:grid-cols-[minmax(18rem,20rem)_minmax(0,1fr)] 2xl:grid-cols-1 2xl:gap-5">
+        <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-3 sm:px-5 sm:py-4 lg:px-3 lg:py-3 xl:px-4 xl:py-3.5 2xl:px-5 2xl:py-4">
+          <div className="grid min-h-0 gap-3 sm:gap-4 lg:grid-cols-[minmax(16rem,18rem)_minmax(0,1fr)] lg:gap-3 xl:grid-cols-[minmax(17rem,19rem)_minmax(0,1fr)] 2xl:grid-cols-[minmax(17rem,19rem)_minmax(0,1fr)]">
             {/* Plantilla */}
             <SurfaceCard
               className="min-w-0 h-full border border-slate-200/80 bg-white shadow-none"
-              paddingClassName="p-3 sm:p-4 lg:p-4.5 xl:p-5"
+              paddingClassName="p-3 sm:p-4 lg:p-3 xl:p-3.5 2xl:p-4"
             >
-              <div className="flex flex-col gap-3 sm:gap-3.5 lg:gap-3">
+              <div className="flex flex-col gap-3 sm:gap-3.5 lg:gap-2.5">
                 <div className="space-y-1 text-center">
-                  <h2 className="font-headline text-[1rem] font-extrabold tracking-tight text-ink sm:text-[1.1rem]">
+                  <h2 className="font-headline text-[1rem] font-extrabold tracking-tight text-ink sm:text-[1.1rem] lg:text-[1rem]">
                     Plantilla base
                   </h2>
-                  <p className="text-[0.76rem] leading-4 text-ink-muted sm:text-[0.82rem] sm:leading-5">
+                  <p className="text-[0.76rem] leading-4 text-ink-muted sm:text-[0.82rem] sm:leading-5 lg:text-[0.76rem] lg:leading-4">
                     <span className="sm:hidden">
                       Elige la plantilla estudiantes o docentes para
                       descargarla.
@@ -683,7 +683,7 @@ export function UniversityBulkUploadPage() {
                         <button
                           key={option.value}
                           className={classNames(
-                            'flex min-w-0 w-full items-start justify-between gap-2 rounded-[1rem] border px-3 py-2.5 text-left transition duration-300 sm:rounded-[1.2rem] sm:px-3.5 sm:py-3',
+                            'flex min-w-0 w-full items-start justify-between gap-2 rounded-[1rem] border px-3 py-2.5 text-left transition duration-300 sm:rounded-[1.2rem] sm:px-3.5 sm:py-3 lg:px-3 lg:py-2.5',
                             isSelected
                               ? 'border-primary bg-primary/5 text-primary'
                               : 'border-slate-200 bg-slate-50 text-ink hover:border-primary/40 hover:bg-white',
@@ -697,7 +697,7 @@ export function UniversityBulkUploadPage() {
                                 ? 'Estudiantes'
                                 : 'Docentes'}
                             </p>
-                            <p className="hidden text-[0.72rem] leading-5 text-ink-muted sm:block">
+                            <p className="hidden text-[0.72rem] leading-5 text-ink-muted sm:block lg:text-[0.7rem] lg:leading-4">
                               {option.description}
                             </p>
                           </div>
@@ -714,7 +714,7 @@ export function UniversityBulkUploadPage() {
                 </div>
                 <div className="order-2 flex justify-center sm:order-1 sm:block">
                   <button
-                    className="mx-auto flex min-h-[2.9rem] w-auto items-center justify-center gap-2 rounded-xl bg-brand-gradient px-4 py-2.5 text-[0.78rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 sm:min-h-0 sm:w-full sm:px-4 sm:py-2.5 sm:text-[0.82rem]"
+                    className="mx-auto flex min-h-[2.9rem] w-auto items-center justify-center gap-2 rounded-xl bg-brand-gradient px-4 py-2.5 text-[0.78rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 sm:min-h-0 sm:w-full sm:px-4 sm:py-2.5 sm:text-[0.82rem] lg:py-2 lg:text-[0.78rem]"
                     type="button"
                     onClick={() => {
                       void downloadTemplate(uploadState.templateType);
@@ -729,7 +729,7 @@ export function UniversityBulkUploadPage() {
                     </span>
                   </button>
                 </div>
-                <div className="order-1 space-y-1 rounded-[1rem] border border-slate-200 bg-slate-50 p-2.5 text-[0.7rem] leading-4 text-ink-muted sm:order-2 sm:p-3 sm:text-[0.74rem] sm:leading-5">
+                <div className="order-1 space-y-1 rounded-[1rem] border border-slate-200 bg-slate-50 p-2.5 text-[0.7rem] leading-4 text-ink-muted sm:order-2 sm:p-3 sm:text-[0.74rem] sm:leading-5 lg:p-2.5 lg:text-[0.7rem] lg:leading-4">
                   <p className="font-semibold text-ink">Columnas requeridas</p>
                   {uploadState.templateType === 'students' ? (
                     <p>
@@ -752,21 +752,21 @@ export function UniversityBulkUploadPage() {
             {/* Subida */}
             <SurfaceCard
               className="min-w-0 h-full border border-slate-200/80 bg-white shadow-none"
-              paddingClassName="p-3 sm:p-4 lg:p-4.5 xl:p-5"
+              paddingClassName="p-3 sm:p-4 lg:p-3 xl:p-3.5 2xl:p-4"
             >
-              <div className="space-y-3.5 sm:space-y-4">
+              <div className="space-y-3.5 sm:space-y-4 lg:space-y-3">
                 <div className="space-y-1 text-center">
-                  <h2 className="font-headline text-[1rem] font-extrabold tracking-tight text-ink sm:text-[1.1rem]">
+                  <h2 className="font-headline text-[1rem] font-extrabold tracking-tight text-ink sm:text-[1.1rem] lg:text-[1rem]">
                     {universityAdminContent.bulkUploadPage.uploadCardTitle}
                   </h2>
-                  <p className="text-[0.76rem] leading-4 text-ink-muted sm:text-[0.82rem] sm:leading-5">
+                  <p className="text-[0.76rem] leading-4 text-ink-muted sm:text-[0.82rem] sm:leading-5 lg:text-[0.76rem] lg:leading-4">
                     {universityAdminContent.bulkUploadPage.subtitle}
                   </p>
                 </div>
 
                 <label
                   className={classNames(
-                    'flex cursor-pointer flex-col items-center justify-center gap-2 rounded-[1.2rem] border-2 border-dashed px-4 py-4 text-center transition duration-300 sm:gap-2.5 sm:rounded-[1.4rem] sm:px-5 sm:py-6 lg:py-5',
+                    'flex cursor-pointer flex-col items-center justify-center gap-2 rounded-[1.2rem] border-2 border-dashed px-4 py-4 text-center transition duration-300 sm:gap-2.5 sm:rounded-[1.4rem] sm:px-5 sm:py-6 lg:gap-2 lg:px-4 lg:py-3.5 xl:py-4',
                     isDragging
                       ? 'border-primary bg-primary/5 scale-[1.01]'
                       : 'border-slate-300 bg-slate-50 hover:border-primary/50 hover:bg-white',
@@ -776,21 +776,21 @@ export function UniversityBulkUploadPage() {
                   onDragOver={handleDragOver}
                   onDrop={handleDrop}
                 >
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-[1rem] bg-white text-primary ring-1 ring-slate-200 sm:h-11 sm:w-11 sm:rounded-[1.2rem]">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-[1rem] bg-white text-primary ring-1 ring-slate-200 sm:h-11 sm:w-11 sm:rounded-[1.2rem] lg:h-9 lg:w-9 lg:rounded-[1rem]">
                     <FileSpreadsheet
                       aria-hidden="true"
-                      className="h-4.5 w-4.5 sm:h-5 sm:w-5"
+                      className="h-4.5 w-4.5 sm:h-5 sm:w-5 lg:h-4.5 lg:w-4.5"
                     />
                   </span>
                   <div className="space-y-1">
-                    <p className="text-[0.8rem] font-semibold text-ink sm:text-[0.83rem]">
+                    <p className="text-[0.8rem] font-semibold text-ink sm:text-[0.83rem] lg:text-[0.78rem]">
                       Arrastra un archivo o selecciona uno desde tu equipo
                     </p>
-                    <p className="text-[0.74rem] text-ink-muted sm:text-[0.78rem]">
+                    <p className="text-[0.74rem] text-ink-muted sm:text-[0.78rem] lg:text-[0.72rem]">
                       Formatos soportados: .xlsx, .xls
                     </p>
                   </div>
-                  <span className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-3 py-1.5 text-[0.76rem] font-semibold text-white sm:px-3.5 sm:py-1.75 sm:text-[0.8rem]">
+                  <span className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-3 py-1.5 text-[0.76rem] font-semibold text-white sm:px-3.5 sm:py-1.75 sm:text-[0.8rem] lg:px-3 lg:py-1.5 lg:text-[0.74rem]">
                     {universityAdminContent.bulkUploadPage.filePickerLabel}
                   </span>
                   <input
@@ -804,9 +804,9 @@ export function UniversityBulkUploadPage() {
                   />
                 </label>
 
-                <div className="space-y-2.5 sm:space-y-3">
+                <div className="space-y-2.5 sm:space-y-3 lg:space-y-2.5">
                   {uploadState.fileName ? (
-                    <div className="rounded-[1rem] border border-slate-200 bg-slate-50 px-3 py-2.5 sm:rounded-[1.2rem] sm:px-3.5 sm:py-3">
+                    <div className="rounded-[1rem] border border-slate-200 bg-slate-50 px-3 py-2.5 sm:rounded-[1.2rem] sm:px-3.5 sm:py-3 lg:px-3 lg:py-2.5">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="space-y-1 min-w-0">
                           <p className="truncate text-[0.8rem] font-semibold text-ink sm:text-[0.83rem]">
@@ -869,8 +869,8 @@ export function UniversityBulkUploadPage() {
                   {uploadState.status === 'validated' &&
                   uploadState.errors.length === 0 ? (
                     <SurfaceCard
-                      className="border border-emerald-200 bg-emerald-50/90 text-[0.78rem] text-emerald-800 shadow-none sm:text-[0.82rem]"
-                      paddingClassName="p-3 sm:p-3.5"
+                      className="border border-emerald-200 bg-emerald-50/90 text-[0.78rem] text-emerald-800 shadow-none sm:text-[0.82rem] lg:text-[0.78rem]"
+                      paddingClassName="p-3 sm:p-3.5 lg:p-2.5"
                     >
                       <div className="flex items-center gap-2.5">
                         <CheckCircle2
@@ -887,8 +887,8 @@ export function UniversityBulkUploadPage() {
 
                   {isProcessing ? (
                     <SurfaceCard
-                      className="border border-primary/20 bg-primary/5 text-[0.78rem] text-ink shadow-none sm:text-[0.82rem]"
-                      paddingClassName="p-3 sm:p-3.5"
+                      className="border border-primary/20 bg-primary/5 text-[0.78rem] text-ink shadow-none sm:text-[0.82rem] lg:text-[0.78rem]"
+                      paddingClassName="p-3 sm:p-3.5 lg:p-2.5"
                     >
                       <div className="space-y-3">
                         <div className="flex flex-wrap items-center justify-between gap-2.5">
@@ -920,8 +920,8 @@ export function UniversityBulkUploadPage() {
 
                   {uploadState.status === 'processed' && processedSummary ? (
                     <SurfaceCard
-                      className="border border-sky-200 bg-sky-50/90 text-[0.78rem] text-sky-900 shadow-none sm:text-[0.82rem]"
-                      paddingClassName="p-3 sm:p-3.5"
+                      className="border border-sky-200 bg-sky-50/90 text-[0.78rem] text-sky-900 shadow-none sm:text-[0.82rem] lg:text-[0.78rem]"
+                      paddingClassName="p-3 sm:p-3.5 lg:p-2.5"
                     >
                       <div className="flex items-center gap-2.5">
                         <Rocket
@@ -935,7 +935,7 @@ export function UniversityBulkUploadPage() {
 
                   <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-center sm:gap-2.5">
                     <button
-                      className="inline-flex min-h-[2.9rem] w-full min-w-0 items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/10 px-2.5 py-2.5 text-[0.74rem] font-semibold text-primary transition duration-300 hover:bg-primary/15 disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-0 sm:w-auto sm:px-4 sm:py-2.5 sm:text-[0.82rem]"
+                      className="inline-flex min-h-[2.9rem] w-full min-w-0 items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/10 px-2.5 py-2.5 text-[0.74rem] font-semibold text-primary transition duration-300 hover:bg-primary/15 disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-0 sm:w-auto sm:px-4 sm:py-2.5 sm:text-[0.82rem] lg:px-3.5 lg:py-2 lg:text-[0.78rem]"
                       disabled={
                         !uploadState.fileName ||
                         isValidating ||
@@ -955,7 +955,7 @@ export function UniversityBulkUploadPage() {
                       </span>
                     </button>
                     <button
-                      className="inline-flex min-h-[2.9rem] w-full min-w-0 items-center justify-center gap-2 rounded-xl bg-brand-gradient px-2.5 py-2.5 text-[0.74rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 sm:w-auto sm:px-4 sm:py-2.5 sm:text-[0.82rem]"
+                      className="inline-flex min-h-[2.9rem] w-full min-w-0 items-center justify-center gap-2 rounded-xl bg-brand-gradient px-2.5 py-2.5 text-[0.74rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 sm:w-auto sm:px-4 sm:py-2.5 sm:text-[0.82rem] lg:px-3.5 lg:py-2 lg:text-[0.78rem]"
                       disabled={
                         uploadState.status !== 'validated' ||
                         isLoading ||
