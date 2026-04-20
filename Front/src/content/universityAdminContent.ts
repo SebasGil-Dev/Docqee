@@ -136,6 +136,20 @@ export const universityAdminContent = {
     },
     homePath: ROUTES.home,
     mobileTitle: 'Admin Universidad',
+    mobileAccountMenuItems: [
+      {
+        icon: 'building2',
+        label: 'Información institucional',
+        matchPrefix: ROUTES.universityInstitution,
+        to: ROUTES.universityInstitution,
+      },
+      {
+        icon: 'upload',
+        label: 'Carga masiva',
+        matchPrefix: ROUTES.universityBulkUpload,
+        to: ROUTES.universityBulkUpload,
+      },
+    ],
     logoutCta: {
       label: 'Cerrar sesión',
       to: ROUTES.login,

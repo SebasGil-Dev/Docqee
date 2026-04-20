@@ -250,6 +250,7 @@ export function AdminShell({
   const accountMenuButtonLabel = isAccountMenuOpen
     ? 'Cerrar menú de cuenta'
     : 'Abrir menú de cuenta';
+  const mobileAccountMenuItems = content.mobileAccountMenuItems ?? [];
 
   useEffect(() => {
     try {
@@ -535,8 +536,28 @@ export function AdminShell({
                       id="admin-header-account-menu"
                       role="menu"
                     >
+                      {mobileAccountMenuItems.map((item) => {
+                        const Icon = navigationIcons[item.icon];
+
+                        return (
+                          <Link
+                            key={item.to}
+                            className="flex w-full items-center gap-2.5 rounded-[1rem] px-3.5 py-3 text-left text-sm font-semibold text-ink transition-colors duration-200 hover:bg-surface hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/12"
+                            role="menuitem"
+                            to={item.to}
+                            onClick={() => setIsAccountMenuOpen(false)}
+                          >
+                            <Icon
+                              aria-hidden="true"
+                              className="h-4.5 w-4.5 shrink-0"
+                            />
+                            <span>{item.label}</span>
+                          </Link>
+                        );
+                      })}
                       <button
                         className="flex w-full items-center gap-2.5 rounded-[1rem] px-3.5 py-3 text-left text-sm font-semibold text-ink transition-colors duration-200 hover:bg-surface hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/12"
+                        role="menuitem"
                         type="button"
                         onClick={() => {
                           setIsAccountMenuOpen(false);

@@ -670,6 +670,7 @@ export type AdminShellContent = {
     lastName: string;
   };
   homePath?: `/${string}`;
+  mobileAccountMenuItems?: readonly AdminShellNavigationItem[];
   mobileTitle?: string;
   logoutCta: {
     label: string;
