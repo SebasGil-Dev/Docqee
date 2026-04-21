@@ -101,6 +101,7 @@ export const studentContent = {
       accept: 'Aceptar',
       close: 'Cerrar',
       reject: 'Rechazar',
+      viewProfile: 'Ver perfil',
     },
     description: '',
     emptyState: 'No encontramos solicitudes con los criterios seleccionados.',

@@ -368,6 +368,30 @@ function createMockState(): StudentStoreState {
       patientAge: 29,
       patientCity: 'Bogota',
       patientName: 'Ana Maria Perez',
+      patientProfile: {
+        avatarAlt: 'Foto de perfil de Ana Maria Perez',
+        avatarSrc: null,
+        averageRating: 4.8,
+        phone: '3001234567',
+        reviews: [
+          {
+            authorName: 'Laura Gomez',
+            comment:
+              'Fue muy respetuosa con el proceso, llego puntual y siguio cada recomendacion clinica.',
+            createdAt: '2026-03-30T09:15:00.000Z',
+            id: 'student-request-1-review-1',
+            rating: 5,
+          },
+          {
+            authorName: 'Camilo Vargas',
+            comment:
+              'Cumplio con el horario acordado y mantuvo una comunicacion clara durante el tratamiento.',
+            createdAt: '2026-02-18T15:40:00.000Z',
+            id: 'student-request-1-review-2',
+            rating: 4.5,
+          },
+        ],
+      },
       reason: 'Dolor dental persistente y revision general.',
       responseAt: null,
       sentAt: '2026-04-04T14:30:00.000Z',
@@ -381,6 +405,22 @@ function createMockState(): StudentStoreState {
       patientAge: 36,
       patientCity: 'Bogota',
       patientName: 'Julian Torres',
+      patientProfile: {
+        avatarAlt: 'Foto de perfil de Julian Torres',
+        avatarSrc: null,
+        averageRating: 4.5,
+        phone: '3015551020',
+        reviews: [
+          {
+            authorName: 'Daniela Ruiz',
+            comment:
+              'Asistio preparado a la cita y fue muy receptivo con las indicaciones del seguimiento.',
+            createdAt: '2026-03-12T11:10:00.000Z',
+            id: 'student-request-2-review-1',
+            rating: 4.5,
+          },
+        ],
+      },
       reason: 'Seguimiento de tratamiento restaurativo.',
       responseAt: '2026-04-03T10:00:00.000Z',
       sentAt: '2026-04-02T16:10:00.000Z',
@@ -394,6 +434,13 @@ function createMockState(): StudentStoreState {
       patientAge: 41,
       patientCity: 'Soacha',
       patientName: 'Claudia Moreno',
+      patientProfile: {
+        avatarAlt: 'Foto de perfil de Claudia Moreno',
+        avatarSrc: null,
+        averageRating: null,
+        phone: '3204448891',
+        reviews: [],
+      },
       reason: 'Consulta por sensibilidad dental.',
       responseAt: '2026-04-01T09:45:00.000Z',
       sentAt: '2026-03-31T12:20:00.000Z',
@@ -407,6 +454,22 @@ function createMockState(): StudentStoreState {
       patientAge: 33,
       patientCity: 'Bogota',
       patientName: 'Ricardo Suarez',
+      patientProfile: {
+        avatarAlt: 'Foto de perfil de Ricardo Suarez',
+        avatarSrc: null,
+        averageRating: 5,
+        phone: '3159087741',
+        reviews: [
+          {
+            authorName: 'Paula Rojas',
+            comment:
+              'Mantuvo una actitud colaborativa y siguio muy bien el plan indicado en cada control.',
+            createdAt: '2026-03-19T08:55:00.000Z',
+            id: 'student-request-4-review-1',
+            rating: 5,
+          },
+        ],
+      },
       reason: 'Proceso finalizado con control satisfactorio.',
       responseAt: '2026-03-28T13:15:00.000Z',
       sentAt: '2026-03-18T08:40:00.000Z',
@@ -745,6 +808,44 @@ function isStudentAgendaAppointment(
   );
 }
 
+function isStudentRequestPatientProfileReview(
+  value: unknown,
+): value is NonNullable<StudentRequest['patientProfile']>['reviews'][number] {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate =
+    value as Partial<NonNullable<StudentRequest['patientProfile']>['reviews'][number]>;
+
+  return (
+    typeof candidate.authorName === 'string' &&
+    (candidate.comment === null || typeof candidate.comment === 'string') &&
+    typeof candidate.createdAt === 'string' &&
+    typeof candidate.id === 'string' &&
+    typeof candidate.rating === 'number'
+  );
+}
+
+function isStudentRequestPatientProfile(
+  value: unknown,
+): value is NonNullable<StudentRequest['patientProfile']> {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<NonNullable<StudentRequest['patientProfile']>>;
+
+  return (
+    typeof candidate.avatarAlt === 'string' &&
+    (candidate.avatarSrc === null || typeof candidate.avatarSrc === 'string') &&
+    (candidate.averageRating === null || typeof candidate.averageRating === 'number') &&
+    (candidate.phone === null || typeof candidate.phone === 'string') &&
+    Array.isArray(candidate.reviews) &&
+    candidate.reviews.every(isStudentRequestPatientProfileReview)
+  );
+}
+
 function isStudentRequest(value: unknown): value is StudentRequest {
   if (typeof value !== 'object' || value === null) {
     return false;
@@ -760,6 +861,9 @@ function isStudentRequest(value: unknown): value is StudentRequest {
     typeof candidate.patientAge === 'number' &&
     typeof candidate.patientCity === 'string' &&
     typeof candidate.patientName === 'string' &&
+    (candidate.patientProfile === undefined ||
+      candidate.patientProfile === null ||
+      isStudentRequestPatientProfile(candidate.patientProfile)) &&
     (candidate.reason === null || typeof candidate.reason === 'string') &&
     (candidate.responseAt === null || typeof candidate.responseAt === 'string') &&
     typeof candidate.sentAt === 'string' &&

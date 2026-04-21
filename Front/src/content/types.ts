@@ -1027,6 +1027,22 @@ export type StudentScheduleBlock = {
   type: StudentScheduleBlockType;
 };
 
+export type StudentRequestPatientProfileReview = {
+  authorName: string;
+  comment: string | null;
+  createdAt: string;
+  id: string;
+  rating: number;
+};
+
+export type StudentRequestPatientProfile = {
+  avatarAlt: string;
+  avatarSrc: string | null;
+  averageRating: number | null;
+  phone: string | null;
+  reviews: StudentRequestPatientProfileReview[];
+};
+
 export type StudentRequest = {
   appointmentsCount: number;
   conversationId: string | null;
@@ -1035,6 +1051,7 @@ export type StudentRequest = {
   patientAge: number;
   patientCity: string;
   patientName: string;
+  patientProfile?: StudentRequestPatientProfile | null;
   reason: string | null;
   responseAt: string | null;
   sentAt: string;

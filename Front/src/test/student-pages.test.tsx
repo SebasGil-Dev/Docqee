@@ -471,6 +471,37 @@ describe('Student pages', () => {
     ).toBeInTheDocument();
   });
 
+  it('permite revisar el perfil del paciente antes de responder la solicitud', async () => {
+    const user = userEvent.setup();
+
+    renderStudentApp([ROUTES.studentRequests]);
+
+    await user.click(
+      within(screen.getByTestId('student-request-row-student-request-1')).getByRole('button', {
+        name: /ver perfil de ana maria perez/i,
+      }),
+    );
+
+    const dialog = screen.getByRole('dialog', { name: /perfil de ana maria perez/i });
+
+    expect(within(dialog).getByText(/^3001234567$/i)).toBeInTheDocument();
+    expect(within(dialog).getByText(/4\.8 de 5 en 2 valoraciones/i)).toBeInTheDocument();
+    expect(
+      within(dialog).getByText(
+        /cumplio con el horario acordado y mantuvo una comunicacion clara/i,
+      ),
+    ).toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole('button', { name: /^Aceptar$/i }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent(/la solicitud fue aceptada/i);
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('dialog', { name: /perfil de ana maria perez/i }),
+      ).not.toBeInTheDocument();
+    });
+  });
+
   it('permite abrir una conversacion y enviar un mensaje al paciente', async () => {
     const user = userEvent.setup();
 

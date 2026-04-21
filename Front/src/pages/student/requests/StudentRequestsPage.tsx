@@ -1,10 +1,15 @@
 import {
+  CalendarDays,
   Check,
+  Eye,
   MessageSquareMore,
+  Phone,
   Search,
   ShieldX,
   SlidersHorizontal,
+  Star,
   UserRound,
+  X,
   XCircle,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -16,11 +21,19 @@ import { Seo } from '@/components/ui/Seo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { ROUTES } from '@/constants/routes';
 import { studentContent } from '@/content/studentContent';
-import type { StudentRequestStatus } from '@/content/types';
+import type { StudentRequest, StudentRequestStatus } from '@/content/types';
 import { classNames } from '@/lib/classNames';
+import { getOptimizedAvatarUrl } from '@/lib/imageOptimization';
 import { useStudentModuleStore } from '@/lib/studentModuleStore';
 
 type RequestStatusFilter = StudentRequestStatus | 'all';
+
+type StudentRequestProfileDialogProps = {
+  onAccept: () => void;
+  onClose: () => void;
+  onReject: () => void;
+  request: StudentRequest;
+};
 
 const requestStatusOptions: Array<{ label: string; value: RequestStatusFilter }> = [
   { label: 'Todas', value: 'all' },
@@ -30,6 +43,29 @@ const requestStatusOptions: Array<{ label: string; value: RequestStatusFilter }>
   { label: 'Cerrada', value: 'CERRADA' },
   { label: 'Cancelada', value: 'CANCELADA' },
 ];
+
+const requestProfileDateFormatter = new Intl.DateTimeFormat('es-CO', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+});
+
+function renderRatingStars(value: number, sizeClassName = 'h-4 w-4') {
+  return Array.from({ length: 5 }, (_, index) => {
+    const isFilled = index < Math.round(value);
+
+    return (
+      <Star
+        key={`request-rating-star-${value}-${index}`}
+        aria-hidden="true"
+        className={classNames(
+          sizeClassName,
+          isFilled ? 'fill-amber-300 text-amber-300' : 'text-slate-300',
+        )}
+      />
+    );
+  });
+}
 
 function getStatusBadgeClasses(status: StudentRequestStatus) {
   switch (status) {
@@ -61,12 +97,291 @@ function getStatusLabel(status: StudentRequestStatus) {
   }
 }
 
+function getPatientInitials(name: string) {
+  const initials = name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('');
+
+  return initials || 'P';
+}
+
+function StudentRequestProfileDialog({
+  onAccept,
+  onClose,
+  onReject,
+  request,
+}: StudentRequestProfileDialogProps) {
+  const patientProfile = request.patientProfile ?? null;
+  const patientReviews = patientProfile?.reviews ?? [];
+  const patientComments = patientReviews.filter((review) => Boolean(review.comment?.trim()));
+  const patientInitials = getPatientInitials(request.patientName);
+  const optimizedAvatarSrc = getOptimizedAvatarUrl(patientProfile?.avatarSrc, 240);
+  const averageRating = patientProfile?.averageRating ?? null;
+  const reviewsSummary =
+    averageRating !== null && patientReviews.length > 0
+      ? `${averageRating.toFixed(1)} de 5 en ${patientReviews.length} ${
+          patientReviews.length === 1 ? 'valoracion' : 'valoraciones'
+        }`
+      : 'Sin valoraciones registradas.';
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
+      <button
+        aria-label="Cerrar perfil del paciente"
+        className="absolute inset-0 bg-slate-950/45 backdrop-blur-[2px]"
+        type="button"
+        onClick={onClose}
+      />
+      <div
+        aria-describedby={`student-request-profile-description-${request.id}`}
+        aria-labelledby={`student-request-profile-title-${request.id}`}
+        aria-modal="true"
+        className="relative w-full max-w-4xl overflow-hidden rounded-[1.9rem] border border-slate-200/80 bg-white shadow-[0_34px_90px_-36px_rgba(15,23,42,0.55)]"
+        role="dialog"
+      >
+        <div className="absolute right-4 top-4 z-10">
+          <button
+            aria-label="Cerrar perfil del paciente"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200"
+            type="button"
+            onClick={onClose}
+          >
+            <X aria-hidden="true" className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="admin-scrollbar max-h-[min(84vh,48rem)] overflow-y-auto px-4 pb-4 pt-5 sm:px-5 sm:pb-5 sm:pt-6">
+          <div className="space-y-4">
+            <div className="space-y-1.5 pr-10">
+              <h2
+                className="font-headline text-[1.35rem] font-extrabold tracking-tight text-ink sm:text-[1.5rem]"
+                id={`student-request-profile-title-${request.id}`}
+              >
+                Perfil de {request.patientName}
+              </h2>
+              <p
+                className="text-sm leading-6 text-ink-muted"
+                id={`student-request-profile-description-${request.id}`}
+              >
+                Revisa la informacion principal del paciente antes de aceptar o rechazar la
+                solicitud.
+              </p>
+            </div>
+
+            <SurfaceCard
+              className="overflow-hidden bg-brand-gradient text-white shadow-none"
+              paddingClassName="p-0"
+            >
+              <div className="flex flex-col gap-4 px-4 py-4 sm:px-5 sm:py-5 lg:flex-row lg:items-center">
+                <div className="shrink-0">
+                  {optimizedAvatarSrc ? (
+                    <img
+                      alt={patientProfile?.avatarAlt ?? `Foto de perfil de ${request.patientName}`}
+                      className="h-20 w-20 rounded-[1.55rem] object-cover ring-4 ring-white/20 sm:h-24 sm:w-24"
+                      decoding="async"
+                      src={optimizedAvatarSrc}
+                    />
+                  ) : (
+                    <span className="inline-flex h-20 w-20 items-center justify-center rounded-[1.55rem] bg-white/14 text-2xl font-extrabold uppercase text-white ring-4 ring-white/15 sm:h-24 sm:w-24 sm:text-[1.7rem]">
+                      {patientInitials}
+                    </span>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1 space-y-3">
+                  <div className="space-y-1">
+                    <h3 className="font-headline text-[1.25rem] font-extrabold tracking-tight text-white">
+                      {request.patientName}
+                    </h3>
+                    <p className="text-sm font-medium text-white/88">
+                      {`${request.patientAge} anos - ${request.patientCity}`}
+                    </p>
+                    <span
+                      className={classNames(
+                        'inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset',
+                        request.status === 'ACEPTADA'
+                          ? 'bg-white/14 text-white ring-white/20'
+                          : request.status === 'PENDIENTE'
+                            ? 'bg-amber-200/15 text-white ring-amber-200/30'
+                            : 'bg-white/10 text-white ring-white/18',
+                      )}
+                    >
+                      Solicitud {getStatusLabel(request.status).toLowerCase()}
+                    </span>
+                  </div>
+                  <div className="grid gap-2.5 sm:grid-cols-3">
+                    <div className="rounded-[1.15rem] bg-white/10 px-3.5 py-3">
+                      <div className="flex items-start gap-2.5">
+                        <Phone aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-white" />
+                        <div className="min-w-0">
+                          <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white/65">
+                            Numero
+                          </p>
+                          <p className="mt-1 break-all text-sm font-semibold text-white">
+                            {patientProfile?.phone?.trim() || 'No disponible'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="rounded-[1.15rem] bg-white/10 px-3.5 py-3">
+                      <div className="flex items-start gap-2.5">
+                        <Star
+                          aria-hidden="true"
+                          className="mt-0.5 h-4 w-4 shrink-0 fill-amber-300 text-amber-300"
+                        />
+                        <div className="min-w-0">
+                          <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white/65">
+                            Valoracion
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-white">{reviewsSummary}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="rounded-[1.15rem] bg-white/10 px-3.5 py-3">
+                      <div className="flex items-start gap-2.5">
+                        <CalendarDays
+                          aria-hidden="true"
+                          className="mt-0.5 h-4 w-4 shrink-0 text-white"
+                        />
+                        <div className="min-w-0">
+                          <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white/65">
+                            Solicitud enviada
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-white">
+                            {requestProfileDateFormatter.format(new Date(request.sentAt))}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </SurfaceCard>
+
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
+              <SurfaceCard
+                className="border border-slate-200/80 bg-white shadow-none"
+                paddingClassName="p-4"
+              >
+                <div className="space-y-3">
+                  <div>
+                    <h3 className="font-headline text-lg font-extrabold tracking-tight text-ink">
+                      Motivo de la solicitud
+                    </h3>
+                    <p className="mt-1 text-sm leading-6 text-ink-muted">
+                      Informacion compartida por el paciente al enviar la solicitud.
+                    </p>
+                  </div>
+                  <div className="rounded-[1.2rem] border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm leading-6 text-ink-muted">
+                    {request.reason ?? 'Sin motivo registrado.'}
+                  </div>
+                </div>
+              </SurfaceCard>
+
+              <SurfaceCard
+                className="border border-slate-200/80 bg-white shadow-none"
+                paddingClassName="p-4"
+              >
+                <div className="space-y-3.5">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h3 className="font-headline text-lg font-extrabold tracking-tight text-ink">
+                        Comentarios de otros estudiantes
+                      </h3>
+                      <p className="mt-1 text-sm leading-6 text-ink-muted">
+                        Observaciones previas para ayudarte a tomar una decision con mas contexto.
+                      </p>
+                    </div>
+                    {averageRating !== null && patientReviews.length > 0 ? (
+                      <div className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 ring-1 ring-amber-200">
+                        <span className="flex items-center gap-1.5">
+                          {renderRatingStars(averageRating, 'h-3.5 w-3.5')}
+                        </span>
+                        <span>{averageRating.toFixed(1)}</span>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {patientComments.length > 0 ? (
+                    <div className="space-y-2.5">
+                      {patientComments.map((review) => (
+                        <div
+                          className="rounded-[1.2rem] border border-slate-200 bg-slate-50 px-3.5 py-3"
+                          key={review.id}
+                        >
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-ink">{review.authorName}</p>
+                              <p className="text-xs text-ink-muted">
+                                {requestProfileDateFormatter.format(new Date(review.createdAt))}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs font-semibold text-amber-700">
+                              <span className="flex items-center gap-1">
+                                {renderRatingStars(review.rating, 'h-3.5 w-3.5')}
+                              </span>
+                              <span>{review.rating.toFixed(1)}</span>
+                            </div>
+                          </div>
+                          <p className="mt-2 text-sm leading-6 text-ink-muted">
+                            {review.comment}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-[1.2rem] border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-ink-muted">
+                      Este paciente aun no tiene comentarios escritos por otros estudiantes.
+                    </div>
+                  )}
+                </div>
+              </SurfaceCard>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-end gap-2.5">
+              <button
+                className="inline-flex items-center justify-center rounded-full bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
+                type="button"
+                onClick={onClose}
+              >
+                Cerrar
+              </button>
+              {request.status === 'PENDIENTE' ? (
+                <>
+                  <button
+                    className="inline-flex items-center gap-2 rounded-full bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700 transition duration-200 hover:bg-rose-100"
+                    type="button"
+                    onClick={onReject}
+                  >
+                    <XCircle aria-hidden="true" className="h-4 w-4" />
+                    <span>{studentContent.requestsPage.actionLabels.reject}</span>
+                  </button>
+                  <button
+                    className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition duration-200 hover:bg-emerald-100"
+                    type="button"
+                    onClick={onAccept}
+                  >
+                    <Check aria-hidden="true" className="h-4 w-4" />
+                    <span>{studentContent.requestsPage.actionLabels.accept}</span>
+                  </button>
+                </>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function StudentRequestsPage() {
   const { errorMessage, isLoading, requests, respondToRequest } = useStudentModuleStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<RequestStatusFilter>('all');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const pendingCount = useMemo(
@@ -78,6 +393,10 @@ export function StudentRequestsPage() {
 
     return matchesSearch && (statusFilter === 'all' || request.status === statusFilter);
   });
+  const selectedRequest = useMemo(
+    () => requests.find((request) => request.id === selectedRequestId) ?? null,
+    [requests, selectedRequestId],
+  );
 
   useEffect(() => {
     if (!isStatusMenuOpen) {
@@ -105,7 +424,30 @@ export function StudentRequestsPage() {
     };
   }, [isStatusMenuOpen]);
 
-  const handleRequestAction = (requestId: string, nextStatus: StudentRequestStatus, message: string) => {
+  useEffect(() => {
+    if (!selectedRequestId) {
+      return undefined;
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setSelectedRequestId(null);
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedRequestId]);
+
+  const handleRequestAction = (
+    requestId: string,
+    nextStatus: StudentRequestStatus,
+    message: string,
+    onSuccess?: () => void,
+  ) => {
     void (async () => {
       const updated = await respondToRequest(requestId, nextStatus);
 
@@ -114,6 +456,7 @@ export function StudentRequestsPage() {
       }
 
       setSuccessMessage(message);
+      onSuccess?.();
     })();
   };
 
@@ -154,7 +497,10 @@ export function StudentRequestsPage() {
         </SurfaceCard>
       ) : null}
       <div>
-        <SurfaceCard className="min-w-0 overflow-hidden bg-brand-gradient text-white" paddingClassName="p-0">
+        <SurfaceCard
+          className="min-w-0 overflow-hidden bg-brand-gradient text-white"
+          paddingClassName="p-0"
+        >
           <div className="flex items-center gap-2.5 px-3.5 py-2">
             <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.9rem] bg-white/12 text-white ring-1 ring-white/18">
               <UserRound aria-hidden="true" className="h-4 w-4" />
@@ -162,14 +508,19 @@ export function StudentRequestsPage() {
             <span className="font-headline text-[1.28rem] font-extrabold tracking-tight text-white">
               {pendingCount}
             </span>
-            <p className="min-w-0 text-[0.82rem] font-semibold text-white/90">Solicitudes pendientes</p>
+            <p className="min-w-0 text-[0.82rem] font-semibold text-white/90">
+              Solicitudes pendientes
+            </p>
           </div>
         </SurfaceCard>
       </div>
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
         <div className="border-b border-slate-200/80 px-4 py-3.5 sm:px-5 sm:py-3.5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <label className="relative min-w-0 flex-1 sm:max-w-[30rem] xl:max-w-[34rem]" htmlFor="student-request-search">
+            <label
+              className="relative min-w-0 flex-1 sm:max-w-[30rem] xl:max-w-[34rem]"
+              htmlFor="student-request-search"
+            >
               <span className="sr-only">{studentContent.requestsPage.searchLabel}</span>
               <Search
                 aria-hidden="true"
@@ -262,7 +613,7 @@ export function StudentRequestsPage() {
         </div>
         {filteredRequests.length > 0 ? (
           <div className="admin-scrollbar min-h-0 flex-1 overflow-x-auto overflow-y-auto">
-            <table className="min-w-[64rem] lg:min-w-full">
+            <table className="min-w-[70rem] lg:min-w-full">
               <thead className="sticky top-0 z-10 bg-slate-100 text-left">
                 <tr className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-ink-muted">
                   <th className="px-4 py-2.5 sm:px-5">Paciente</th>
@@ -324,7 +675,16 @@ export function StudentRequestsPage() {
                     </td>
                     <td className="px-4 py-3 text-right sm:px-5">
                       {request.status === 'PENDIENTE' ? (
-                        <div className="flex justify-end gap-2">
+                        <div className="flex flex-wrap justify-end gap-2">
+                          <button
+                            aria-label={`Ver perfil de ${request.patientName}`}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
+                            type="button"
+                            onClick={() => setSelectedRequestId(request.id)}
+                          >
+                            <Eye aria-hidden="true" className="h-3.5 w-3.5" />
+                            <span>{studentContent.requestsPage.actionLabels.viewProfile}</span>
+                          </button>
                           <button
                             className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition duration-200 hover:bg-emerald-100"
                             type="button"
@@ -355,7 +715,16 @@ export function StudentRequestsPage() {
                           </button>
                         </div>
                       ) : request.status === 'ACEPTADA' ? (
-                        <div className="flex justify-end gap-2">
+                        <div className="flex flex-wrap justify-end gap-2">
+                          <button
+                            aria-label={`Ver perfil de ${request.patientName}`}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
+                            type="button"
+                            onClick={() => setSelectedRequestId(request.id)}
+                          >
+                            <Eye aria-hidden="true" className="h-3.5 w-3.5" />
+                            <span>{studentContent.requestsPage.actionLabels.viewProfile}</span>
+                          </button>
                           {request.conversationId ? (
                             <Link
                               className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition duration-200 hover:bg-primary/15"
@@ -383,7 +752,16 @@ export function StudentRequestsPage() {
                           </button>
                         </div>
                       ) : request.conversationId ? (
-                        <div className="flex justify-end">
+                        <div className="flex flex-wrap justify-end gap-2">
+                          <button
+                            aria-label={`Ver perfil de ${request.patientName}`}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
+                            type="button"
+                            onClick={() => setSelectedRequestId(request.id)}
+                          >
+                            <Eye aria-hidden="true" className="h-3.5 w-3.5" />
+                            <span>{studentContent.requestsPage.actionLabels.viewProfile}</span>
+                          </button>
                           <Link
                             className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
                             to={`${ROUTES.studentConversations}?conversation=${request.conversationId}`}
@@ -395,7 +773,18 @@ export function StudentRequestsPage() {
                           </Link>
                         </div>
                       ) : (
-                        <span className="text-xs font-medium text-ink-muted">Sin acciones</span>
+                        <div className="flex flex-wrap items-center justify-end gap-2">
+                          <button
+                            aria-label={`Ver perfil de ${request.patientName}`}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
+                            type="button"
+                            onClick={() => setSelectedRequestId(request.id)}
+                          >
+                            <Eye aria-hidden="true" className="h-3.5 w-3.5" />
+                            <span>{studentContent.requestsPage.actionLabels.viewProfile}</span>
+                          </button>
+                          <span className="text-xs font-medium text-ink-muted">Sin acciones</span>
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -411,9 +800,29 @@ export function StudentRequestsPage() {
           </div>
         )}
       </AdminPanelCard>
+
+      {selectedRequest ? (
+        <StudentRequestProfileDialog
+          request={selectedRequest}
+          onAccept={() =>
+            handleRequestAction(
+              selectedRequest.id,
+              'ACEPTADA',
+              'La solicitud fue aceptada y la conversacion quedo habilitada.',
+              () => setSelectedRequestId(null),
+            )
+          }
+          onClose={() => setSelectedRequestId(null)}
+          onReject={() =>
+            handleRequestAction(
+              selectedRequest.id,
+              'RECHAZADA',
+              'La solicitud fue rechazada desde el modulo del estudiante.',
+              () => setSelectedRequestId(null),
+            )
+          }
+        />
+      ) : null}
     </div>
   );
 }
-
-
-
