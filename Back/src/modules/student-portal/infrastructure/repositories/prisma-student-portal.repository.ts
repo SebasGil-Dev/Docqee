@@ -211,7 +211,9 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
   ): StudentRequestDto {
     const patientName = `${request.cuenta_paciente.persona.nombres} ${request.cuenta_paciente.persona.apellidos}`;
     const requestStatus =
-      request.conversacion?.estado === 'CERRADA' ? 'CERRADA' : request.estado;
+      request.estado === 'ACEPTADA' && request.conversacion?.estado === 'CERRADA'
+        ? 'CERRADA'
+        : request.estado;
 
     return {
       appointmentsCount: request.cita.length,
@@ -383,7 +385,7 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     );
 
     const conversations: StudentConversationDto[] = solicitudes
-      .filter((s) => s.conversacion !== null)
+      .filter((s) => s.estado === 'ACEPTADA' && s.conversacion !== null)
       .map((s) => {
         const conv = s.conversacion!;
         const patientName = `${s.cuenta_paciente.persona.nombres} ${s.cuenta_paciente.persona.apellidos}`;
@@ -947,6 +949,7 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     const solicitudes = await this.prisma.solicitud.findMany({
       where: {
         id_cuenta_estudiante: studentAccountId,
+        estado: 'ACEPTADA',
         conversacion: { isNot: null },
       },
       include: {
@@ -1006,6 +1009,7 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     const solicitud = await this.prisma.solicitud.findFirst({
       where: {
         id_cuenta_estudiante: studentAccountId,
+        estado: 'ACEPTADA',
         conversacion: { id_conversacion: conversationId },
       },
       include: {

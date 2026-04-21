@@ -147,13 +147,17 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     };
   }): PatientRequestDto {
     const requestStatus =
-      request.conversacion?.estado === "CERRADA" ? "CERRADA" : request.estado;
+      request.estado === "ACEPTADA" && request.conversacion?.estado === "CERRADA"
+        ? "CERRADA"
+        : request.estado;
+    const conversationId =
+      request.estado === "ACEPTADA" && request.conversacion
+        ? String(request.conversacion.id_conversacion)
+        : null;
 
     return {
       appointmentsCount: request.cita?.length ?? 0,
-      conversationId: request.conversacion
-        ? String(request.conversacion.id_conversacion)
-        : null,
+      conversationId,
       id: String(request.id_solicitud),
       reason: request.motivo_consulta ?? null,
       responseAt: request.fecha_respuesta?.toISOString() ?? null,
@@ -747,7 +751,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     );
 
     const conversations: PatientConversationDto[] = solicitudes
-      .filter((s) => s.conversacion !== null)
+      .filter((s) => s.estado === "ACEPTADA" && s.conversacion !== null)
       .map((s) => {
         const conv = s.conversacion!;
         const studentName = `${s.cuenta_estudiante.persona.nombres} ${s.cuenta_estudiante.persona.apellidos}`;
@@ -861,6 +865,47 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         "Debes ingresar el motivo de la solicitud.",
       );
     }
+    const requestInclude = {
+      cita: {
+        select: { id_cita: true },
+      },
+      conversacion: {
+        select: { estado: true, id_conversacion: true },
+      },
+      cuenta_estudiante: {
+        include: {
+          persona: true,
+          universidad: true,
+        },
+      },
+    } as const;
+    const reuseClosedRequest = async () => {
+      const closedRequest = await this.prisma.solicitud.findFirst({
+        where: {
+          id_cuenta_estudiante: studentAccountId,
+          id_cuenta_paciente: patientAccountId,
+          conversacion: { is: { estado: "CERRADA" } },
+        },
+        orderBy: { fecha_envio: "desc" },
+        select: { id_solicitud: true },
+      });
+
+      if (!closedRequest) {
+        return null;
+      }
+
+      return this.prisma.solicitud.update({
+        where: { id_solicitud: closedRequest.id_solicitud },
+        data: {
+          estado: "PENDIENTE",
+          fecha_actualizacion: new Date(),
+          fecha_envio: new Date(),
+          fecha_respuesta: null,
+          motivo_consulta: normalizedReason,
+        },
+        include: requestInclude,
+      });
+    };
 
     const [patient, student, existingRequest] = await Promise.all([
       this.prisma.cuenta_paciente.findUnique({
@@ -910,29 +955,37 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       );
     }
 
-    const request = await this.prisma.solicitud.create({
-      data: {
-        id_cuenta_estudiante: studentAccountId,
-        id_cuenta_paciente: patientAccountId,
-        motivo_consulta: normalizedReason,
-      },
-      include: {
-        cita: {
-          select: { id_cita: true },
-        },
-        conversacion: {
-          select: { estado: true, id_conversacion: true },
-        },
-        cuenta_estudiante: {
-          include: {
-            persona: true,
-            universidad: true,
-          },
-        },
-      },
-    });
+    const reusedRequest = await reuseClosedRequest();
 
-    return this.toRequestDto(request);
+    if (reusedRequest) {
+      return this.toRequestDto(reusedRequest);
+    }
+
+    try {
+      const request = await this.prisma.solicitud.create({
+        data: {
+          id_cuenta_estudiante: studentAccountId,
+          id_cuenta_paciente: patientAccountId,
+          motivo_consulta: normalizedReason,
+        },
+        include: requestInclude,
+      });
+
+      return this.toRequestDto(request);
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        const fallbackRequest = await reuseClosedRequest();
+
+        if (fallbackRequest) {
+          return this.toRequestDto(fallbackRequest);
+        }
+      }
+
+      throw error;
+    }
   }
 
   async updateRequestStatus(
@@ -1208,6 +1261,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     const solicitud = await this.prisma.solicitud.findFirst({
       where: {
         id_cuenta_paciente: patientAccountId,
+        estado: "ACEPTADA",
         conversacion: { id_conversacion: conversationId },
       },
       include: {
