@@ -110,7 +110,6 @@ describe('Student pages', () => {
       'https://drive.google.com/file/d/demo-cv',
     );
     await user.click(screen.getByRole('button', { name: /agregar enlace/i }));
-    await user.click(screen.getByRole('button', { name: /guardar cambios/i }));
 
     expect(await screen.findByRole('status')).toHaveTextContent(
       /^tu perfil se actualizo correctamente\.$/i,

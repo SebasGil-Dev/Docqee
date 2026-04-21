@@ -291,6 +291,10 @@ export function StudentProfilePage() {
   };
 
   const handleAddLink = () => {
+    if (isSavingProfile) {
+      return;
+    }
+
     const normalizedUrl = linkDraft.url.trim();
 
     if (!normalizedUrl || !isValidUrl(normalizedUrl)) {
@@ -298,24 +302,90 @@ export function StudentProfilePage() {
       return;
     }
 
-    handleFieldChange('links', [
+    const nextLinks = [
       ...values.links,
       {
         id: nextLinkId(),
         type: linkDraft.type,
         url: normalizedUrl,
       },
-    ]);
+    ];
+    const nextValues = {
+      ...values,
+      links: nextLinks,
+    };
+
+    handleFieldChange('links', nextLinks);
     setLinkDraft(initialLinkDraft);
     setLinkError(null);
+    void persistProfileChanges(nextValues, false);
+  };
+
+  const persistProfileChanges = async (
+    nextValues: StudentProfileFormValues,
+    includeAssignments: boolean,
+  ) => {
+    if (isSavingProfile) {
+      return false;
+    }
+
+    setIsSavingProfile(true);
+
+    const nextSelectedTreatmentTypeIds = [...selectedTreatmentTypeIds];
+    const nextSelectedSiteIds = [...selectedSiteIds];
+
+    try {
+      if (avatarUploadStatus === 'error') {
+        return false;
+      }
+
+      let submissionValues = nextValues;
+
+      if (avatarUploadPromiseRef.current) {
+        setAvatarUploadMessage('Terminando de subir la foto...');
+        const uploadedAvatarSrc = await avatarUploadPromiseRef.current;
+
+        if (!uploadedAvatarSrc) {
+          return false;
+        }
+
+        submissionValues = {
+          ...nextValues,
+          avatarSrc: uploadedAvatarSrc,
+        };
+      }
+
+      const updated = await updateProfile(submissionValues);
+
+      if (!updated) {
+        return false;
+      }
+
+      if (includeAssignments) {
+        const updatedTreatments = await updateTreatments(
+          nextSelectedTreatmentTypeIds,
+        );
+
+        if (!updatedTreatments) {
+          return false;
+        }
+
+        const updatedPracticeSites = await updatePracticeSites(nextSelectedSiteIds);
+
+        if (!updatedPracticeSites) {
+          return false;
+        }
+      }
+
+      setSaveMessage(studentContent.profilePage.successMessage);
+      return true;
+    } finally {
+      setIsSavingProfile(false);
+    }
   };
 
   const handleSubmit = (event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
-
-    if (isSavingProfile) {
-      return;
-    }
 
     const nextErrors = validateProfile(values);
     setErrors(nextErrors);
@@ -324,58 +394,7 @@ export function StudentProfilePage() {
       return;
     }
 
-    void (async () => {
-      setIsSavingProfile(true);
-
-      const nextSelectedTreatmentTypeIds = [...selectedTreatmentTypeIds];
-      const nextSelectedSiteIds = [...selectedSiteIds];
-
-      try {
-        if (avatarUploadStatus === 'error') {
-          return;
-        }
-
-        let submissionValues = values;
-
-        if (avatarUploadPromiseRef.current) {
-          setAvatarUploadMessage('Terminando de subir la foto...');
-          const uploadedAvatarSrc = await avatarUploadPromiseRef.current;
-
-          if (!uploadedAvatarSrc) {
-            return;
-          }
-
-          submissionValues = {
-            ...values,
-            avatarSrc: uploadedAvatarSrc,
-          };
-        }
-
-        const updated = await updateProfile(submissionValues);
-
-        if (!updated) {
-          return;
-        }
-
-        const updatedTreatments = await updateTreatments(
-          nextSelectedTreatmentTypeIds,
-        );
-
-        if (!updatedTreatments) {
-          return;
-        }
-
-        const updatedPracticeSites = await updatePracticeSites(nextSelectedSiteIds);
-
-        if (!updatedPracticeSites) {
-          return;
-        }
-
-        setSaveMessage(studentContent.profilePage.successMessage);
-      } finally {
-        setIsSavingProfile(false);
-      }
-    })();
+    void persistProfileChanges(values, true);
   };
 
   const isAvatarUploading = avatarUploadStatus === 'uploading';
@@ -792,7 +811,8 @@ export function StudentProfilePage() {
                     />
                     <div className="flex items-end">
                       <button
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 lg:w-auto"
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 lg:w-auto"
+                        disabled={isLoading || isSavingProfile}
                         type="button"
                         onClick={handleAddLink}
                       >
@@ -802,18 +822,18 @@ export function StudentProfilePage() {
                     </div>
                   </div>
                   {values.links.length > 0 ? (
-                    <div className="grid gap-3">
+                    <div className="grid gap-3 overflow-hidden">
                       {values.links.map((link) => (
                         <div
                           key={link.id}
-                          className="flex flex-col gap-3 rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between"
+                          className="flex flex-col gap-3 overflow-hidden rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between"
                         >
-                          <div className="min-w-0 space-y-1">
+                          <div className="min-w-0 flex-1 space-y-1">
                             <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary/70">
                               {getLinkTypeLabel(link.type)}
                             </p>
                             <a
-                              className="block truncate text-sm font-semibold text-ink transition duration-200 hover:text-primary hover:underline"
+                              className="block max-w-full whitespace-normal break-words text-sm font-semibold leading-6 text-ink transition duration-200 [overflow-wrap:anywhere] hover:text-primary hover:underline"
                               href={link.url}
                               rel="noreferrer"
                               target="_blank"
@@ -823,7 +843,7 @@ export function StudentProfilePage() {
                           </div>
                           <button
                             aria-label={`Eliminar enlace ${link.url}`}
-                            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-rose-600 transition duration-300 hover:bg-rose-50"
+                            className="inline-flex h-10 w-10 shrink-0 items-center justify-center self-start rounded-full border border-slate-200 bg-white text-rose-600 transition duration-300 hover:bg-rose-50 sm:self-center"
                             type="button"
                             onClick={() =>
                               handleFieldChange(
