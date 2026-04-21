@@ -295,11 +295,12 @@ export function StudentAppointmentsPage() {
   const [editingAppointmentId, setEditingAppointmentId] = useState<
     string | null
   >(null);
+  const [appointmentDialogMode, setAppointmentDialogMode] = useState<
+    'create' | 'view' | 'edit'
+  >('create');
   const [appointmentApiError, setAppointmentApiError] = useState<string | null>(
     null,
   );
-  const [viewingAppointment, setViewingAppointment] =
-    useState<StudentAgendaAppointment | null>(null);
   const [appointmentToCancel, setAppointmentToCancel] =
     useState<StudentAgendaAppointment | null>(null);
   const [commentsAppointment, setCommentsAppointment] =
@@ -357,6 +358,28 @@ export function StudentAppointmentsPage() {
       ),
     [practiceSites],
   );
+  const isAppointmentDialogReadOnly = appointmentDialogMode === 'view';
+  const canEditCurrentDialogAppointment = useMemo(() => {
+    if (!editingAppointmentId) {
+      return false;
+    }
+
+    const currentAppointment = appointments.find(
+      (appointment) => appointment.id === editingAppointmentId,
+    );
+
+    return currentAppointment ? canEditAppointment(currentAppointment) : false;
+  }, [appointments, editingAppointmentId]);
+  const appointmentDialogTitle =
+    appointmentDialogMode === 'view'
+      ? 'Ver cita'
+      : appointmentDialogMode === 'edit'
+        ? 'Editar cita'
+        : 'Agendar cita';
+  const appointmentDialogDescription =
+    appointmentDialogMode === 'view'
+      ? 'Consulta la cita y usa Editar cita para habilitar cambios.'
+      : 'Agenda una cita a partir de una solicitud aceptada, con sede, docente supervisor y tratamientos validos.';
   const filteredAppointments = useMemo(() => {
     const filtered = appointments.filter((appointment) => {
       const matchesSearch = appointment.patientName
@@ -414,6 +437,7 @@ export function StudentAppointmentsPage() {
 
   const resetAppointmentForm = () => {
     setEditingAppointmentId(null);
+    setAppointmentDialogMode('create');
     setAppointmentErrors({});
     setAppointmentValues(initialAppointmentFormValues);
     setAppointmentApiError(null);
@@ -427,10 +451,6 @@ export function StudentAppointmentsPage() {
   const closeAppointmentDialog = () => {
     resetAppointmentForm();
     setIsAppointmentDialogOpen(false);
-  };
-
-  const closeAppointmentDetails = () => {
-    setViewingAppointment(null);
   };
 
   const handleAppointmentFieldChange = (
@@ -450,6 +470,10 @@ export function StudentAppointmentsPage() {
   };
 
   const handleTreatmentToggle = (treatmentId: string) => {
+    if (isAppointmentDialogReadOnly) {
+      return;
+    }
+
     setAppointmentValues((currentValues) => {
       const isSelected = currentValues.treatmentIds.includes(treatmentId);
 
@@ -470,20 +494,34 @@ export function StudentAppointmentsPage() {
     setAppointmentApiError(null);
   };
 
-  const handleEditAppointment = (appointment: StudentAgendaAppointment) => {
+  const openAppointmentDialog = (
+    appointment: StudentAgendaAppointment,
+    mode: 'view' | 'edit',
+  ) => {
     setEditingAppointmentId(appointment.id);
+    setAppointmentDialogMode(mode);
     setAppointmentValues(getInitialAppointmentFormValues(appointment));
     setAppointmentErrors({});
+    setAppointmentApiError(null);
     setIsAppointmentDialogOpen(true);
   };
 
-  const handleViewAppointment = (appointment: StudentAgendaAppointment) => {
-    setViewingAppointment(appointment);
+  const handleEditAppointment = (appointment: StudentAgendaAppointment) => {
+    openAppointmentDialog(appointment, 'edit');
   };
 
-  const handleEditFromDetails = (appointment: StudentAgendaAppointment) => {
-    setViewingAppointment(null);
-    handleEditAppointment(appointment);
+  const handleViewAppointment = (appointment: StudentAgendaAppointment) => {
+    openAppointmentDialog(appointment, 'view');
+  };
+
+  const handleEnableAppointmentEditing = () => {
+    if (!editingAppointmentId) {
+      return;
+    }
+
+    setAppointmentDialogMode('edit');
+    setAppointmentErrors({});
+    setAppointmentApiError(null);
   };
 
   const handleAppointmentSubmit = () => {
@@ -1015,28 +1053,17 @@ export function StudentAppointmentsPage() {
           </div>
         )}
       </AdminPanelCard>
-      {viewingAppointment ? (
-        <AppointmentDetailsModal
-          appointment={viewingAppointment}
-          canEdit={canEditAppointment(viewingAppointment)}
-          locality={
-            practiceSitesBySiteId.get(viewingAppointment.siteId)?.locality ??
-            viewingAppointment.city
-          }
-          onClose={closeAppointmentDetails}
-          onEdit={() => handleEditFromDetails(viewingAppointment)}
-        />
-      ) : null}
       {isAppointmentDialogOpen ? (
         <StudentAppointmentsDialogFrame
-          description="Agenda una cita a partir de una solicitud aceptada, con sede, docente supervisor y tratamientos validos."
+          description={appointmentDialogDescription}
           onClose={closeAppointmentDialog}
-          title={editingAppointmentId ? 'Editar cita' : 'Agendar cita'}
+          title={appointmentDialogTitle}
         >
           <div className="space-y-2.5">
             <div className="grid gap-2 sm:grid-cols-2">
               <AdminDropdownField
                 containerClassName="student-appointment-dialog-field"
+                disabled={isAppointmentDialogReadOnly}
                 error={appointmentErrors.requestId}
                 icon={UserRound}
                 id="student-appointment-request"
@@ -1054,6 +1081,7 @@ export function StudentAppointmentsPage() {
               />
               <AdminDropdownField
                 containerClassName="student-appointment-dialog-field"
+                disabled={isAppointmentDialogReadOnly}
                 error={appointmentErrors.siteId}
                 icon={MapPin}
                 id="student-appointment-site"
@@ -1072,6 +1100,7 @@ export function StudentAppointmentsPage() {
             </div>
             <AdminDropdownField
               containerClassName="student-appointment-dialog-field"
+              disabled={isAppointmentDialogReadOnly}
               error={appointmentErrors.appointmentTypeId}
               icon={Stethoscope}
               id="student-appointment-type"
@@ -1090,6 +1119,7 @@ export function StudentAppointmentsPage() {
             <div className="grid gap-2 sm:grid-cols-3">
               <AdminTextField
                 containerClassName="student-appointment-dialog-field"
+                disabled={isAppointmentDialogReadOnly}
                 error={appointmentErrors.startDate}
                 icon={CalendarCheck2}
                 id="student-appointment-date"
@@ -1104,6 +1134,7 @@ export function StudentAppointmentsPage() {
               />
               <AdminTimePickerField
                 containerClassName="student-appointment-dialog-field"
+                disabled={isAppointmentDialogReadOnly}
                 error={appointmentErrors.startTime}
                 id="student-appointment-start-time"
                 label="Hora de inicio"
@@ -1115,7 +1146,9 @@ export function StudentAppointmentsPage() {
               />
               <AdminTimePickerField
                 containerClassName="student-appointment-dialog-field"
-                disabled={!appointmentValues.startTime}
+                disabled={
+                  isAppointmentDialogReadOnly || !appointmentValues.startTime
+                }
                 error={appointmentErrors.endTime}
                 id="student-appointment-end-time"
                 label="Hora de finalizacion"
@@ -1129,6 +1162,7 @@ export function StudentAppointmentsPage() {
             </div>
             <AdminDropdownField
               containerClassName="student-appointment-dialog-field"
+              disabled={isAppointmentDialogReadOnly}
               error={appointmentErrors.supervisorId}
               icon={GraduationCap}
               id="student-appointment-supervisor"
@@ -1171,10 +1205,14 @@ export function StudentAppointmentsPage() {
                       key={treatment.id}
                       className={classNames(
                         'rounded-[0.85rem] border px-2 py-1.5 text-left transition duration-200',
+                        isAppointmentDialogReadOnly
+                          ? 'cursor-default'
+                          : 'cursor-pointer',
                         isSelected
                           ? 'border-primary/35 bg-primary/[0.08] shadow-[0_18px_36px_-30px_rgba(22,78,99,0.8)]'
                           : 'border-slate-200/80 bg-white hover:border-primary/20 hover:bg-slate-50',
                       )}
+                      disabled={isAppointmentDialogReadOnly}
                       type="button"
                       onClick={() =>
                         handleTreatmentToggle(treatment.treatmentTypeId)
@@ -1213,9 +1251,13 @@ export function StudentAppointmentsPage() {
                 Informacion adicional
               </label>
               <textarea
-                className="student-appointment-dialog-notes min-h-[3rem] w-full rounded-[0.85rem] border border-slate-200 bg-surface px-2.5 py-1.5 text-[0.72rem] text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                className={classNames(
+                  'student-appointment-dialog-notes min-h-[3rem] w-full rounded-[0.85rem] border border-slate-200 bg-surface px-2.5 py-1.5 text-[0.72rem] text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                  isAppointmentDialogReadOnly && 'bg-slate-50',
+                )}
                 id="student-appointment-additional-info"
                 placeholder="Registra observaciones operativas o notas de preparacion para la cita."
+                readOnly={isAppointmentDialogReadOnly}
                 value={appointmentValues.additionalInfo}
                 onChange={(event) =>
                   handleAppointmentFieldChange(
@@ -1239,23 +1281,40 @@ export function StudentAppointmentsPage() {
                 type="button"
                 onClick={closeAppointmentDialog}
               >
-                Cancelar
+                {isAppointmentDialogReadOnly ? 'Cerrar' : 'Cancelar'}
               </button>
-              <button
-                className="inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-gradient px-3 py-1.5 text-[0.76rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
-                disabled={isLoading || acceptedRequests.length === 0}
-                type="button"
-                onClick={handleAppointmentSubmit}
-              >
-                <CalendarCheck2 aria-hidden="true" className="h-4 w-4" />
-                <span>
-                  {editingAppointmentId
-                    ? studentContent.appointmentsPage.actionLabels.update
-                    : studentContent.appointmentsPage.actionLabels.save}
-                </span>
-              </button>
+              {isAppointmentDialogReadOnly ? (
+                canEditCurrentDialogAppointment ? (
+                  <button
+                    className="inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-gradient px-3 py-1.5 text-[0.76rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
+                    type="button"
+                    onClick={handleEnableAppointmentEditing}
+                  >
+                    <PencilLine aria-hidden="true" className="h-4 w-4" />
+                    <span>Editar cita</span>
+                  </button>
+                ) : null
+              ) : (
+                <button
+                  className="inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-gradient px-3 py-1.5 text-[0.76rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
+                  disabled={
+                    isLoading ||
+                    (appointmentDialogMode === 'create' &&
+                      acceptedRequests.length === 0)
+                  }
+                  type="button"
+                  onClick={handleAppointmentSubmit}
+                >
+                  <CalendarCheck2 aria-hidden="true" className="h-4 w-4" />
+                  <span>
+                    {appointmentDialogMode === 'edit'
+                      ? studentContent.appointmentsPage.actionLabels.update
+                      : studentContent.appointmentsPage.actionLabels.save}
+                  </span>
+                </button>
+              )}
             </div>
-            {acceptedRequests.length === 0 ? (
+            {appointmentDialogMode === 'create' && acceptedRequests.length === 0 ? (
               <p className="text-[0.72rem] font-medium text-amber-700">
                 Necesitas una solicitud aceptada para poder programar nuevas
                 citas.
@@ -1310,139 +1369,6 @@ export function StudentAppointmentsPage() {
         />
       ) : null}
     </div>
-  );
-}
-
-function AppointmentDetailsModal({
-  appointment,
-  canEdit,
-  locality,
-  onClose,
-  onEdit,
-}: {
-  appointment: StudentAgendaAppointment;
-  canEdit: boolean;
-  locality: string;
-  onClose: () => void;
-  onEdit: () => void;
-}) {
-  return (
-    <StudentAppointmentsDialogFrame
-      description="Consulta el resumen operativo de la cita y abre la edición cuando necesites hacer un ajuste."
-      onClose={onClose}
-      title="Ver cita"
-    >
-      <div className="space-y-3">
-        <div className="grid gap-2 sm:grid-cols-3">
-          <div className="rounded-[1rem] border border-slate-200 bg-slate-50 px-3 py-2.5">
-            <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-primary/70">
-              Paciente
-            </p>
-            <p className="mt-1 text-[0.88rem] font-semibold text-ink">
-              {appointment.patientName}
-            </p>
-          </div>
-          <div className="rounded-[1rem] border border-slate-200 bg-slate-50 px-3 py-2.5 sm:col-span-2">
-            <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-primary/70">
-              Estado
-            </p>
-            <p className="mt-1 text-[0.88rem] font-semibold text-ink">
-              {getStatusLabel(appointment.status)}
-            </p>
-          </div>
-        </div>
-
-        <div className="grid gap-2 sm:grid-cols-2">
-          <div className="rounded-[1rem] border border-slate-200 bg-white px-3 py-3">
-            <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-primary/70">
-              Atención clínica
-            </p>
-            <div className="mt-2 space-y-1.5 text-[0.8rem] text-ink-muted">
-              <p className="inline-flex items-center gap-1.5 font-semibold text-ink">
-                <Stethoscope
-                  aria-hidden="true"
-                  className="h-3.5 w-3.5 text-primary"
-                />
-                <span>{appointment.appointmentType}</span>
-              </p>
-              <p className="inline-flex items-center gap-1.5">
-                <GraduationCap
-                  aria-hidden="true"
-                  className="h-3.5 w-3.5 text-primary"
-                />
-                <span>
-                  <span className="font-semibold text-ink">Docente =</span>{' '}
-                  {appointment.supervisorName}
-                </span>
-              </p>
-              <p className="inline-flex items-center gap-1.5">
-                <BriefcaseMedical
-                  aria-hidden="true"
-                  className="h-3.5 w-3.5 text-primary"
-                />
-                <span>{formatTreatmentSummary(appointment.treatmentNames)}</span>
-              </p>
-            </div>
-          </div>
-          <div className="rounded-[1rem] border border-slate-200 bg-white px-3 py-3">
-            <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-primary/70">
-              Programación
-            </p>
-            <div className="mt-2 space-y-1.5 text-[0.8rem] text-ink-muted">
-              <p className="inline-flex items-center gap-1.5 font-semibold text-ink">
-                <Clock3
-                  aria-hidden="true"
-                  className="h-3.5 w-3.5 text-primary"
-                />
-                <span>
-                  {formatDateTimeRange(appointment.startAt, appointment.endAt)}
-                </span>
-              </p>
-              <p className="inline-flex items-center gap-1.5">
-                <MapPin
-                  aria-hidden="true"
-                  className="h-3.5 w-3.5 text-primary"
-                />
-                <span>
-                  {appointment.siteName} - {locality}
-                </span>
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {appointment.additionalInfo ? (
-          <div className="rounded-[1rem] border border-slate-200 bg-white px-3 py-3">
-            <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-primary/70">
-              Información adicional
-            </p>
-            <p className="mt-2 text-[0.8rem] leading-6 text-ink-muted">
-              {appointment.additionalInfo}
-            </p>
-          </div>
-        ) : null}
-
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          <button
-            className="inline-flex items-center justify-center rounded-full bg-slate-100 px-3 py-1.5 text-[0.76rem] font-semibold text-ink-muted transition duration-200 hover:bg-slate-200"
-            type="button"
-            onClick={onClose}
-          >
-            Cerrar
-          </button>
-          {canEdit ? (
-            <button
-              className="inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-gradient px-3 py-1.5 text-[0.76rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
-              type="button"
-              onClick={onEdit}
-            >
-              <PencilLine aria-hidden="true" className="h-4 w-4" />
-              <span>Editar cita</span>
-            </button>
-          ) : null}
-        </div>
-      </div>
-    </StudentAppointmentsDialogFrame>
   );
 }
 
