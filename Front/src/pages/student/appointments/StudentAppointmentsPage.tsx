@@ -788,17 +788,17 @@ export function StudentAppointmentsPage() {
             <table className="w-full table-fixed">
               <colgroup>
                 <col className="w-[17%]" />
-                <col className="w-[27%]" />
+                <col className="w-[25%]" />
                 <col className="w-[24%]" />
-                <col className="w-[12%]" />
+                <col className="w-[14%]" />
                 <col className="w-[20%]" />
               </colgroup>
               <thead className="sticky top-0 z-10 bg-slate-100 text-left">
                 <tr className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-ink-muted">
                   <th className="px-4 py-3 sm:px-5">Paciente</th>
                   <th className="py-3 pl-0 pr-4">Atención clínica</th>
-                  <th className="px-4 py-3">Programación</th>
-                  <th className="w-[9.5rem] px-4 py-3 text-left">Estado</th>
+                  <th className="py-3 pl-0 pr-4">Programación</th>
+                  <th className="w-[9.5rem] py-3 pl-0 pr-4 text-left">Estado</th>
                   <th className="px-4 py-3 text-center sm:px-5">Acciones</th>
                 </tr>
               </thead>
@@ -855,7 +855,7 @@ export function StudentAppointmentsPage() {
                           </p>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="py-3 pl-0 pr-4">
                         <div className="min-w-0 space-y-0.5 text-[0.82rem] leading-5 text-ink-muted">
                           <p className="flex items-start gap-1.5 font-semibold text-ink">
                             <Clock3
@@ -880,7 +880,7 @@ export function StudentAppointmentsPage() {
                           </p>
                         </div>
                       </td>
-                    <td className="w-[9.5rem] px-4 py-3">
+                    <td className="w-[9.5rem] py-3 pl-0 pr-4">
                       <span
                         className={classNames(
                           'inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset',
