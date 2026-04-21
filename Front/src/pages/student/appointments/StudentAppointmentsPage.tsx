@@ -4,6 +4,7 @@ import {
   Check,
   CheckCircle2,
   Clock3,
+  Eye,
   GraduationCap,
   MapPin,
   MessageSquare,
@@ -158,10 +159,8 @@ function getStatusBadgeClasses(status: StudentAgendaAppointmentStatus) {
 }
 
 function formatDateTimeRange(startAt: string, endAt: string) {
-  const formatter = new Intl.DateTimeFormat('es-CO', {
+  const dateFormatter = new Intl.DateTimeFormat('es-CO', {
     day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
     month: 'short',
   });
   const startDate = new Date(startAt);
@@ -171,7 +170,30 @@ function formatDateTimeRange(startAt: string, endAt: string) {
     minute: '2-digit',
   });
 
-  return `${formatter.format(startDate)} - ${timeFormatter.format(endDate)}`;
+  return `${dateFormatter
+    .format(startDate)
+    .replace(/\s+/, ' de ')}, ${timeFormatter.format(startDate)} A ${timeFormatter.format(endDate)}`;
+}
+
+function formatTreatmentSummary(treatmentNames: string[]) {
+  const firstTreatment = treatmentNames[0];
+
+  if (!firstTreatment) {
+    return 'Sin tratamiento asociado';
+  }
+
+  const additionalTreatments = treatmentNames.length - 1;
+
+  return additionalTreatments > 0
+    ? `${firstTreatment} +${additionalTreatments}`
+    : firstTreatment;
+}
+
+function canEditAppointment(appointment: StudentAgendaAppointment) {
+  return (
+    appointment.status === 'PROPUESTA' ||
+    appointment.status === 'REPROGRAMACION_PENDIENTE'
+  );
 }
 
 function getInitialAppointmentFormValues(
@@ -274,6 +296,8 @@ export function StudentAppointmentsPage() {
   const [appointmentApiError, setAppointmentApiError] = useState<string | null>(
     null,
   );
+  const [viewingAppointment, setViewingAppointment] =
+    useState<StudentAgendaAppointment | null>(null);
   const [appointmentToCancel, setAppointmentToCancel] =
     useState<StudentAgendaAppointment | null>(null);
   const [commentsAppointment, setCommentsAppointment] =
@@ -323,6 +347,13 @@ export function StudentAppointmentsPage() {
   const availableAppointmentTypes = useMemo(
     () => appointmentTypes,
     [appointmentTypes],
+  );
+  const practiceSitesBySiteId = useMemo(
+    () =>
+      new Map(
+        practiceSites.map((practiceSite) => [practiceSite.siteId, practiceSite]),
+      ),
+    [practiceSites],
   );
   const filteredAppointments = useMemo(() => {
     const filtered = appointments.filter((appointment) => {
@@ -396,6 +427,10 @@ export function StudentAppointmentsPage() {
     setIsAppointmentDialogOpen(false);
   };
 
+  const closeAppointmentDetails = () => {
+    setViewingAppointment(null);
+  };
+
   const handleAppointmentFieldChange = (
     field: keyof StudentAppointmentFormValues,
     nextValue: string | string[],
@@ -438,6 +473,15 @@ export function StudentAppointmentsPage() {
     setAppointmentValues(getInitialAppointmentFormValues(appointment));
     setAppointmentErrors({});
     setIsAppointmentDialogOpen(true);
+  };
+
+  const handleViewAppointment = (appointment: StudentAgendaAppointment) => {
+    setViewingAppointment(appointment);
+  };
+
+  const handleEditFromDetails = (appointment: StudentAgendaAppointment) => {
+    setViewingAppointment(null);
+    handleEditAppointment(appointment);
   };
 
   const handleAppointmentSubmit = () => {
@@ -743,87 +787,53 @@ export function StudentAppointmentsPage() {
               <thead className="sticky top-0 z-10 bg-slate-100 text-left">
                 <tr className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-ink-muted">
                   <th className="px-4 py-3 sm:px-5">Paciente</th>
-                  <th className="px-4 py-3">Programacion</th>
-                  <th className="px-4 py-3">Atencion clinica</th>
+                  <th className="px-4 py-3">Atención clínica</th>
+                  <th className="px-4 py-3">Programación</th>
                   <th className="w-[9.5rem] px-4 py-3 text-left">Estado</th>
                   <th className="px-4 py-3 text-right sm:px-5">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200/80 bg-white">
-                {filteredAppointments.map((appointment) => (
-                  <tr
-                    key={appointment.id}
-                    className="align-top"
-                    data-testid={`student-appointment-row-${appointment.id}`}
-                  >
-                    <td className="px-4 py-3.5 sm:px-5">
-                      <div className="space-y-1.5">
-                        <p className="text-sm font-semibold text-ink">
-                          {appointment.patientName}
-                        </p>
-                        <p className="inline-flex items-center gap-1.5 text-xs text-ink-muted">
-                          <UserRound
-                            aria-hidden="true"
-                            className="h-3.5 w-3.5 text-primary"
-                          />
-                          Solicitud vinculada
-                        </p>
-                        <p className="text-xs text-ink-muted">
-                          ID relacion: {appointment.requestId}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3.5">
-                      <div className="max-w-[19rem] space-y-1.5 text-sm text-ink-muted">
-                        <p className="font-semibold text-ink">
-                          {appointment.appointmentType}
-                        </p>
-                        <p>
-                          {formatDateTimeRange(
-                            appointment.startAt,
-                            appointment.endAt,
-                          )}
-                        </p>
-                        <p className="inline-flex items-center gap-1.5">
-                          <MapPin
-                            aria-hidden="true"
-                            className="h-3.5 w-3.5 text-primary"
-                          />
-                          <span>
-                            {appointment.siteName} - {appointment.city}
-                          </span>
-                        </p>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3.5">
-                      <div className="max-w-[24rem] space-y-2 text-sm text-ink-muted">
-                        <p className="inline-flex items-center gap-1.5">
-                          <GraduationCap
-                            aria-hidden="true"
-                            className="h-3.5 w-3.5 text-primary"
-                          />
-                          <span>Docente: {appointment.supervisorName}</span>
-                        </p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {appointment.treatmentNames.map((treatmentName) => (
-                            <span
-                              key={`${appointment.id}-${treatmentName}`}
-                              className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[0.72rem] font-semibold text-primary"
-                            >
-                              <Stethoscope
-                                aria-hidden="true"
-                                className="h-3.5 w-3.5"
-                              />
-                              <span>{treatmentName}</span>
-                            </span>
-                          ))}
+                {filteredAppointments.map((appointment) => {
+                  const appointmentLocality =
+                    practiceSitesBySiteId.get(appointment.siteId)?.locality ??
+                    appointment.city;
+
+                  return (
+                    <tr
+                      key={appointment.id}
+                      className="align-top"
+                      data-testid={`student-appointment-row-${appointment.id}`}
+                    >
+                      <td className="px-4 py-3.5 sm:px-5">
+                        <div className="space-y-1">
+                          <p className="text-sm font-semibold text-ink">
+                            {appointment.patientName}
+                          </p>
                         </div>
-                        <p className="leading-6">
-                          {appointment.additionalInfo ??
-                            'Sin notas adicionales.'}
-                        </p>
-                      </div>
-                    </td>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <div className="max-w-[18rem] space-y-1 text-sm text-ink-muted">
+                          <p className="font-semibold text-ink">
+                            {appointment.appointmentType}
+                          </p>
+                          <p>{appointment.supervisorName}</p>
+                          <p>{formatTreatmentSummary(appointment.treatmentNames)}</p>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <div className="max-w-[20rem] space-y-1 text-sm text-ink-muted">
+                          <p className="font-semibold text-ink">
+                            {formatDateTimeRange(
+                              appointment.startAt,
+                              appointment.endAt,
+                            )}
+                          </p>
+                          <p>
+                            {appointment.siteName} - {appointmentLocality}
+                          </p>
+                        </div>
+                      </td>
                     <td className="w-[9.5rem] px-4 py-3.5">
                       <span
                         className={classNames(
@@ -841,18 +851,13 @@ export function StudentAppointmentsPage() {
                           <button
                             className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-primary ring-1 ring-slate-200 transition duration-200 hover:bg-slate-100"
                             type="button"
-                            onClick={() => handleEditAppointment(appointment)}
+                            onClick={() => handleViewAppointment(appointment)}
                           >
-                            <PencilLine
+                            <Eye
                               aria-hidden="true"
                               className="h-3.5 w-3.5"
                             />
-                            <span>
-                              {
-                                studentContent.appointmentsPage.actionLabels
-                                  .edit
-                              }
-                            </span>
+                            <span>Ver cita</span>
                           </button>
                           <button
                             className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition duration-200 hover:bg-rose-100"
@@ -949,7 +954,8 @@ export function StudentAppointmentsPage() {
                       )}
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -963,6 +969,18 @@ export function StudentAppointmentsPage() {
           </div>
         )}
       </AdminPanelCard>
+      {viewingAppointment ? (
+        <AppointmentDetailsModal
+          appointment={viewingAppointment}
+          canEdit={canEditAppointment(viewingAppointment)}
+          locality={
+            practiceSitesBySiteId.get(viewingAppointment.siteId)?.locality ??
+            viewingAppointment.city
+          }
+          onClose={closeAppointmentDetails}
+          onEdit={() => handleEditFromDetails(viewingAppointment)}
+        />
+      ) : null}
       {isAppointmentDialogOpen ? (
         <StudentAppointmentsDialogFrame
           description="Agenda una cita a partir de una solicitud aceptada, con sede, docente supervisor y tratamientos validos."
@@ -1246,6 +1264,108 @@ export function StudentAppointmentsPage() {
         />
       ) : null}
     </div>
+  );
+}
+
+function AppointmentDetailsModal({
+  appointment,
+  canEdit,
+  locality,
+  onClose,
+  onEdit,
+}: {
+  appointment: StudentAgendaAppointment;
+  canEdit: boolean;
+  locality: string;
+  onClose: () => void;
+  onEdit: () => void;
+}) {
+  return (
+    <StudentAppointmentsDialogFrame
+      description="Consulta el resumen operativo de la cita y abre la edición cuando necesites hacer un ajuste."
+      onClose={onClose}
+      title="Ver cita"
+    >
+      <div className="space-y-3">
+        <div className="grid gap-2 sm:grid-cols-3">
+          <div className="rounded-[1rem] border border-slate-200 bg-slate-50 px-3 py-2.5">
+            <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-primary/70">
+              Paciente
+            </p>
+            <p className="mt-1 text-[0.88rem] font-semibold text-ink">
+              {appointment.patientName}
+            </p>
+          </div>
+          <div className="rounded-[1rem] border border-slate-200 bg-slate-50 px-3 py-2.5 sm:col-span-2">
+            <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-primary/70">
+              Estado
+            </p>
+            <p className="mt-1 text-[0.88rem] font-semibold text-ink">
+              {getStatusLabel(appointment.status)}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-2 sm:grid-cols-2">
+          <div className="rounded-[1rem] border border-slate-200 bg-white px-3 py-3">
+            <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-primary/70">
+              Atención clínica
+            </p>
+            <div className="mt-2 space-y-1.5 text-[0.8rem] text-ink-muted">
+              <p className="font-semibold text-ink">
+                {appointment.appointmentType}
+              </p>
+              <p>{appointment.supervisorName}</p>
+              <p>{formatTreatmentSummary(appointment.treatmentNames)}</p>
+            </div>
+          </div>
+          <div className="rounded-[1rem] border border-slate-200 bg-white px-3 py-3">
+            <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-primary/70">
+              Programación
+            </p>
+            <div className="mt-2 space-y-1.5 text-[0.8rem] text-ink-muted">
+              <p className="font-semibold text-ink">
+                {formatDateTimeRange(appointment.startAt, appointment.endAt)}
+              </p>
+              <p>
+                {appointment.siteName} - {locality}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {appointment.additionalInfo ? (
+          <div className="rounded-[1rem] border border-slate-200 bg-white px-3 py-3">
+            <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-primary/70">
+              Información adicional
+            </p>
+            <p className="mt-2 text-[0.8rem] leading-6 text-ink-muted">
+              {appointment.additionalInfo}
+            </p>
+          </div>
+        ) : null}
+
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <button
+            className="inline-flex items-center justify-center rounded-full bg-slate-100 px-3 py-1.5 text-[0.76rem] font-semibold text-ink-muted transition duration-200 hover:bg-slate-200"
+            type="button"
+            onClick={onClose}
+          >
+            Cerrar
+          </button>
+          {canEdit ? (
+            <button
+              className="inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-gradient px-3 py-1.5 text-[0.76rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
+              type="button"
+              onClick={onEdit}
+            >
+              <PencilLine aria-hidden="true" className="h-4 w-4" />
+              <span>Editar cita</span>
+            </button>
+          ) : null}
+        </div>
+      </div>
+    </StudentAppointmentsDialogFrame>
   );
 }
 
