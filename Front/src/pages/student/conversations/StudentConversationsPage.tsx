@@ -4,7 +4,6 @@ import {
   MessageSquareMore,
   Search,
   SendHorizontal,
-  ShieldCheck,
   SlidersHorizontal,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -30,28 +29,6 @@ const conversationStatusOptions: Array<{
   { label: 'Solo lectura', value: 'SOLO_LECTURA' },
   { label: 'Cerrada', value: 'CERRADA' },
 ];
-
-function getStatusBadgeClasses(status: StudentConversationStatus) {
-  switch (status) {
-    case 'ACTIVA':
-      return 'bg-emerald-50 text-emerald-700 ring-emerald-200';
-    case 'SOLO_LECTURA':
-      return 'bg-amber-50 text-amber-700 ring-amber-200';
-    default:
-      return 'bg-slate-100 text-slate-700 ring-slate-200';
-  }
-}
-
-function getStatusLabel(status: StudentConversationStatus) {
-  switch (status) {
-    case 'ACTIVA':
-      return 'Activa';
-    case 'SOLO_LECTURA':
-      return 'Solo lectura';
-    default:
-      return 'Cerrada';
-  }
-}
 
 function formatTime(value: string) {
   return new Intl.DateTimeFormat('es-CO', {
@@ -220,8 +197,7 @@ export function StudentConversationsPage() {
       />
       <AdminPageHeader
         className="gap-3"
-        description={studentContent.conversationsPage.description}
-        descriptionClassName="text-sm leading-6 sm:text-base"
+        description=""
         headingAlign="center"
         title={studentContent.conversationsPage.title}
         titleClassName="text-[1.45rem] sm:text-[1.7rem]"
@@ -341,24 +317,6 @@ export function StudentConversationsPage() {
                 </div>
               </div>
             </div>
-            {selectedConversation ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex max-w-full items-center rounded-full bg-slate-100 px-3 py-1 text-[0.72rem] font-semibold text-ink">
-                  {selectedConversation.patientName}
-                </span>
-                <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-[0.72rem] font-semibold text-ink-muted">
-                  Solicitud {selectedConversation.requestId}
-                </span>
-                <span
-                  className={classNames(
-                    'inline-flex rounded-full px-3 py-1 text-[0.72rem] font-semibold ring-1 ring-inset',
-                    getStatusBadgeClasses(selectedConversation.status),
-                  )}
-                >
-                  {getStatusLabel(selectedConversation.status)}
-                </span>
-              </div>
-            ) : null}
           </div>
         </div>
         <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 py-3 sm:px-4 lg:grid lg:grid-cols-[minmax(18rem,21.5rem)_minmax(0,1fr)] lg:overflow-hidden xl:grid-cols-[minmax(20rem,23rem)_minmax(0,1fr)]">
@@ -419,15 +377,7 @@ export function StudentConversationsPage() {
                           <p className="mt-2 line-clamp-2 break-words text-sm leading-6 text-ink-muted">
                             {lastMessage?.content ?? conversation.reason ?? 'Sin mensajes todavia.'}
                           </p>
-                          <div className="mt-3 flex items-center justify-between gap-3">
-                            <span
-                              className={classNames(
-                                'inline-flex rounded-full px-3 py-1 text-[0.68rem] font-semibold ring-1 ring-inset',
-                                getStatusBadgeClasses(conversation.status),
-                              )}
-                            >
-                              {getStatusLabel(conversation.status)}
-                            </span>
+                          <div className="mt-3 flex items-center justify-end gap-3">
                             <span className="text-[0.72rem] font-medium text-ink-muted">
                               {lastMessage ? formatTime(lastMessage.sentAt) : 'Sin hora'}
                             </span>
@@ -459,25 +409,11 @@ export function StudentConversationsPage() {
                         <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
                           {selectedConversation.patientName}
                         </h2>
-                        <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-[0.72rem] font-semibold text-ink-muted">
-                          Solicitud {selectedConversation.requestId}
-                        </span>
-                        <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-[0.72rem] font-semibold text-ink-muted">
-                          {selectedConversation.patientCity}
-                        </span>
                       </div>
                       <p className="break-words text-sm leading-6 text-ink-muted">
                         {selectedConversation.reason ?? 'Conversacion iniciada desde una solicitud sin motivo especificado.'}
                       </p>
                     </div>
-                    <span
-                      className={classNames(
-                        'inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset',
-                        getStatusBadgeClasses(selectedConversation.status),
-                      )}
-                    >
-                      {getStatusLabel(selectedConversation.status)}
-                    </span>
                   </div>
                 </div>
                 <div
@@ -529,14 +465,6 @@ export function StudentConversationsPage() {
                 <div className="shrink-0 border-t border-slate-200/80 px-4 py-3 sm:px-5">
                   {selectedConversation.status === 'ACTIVA' ? (
                     <div className="space-y-3">
-                      <div className="rounded-[1.25rem] border border-emerald-200/80 bg-emerald-50/75 px-4 py-3 text-sm text-emerald-800">
-                        <div className="flex items-center gap-2">
-                          <ShieldCheck aria-hidden="true" className="h-4.5 w-4.5" />
-                          <p className="font-medium">
-                            Conversacion activa. Puedes responder al paciente desde aqui.
-                          </p>
-                        </div>
-                      </div>
                       {successMessage ? (
                         <p
                           className="rounded-[1rem] border border-emerald-200/80 bg-white px-3 py-2 text-sm font-semibold text-emerald-700"
