@@ -814,11 +814,23 @@ export function StudentAppointmentsPage() {
                       </td>
                       <td className="px-4 py-3.5">
                         <div className="max-w-[18rem] space-y-1 text-sm text-ink-muted">
-                          <p className="font-semibold text-ink">
-                            {appointment.appointmentType}
+                          <p className="inline-flex items-center gap-1.5 font-semibold text-ink">
+                            <Stethoscope
+                              aria-hidden="true"
+                              className="h-3.5 w-3.5 text-primary"
+                            />
+                            <span>{appointment.appointmentType}</span>
                           </p>
-                          <p>{appointment.supervisorName}</p>
-                          <p>{formatTreatmentSummary(appointment.treatmentNames)}</p>
+                          <p>Docente = {appointment.supervisorName}</p>
+                          <p className="inline-flex items-center gap-1.5">
+                            <Check
+                              aria-hidden="true"
+                              className="h-3.5 w-3.5 text-primary"
+                            />
+                            <span>
+                              {formatTreatmentSummary(appointment.treatmentNames)}
+                            </span>
+                          </p>
                         </div>
                       </td>
                       <td className="px-4 py-3.5">
@@ -829,8 +841,14 @@ export function StudentAppointmentsPage() {
                               appointment.endAt,
                             )}
                           </p>
-                          <p>
+                          <p className="inline-flex items-center gap-1.5">
+                            <MapPin
+                              aria-hidden="true"
+                              className="h-3.5 w-3.5 text-primary"
+                            />
+                            <span>
                             {appointment.siteName} - {appointmentLocality}
+                            </span>
                           </p>
                         </div>
                       </td>
@@ -1312,11 +1330,21 @@ function AppointmentDetailsModal({
               Atención clínica
             </p>
             <div className="mt-2 space-y-1.5 text-[0.8rem] text-ink-muted">
-              <p className="font-semibold text-ink">
-                {appointment.appointmentType}
+              <p className="inline-flex items-center gap-1.5 font-semibold text-ink">
+                <Stethoscope
+                  aria-hidden="true"
+                  className="h-3.5 w-3.5 text-primary"
+                />
+                <span>{appointment.appointmentType}</span>
               </p>
-              <p>{appointment.supervisorName}</p>
-              <p>{formatTreatmentSummary(appointment.treatmentNames)}</p>
+              <p>Docente = {appointment.supervisorName}</p>
+              <p className="inline-flex items-center gap-1.5">
+                <Check
+                  aria-hidden="true"
+                  className="h-3.5 w-3.5 text-primary"
+                />
+                <span>{formatTreatmentSummary(appointment.treatmentNames)}</span>
+              </p>
             </div>
           </div>
           <div className="rounded-[1rem] border border-slate-200 bg-white px-3 py-3">
@@ -1327,8 +1355,14 @@ function AppointmentDetailsModal({
               <p className="font-semibold text-ink">
                 {formatDateTimeRange(appointment.startAt, appointment.endAt)}
               </p>
-              <p>
-                {appointment.siteName} - {locality}
+              <p className="inline-flex items-center gap-1.5">
+                <MapPin
+                  aria-hidden="true"
+                  className="h-3.5 w-3.5 text-primary"
+                />
+                <span>
+                  {appointment.siteName} - {locality}
+                </span>
               </p>
             </div>
           </div>
