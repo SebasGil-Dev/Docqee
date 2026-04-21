@@ -27,8 +27,16 @@
     margin: 0;
     min-height: 100vh;
     background:
-      radial-gradient(circle at top left, rgba(108, 211, 247, 0.16), transparent 34%),
-      radial-gradient(circle at 88% 10%, rgba(0, 100, 124, 0.08), transparent 26%),
+      radial-gradient(
+        circle at top left,
+        rgba(108, 211, 247, 0.16),
+        transparent 34%
+      ),
+      radial-gradient(
+        circle at 88% 10%,
+        rgba(0, 100, 124, 0.08),
+        transparent 26%
+      ),
       rgb(var(--color-surface));
     color: rgb(var(--color-ink));
     font-family: 'Public Sans', ui-sans-serif, system-ui, sans-serif;
@@ -259,6 +267,14 @@
     line-height: 1.25rem;
   }
 
+  .student-page-compact .student-conversation-send-button {
+    width: 1.95rem;
+    height: 1.95rem;
+    min-height: 1.95rem;
+    max-height: 1.95rem;
+    padding: 0;
+  }
+
   .student-page-compact .admin-status-badge {
     padding: 0.18rem 0.56rem;
     font-size: 0.6rem;
@@ -335,7 +351,8 @@
   }
 }
 
-@media (min-width: 1024px) and (max-width: 1535px), (min-width: 1024px) and (max-height: 900px) {
+@media (min-width: 1024px) and (max-width: 1535px),
+  (min-width: 1024px) and (max-height: 900px) {
   .admin-shell-density .surface-card {
     border-radius: 1.5rem;
   }
@@ -432,7 +449,10 @@
 
   .bulk-upload-upload-layout {
     display: grid;
-    grid-template-columns: minmax(15rem, 17rem) minmax(0, 1fr) minmax(15rem, 18rem);
+    grid-template-columns: minmax(15rem, 17rem) minmax(0, 1fr) minmax(
+        15rem,
+        18rem
+      );
     align-items: start;
     gap: 1rem;
   }

@@ -2,7 +2,6 @@ import {
   Check,
   LockKeyhole,
   MessageSquareMore,
-  Search,
   SendHorizontal,
   SlidersHorizontal,
 } from 'lucide-react';
@@ -61,7 +60,6 @@ export function StudentConversationsPage() {
     sendConversationMessage,
     refreshConversation,
   } = useStudentModuleStore();
-  const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] =
     useState<ConversationStatusFilter>('all');
   const [composerValue, setComposerValue] = useState('');
@@ -70,27 +68,19 @@ export function StudentConversationsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const normalizedSearch = searchTerm.trim().toLowerCase();
   const selectedConversationId = searchParams.get('conversation');
   const filteredConversations = useMemo(
     () =>
       conversations
         .filter((conversation) => {
-          const matchesSearch = conversation.patientName
-            .toLowerCase()
-            .includes(normalizedSearch);
-
-          return (
-            matchesSearch &&
-            (statusFilter === 'all' || conversation.status === statusFilter)
-          );
+          return statusFilter === 'all' || conversation.status === statusFilter;
         })
         .sort((a, b) => {
           const aTime = getLastMessage(a)?.sentAt ?? '';
           const bTime = getLastMessage(b)?.sentAt ?? '';
           return bTime < aTime ? -1 : bTime > aTime ? 1 : 0;
         }),
-    [conversations, normalizedSearch, statusFilter],
+    [conversations, statusFilter],
   );
   const selectedConversation = useMemo(
     () =>
@@ -253,28 +243,6 @@ export function StudentConversationsPage() {
                 </h2>
               </div>
               <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
-                <label
-                  className="relative min-w-0 flex-1 sm:w-[18rem] sm:flex-none xl:w-[22rem]"
-                  htmlFor="student-conversation-search"
-                >
-                  <span className="sr-only">
-                    {studentContent.conversationsPage.searchLabel}
-                  </span>
-                  <Search
-                    aria-hidden="true"
-                    className="pointer-events-none absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ghost"
-                  />
-                  <input
-                    className="h-9 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-9 pr-3 text-xs text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
-                    id="student-conversation-search"
-                    placeholder={
-                      studentContent.conversationsPage.searchPlaceholder
-                    }
-                    type="search"
-                    value={searchTerm}
-                    onChange={(event) => setSearchTerm(event.target.value)}
-                  />
-                </label>
                 <div className="relative shrink-0" ref={statusMenuRef}>
                   <button
                     aria-controls="student-conversation-status-menu"
@@ -377,9 +345,6 @@ export function StudentConversationsPage() {
                     Selecciona un paciente.
                   </p>
                 </div>
-                <span className="inline-flex min-w-[1.35rem] items-center justify-center rounded-full bg-primary/10 px-1 py-0.5 text-[0.56rem] font-bold leading-none text-primary">
-                  {filteredConversations.length}
-                </span>
               </div>
               <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto p-1.5">
                 {filteredConversations.length > 0 ? (
@@ -412,9 +377,6 @@ export function StudentConversationsPage() {
                             <div className="min-w-0">
                               <p className="truncate text-[0.72rem] font-semibold leading-tight text-ink">
                                 {conversation.patientName}
-                              </p>
-                              <p className="text-[0.56rem] leading-tight text-ink-muted">
-                                {`${conversation.patientAge} a\u00f1os - ${conversation.patientCity}`}
                               </p>
                             </div>
                             {conversation.unreadCount > 0 ? (
@@ -521,7 +483,7 @@ export function StudentConversationsPage() {
                 <div className="shrink-0 border-t border-slate-200/80 px-2.5 py-1.5 sm:px-3">
                   {selectedConversation.status === 'ACTIVA' ? (
                     <div className="space-y-1.5">
-                      <div className="flex flex-col gap-1.5 sm:flex-row sm:items-end">
+                      <div className="flex items-center gap-1.5">
                         <div className="min-w-0 flex-1">
                           <label
                             className="sr-only"
@@ -543,7 +505,7 @@ export function StudentConversationsPage() {
                                 : 'border-slate-200 focus-visible:border-primary',
                             )}
                             id="student-conversation-message"
-                            placeholder="Escribe una respuesta clara para continuar el caso."
+                            placeholder="Escribe un mensaje…"
                             rows={1}
                             value={composerValue}
                             onChange={(event) => {
@@ -571,7 +533,7 @@ export function StudentConversationsPage() {
                             studentContent.conversationsPage.actionLabels
                               .sendMessage
                           }
-                          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/12"
+                          className="student-conversation-send-button inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/12"
                           disabled={isLoading}
                           type="button"
                           onClick={handleSendMessage}
