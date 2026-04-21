@@ -1050,6 +1050,7 @@ export type StudentRequest = {
   id: string;
   patientAge: number;
   patientCity: string;
+  patientLocality?: string | null;
   patientName: string;
   patientProfile?: StudentRequestPatientProfile | null;
   reason: string | null;

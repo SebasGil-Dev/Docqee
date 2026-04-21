@@ -432,8 +432,19 @@ describe('Student pages', () => {
     expect(screen.queryByText(/^Conversaciones activas$/i)).not.toBeInTheDocument();
     expect(screen.getByPlaceholderText(/buscar por nombre del paciente/i)).toBeInTheDocument();
     expect(
-      within(screen.getByTestId('student-request-row-student-request-1')).getByText(/29 a\u00f1os/i),
+      screen.queryByRole('columnheader', { name: /^Seguimiento$/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('student-request-row-student-request-1')).getByText(
+        /bogota - chapinero/i,
+      ),
     ).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('student-request-row-student-request-1')).getByText(/envio:/i),
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('student-request-row-student-request-1')).queryByText(/a\u00f1os/i),
+    ).not.toBeInTheDocument();
 
     await user.type(screen.getByLabelText(/buscar paciente/i), 'Soacha');
 
@@ -484,8 +495,12 @@ describe('Student pages', () => {
 
     const dialog = screen.getByRole('dialog', { name: /perfil de ana maria perez/i });
 
-    expect(within(dialog).getByText(/^3001234567$/i)).toBeInTheDocument();
-    expect(within(dialog).getByText(/4\.8 de 5 en 2 valoraciones/i)).toBeInTheDocument();
+    expect(within(dialog).queryByText(/^Numero$/i)).not.toBeInTheDocument();
+    expect(within(dialog).queryByText(/^3001234567$/i)).not.toBeInTheDocument();
+    expect(within(dialog).getByText(/valoraci[o\u00f3]n/i)).toBeInTheDocument();
+    expect(
+      within(dialog).queryByText(/sin valoraciones registradas/i),
+    ).not.toBeInTheDocument();
     expect(
       within(dialog).getByText(
         /cumplio con el horario acordado y mantuvo una comunicacion clara/i,

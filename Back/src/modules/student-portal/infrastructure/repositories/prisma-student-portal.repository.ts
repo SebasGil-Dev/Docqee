@@ -21,6 +21,49 @@ import { StudentSupervisorDto } from '../../application/dto/student-supervisor.d
 import { StudentTreatmentDto } from '../../application/dto/student-treatment.dto';
 import { StudentPortalRepository } from '../../domain/repositories/student-portal.repository';
 
+type StudentRequestPatientReviewRecord = {
+  calificacion: number;
+  comentario: string | null;
+  cuenta_acceso_valoracion_id_cuenta_emisorTocuenta_acceso: {
+    cuenta_estudiante: {
+      persona: {
+        apellidos: string;
+        nombres: string;
+      };
+    } | null;
+  };
+  fecha_creacion: Date;
+  id_cuenta_receptor: number;
+  id_valoracion: number;
+};
+
+type StudentPortalRequestRecord = {
+  cita: unknown[];
+  conversacion: {
+    estado: string;
+    id_conversacion: number;
+  } | null;
+  cuenta_paciente: {
+    fecha_nacimiento: Date;
+    foto_url: string | null;
+    localidad: {
+      ciudad: {
+        nombre: string;
+      };
+      nombre: string;
+    };
+    persona: {
+      apellidos: string;
+      nombres: string;
+    };
+  };
+  estado: StudentRequestDto['status'];
+  fecha_envio: Date;
+  fecha_respuesta: Date | null;
+  id_solicitud: number;
+  motivo_consulta: string | null;
+};
+
 function calcAge(birthDate: Date): number {
   const today = new Date();
   return (
@@ -33,6 +76,23 @@ function calcAge(birthDate: Date): number {
 function normalizeOptionalText(value: string | null | undefined) {
   const normalizedValue = typeof value === 'string' ? normalizeText(value) : '';
   return normalizedValue.length > 0 ? normalizedValue : null;
+}
+
+function calculateAverageRating(reviews: StudentRequestPatientReviewRecord[]) {
+  if (reviews.length === 0) {
+    return null;
+  }
+
+  const totalRating = reviews.reduce((total, review) => total + review.calificacion, 0);
+  return Math.round((totalRating / reviews.length) * 10) / 10;
+}
+
+function getPatientReviewAuthorName(review: StudentRequestPatientReviewRecord) {
+  const author =
+    review.cuenta_acceso_valoracion_id_cuenta_emisorTocuenta_acceso.cuenta_estudiante
+      ?.persona;
+
+  return author ? `${author.nombres} ${author.apellidos}` : 'Estudiante';
 }
 
 @Injectable()
@@ -102,6 +162,80 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       universityLogoAlt: `Logo de ${student.universidad.nombre}`,
       universityLogoSrc: student.universidad.logo_url ?? null,
       universityName: student.universidad.nombre,
+    };
+  }
+
+  private async getPatientReviewsByAccountId(
+    patientAccountIds: number[],
+    currentStudentAccountId: number,
+  ) {
+    const uniquePatientAccountIds = [...new Set(patientAccountIds)];
+
+    if (uniquePatientAccountIds.length === 0) {
+      return new Map<number, StudentRequestPatientReviewRecord[]>();
+    }
+
+    const patientReviews = await this.prisma.valoracion.findMany({
+      where: {
+        id_cuenta_emisor: { not: currentStudentAccountId },
+        id_cuenta_receptor: { in: uniquePatientAccountIds },
+      },
+      include: {
+        cuenta_acceso_valoracion_id_cuenta_emisorTocuenta_acceso: {
+          include: {
+            cuenta_estudiante: {
+              include: {
+                persona: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { fecha_creacion: 'desc' },
+    });
+    const patientReviewsByAccountId = new Map<number, StudentRequestPatientReviewRecord[]>();
+
+    patientReviews.forEach((review) => {
+      const currentReviews = patientReviewsByAccountId.get(review.id_cuenta_receptor) ?? [];
+      currentReviews.push(review);
+      patientReviewsByAccountId.set(review.id_cuenta_receptor, currentReviews);
+    });
+
+    return patientReviewsByAccountId;
+  }
+
+  private toStudentRequestDto(
+    request: StudentPortalRequestRecord,
+    patientReviews: StudentRequestPatientReviewRecord[],
+  ): StudentRequestDto {
+    const patientName = `${request.cuenta_paciente.persona.nombres} ${request.cuenta_paciente.persona.apellidos}`;
+
+    return {
+      appointmentsCount: request.cita.length,
+      conversationEnabled: request.conversacion?.estado === 'ACTIVA',
+      conversationId: request.conversacion ? String(request.conversacion.id_conversacion) : null,
+      id: String(request.id_solicitud),
+      patientAge: calcAge(request.cuenta_paciente.fecha_nacimiento),
+      patientCity: request.cuenta_paciente.localidad.ciudad.nombre,
+      patientLocality: request.cuenta_paciente.localidad.nombre,
+      patientName,
+      patientProfile: {
+        avatarAlt: `Foto de perfil de ${patientName}`,
+        avatarSrc: request.cuenta_paciente.foto_url ?? null,
+        averageRating: calculateAverageRating(patientReviews),
+        phone: null,
+        reviews: patientReviews.map((review) => ({
+          authorName: getPatientReviewAuthorName(review),
+          comment: review.comentario ?? null,
+          createdAt: review.fecha_creacion.toISOString(),
+          id: String(review.id_valoracion),
+          rating: review.calificacion,
+        })),
+      },
+      reason: request.motivo_consulta ?? null,
+      responseAt: request.fecha_respuesta?.toISOString() ?? null,
+      sentAt: request.fecha_envio.toISOString(),
+      status: request.estado,
     };
   }
 
@@ -202,20 +336,17 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     const scheduleBlocks: StudentScheduleBlockDto[] = bloques.map((b) =>
       this.toScheduleBlockDto(b),
     );
+    const patientReviewsByAccountId = await this.getPatientReviewsByAccountId(
+      solicitudes.map((solicitud) => solicitud.cuenta_paciente.id_cuenta),
+      studentAccountId,
+    );
 
-    const requests: StudentRequestDto[] = solicitudes.map((s) => ({
-      appointmentsCount: s.cita.length,
-      conversationEnabled: s.conversacion?.estado === 'ACTIVA',
-      conversationId: s.conversacion ? String(s.conversacion.id_conversacion) : null,
-      id: String(s.id_solicitud),
-      patientAge: calcAge(s.cuenta_paciente.fecha_nacimiento),
-      patientCity: s.cuenta_paciente.localidad.ciudad.nombre,
-      patientName: `${s.cuenta_paciente.persona.nombres} ${s.cuenta_paciente.persona.apellidos}`,
-      reason: s.motivo_consulta ?? null,
-      responseAt: s.fecha_respuesta?.toISOString() ?? null,
-      sentAt: s.fecha_envio.toISOString(),
-      status: s.estado,
-    }));
+    const requests: StudentRequestDto[] = solicitudes.map((s) =>
+      this.toStudentRequestDto(
+        s,
+        patientReviewsByAccountId.get(s.cuenta_paciente.id_cuenta) ?? [],
+      ),
+    );
 
     const appointments: StudentAgendaAppointmentDto[] = solicitudes.flatMap((s) =>
       s.cita.map((c) => ({
@@ -708,20 +839,15 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
         cita: true,
       },
     });
+    const patientReviewsByAccountId = await this.getPatientReviewsByAccountId(
+      [updated.cuenta_paciente.id_cuenta],
+      studentAccountId,
+    );
 
-    return {
-      appointmentsCount: updated.cita.length,
-      conversationEnabled: updated.conversacion?.estado === 'ACTIVA',
-      conversationId: updated.conversacion ? String(updated.conversacion.id_conversacion) : null,
-      id: String(updated.id_solicitud),
-      patientAge: calcAge(updated.cuenta_paciente.fecha_nacimiento),
-      patientCity: updated.cuenta_paciente.localidad.ciudad.nombre,
-      patientName: `${updated.cuenta_paciente.persona.nombres} ${updated.cuenta_paciente.persona.apellidos}`,
-      reason: updated.motivo_consulta ?? null,
-      responseAt: updated.fecha_respuesta?.toISOString() ?? null,
-      sentAt: updated.fecha_envio.toISOString(),
-      status: updated.estado,
-    };
+    return this.toStudentRequestDto(
+      updated,
+      patientReviewsByAccountId.get(updated.cuenta_paciente.id_cuenta) ?? [],
+    );
   }
 
   async getConversations(studentAccountId: number): Promise<StudentConversationDto[]> {
