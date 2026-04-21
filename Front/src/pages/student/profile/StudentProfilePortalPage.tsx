@@ -14,6 +14,7 @@ import {
 import type { ChangeEvent, FormEvent } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { AdminConfirmationDialog } from '@/components/admin/AdminConfirmationDialog';
 import { AdminDropdownField } from '@/components/admin/AdminDropdownField';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
@@ -105,6 +106,9 @@ export function StudentProfilePage() {
   const [errors, setErrors] = useState<StudentProfileFormErrors>({});
   const [linkDraft, setLinkDraft] = useState<StudentLinkDraft>(initialLinkDraft);
   const [linkError, setLinkError] = useState<string | null>(null);
+  const [linkPendingDeletion, setLinkPendingDeletion] = useState<StudentProfile['links'][number] | null>(
+    null,
+  );
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [avatarUploadStatus, setAvatarUploadStatus] =
@@ -138,6 +142,7 @@ export function StudentProfilePage() {
     setErrors({});
     setLinkDraft(initialLinkDraft);
     setLinkError(null);
+    setLinkPendingDeletion(null);
     setAvatarUploadStatus('idle');
     setAvatarUploadMessage(null);
     setIsSavingProfile(false);
@@ -321,6 +326,14 @@ export function StudentProfilePage() {
     void persistProfileChanges(nextValues, false);
   };
 
+  const handleRequestLinkRemoval = (link: StudentProfile['links'][number]) => {
+    if (isSavingProfile) {
+      return;
+    }
+
+    setLinkPendingDeletion(link);
+  };
+
   const persistProfileChanges = async (
     nextValues: StudentProfileFormValues,
     includeAssignments: boolean,
@@ -382,6 +395,22 @@ export function StudentProfilePage() {
     } finally {
       setIsSavingProfile(false);
     }
+  };
+
+  const handleConfirmLinkRemoval = () => {
+    if (!linkPendingDeletion || isSavingProfile) {
+      return;
+    }
+
+    const nextLinks = values.links.filter((link) => link.id !== linkPendingDeletion.id);
+    const nextValues = {
+      ...values,
+      links: nextLinks,
+    };
+
+    handleFieldChange('links', nextLinks);
+    setLinkPendingDeletion(null);
+    void persistProfileChanges(nextValues, false);
   };
 
   const handleSubmit = (event?: FormEvent<HTMLFormElement>) => {
@@ -844,13 +873,9 @@ export function StudentProfilePage() {
                           <button
                             aria-label={`Eliminar enlace ${link.url}`}
                             className="inline-flex h-10 w-10 shrink-0 items-center justify-center self-start rounded-full border border-slate-200 bg-white text-rose-600 transition duration-300 hover:bg-rose-50 sm:self-center"
+                            disabled={isLoading || isSavingProfile}
                             type="button"
-                            onClick={() =>
-                              handleFieldChange(
-                                'links',
-                                values.links.filter((currentLink) => currentLink.id !== link.id),
-                              )
-                            }
+                            onClick={() => handleRequestLinkRemoval(link)}
                           >
                             <Trash2 aria-hidden="true" className="h-4 w-4" />
                           </button>
@@ -896,6 +921,21 @@ export function StudentProfilePage() {
             </button>
           </div>
         </form>
+        <AdminConfirmationDialog
+          cancelLabel="No, conservar enlace"
+          confirmLabel="Si, eliminar enlace"
+          description={
+            linkPendingDeletion
+              ? `El enlace ${linkPendingDeletion.url} se eliminara de tu perfil y este cambio se guardara automaticamente.`
+              : 'El enlace se eliminara de tu perfil y este cambio se guardara automaticamente.'
+          }
+          isOpen={!!linkPendingDeletion}
+          isSubmitting={isSavingProfile}
+          title="Eliminar enlace"
+          tone="danger"
+          onCancel={() => setLinkPendingDeletion(null)}
+          onConfirm={handleConfirmLinkRemoval}
+        />
       </AdminPanelCard>
     </div>
   );

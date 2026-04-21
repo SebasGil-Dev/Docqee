@@ -117,6 +117,37 @@ describe('Student pages', () => {
     expect(screen.getByText(/https:\/\/drive.google.com\/file\/d\/demo-cv/i)).toBeInTheDocument();
   });
 
+  it('solicita confirmacion para eliminar un enlace profesional y lo guarda de inmediato', async () => {
+    const user = userEvent.setup();
+
+    renderStudentApp([ROUTES.studentProfile]);
+
+    await user.click(
+      screen.getByRole('button', {
+        name: /eliminar enlace https:\/\/linkedin\.com\/in\/valentina-rios-docqee/i,
+      }),
+    );
+
+    const confirmDialog = screen.getByRole('dialog', { name: /eliminar enlace/i });
+    expect(
+      within(confirmDialog).getByText(/este cambio se guardara automaticamente/i),
+    ).toBeInTheDocument();
+
+    await user.click(
+      within(confirmDialog).getByRole('button', { name: /si, eliminar enlace/i }),
+    );
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      /^tu perfil se actualizo correctamente\.$/i,
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.queryByText(/https:\/\/linkedin\.com\/in\/valentina-rios-docqee/i),
+      ).not.toBeInTheDocument();
+    });
+  });
+
   it('muestra notificaciones del estudiante en el header', async () => {
     const user = userEvent.setup();
 
