@@ -893,9 +893,9 @@ export function StudentAppointmentsPage() {
                     <td className="px-4 py-3 text-center sm:px-5">
                       {appointment.status === 'PROPUESTA' ||
                       appointment.status === 'REPROGRAMACION_PENDIENTE' ? (
-                        <div className="flex flex-col items-center gap-1.5">
+                        <div className="flex flex-nowrap items-center justify-center gap-1.5">
                           <button
-                            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-primary ring-1 ring-slate-200 transition duration-200 hover:bg-slate-100"
+                            className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-white px-2.5 py-1.5 text-xs font-semibold text-primary ring-1 ring-slate-200 transition duration-200 hover:bg-slate-100"
                             type="button"
                             onClick={() => handleViewAppointment(appointment)}
                           >
@@ -906,7 +906,7 @@ export function StudentAppointmentsPage() {
                             <span>Ver cita</span>
                           </button>
                           <button
-                            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition duration-200 hover:bg-rose-100"
+                            className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-rose-50 px-2.5 py-1.5 text-xs font-semibold text-rose-700 transition duration-200 hover:bg-rose-100"
                             type="button"
                             onClick={() => setAppointmentToCancel(appointment)}
                           >
