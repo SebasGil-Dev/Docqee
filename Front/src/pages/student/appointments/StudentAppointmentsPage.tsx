@@ -1,5 +1,6 @@
 import {
   Ban,
+  BriefcaseMedical,
   CalendarCheck2,
   Check,
   CheckCircle2,
@@ -821,9 +822,20 @@ export function StudentAppointmentsPage() {
                             />
                             <span>{appointment.appointmentType}</span>
                           </p>
-                          <p>Docente = {appointment.supervisorName}</p>
                           <p className="inline-flex items-center gap-1.5">
-                            <Check
+                            <GraduationCap
+                              aria-hidden="true"
+                              className="h-3.5 w-3.5 text-primary"
+                            />
+                            <span>
+                              <span className="font-semibold text-ink">
+                                Docente =
+                              </span>{' '}
+                              {appointment.supervisorName}
+                            </span>
+                          </p>
+                          <p className="inline-flex items-center gap-1.5">
+                            <BriefcaseMedical
                               aria-hidden="true"
                               className="h-3.5 w-3.5 text-primary"
                             />
@@ -835,11 +847,17 @@ export function StudentAppointmentsPage() {
                       </td>
                       <td className="px-4 py-3.5">
                         <div className="max-w-[20rem] space-y-1 text-sm text-ink-muted">
-                          <p className="font-semibold text-ink">
-                            {formatDateTimeRange(
-                              appointment.startAt,
-                              appointment.endAt,
-                            )}
+                          <p className="inline-flex items-center gap-1.5 font-semibold text-ink">
+                            <Clock3
+                              aria-hidden="true"
+                              className="h-3.5 w-3.5 text-primary"
+                            />
+                            <span>
+                              {formatDateTimeRange(
+                                appointment.startAt,
+                                appointment.endAt,
+                              )}
+                            </span>
                           </p>
                           <p className="inline-flex items-center gap-1.5">
                             <MapPin
@@ -1337,9 +1355,18 @@ function AppointmentDetailsModal({
                 />
                 <span>{appointment.appointmentType}</span>
               </p>
-              <p>Docente = {appointment.supervisorName}</p>
               <p className="inline-flex items-center gap-1.5">
-                <Check
+                <GraduationCap
+                  aria-hidden="true"
+                  className="h-3.5 w-3.5 text-primary"
+                />
+                <span>
+                  <span className="font-semibold text-ink">Docente =</span>{' '}
+                  {appointment.supervisorName}
+                </span>
+              </p>
+              <p className="inline-flex items-center gap-1.5">
+                <BriefcaseMedical
                   aria-hidden="true"
                   className="h-3.5 w-3.5 text-primary"
                 />
@@ -1352,8 +1379,14 @@ function AppointmentDetailsModal({
               Programación
             </p>
             <div className="mt-2 space-y-1.5 text-[0.8rem] text-ink-muted">
-              <p className="font-semibold text-ink">
-                {formatDateTimeRange(appointment.startAt, appointment.endAt)}
+              <p className="inline-flex items-center gap-1.5 font-semibold text-ink">
+                <Clock3
+                  aria-hidden="true"
+                  className="h-3.5 w-3.5 text-primary"
+                />
+                <span>
+                  {formatDateTimeRange(appointment.startAt, appointment.endAt)}
+                </span>
               </p>
               <p className="inline-flex items-center gap-1.5">
                 <MapPin
