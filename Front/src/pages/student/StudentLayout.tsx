@@ -13,7 +13,7 @@ import {
 import { useStudentPortalNotifications } from '@/lib/portalNotifications';
 import { useStudentModuleStore } from '@/lib/studentModuleStore';
 
-const NOTIFICATION_POLL_INTERVAL_MS = 15_000;
+const NOTIFICATION_POLL_INTERVAL_MS = 30_000;
 
 export function StudentLayout() {
   const { session } = useAuth();
@@ -22,18 +22,16 @@ export function StudentLayout() {
     IS_TEST_MODE ||
     (session?.user.role === 'STUDENT' &&
       !shouldRequireFirstLoginPasswordChange(session));
-  const { appointments, conversations, profile, requests, refresh } = useStudentModuleStore({
-    autoLoad: shouldAutoLoadStudentModule,
-  });
-  const {
-    markAllNotificationsAsRead,
-    markNotificationAsRead,
-    notifications,
-  } = useStudentPortalNotifications({
-    appointments,
-    conversations,
-    requests,
-  });
+  const { appointments, conversations, isLoading, profile, requests, refresh } =
+    useStudentModuleStore({
+      autoLoad: shouldAutoLoadStudentModule,
+    });
+  const { markAllNotificationsAsRead, markNotificationAsRead, notifications } =
+    useStudentPortalNotifications({
+      appointments,
+      conversations,
+      requests,
+    });
 
   useEffect(() => {
     if (IS_TEST_MODE || !shouldAutoLoadStudentModule) {
@@ -41,13 +39,13 @@ export function StudentLayout() {
     }
 
     const interval = setInterval(() => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === 'visible' && !isLoading) {
         void refresh();
       }
     }, NOTIFICATION_POLL_INTERVAL_MS);
 
     return () => clearInterval(interval);
-  }, [shouldAutoLoadStudentModule, refresh]);
+  }, [isLoading, shouldAutoLoadStudentModule, refresh]);
 
   if (!IS_TEST_MODE) {
     if (!session) {
@@ -55,7 +53,9 @@ export function StudentLayout() {
     }
 
     if (session.user.role !== 'STUDENT') {
-      return <Navigate replace to={getDefaultRouteForRole(session.user.role)} />;
+      return (
+        <Navigate replace to={getDefaultRouteForRole(session.user.role)} />
+      );
     }
 
     if (shouldRequireFirstLoginPasswordChange(session)) {

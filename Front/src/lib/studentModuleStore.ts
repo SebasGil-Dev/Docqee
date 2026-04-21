@@ -112,6 +112,7 @@ type UseStudentModuleStoreOptions = {
 
 const STUDENT_MODULE_CACHE_STORAGE_KEY = 'docqee.student.module-cache';
 const STUDENT_MODULE_CACHE_MAX_AGE_MS = 30 * 60 * 1000;
+const STUDENT_REFERENCE_DATA_CACHE_MAX_AGE_MS = 10 * 60 * 1000;
 const listeners = new Set<() => void>();
 
 function createMockState(): StudentStoreState {
@@ -147,21 +148,24 @@ function createMockState(): StudentStoreState {
 
   const treatments: StudentTreatment[] = [
     {
-      description: 'Atencion preventiva, valoracion inicial y acompanamiento de control.',
+      description:
+        'Atencion preventiva, valoracion inicial y acompanamiento de control.',
       id: 'treatment-1',
       treatmentTypeId: 'type-1',
       name: 'Operatoria basica',
       status: 'active',
     },
     {
-      description: 'Manejo de protocolos de higiene oral y educacion al paciente.',
+      description:
+        'Manejo de protocolos de higiene oral y educacion al paciente.',
       id: 'treatment-2',
       treatmentTypeId: 'type-2',
       name: 'Promocion y prevencion',
       status: 'active',
     },
     {
-      description: 'Seguimiento del paciente en procedimientos de apoyo restaurativo.',
+      description:
+        'Seguimiento del paciente en procedimientos de apoyo restaurativo.',
       id: 'treatment-3',
       treatmentTypeId: 'type-3',
       name: 'Rehabilitacion oral',
@@ -258,7 +262,8 @@ function createMockState(): StudentStoreState {
 
   const appointments: StudentAgendaAppointment[] = [
     {
-      additionalInfo: 'Pendiente de confirmar la propuesta inicial con el paciente.',
+      additionalInfo:
+        'Pendiente de confirmar la propuesta inicial con el paciente.',
       appointmentType: 'Valoracion inicial',
       city: 'Bogota',
       createdAt: '2026-04-05T10:00:00.000Z',
@@ -298,7 +303,8 @@ function createMockState(): StudentStoreState {
       treatmentNames: ['Operatoria basica', 'Promocion y prevencion'],
     },
     {
-      additionalInfo: 'Reprogramacion solicitada por ajuste de horario del paciente.',
+      additionalInfo:
+        'Reprogramacion solicitada por ajuste de horario del paciente.',
       appointmentType: 'Seguimiento preventivo',
       city: 'Bogota',
       createdAt: '2026-04-07T10:00:00.000Z',
@@ -318,7 +324,8 @@ function createMockState(): StudentStoreState {
       treatmentNames: ['Promocion y prevencion'],
     },
     {
-      additionalInfo: 'El paciente cancelo la asistencia y quedo registrado en agenda.',
+      additionalInfo:
+        'El paciente cancelo la asistencia y quedo registrado en agenda.',
       appointmentType: 'Revision de sensibilidad',
       city: 'Soacha',
       createdAt: '2026-04-08T11:00:00.000Z',
@@ -488,14 +495,16 @@ function createMockState(): StudentStoreState {
         {
           author: 'PACIENTE',
           authorName: 'Julian Torres',
-          content: 'Hola, quisiera confirmar si puedes revisar mi seguimiento esta semana.',
+          content:
+            'Hola, quisiera confirmar si puedes revisar mi seguimiento esta semana.',
           id: 'student-message-1',
           sentAt: '2026-04-03T10:15:00.000Z',
         },
         {
           author: 'ESTUDIANTE',
           authorName: 'Valentina Rios',
-          content: 'Hola Julian, claro que si. Estoy revisando mis espacios disponibles.',
+          content:
+            'Hola Julian, claro que si. Estoy revisando mis espacios disponibles.',
           id: 'student-message-2',
           sentAt: '2026-04-03T10:24:00.000Z',
         },
@@ -528,7 +537,8 @@ function createMockState(): StudentStoreState {
         {
           author: 'ESTUDIANTE',
           authorName: 'Valentina Rios',
-          content: 'Con gusto, Ricardo. Quedo cerrado el proceso con control satisfactorio.',
+          content:
+            'Con gusto, Ricardo. Quedo cerrado el proceso con control satisfactorio.',
           id: 'student-message-5',
           sentAt: '2026-03-28T13:33:00.000Z',
         },
@@ -655,7 +665,9 @@ function isStudentLinkType(value: unknown) {
   );
 }
 
-function isStudentAgendaStatus(value: unknown): value is StudentAgendaAppointmentStatus {
+function isStudentAgendaStatus(
+  value: unknown,
+): value is StudentAgendaAppointmentStatus {
   return (
     value === 'PROPUESTA' ||
     value === 'ACEPTADA' ||
@@ -665,7 +677,9 @@ function isStudentAgendaStatus(value: unknown): value is StudentAgendaAppointmen
   );
 }
 
-function isStudentRequestStatusValue(value: unknown): value is StudentRequestStatus {
+function isStudentRequestStatusValue(
+  value: unknown,
+): value is StudentRequestStatus {
   return (
     value === 'PENDIENTE' ||
     value === 'ACEPTADA' ||
@@ -692,7 +706,8 @@ function isStudentProfile(value: unknown): value is StudentProfile {
 
   return (
     typeof candidate.avatarAlt === 'string' &&
-    (candidate.avatarFileName === null || typeof candidate.avatarFileName === 'string') &&
+    (candidate.avatarFileName === null ||
+      typeof candidate.avatarFileName === 'string') &&
     (candidate.avatarSrc === null || typeof candidate.avatarSrc === 'string') &&
     typeof candidate.availabilityGeneral === 'string' &&
     typeof candidate.biography === 'string' &&
@@ -763,7 +778,9 @@ function isStudentSupervisor(value: unknown): value is StudentSupervisor {
   );
 }
 
-function isStudentAppointmentReview(value: unknown): value is StudentAppointmentReview {
+function isStudentAppointmentReview(
+  value: unknown,
+): value is StudentAppointmentReview {
   if (typeof value !== 'object' || value === null) {
     return false;
   }
@@ -819,8 +836,9 @@ function isStudentRequestPatientProfileReview(
     return false;
   }
 
-  const candidate =
-    value as Partial<NonNullable<StudentRequest['patientProfile']>['reviews'][number]>;
+  const candidate = value as Partial<
+    NonNullable<StudentRequest['patientProfile']>['reviews'][number]
+  >;
 
   return (
     typeof candidate.authorName === 'string' &&
@@ -838,12 +856,15 @@ function isStudentRequestPatientProfile(
     return false;
   }
 
-  const candidate = value as Partial<NonNullable<StudentRequest['patientProfile']>>;
+  const candidate = value as Partial<
+    NonNullable<StudentRequest['patientProfile']>
+  >;
 
   return (
     typeof candidate.avatarAlt === 'string' &&
     (candidate.avatarSrc === null || typeof candidate.avatarSrc === 'string') &&
-    (candidate.averageRating === null || typeof candidate.averageRating === 'number') &&
+    (candidate.averageRating === null ||
+      typeof candidate.averageRating === 'number') &&
     (candidate.phone === null || typeof candidate.phone === 'string') &&
     Array.isArray(candidate.reviews) &&
     candidate.reviews.every(isStudentRequestPatientProfileReview)
@@ -859,7 +880,8 @@ function isStudentRequest(value: unknown): value is StudentRequest {
 
   return (
     typeof candidate.appointmentsCount === 'number' &&
-    (candidate.conversationId === null || typeof candidate.conversationId === 'string') &&
+    (candidate.conversationId === null ||
+      typeof candidate.conversationId === 'string') &&
     typeof candidate.conversationEnabled === 'boolean' &&
     typeof candidate.id === 'string' &&
     typeof candidate.patientAge === 'number' &&
@@ -872,7 +894,8 @@ function isStudentRequest(value: unknown): value is StudentRequest {
       candidate.patientProfile === null ||
       isStudentRequestPatientProfile(candidate.patientProfile)) &&
     (candidate.reason === null || typeof candidate.reason === 'string') &&
-    (candidate.responseAt === null || typeof candidate.responseAt === 'string') &&
+    (candidate.responseAt === null ||
+      typeof candidate.responseAt === 'string') &&
     typeof candidate.sentAt === 'string' &&
     isStudentRequestStatusValue(candidate.status)
   );
@@ -933,7 +956,8 @@ function isStudentScheduleBlock(value: unknown): value is StudentScheduleBlock {
       typeof candidate.recurrenceEndDate === 'string') &&
     (candidate.recurrenceStartDate === null ||
       typeof candidate.recurrenceStartDate === 'string') &&
-    (candidate.specificDate === null || typeof candidate.specificDate === 'string') &&
+    (candidate.specificDate === null ||
+      typeof candidate.specificDate === 'string') &&
     typeof candidate.startTime === 'string' &&
     (candidate.status === 'active' || candidate.status === 'inactive') &&
     isStudentScheduleBlockTypeValue(candidate.type)
@@ -1050,7 +1074,9 @@ function readPersistedStudentModuleCache() {
   }
 
   try {
-    const parsedCache = JSON.parse(rawCache) as Partial<PersistedStudentModuleCache>;
+    const parsedCache = JSON.parse(
+      rawCache,
+    ) as Partial<PersistedStudentModuleCache>;
 
     if (
       typeof parsedCache.updatedAt !== 'number' ||
@@ -1098,6 +1124,17 @@ let nextConversationMessageSequence =
     0,
   ) + 1;
 let runtimeLoadPromise: Promise<StudentStoreState> | null = null;
+const conversationRefreshPromises = new Map<string, Promise<void>>();
+let universitySitesCache: {
+  data: StudentPracticeSite[];
+  expiresAt: number;
+} | null = null;
+let universitySitesLoadPromise: Promise<StudentPracticeSite[]> | null = null;
+let treatmentTypesCache: {
+  data: StudentTreatmentType[];
+  expiresAt: number;
+} | null = null;
+let treatmentTypesLoadPromise: Promise<StudentTreatmentType[]> | null = null;
 
 function syncStudentRuntimeSequences(moduleState: StudentModuleState) {
   nextLinkSequence = moduleState.profile.links.length + 1;
@@ -1133,10 +1170,50 @@ function getSnapshot() {
   return state;
 }
 
+function didPersistableStudentModuleStateChange(
+  previousState: StudentStoreState,
+  nextState: StudentStoreState,
+) {
+  return (
+    previousState.appointments !== nextState.appointments ||
+    previousState.conversations !== nextState.conversations ||
+    previousState.practiceSites !== nextState.practiceSites ||
+    previousState.profile !== nextState.profile ||
+    previousState.reviews !== nextState.reviews ||
+    previousState.requests !== nextState.requests ||
+    previousState.scheduleBlocks !== nextState.scheduleBlocks ||
+    previousState.supervisors !== nextState.supervisors ||
+    previousState.treatments !== nextState.treatments
+  );
+}
+
+function didStudentStoreStateChange(
+  previousState: StudentStoreState,
+  nextState: StudentStoreState,
+) {
+  return (
+    didPersistableStudentModuleStateChange(previousState, nextState) ||
+    previousState.errorMessage !== nextState.errorMessage ||
+    previousState.isLoading !== nextState.isLoading ||
+    previousState.isReady !== nextState.isReady ||
+    previousState.shouldRefresh !== nextState.shouldRefresh
+  );
+}
+
 function updateState(nextState: StudentStoreState) {
+  const previousState = state;
+
+  if (!didStudentStoreStateChange(previousState, nextState)) {
+    return;
+  }
+
   state = nextState;
 
-  if (!IS_TEST_MODE && nextState.isReady) {
+  if (
+    !IS_TEST_MODE &&
+    nextState.isReady &&
+    didPersistableStudentModuleStateChange(previousState, nextState)
+  ) {
     persistStudentModuleCache(getPersistableStudentModuleState(nextState));
   }
 
@@ -1167,7 +1244,8 @@ function buildConversationForRequest(
     author: 'PACIENTE',
     authorName: request.patientName,
     content:
-      request.reason ?? 'Hola, quisiera continuar la conversacion sobre mi solicitud.',
+      request.reason ??
+      'Hola, quisiera continuar la conversacion sobre mi solicitud.',
     id: `student-message-${nextConversationMessageSequence++}`,
     sentAt: new Date().toISOString(),
   };
@@ -1212,11 +1290,17 @@ function normalizeScheduleBlockInput(values: StudentScheduleBlockFormValues) {
     endTime: values.endTime,
     reason: normalizeNullableText(values.reason),
     recurrenceEndDate:
-      values.type === 'RECURRENTE' ? normalizeNullableText(values.recurrenceEndDate) : null,
+      values.type === 'RECURRENTE'
+        ? normalizeNullableText(values.recurrenceEndDate)
+        : null,
     recurrenceStartDate:
-      values.type === 'RECURRENTE' ? normalizeNullableText(values.recurrenceStartDate) : null,
+      values.type === 'RECURRENTE'
+        ? normalizeNullableText(values.recurrenceStartDate)
+        : null,
     specificDate:
-      values.type === 'ESPECIFICO' ? normalizeNullableText(values.specificDate) : null,
+      values.type === 'ESPECIFICO'
+        ? normalizeNullableText(values.specificDate)
+        : null,
     startTime: values.startTime,
     type: values.type,
   } satisfies Omit<StudentScheduleBlock, 'id' | 'status'>;
@@ -1241,7 +1325,10 @@ function buildDateTime(dateValue: string, timeValue: string) {
   return new Date(year, month - 1, day, hours, minutes, 0, 0);
 }
 
-function doesScheduleBlockMatchDate(block: StudentScheduleBlock, dateValue: string) {
+function doesScheduleBlockMatchDate(
+  block: StudentScheduleBlock,
+  dateValue: string,
+) {
   if (block.type === 'ESPECIFICO') {
     return block.specificDate === dateValue;
   }
@@ -1316,9 +1403,15 @@ function findAppointmentValidationError(
   }
 
   const selectedTreatments = normalized.treatmentIds.map((treatmentId) =>
-    state.treatments.find((treatment) => treatment.treatmentTypeId === treatmentId),
+    state.treatments.find(
+      (treatment) => treatment.treatmentTypeId === treatmentId,
+    ),
   );
-  if (selectedTreatments.some((treatment) => !treatment || treatment.status !== 'active')) {
+  if (
+    selectedTreatments.some(
+      (treatment) => !treatment || treatment.status !== 'active',
+    )
+  ) {
     return 'Todos los tratamientos de la cita deben estar activos.';
   }
 
@@ -1333,7 +1426,10 @@ function findAppointmentValidationError(
       return false;
     }
 
-    if (appointment.status === 'CANCELADA' || appointment.status === 'FINALIZADA') {
+    if (
+      appointment.status === 'CANCELADA' ||
+      appointment.status === 'FINALIZADA'
+    ) {
       return false;
     }
 
@@ -1386,6 +1482,31 @@ function updateProfileMock(values: StudentProfileFormValues) {
   });
 }
 
+function areConversationMessagesEqual(
+  firstMessages: StudentConversationMessage[],
+  secondMessages: StudentConversationMessage[],
+) {
+  if (firstMessages.length !== secondMessages.length) {
+    return false;
+  }
+
+  return firstMessages.every((message, index) => {
+    const nextMessage = secondMessages[index];
+
+    if (!nextMessage) {
+      return false;
+    }
+
+    return (
+      message.id === nextMessage.id &&
+      message.author === nextMessage.author &&
+      message.authorName === nextMessage.authorName &&
+      message.content === nextMessage.content &&
+      message.sentAt === nextMessage.sentAt
+    );
+  });
+}
+
 function updatePracticeSitesMock(siteIds: string[]) {
   const selectedSiteIds = new Set(siteIds);
 
@@ -1413,7 +1534,9 @@ function updateTreatmentsMock(treatmentTypeIds: string[]) {
 }
 
 function toggleTreatmentStatusMock(treatmentId: string) {
-  const currentTreatment = state.treatments.find((treatment) => treatment.id === treatmentId);
+  const currentTreatment = state.treatments.find(
+    (treatment) => treatment.id === treatmentId,
+  );
 
   if (!currentTreatment) {
     return null;
@@ -1425,7 +1548,9 @@ function toggleTreatmentStatusMock(treatmentId: string) {
   updateState({
     ...state,
     treatments: state.treatments.map((treatment) =>
-      treatment.id === treatmentId ? { ...treatment, status: nextStatus } : treatment,
+      treatment.id === treatmentId
+        ? { ...treatment, status: nextStatus }
+        : treatment,
     ),
   });
 
@@ -1463,7 +1588,9 @@ function upsertScheduleBlockMock(
   const normalizedBlock = normalizeScheduleBlockInput(values);
 
   if (blockId) {
-    const existingBlock = state.scheduleBlocks.find((block) => block.id === blockId);
+    const existingBlock = state.scheduleBlocks.find(
+      (block) => block.id === blockId,
+    );
 
     if (!existingBlock) {
       return null;
@@ -1515,33 +1642,48 @@ function upsertAppointmentMock(
   }
 
   const normalized = normalizeAppointmentInput(values);
-  const request = state.requests.find((currentRequest) => currentRequest.id === normalized.requestId);
-  const site = state.practiceSites.find((practiceSite) => practiceSite.siteId === normalized.siteId);
+  const request = state.requests.find(
+    (currentRequest) => currentRequest.id === normalized.requestId,
+  );
+  const site = state.practiceSites.find(
+    (practiceSite) => practiceSite.siteId === normalized.siteId,
+  );
   const supervisor = state.supervisors.find(
     (currentSupervisor) => currentSupervisor.id === normalized.supervisorId,
   );
   const treatmentNames: string[] = normalized.treatmentIds
     .map(
       (treatmentId) =>
-        state.treatments.find((treatment) => treatment.treatmentTypeId === treatmentId)?.name ?? '',
+        state.treatments.find(
+          (treatment) => treatment.treatmentTypeId === treatmentId,
+        )?.name ?? '',
     )
-    .filter((treatmentName): treatmentName is string => treatmentName.length > 0);
+    .filter(
+      (treatmentName): treatmentName is string => treatmentName.length > 0,
+    );
   const nextAppointment: StudentAgendaAppointment = {
     additionalInfo: normalized.additionalInfo,
     appointmentType: getAppointmentTypeLabel(treatmentNames),
     city: site?.city ?? '',
     createdAt: new Date().toISOString(),
-    endAt: buildDateTime(normalized.startDate, normalized.endTime).toISOString(),
+    endAt: buildDateTime(
+      normalized.startDate,
+      normalized.endTime,
+    ).toISOString(),
     id: appointmentId ?? `student-appointment-${nextAppointmentSequence}`,
     patientName: request?.patientName ?? '',
     requestId: normalized.requestId,
     respondedAt: null,
     siteId: normalized.siteId,
     siteName: site?.name ?? '',
-    startAt: buildDateTime(normalized.startDate, normalized.startTime).toISOString(),
+    startAt: buildDateTime(
+      normalized.startDate,
+      normalized.startTime,
+    ).toISOString(),
     status: appointmentId
-      ? state.appointments.find((appointment) => appointment.id === appointmentId)?.status ??
-        'PROPUESTA'
+      ? (state.appointments.find(
+          (appointment) => appointment.id === appointmentId,
+        )?.status ?? 'PROPUESTA')
       : 'PROPUESTA',
     myRating: null,
     supervisorId: normalized.supervisorId,
@@ -1554,10 +1696,11 @@ function upsertAppointmentMock(
     nextAppointmentSequence += 1;
   }
 
-  const previousRequestId =
-    appointmentId
-      ? state.appointments.find((appointment) => appointment.id === appointmentId)?.requestId ?? null
-      : null;
+  const previousRequestId = appointmentId
+    ? (state.appointments.find(
+        (appointment) => appointment.id === appointmentId,
+      )?.requestId ?? null)
+    : null;
 
   updateState({
     ...state,
@@ -1569,8 +1712,13 @@ function upsertAppointmentMock(
       : [nextAppointment, ...state.appointments],
     requests: state.requests.map((currentRequest) => {
       const currentCount = currentRequest.appointmentsCount;
-      const shouldIncrease = currentRequest.id === normalized.requestId && previousRequestId !== normalized.requestId;
-      const shouldDecrease = !!previousRequestId && currentRequest.id === previousRequestId && previousRequestId !== normalized.requestId;
+      const shouldIncrease =
+        currentRequest.id === normalized.requestId &&
+        previousRequestId !== normalized.requestId;
+      const shouldDecrease =
+        !!previousRequestId &&
+        currentRequest.id === previousRequestId &&
+        previousRequestId !== normalized.requestId;
 
       return {
         ...currentRequest,
@@ -1587,7 +1735,9 @@ function upsertAppointmentMock(
 }
 
 function toggleScheduleBlockStatusMock(blockId: string) {
-  const currentBlock = state.scheduleBlocks.find((block) => block.id === blockId);
+  const currentBlock = state.scheduleBlocks.find(
+    (block) => block.id === blockId,
+  );
 
   if (!currentBlock) {
     return null;
@@ -1622,7 +1772,9 @@ function updateAppointmentStatusMock(
     ...state,
     errorMessage: null,
     appointments: state.appointments.map((appointment) =>
-      appointment.id === appointmentId ? { ...appointment, status } : appointment,
+      appointment.id === appointmentId
+        ? { ...appointment, status }
+        : appointment,
     ),
   });
 
@@ -1630,7 +1782,9 @@ function updateAppointmentStatusMock(
 }
 
 function deleteScheduleBlockMock(blockId: string) {
-  const currentBlock = state.scheduleBlocks.find((block) => block.id === blockId);
+  const currentBlock = state.scheduleBlocks.find(
+    (block) => block.id === blockId,
+  );
 
   if (!currentBlock) {
     return false;
@@ -1638,27 +1792,36 @@ function deleteScheduleBlockMock(blockId: string) {
 
   updateState({
     ...state,
-    scheduleBlocks: state.scheduleBlocks.filter((block) => block.id !== blockId),
+    scheduleBlocks: state.scheduleBlocks.filter(
+      (block) => block.id !== blockId,
+    ),
   });
 
   return true;
 }
 
-function respondToRequestMock(requestId: string, nextStatus: StudentRequestStatus) {
-  const currentRequest = state.requests.find((request) => request.id === requestId);
+function respondToRequestMock(
+  requestId: string,
+  nextStatus: StudentRequestStatus,
+) {
+  const currentRequest = state.requests.find(
+    (request) => request.id === requestId,
+  );
 
   if (!currentRequest) {
     return false;
   }
 
   const currentConversation = currentRequest.conversationId
-    ? state.conversations.find(
+    ? (state.conversations.find(
         (conversation) => conversation.id === currentRequest.conversationId,
-      ) ?? null
-    : state.conversations.find((conversation) => conversation.requestId === requestId) ?? null;
+      ) ?? null)
+    : (state.conversations.find(
+        (conversation) => conversation.requestId === requestId,
+      ) ?? null);
   const nextConversation =
     nextStatus === 'ACEPTADA'
-      ? currentConversation ?? buildConversationForRequest(currentRequest)
+      ? (currentConversation ?? buildConversationForRequest(currentRequest))
       : currentConversation;
 
   updateState({
@@ -1687,7 +1850,7 @@ function respondToRequestMock(requestId: string, nextStatus: StudentRequestStatu
             ...request,
             conversationId:
               nextStatus === 'ACEPTADA'
-                ? nextConversation?.id ?? request.conversationId
+                ? (nextConversation?.id ?? request.conversationId)
                 : request.conversationId,
             conversationEnabled:
               nextStatus === 'ACEPTADA'
@@ -1711,7 +1874,11 @@ function sendConversationMessageMock(conversationId: string, content: string) {
     (conversation) => conversation.id === conversationId,
   );
 
-  if (!currentConversation || currentConversation.status !== 'ACTIVA' || !normalizedContent) {
+  if (
+    !currentConversation ||
+    currentConversation.status !== 'ACTIVA' ||
+    !normalizedContent
+  ) {
     return false;
   }
 
@@ -1753,7 +1920,7 @@ async function loadRuntimeState(forceRefresh = false) {
 
   patchState({
     errorMessage: null,
-    isLoading: true,
+    isLoading: !state.isReady,
   });
 
   runtimeLoadPromise = getStudentPortalDashboard()
@@ -1773,7 +1940,10 @@ async function loadRuntimeState(forceRefresh = false) {
     })
     .catch((error) => {
       patchState({
-        errorMessage: getErrorMessage(error, 'No pudimos cargar el portal del estudiante.'),
+        errorMessage: getErrorMessage(
+          error,
+          'No pudimos cargar el portal del estudiante.',
+        ),
         isLoading: false,
         shouldRefresh: false,
       });
@@ -1851,7 +2021,10 @@ async function toggleTreatmentStatus(treatmentId: string) {
     return result.status;
   } catch (error) {
     patchState({
-      errorMessage: getErrorMessage(error, 'No pudimos actualizar el tratamiento.'),
+      errorMessage: getErrorMessage(
+        error,
+        'No pudimos actualizar el tratamiento.',
+      ),
       isLoading: false,
     });
     return null;
@@ -1915,7 +2088,9 @@ async function upsertAppointment(
       ...state,
       appointments: appointmentId
         ? state.appointments.map((currentAppointment) =>
-            currentAppointment.id === appointmentId ? appointment : currentAppointment,
+            currentAppointment.id === appointmentId
+              ? appointment
+              : currentAppointment,
           )
         : [appointment, ...state.appointments],
       errorMessage: null,
@@ -1966,7 +2141,10 @@ async function upsertScheduleBlock(
     return scheduleBlock;
   } catch (error) {
     patchState({
-      errorMessage: getErrorMessage(error, 'No pudimos guardar el bloqueo de agenda.'),
+      errorMessage: getErrorMessage(
+        error,
+        'No pudimos guardar el bloqueo de agenda.',
+      ),
       isLoading: false,
     });
     return null;
@@ -1981,11 +2159,17 @@ async function submitAppointmentReview(
   patchState({ errorMessage: null, isLoading: true });
 
   try {
-    const appointment = await submitStudentPortalAppointmentReview(appointmentId, rating, comment);
+    const appointment = await submitStudentPortalAppointmentReview(
+      appointmentId,
+      rating,
+      comment,
+    );
 
     updateState({
       ...state,
-      appointments: state.appointments.map((a) => (a.id === appointmentId ? appointment : a)),
+      appointments: state.appointments.map((a) =>
+        a.id === appointmentId ? appointment : a,
+      ),
       errorMessage: null,
       isLoading: false,
       isReady: true,
@@ -2015,12 +2199,17 @@ async function updateAppointmentStatus(
   });
 
   try {
-    const appointment = await updateStudentPortalAppointmentStatus(appointmentId, status);
+    const appointment = await updateStudentPortalAppointmentStatus(
+      appointmentId,
+      status,
+    );
 
     updateState({
       ...state,
       appointments: state.appointments.map((currentAppointment) =>
-        currentAppointment.id === appointmentId ? appointment : currentAppointment,
+        currentAppointment.id === appointmentId
+          ? appointment
+          : currentAppointment,
       ),
       errorMessage: null,
       isLoading: false,
@@ -2030,7 +2219,10 @@ async function updateAppointmentStatus(
     return true;
   } catch (error) {
     patchState({
-      errorMessage: getErrorMessage(error, 'No pudimos actualizar el estado de la cita.'),
+      errorMessage: getErrorMessage(
+        error,
+        'No pudimos actualizar el estado de la cita.',
+      ),
       isLoading: false,
     });
     return false;
@@ -2056,14 +2248,19 @@ async function toggleScheduleBlockStatus(blockId: string) {
       isLoading: false,
       isReady: true,
       scheduleBlocks: state.scheduleBlocks.map((block) =>
-        block.id === result.blockId ? { ...block, status: result.status } : block,
+        block.id === result.blockId
+          ? { ...block, status: result.status }
+          : block,
       ),
     });
 
     return result.status;
   } catch (error) {
     patchState({
-      errorMessage: getErrorMessage(error, 'No pudimos actualizar el estado del bloqueo.'),
+      errorMessage: getErrorMessage(
+        error,
+        'No pudimos actualizar el estado del bloqueo.',
+      ),
       isLoading: false,
     });
     return null;
@@ -2088,13 +2285,18 @@ async function deleteScheduleBlock(blockId: string) {
       errorMessage: null,
       isLoading: false,
       isReady: true,
-      scheduleBlocks: state.scheduleBlocks.filter((block) => block.id !== blockId),
+      scheduleBlocks: state.scheduleBlocks.filter(
+        (block) => block.id !== blockId,
+      ),
     });
 
     return true;
   } catch (error) {
     patchState({
-      errorMessage: getErrorMessage(error, 'No pudimos eliminar el bloqueo de agenda.'),
+      errorMessage: getErrorMessage(
+        error,
+        'No pudimos eliminar el bloqueo de agenda.',
+      ),
       isLoading: false,
     });
     return false;
@@ -2115,7 +2317,10 @@ async function respondToRequest(
   });
 
   try {
-    const request = await updateStudentPortalRequestStatus(requestId, nextStatus);
+    const request = await updateStudentPortalRequestStatus(
+      requestId,
+      nextStatus,
+    );
 
     updateState({
       ...state,
@@ -2130,7 +2335,10 @@ async function respondToRequest(
     return true;
   } catch (error) {
     patchState({
-      errorMessage: getErrorMessage(error, 'No pudimos actualizar la solicitud.'),
+      errorMessage: getErrorMessage(
+        error,
+        'No pudimos actualizar la solicitud.',
+      ),
       isLoading: false,
     });
     return false;
@@ -2139,35 +2347,71 @@ async function respondToRequest(
 
 async function refreshConversation(conversationId: string) {
   if (IS_TEST_MODE) return;
-  try {
-    const conversation = await getStudentPortalConversation(conversationId);
-    updateState({
-      ...state,
-      conversations: state.conversations.map((c) => {
-        if (c.id !== conversationId) return c;
-        const optimisticMessages = c.messages.filter((m) =>
-          m.id.startsWith('optimistic-'),
+  const pendingRefresh = conversationRefreshPromises.get(conversationId);
+
+  if (pendingRefresh) {
+    return pendingRefresh;
+  }
+
+  const refreshPromise = getStudentPortalConversation(conversationId)
+    .then((conversation) => {
+      let shouldUpdate = false;
+      const conversations = state.conversations.map((currentConversation) => {
+        if (currentConversation.id !== conversationId) {
+          return currentConversation;
+        }
+
+        const optimisticMessages = currentConversation.messages.filter(
+          (message) => message.id.startsWith('optimistic-'),
         );
-        const currentRealMessages = c.messages.filter(
-          (m) => !m.id.startsWith('optimistic-'),
+        const currentRealMessages = currentConversation.messages.filter(
+          (message) => !message.id.startsWith('optimistic-'),
         );
-        // If we have more confirmed messages than the API returned, keep ours.
-        // This handles the window where a just-sent message hasn't propagated
-        // to the conversation endpoint yet (race between send API and read API).
+        // Keep locally confirmed messages while the conversation endpoint catches up.
         const baseMessages =
           currentRealMessages.length > conversation.messages.length
             ? currentRealMessages
             : conversation.messages;
+        const nextMessages = [...baseMessages, ...optimisticMessages];
+
+        if (
+          currentConversation.status === conversation.status &&
+          areConversationMessagesEqual(
+            currentConversation.messages,
+            nextMessages,
+          )
+        ) {
+          return currentConversation;
+        }
+
+        shouldUpdate = true;
+
         return {
-          ...c,
-          messages: [...baseMessages, ...optimisticMessages],
+          ...currentConversation,
+          messages: nextMessages,
           status: conversation.status,
         };
-      }),
+      });
+
+      if (shouldUpdate) {
+        updateState({
+          ...state,
+          conversations,
+        });
+      }
+    })
+    .catch(() => {
+      // silently ignore - background poll
+    })
+    .finally(() => {
+      if (conversationRefreshPromises.get(conversationId) === refreshPromise) {
+        conversationRefreshPromises.delete(conversationId);
+      }
     });
-  } catch {
-    // silently ignore - background poll
-  }
+
+  conversationRefreshPromises.set(conversationId, refreshPromise);
+
+  return refreshPromise;
 }
 
 async function sendConversationMessage(
@@ -2193,14 +2437,20 @@ async function sendConversationMessage(
     ...state,
     conversations: state.conversations.map((conversation) =>
       conversation.id === conversationId
-        ? { ...conversation, messages: [...conversation.messages, optimisticMessage] }
+        ? {
+            ...conversation,
+            messages: [...conversation.messages, optimisticMessage],
+          }
         : conversation,
     ),
     errorMessage: null,
   });
 
   try {
-    const message = await sendStudentPortalConversationMessage(conversationId, content);
+    const message = await sendStudentPortalConversationMessage(
+      conversationId,
+      content,
+    );
 
     updateState({
       ...state,
@@ -2208,7 +2458,9 @@ async function sendConversationMessage(
         conversation.id === conversationId
           ? {
               ...conversation,
-              messages: conversation.messages.map((m) => (m.id === tempId ? message : m)),
+              messages: conversation.messages.map((m) =>
+                m.id === tempId ? message : m,
+              ),
             }
           : conversation,
       ),
@@ -2231,11 +2483,28 @@ async function sendConversationMessage(
 
 async function getUniversitySites(): Promise<StudentPracticeSite[]> {
   if (IS_TEST_MODE) return state.practiceSites;
-  try {
-    return await getStudentPortalUniversitySites();
-  } catch {
-    return [];
+
+  if (universitySitesCache && Date.now() < universitySitesCache.expiresAt) {
+    return universitySitesCache.data;
   }
+
+  if (!universitySitesLoadPromise) {
+    universitySitesLoadPromise = getStudentPortalUniversitySites()
+      .then((practiceSites) => {
+        universitySitesCache = {
+          data: practiceSites,
+          expiresAt: Date.now() + STUDENT_REFERENCE_DATA_CACHE_MAX_AGE_MS,
+        };
+
+        return practiceSites;
+      })
+      .catch(() => [])
+      .finally(() => {
+        universitySitesLoadPromise = null;
+      });
+  }
+
+  return universitySitesLoadPromise;
 }
 
 async function updatePracticeSites(siteIds: string[]): Promise<boolean> {
@@ -2248,21 +2517,50 @@ async function updatePracticeSites(siteIds: string[]): Promise<boolean> {
 
   try {
     const practiceSites = await updateStudentPortalPracticeSites(siteIds);
-    updateState({ ...state, errorMessage: null, isLoading: false, isReady: true, practiceSites });
+    updateState({
+      ...state,
+      errorMessage: null,
+      isLoading: false,
+      isReady: true,
+      practiceSites,
+    });
     return true;
   } catch (error) {
-    patchState({ errorMessage: getErrorMessage(error, 'No pudimos actualizar tus sedes de práctica.'), isLoading: false });
+    patchState({
+      errorMessage: getErrorMessage(
+        error,
+        'No pudimos actualizar tus sedes de práctica.',
+      ),
+      isLoading: false,
+    });
     return false;
   }
 }
 
 async function getTreatmentTypes(): Promise<StudentTreatmentType[]> {
   if (IS_TEST_MODE) return [];
-  try {
-    return await getStudentPortalTreatmentTypes();
-  } catch {
-    return [];
+
+  if (treatmentTypesCache && Date.now() < treatmentTypesCache.expiresAt) {
+    return treatmentTypesCache.data;
   }
+
+  if (!treatmentTypesLoadPromise) {
+    treatmentTypesLoadPromise = getStudentPortalTreatmentTypes()
+      .then((treatmentTypes) => {
+        treatmentTypesCache = {
+          data: treatmentTypes,
+          expiresAt: Date.now() + STUDENT_REFERENCE_DATA_CACHE_MAX_AGE_MS,
+        };
+
+        return treatmentTypes;
+      })
+      .catch(() => [])
+      .finally(() => {
+        treatmentTypesLoadPromise = null;
+      });
+  }
+
+  return treatmentTypesLoadPromise;
 }
 
 async function updateTreatments(treatmentTypeIds: string[]): Promise<boolean> {
@@ -2275,10 +2573,22 @@ async function updateTreatments(treatmentTypeIds: string[]): Promise<boolean> {
 
   try {
     const treatments = await updateStudentPortalTreatments(treatmentTypeIds);
-    updateState({ ...state, errorMessage: null, isLoading: false, isReady: true, treatments });
+    updateState({
+      ...state,
+      errorMessage: null,
+      isLoading: false,
+      isReady: true,
+      treatments,
+    });
     return true;
   } catch (error) {
-    patchState({ errorMessage: getErrorMessage(error, 'No pudimos actualizar tus tratamientos.'), isLoading: false });
+    patchState({
+      errorMessage: getErrorMessage(
+        error,
+        'No pudimos actualizar tus tratamientos.',
+      ),
+      isLoading: false,
+    });
     return false;
   }
 }
@@ -2293,10 +2603,17 @@ export function resetStudentModuleState() {
     IS_TEST_MODE ? initialMockState : createEmptyRuntimeModuleState(),
   );
   runtimeLoadPromise = null;
+  conversationRefreshPromises.clear();
+  universitySitesCache = null;
+  universitySitesLoadPromise = null;
+  treatmentTypesCache = null;
+  treatmentTypesLoadPromise = null;
   emitChange();
 }
 
-export function useStudentModuleStore(options: UseStudentModuleStoreOptions = {}) {
+export function useStudentModuleStore(
+  options: UseStudentModuleStoreOptions = {},
+) {
   const snapshot = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   const shouldAutoLoad = options.autoLoad ?? true;
 

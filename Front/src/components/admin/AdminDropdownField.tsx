@@ -27,7 +27,9 @@ type AdminDropdownFieldProps = {
   name: string;
   onBlur?: (() => void) | undefined;
   onChange: (value: string) => void;
-  onKeyDown?: ((event: ReactKeyboardEvent<HTMLButtonElement>) => void) | undefined;
+  onKeyDown?:
+    | ((event: ReactKeyboardEvent<HTMLButtonElement>) => void)
+    | undefined;
   options: SelectOption[];
   placeholder: string;
   triggerClassName?: string;
@@ -88,12 +90,18 @@ export function AdminDropdownField({
   }, [isOpen]);
 
   return (
-    <div className={classNames('admin-dropdown-field space-y-1.5', containerClassName)}>
+    <div
+      className={classNames(
+        'admin-dropdown-field space-y-1.5',
+        containerClassName,
+      )}
+    >
       <label
         className={classNames(
           'admin-dropdown-field__label block text-sm font-semibold text-ink',
           labelClassName,
         )}
+        htmlFor={id}
       >
         {label}
       </label>
@@ -101,7 +109,9 @@ export function AdminDropdownField({
         className="relative"
         ref={rootRef}
         onBlur={(event) => {
-          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          if (
+            !event.currentTarget.contains(event.relatedTarget as Node | null)
+          ) {
             setIsOpen(false);
             onBlur?.();
           }
@@ -114,7 +124,9 @@ export function AdminDropdownField({
         />
         <button
           aria-controls={`${id}-menu`}
-          aria-describedby={error ? `${id}-error` : helpText ? `${id}-help` : undefined}
+          aria-describedby={
+            error ? `${id}-error` : helpText ? `${id}-help` : undefined
+          }
           aria-expanded={isOpen}
           aria-haspopup="listbox"
           aria-invalid={Boolean(error)}
@@ -184,7 +196,9 @@ export function AdminDropdownField({
                     <span
                       className={classNames(
                         'inline-flex h-4.5 w-4.5 items-center justify-center rounded-full',
-                        isSelected ? 'bg-white/18 text-white' : 'bg-white text-slate-300',
+                        isSelected
+                          ? 'bg-white/18 text-white'
+                          : 'bg-white text-slate-300',
                       )}
                     >
                       <Check aria-hidden="true" className="h-3 w-3" />

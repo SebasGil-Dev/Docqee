@@ -275,6 +275,91 @@
     padding: 0;
   }
 
+  .student-page-compact
+    .student-appointment-dialog-field
+    > :not([hidden])
+    ~ :not([hidden]) {
+    --tw-space-y-reverse: 0;
+    margin-top: calc(0.25rem * calc(1 - var(--tw-space-y-reverse)));
+    margin-bottom: calc(0.25rem * var(--tw-space-y-reverse));
+  }
+
+  .student-page-compact .student-appointment-dialog .admin-text-field__label,
+  .student-page-compact
+    .student-appointment-dialog
+    .admin-dropdown-field__label,
+  .student-page-compact .student-appointment-dialog .admin-time-picker > label {
+    font-size: 0.7rem;
+    line-height: 1rem;
+  }
+
+  .student-page-compact .student-appointment-dialog .admin-text-field__input,
+  .student-page-compact
+    .student-appointment-dialog
+    .admin-dropdown-field__trigger,
+  .student-page-compact
+    .student-appointment-dialog
+    .admin-time-picker
+    > .relative
+    > button {
+    min-height: 2rem;
+    padding-top: 0.34rem;
+    padding-bottom: 0.34rem;
+    border-radius: 0.85rem;
+    font-size: 0.74rem;
+    line-height: 1.15rem;
+  }
+
+  .student-page-compact .student-appointment-dialog .admin-text-field__input,
+  .student-page-compact
+    .student-appointment-dialog
+    .admin-dropdown-field__trigger,
+  .student-page-compact
+    .student-appointment-dialog
+    .admin-time-picker
+    > .relative
+    > button {
+    padding-left: 2.1rem;
+  }
+
+  .student-page-compact
+    .student-appointment-dialog
+    .admin-text-field
+    > .relative
+    > svg:first-of-type,
+  .student-page-compact
+    .student-appointment-dialog
+    .admin-dropdown-field
+    > .relative
+    > svg:first-of-type,
+  .student-page-compact
+    .student-appointment-dialog
+    .admin-time-picker
+    > .relative
+    > svg:first-of-type {
+    left: 0.72rem;
+    width: 0.88rem;
+    height: 0.88rem;
+  }
+
+  .student-page-compact
+    .student-appointment-dialog
+    .admin-dropdown-field__menu {
+    top: calc(100% + 0.3rem);
+    bottom: auto;
+    z-index: 60;
+  }
+
+  .student-page-compact .student-appointment-dialog-notes {
+    height: 3rem;
+    min-height: 3rem;
+    max-height: 3rem;
+    overflow-y: auto;
+    padding-top: 0.45rem;
+    padding-bottom: 0.45rem;
+    line-height: 1.1rem;
+  }
+
   .student-page-compact .admin-status-badge {
     padding: 0.18rem 0.56rem;
     font-size: 0.6rem;

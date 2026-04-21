@@ -45,7 +45,13 @@ function toTotalMinutes(h24: number, minute: number) {
 }
 
 function toH24(hour: number, period: 'AM' | 'PM') {
-  return period === 'AM' ? (hour === 12 ? 0 : hour) : hour === 12 ? 12 : hour + 12;
+  return period === 'AM'
+    ? hour === 12
+      ? 0
+      : hour
+    : hour === 12
+      ? 12
+      : hour + 12;
 }
 
 function parseMinTotal(min: string | undefined): number {
@@ -92,7 +98,9 @@ export function AdminTimePickerField({
   const parsed = value ? parseTime(value) : null;
   const [selHour, setSelHour] = useState(parsed?.hour ?? 12);
   const [selMinute, setSelMinute] = useState(parsed?.minute ?? 0);
-  const [selPeriod, setSelPeriod] = useState<'AM' | 'PM'>(parsed?.period ?? 'AM');
+  const [selPeriod, setSelPeriod] = useState<'AM' | 'PM'>(
+    parsed?.period ?? 'AM',
+  );
 
   useEffect(() => {
     if (value) {
@@ -245,13 +253,19 @@ export function AdminTimePickerField({
 
   const cellBase =
     'flex h-8 w-full items-center justify-center rounded-[0.65rem] text-[0.78rem] font-semibold transition duration-150';
-  const cellActive = 'bg-primary text-white shadow-[0_10px_24px_-16px_rgba(22,78,99,0.9)]';
+  const cellActive =
+    'bg-primary text-white shadow-[0_10px_24px_-16px_rgba(22,78,99,0.9)]';
   const cellEnabled = 'text-ink hover:bg-slate-100 cursor-pointer';
   const cellDisabled = 'text-slate-300 cursor-not-allowed line-through';
 
   return (
-    <div className={classNames('admin-time-picker space-y-1.5', containerClassName)}>
-      <label className="block text-sm font-semibold text-ink">
+    <div
+      className={classNames(
+        'admin-time-picker space-y-1.5',
+        containerClassName,
+      )}
+    >
+      <label className="block text-sm font-semibold text-ink" htmlFor={id}>
         {label}
       </label>
       <div className="relative" ref={rootRef}>
@@ -298,7 +312,10 @@ export function AdminTimePickerField({
                 <p className="mb-1 text-center text-[0.65rem] font-bold uppercase tracking-wide text-ink-muted">
                   Hora
                 </p>
-                <div className="admin-scrollbar max-h-[13rem] space-y-0.5 overflow-y-auto pr-0.5" ref={hoursScrollRef}>
+                <div
+                  className="admin-scrollbar max-h-[13rem] space-y-0.5 overflow-y-auto pr-0.5"
+                  ref={hoursScrollRef}
+                >
                   {HOURS.map((h) => {
                     const isDisabled = isHourDisabled(h, selPeriod);
                     const isSelected = selHour === h;
@@ -308,7 +325,11 @@ export function AdminTimePickerField({
                         key={h}
                         className={classNames(
                           cellBase,
-                          isDisabled ? cellDisabled : isSelected ? cellActive : cellEnabled,
+                          isDisabled
+                            ? cellDisabled
+                            : isSelected
+                              ? cellActive
+                              : cellEnabled,
                         )}
                         disabled={isDisabled}
                         type="button"
@@ -326,7 +347,10 @@ export function AdminTimePickerField({
                 <p className="mb-1 text-center text-[0.65rem] font-bold uppercase tracking-wide text-ink-muted">
                   Min
                 </p>
-                <div className="admin-scrollbar max-h-[13rem] space-y-0.5 overflow-y-auto pr-0.5" ref={minutesScrollRef}>
+                <div
+                  className="admin-scrollbar max-h-[13rem] space-y-0.5 overflow-y-auto pr-0.5"
+                  ref={minutesScrollRef}
+                >
                   {MINUTES.map((m) => {
                     const isDisabled = isMinuteDisabled(m);
                     const isSelected = selMinute === m;
@@ -336,7 +360,11 @@ export function AdminTimePickerField({
                         key={m}
                         className={classNames(
                           cellBase,
-                          isDisabled ? cellDisabled : isSelected ? cellActive : cellEnabled,
+                          isDisabled
+                            ? cellDisabled
+                            : isSelected
+                              ? cellActive
+                              : cellEnabled,
                         )}
                         disabled={isDisabled}
                         type="button"
