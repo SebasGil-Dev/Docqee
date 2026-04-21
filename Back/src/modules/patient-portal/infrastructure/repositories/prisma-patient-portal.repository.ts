@@ -139,13 +139,16 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     fecha_respuesta: Date | null;
     fecha_envio: Date;
     estado: "PENDIENTE" | "ACEPTADA" | "RECHAZADA" | "CERRADA" | "CANCELADA";
-    conversacion?: { id_conversacion: number } | null;
+    conversacion?: { estado?: string; id_conversacion: number } | null;
     cita?: { id_cita: number }[];
     cuenta_estudiante: {
       persona: { nombres: string; apellidos: string };
       universidad: { nombre: string };
     };
   }): PatientRequestDto {
+    const requestStatus =
+      request.conversacion?.estado === "CERRADA" ? "CERRADA" : request.estado;
+
     return {
       appointmentsCount: request.cita?.length ?? 0,
       conversationId: request.conversacion
@@ -155,7 +158,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       reason: request.motivo_consulta ?? null,
       responseAt: request.fecha_respuesta?.toISOString() ?? null,
       sentAt: request.fecha_envio.toISOString(),
-      status: request.estado,
+      status: requestStatus,
       studentId: String(request.id_cuenta_estudiante),
       studentName: `${request.cuenta_estudiante.persona.nombres} ${request.cuenta_estudiante.persona.apellidos}`,
       universityName: request.cuenta_estudiante.universidad.nombre,
@@ -878,9 +881,16 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         where: {
           id_cuenta_estudiante: studentAccountId,
           id_cuenta_paciente: patientAccountId,
-          estado: {
-            in: ["PENDIENTE", "ACEPTADA"],
-          },
+          OR: [
+            { estado: "PENDIENTE" },
+            {
+              estado: "ACEPTADA",
+              OR: [
+                { conversacion: { is: null } },
+                { conversacion: { isNot: { estado: "CERRADA" } } },
+              ],
+            },
+          ],
         },
         select: { id_solicitud: true },
       }),
@@ -911,7 +921,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
           select: { id_cita: true },
         },
         conversacion: {
-          select: { id_conversacion: true },
+          select: { estado: true, id_conversacion: true },
         },
         cuenta_estudiante: {
           include: {
@@ -943,7 +953,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       data: { estado: payload.status, fecha_respuesta: new Date() },
       include: {
         cita: { select: { id_cita: true } },
-        conversacion: { select: { id_conversacion: true } },
+        conversacion: { select: { estado: true, id_conversacion: true } },
         cuenta_estudiante: { include: { persona: true, universidad: true } },
       },
     });

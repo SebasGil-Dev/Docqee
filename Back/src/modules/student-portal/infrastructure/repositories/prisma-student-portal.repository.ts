@@ -210,6 +210,8 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     patientReviews: StudentRequestPatientReviewRecord[],
   ): StudentRequestDto {
     const patientName = `${request.cuenta_paciente.persona.nombres} ${request.cuenta_paciente.persona.apellidos}`;
+    const requestStatus =
+      request.conversacion?.estado === 'CERRADA' ? 'CERRADA' : request.estado;
 
     return {
       appointmentsCount: request.cita.length,
@@ -236,7 +238,7 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       reason: request.motivo_consulta ?? null,
       responseAt: request.fecha_respuesta?.toISOString() ?? null,
       sentAt: request.fecha_envio.toISOString(),
-      status: request.estado,
+      status: requestStatus,
     };
   }
 
@@ -835,18 +837,22 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       }
 
       const updated = await this.prisma.$transaction(async (tx) => {
-        await tx.conversacion.updateMany({
+        const closedConversation = await tx.conversacion.updateMany({
           where: { id_solicitud: requestId },
           data: { estado: 'CERRADA' },
         });
 
-        return tx.solicitud.update({
+        if (closedConversation.count === 0) {
+          await tx.conversacion.create({
+            data: {
+              id_solicitud: requestId,
+              estado: 'CERRADA',
+            },
+          });
+        }
+
+        return tx.solicitud.findUniqueOrThrow({
           where: { id_solicitud: requestId },
-          data: {
-            estado: 'CERRADA',
-            fecha_cierre: new Date(),
-            fecha_actualizacion: new Date(),
-          },
           include: {
             cuenta_paciente: {
               include: {
@@ -885,17 +891,22 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       });
 
       if (payload.status === 'ACEPTADA') {
-        await tx.conversacion.upsert({
+        const activatedConversation = await tx.conversacion.updateMany({
           where: { id_solicitud: requestId },
-          create: {
-            id_solicitud: requestId,
-            estado: 'ACTIVA',
-          },
-          update: {
+          data: {
             estado: 'ACTIVA',
             solo_lectura_at: null,
           },
         });
+
+        if (activatedConversation.count === 0) {
+          await tx.conversacion.create({
+            data: {
+              id_solicitud: requestId,
+              estado: 'ACTIVA',
+            },
+          });
+        }
       }
 
       return tx.solicitud.findUniqueOrThrow({
@@ -1148,17 +1159,18 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     studentAccountId: number,
     payload: UpsertStudentAppointmentDto,
   ): Promise<StudentAgendaAppointmentDto> {
-    // Verify solicitud belongs to this student and is in ACEPTADA status
+    // Verify solicitud belongs to this student and has an active conversation.
     const solicitud = await this.prisma.solicitud.findFirst({
       where: { id_solicitud: payload.requestId, id_cuenta_estudiante: studentAccountId },
+      include: { conversacion: true },
     });
 
     if (!solicitud) {
       throw new NotFoundException('La solicitud no existe o no te pertenece.');
     }
 
-    if (solicitud.estado !== 'ACEPTADA') {
-      throw new BadRequestException('Solo puedes programar citas para solicitudes aceptadas.');
+    if (solicitud.estado !== 'ACEPTADA' || solicitud.conversacion?.estado !== 'ACTIVA') {
+      throw new BadRequestException('Solo puedes programar citas para solicitudes aceptadas y activas.');
     }
 
     // Verify supervisor belongs to the student's university
