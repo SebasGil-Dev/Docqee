@@ -13,6 +13,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import { AdminConfirmationDialog } from '@/components/admin/AdminConfirmationDialog';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
 import { Seo } from '@/components/ui/Seo';
@@ -211,18 +212,6 @@ function StudentRequestProfileDialog({
                   )}
                 </div>
                 <div className="flex min-w-0 flex-col justify-center gap-2 rounded-[1.15rem] bg-white/10 px-3.5 py-2.5">
-                  <span
-                    className={classNames(
-                      'inline-flex w-fit shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-inset',
-                      request.status === 'ACEPTADA'
-                        ? 'bg-white/14 text-white ring-white/20'
-                        : request.status === 'PENDIENTE'
-                          ? 'bg-amber-200/15 text-white ring-amber-200/30'
-                          : 'bg-white/10 text-white ring-white/18',
-                    )}
-                  >
-                    Solicitud {getStatusLabel(request.status).toLowerCase()}
-                  </span>
                   <div className="min-w-0">
                     <h3 className="truncate font-headline text-[1.25rem] font-extrabold tracking-tight text-white">
                       {request.patientName}
@@ -286,14 +275,6 @@ function StudentRequestProfileDialog({
                         Comentarios de otros estudiantes
                       </h3>
                     </div>
-                    {averageRating !== null && patientReviews.length > 0 ? (
-                      <div className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 ring-1 ring-amber-200">
-                        <span className="flex items-center gap-1.5">
-                          {renderRatingStars(averageRating, 'h-3.5 w-3.5')}
-                        </span>
-                        <span>{averageRating.toFixed(1)}</span>
-                      </div>
-                    ) : null}
                   </div>
 
                   {patientComments.length > 0 ? (
@@ -375,6 +356,7 @@ export function StudentRequestsPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
+  const [requestToClose, setRequestToClose] = useState<StudentRequest | null>(null);
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const pendingCount = useMemo(
@@ -440,6 +422,20 @@ export function StudentRequestsPage() {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [selectedRequestId]);
+
+  useEffect(() => {
+    if (!successMessage) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setSuccessMessage(null);
+    }, 3000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [successMessage]);
 
   const handleRequestAction = (
     requestId: string,
@@ -618,7 +614,7 @@ export function StudentRequestsPage() {
                   <th className="w-[17rem] px-4 py-2.5 sm:px-5">Paciente</th>
                   <th className="px-4 py-2.5">Motivo</th>
                   <th className="w-[9.5rem] px-4 py-2.5 text-left">Estado</th>
-                  <th className="w-[18rem] px-4 py-2.5 text-right sm:px-5">Acciones</th>
+                  <th className="w-[18rem] px-4 py-2.5 text-center sm:px-5">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200/80 bg-white">
@@ -657,9 +653,9 @@ export function StudentRequestsPage() {
                         {getStatusLabel(request.status)}
                       </span>
                     </td>
-                    <td className="w-[18rem] px-4 py-3 text-right sm:px-5">
+                    <td className="w-[18rem] px-4 py-3 text-center sm:px-5">
                       {request.status === 'PENDIENTE' ? (
-                        <div className="flex flex-nowrap items-center justify-end gap-2 whitespace-nowrap">
+                        <div className="flex flex-nowrap items-center justify-center gap-2 whitespace-nowrap">
                           <button
                             aria-label={`Ver perfil de ${request.patientName}`}
                             className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
@@ -699,7 +695,7 @@ export function StudentRequestsPage() {
                           </button>
                         </div>
                       ) : request.status === 'ACEPTADA' ? (
-                        <div className="flex flex-nowrap items-center justify-end gap-2 whitespace-nowrap">
+                        <div className="flex flex-nowrap items-center justify-center gap-2 whitespace-nowrap">
                           <button
                             aria-label={`Ver perfil de ${request.patientName}`}
                             className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
@@ -723,20 +719,14 @@ export function StudentRequestsPage() {
                           <button
                             className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
                             type="button"
-                            onClick={() =>
-                              handleRequestAction(
-                                request.id,
-                                'CERRADA',
-                                'La solicitud fue cerrada y la conversacion paso a modo no operativo.',
-                              )
-                            }
+                            onClick={() => setRequestToClose(request)}
                           >
                             <ShieldX aria-hidden="true" className="h-3.5 w-3.5" />
                             <span>{studentContent.requestsPage.actionLabels.close}</span>
                           </button>
                         </div>
                       ) : request.conversationId ? (
-                        <div className="flex flex-nowrap items-center justify-end gap-2 whitespace-nowrap">
+                        <div className="flex flex-nowrap items-center justify-center gap-2 whitespace-nowrap">
                           <button
                             aria-label={`Ver perfil de ${request.patientName}`}
                             className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
@@ -757,7 +747,7 @@ export function StudentRequestsPage() {
                           </Link>
                         </div>
                       ) : (
-                        <div className="flex flex-nowrap items-center justify-end gap-2 whitespace-nowrap">
+                        <div className="flex flex-nowrap items-center justify-center gap-2 whitespace-nowrap">
                           <button
                             aria-label={`Ver perfil de ${request.patientName}`}
                             className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
@@ -807,6 +797,29 @@ export function StudentRequestsPage() {
           }
         />
       ) : null}
+      <AdminConfirmationDialog
+        cancelLabel="No, volver"
+        confirmLabel="Sí, cerrar solicitud"
+        description="Si cierras esta solicitud, ya no podrás comunicarte más con este usuario. ¿Estás seguro de que deseas continuar?"
+        icon={ShieldX}
+        isOpen={!!requestToClose}
+        isSubmitting={isLoading}
+        title="Cerrar solicitud"
+        tone="danger"
+        onCancel={() => setRequestToClose(null)}
+        onConfirm={() => {
+          if (!requestToClose) {
+            return;
+          }
+
+          handleRequestAction(
+            requestToClose.id,
+            'CERRADA',
+            'La solicitud fue cerrada y la conversación quedó inhabilitada para nuevos mensajes.',
+            () => setRequestToClose(null),
+          );
+        }}
+      />
     </div>
   );
 }

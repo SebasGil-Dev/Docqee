@@ -1,6 +1,7 @@
 import {
   Ban,
   BriefcaseMedical,
+  CalendarDays,
   CalendarCheck2,
   Check,
   CheckCircle2,
@@ -296,7 +297,7 @@ export function StudentAppointmentsPage() {
     string | null
   >(null);
   const [appointmentDialogMode, setAppointmentDialogMode] = useState<
-    'create' | 'view' | 'edit'
+    'create' | 'view' | 'edit' | 'reschedule'
   >('create');
   const [appointmentApiError, setAppointmentApiError] = useState<string | null>(
     null,
@@ -359,6 +360,7 @@ export function StudentAppointmentsPage() {
     [practiceSites],
   );
   const isAppointmentDialogReadOnly = appointmentDialogMode === 'view';
+  const isRescheduleMode = appointmentDialogMode === 'reschedule';
   const canEditCurrentDialogAppointment = useMemo(() => {
     if (!editingAppointmentId) {
       return false;
@@ -373,12 +375,16 @@ export function StudentAppointmentsPage() {
   const appointmentDialogTitle =
     appointmentDialogMode === 'view'
       ? 'Ver cita'
+      : appointmentDialogMode === 'reschedule'
+        ? 'Reprogramar cita'
       : appointmentDialogMode === 'edit'
         ? 'Editar cita'
         : 'Agendar cita';
   const appointmentDialogDescription =
     appointmentDialogMode === 'view'
       ? 'Consulta la cita y usa Editar cita para habilitar cambios.'
+      : appointmentDialogMode === 'reschedule'
+        ? 'Propón una nueva fecha y hora para la cita ya aceptada.'
       : 'Agenda una cita a partir de una solicitud aceptada, con sede, docente supervisor y tratamientos validos.';
   const filteredAppointments = useMemo(() => {
     const filtered = appointments.filter((appointment) => {
@@ -496,7 +502,7 @@ export function StudentAppointmentsPage() {
 
   const openAppointmentDialog = (
     appointment: StudentAgendaAppointment,
-    mode: 'view' | 'edit',
+    mode: 'view' | 'edit' | 'reschedule',
   ) => {
     setEditingAppointmentId(appointment.id);
     setAppointmentDialogMode(mode);
@@ -512,6 +518,12 @@ export function StudentAppointmentsPage() {
 
   const handleViewAppointment = (appointment: StudentAgendaAppointment) => {
     openAppointmentDialog(appointment, 'view');
+  };
+
+  const handleRescheduleAppointment = (
+    appointment: StudentAgendaAppointment,
+  ) => {
+    openAppointmentDialog(appointment, 'reschedule');
   };
 
   const handleEnableAppointmentEditing = () => {
@@ -963,19 +975,14 @@ export function StudentAppointmentsPage() {
                             className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-sky-50 px-2.5 py-1.5 text-xs font-semibold text-sky-700 transition duration-200 hover:bg-sky-100"
                             type="button"
                             onClick={() =>
-                              handleStatusChange(appointment.id, 'FINALIZADA')
+                              handleRescheduleAppointment(appointment)
                             }
                           >
-                            <CheckCircle2
+                            <CalendarDays
                               aria-hidden="true"
                               className="h-3.5 w-3.5"
                             />
-                            <span>
-                              {
-                                studentContent.appointmentsPage.actionLabels
-                                  .finalize
-                              }
-                            </span>
+                            <span>Reprogramar</span>
                           </button>
                           <button
                             className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-rose-50 px-2.5 py-1.5 text-xs font-semibold text-rose-700 transition duration-200 hover:bg-rose-100"
@@ -1063,7 +1070,7 @@ export function StudentAppointmentsPage() {
             <div className="grid gap-2 sm:grid-cols-2">
               <AdminDropdownField
                 containerClassName="student-appointment-dialog-field"
-                disabled={isAppointmentDialogReadOnly}
+                disabled={isAppointmentDialogReadOnly || isRescheduleMode}
                 error={appointmentErrors.requestId}
                 icon={UserRound}
                 id="student-appointment-request"
@@ -1081,7 +1088,7 @@ export function StudentAppointmentsPage() {
               />
               <AdminDropdownField
                 containerClassName="student-appointment-dialog-field"
-                disabled={isAppointmentDialogReadOnly}
+                disabled={isAppointmentDialogReadOnly || isRescheduleMode}
                 error={appointmentErrors.siteId}
                 icon={MapPin}
                 id="student-appointment-site"
@@ -1100,7 +1107,7 @@ export function StudentAppointmentsPage() {
             </div>
             <AdminDropdownField
               containerClassName="student-appointment-dialog-field"
-              disabled={isAppointmentDialogReadOnly}
+              disabled={isAppointmentDialogReadOnly || isRescheduleMode}
               error={appointmentErrors.appointmentTypeId}
               icon={Stethoscope}
               id="student-appointment-type"
@@ -1162,7 +1169,7 @@ export function StudentAppointmentsPage() {
             </div>
             <AdminDropdownField
               containerClassName="student-appointment-dialog-field"
-              disabled={isAppointmentDialogReadOnly}
+              disabled={isAppointmentDialogReadOnly || isRescheduleMode}
               error={appointmentErrors.supervisorId}
               icon={GraduationCap}
               id="student-appointment-supervisor"
@@ -1205,14 +1212,14 @@ export function StudentAppointmentsPage() {
                       key={treatment.id}
                       className={classNames(
                         'rounded-[0.85rem] border px-2 py-1.5 text-left transition duration-200',
-                        isAppointmentDialogReadOnly
+                        isAppointmentDialogReadOnly || isRescheduleMode
                           ? 'cursor-default'
                           : 'cursor-pointer',
                         isSelected
                           ? 'border-primary/35 bg-primary/[0.08] shadow-[0_18px_36px_-30px_rgba(22,78,99,0.8)]'
                           : 'border-slate-200/80 bg-white hover:border-primary/20 hover:bg-slate-50',
                       )}
-                      disabled={isAppointmentDialogReadOnly}
+                      disabled={isAppointmentDialogReadOnly || isRescheduleMode}
                       type="button"
                       onClick={() =>
                         handleTreatmentToggle(treatment.treatmentTypeId)
@@ -1253,11 +1260,12 @@ export function StudentAppointmentsPage() {
               <textarea
                 className={classNames(
                   'student-appointment-dialog-notes min-h-[3rem] w-full rounded-[0.85rem] border border-slate-200 bg-surface px-2.5 py-1.5 text-[0.72rem] text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
-                  isAppointmentDialogReadOnly && 'bg-slate-50',
+                  (isAppointmentDialogReadOnly || isRescheduleMode) &&
+                    'bg-slate-50',
                 )}
                 id="student-appointment-additional-info"
                 placeholder="Registra observaciones operativas o notas de preparacion para la cita."
-                readOnly={isAppointmentDialogReadOnly}
+                readOnly={isAppointmentDialogReadOnly || isRescheduleMode}
                 value={appointmentValues.additionalInfo}
                 onChange={(event) =>
                   handleAppointmentFieldChange(
@@ -1309,6 +1317,8 @@ export function StudentAppointmentsPage() {
                   <span>
                     {appointmentDialogMode === 'edit'
                       ? studentContent.appointmentsPage.actionLabels.update
+                      : appointmentDialogMode === 'reschedule'
+                        ? 'Enviar reprogramacion'
                       : studentContent.appointmentsPage.actionLabels.save}
                   </span>
                 </button>
