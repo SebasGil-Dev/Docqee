@@ -367,6 +367,7 @@ function createMockState(): StudentStoreState {
       id: 'student-request-1',
       patientAge: 29,
       patientCity: 'Bogota',
+      patientLocality: 'Chapinero',
       patientName: 'Ana Maria Perez',
       patientProfile: {
         avatarAlt: 'Foto de perfil de Ana Maria Perez',
@@ -404,6 +405,7 @@ function createMockState(): StudentStoreState {
       id: 'student-request-2',
       patientAge: 36,
       patientCity: 'Bogota',
+      patientLocality: 'Teusaquillo',
       patientName: 'Julian Torres',
       patientProfile: {
         avatarAlt: 'Foto de perfil de Julian Torres',
@@ -433,6 +435,7 @@ function createMockState(): StudentStoreState {
       id: 'student-request-3',
       patientAge: 41,
       patientCity: 'Soacha',
+      patientLocality: 'Centro',
       patientName: 'Claudia Moreno',
       patientProfile: {
         avatarAlt: 'Foto de perfil de Claudia Moreno',
@@ -453,6 +456,7 @@ function createMockState(): StudentStoreState {
       id: 'student-request-4',
       patientAge: 33,
       patientCity: 'Bogota',
+      patientLocality: 'Suba',
       patientName: 'Ricardo Suarez',
       patientProfile: {
         avatarAlt: 'Foto de perfil de Ricardo Suarez',
@@ -860,6 +864,9 @@ function isStudentRequest(value: unknown): value is StudentRequest {
     typeof candidate.id === 'string' &&
     typeof candidate.patientAge === 'number' &&
     typeof candidate.patientCity === 'string' &&
+    (candidate.patientLocality === undefined ||
+      candidate.patientLocality === null ||
+      typeof candidate.patientLocality === 'string') &&
     typeof candidate.patientName === 'string' &&
     (candidate.patientProfile === undefined ||
       candidate.patientProfile === null ||

@@ -3,7 +3,6 @@ import {
   Check,
   Eye,
   MessageSquareMore,
-  Phone,
   Search,
   ShieldX,
   SlidersHorizontal,
@@ -49,6 +48,14 @@ const requestProfileDateFormatter = new Intl.DateTimeFormat('es-CO', {
   month: 'short',
   year: 'numeric',
 });
+
+function formatRequestDate(value: string) {
+  return new Date(value).toLocaleDateString('es-CO');
+}
+
+function getPatientLocationLabel(request: StudentRequest) {
+  return [request.patientCity, request.patientLocality].filter(Boolean).join(' - ');
+}
 
 function renderRatingStars(value: number, sizeClassName = 'h-4 w-4') {
   return Array.from({ length: 5 }, (_, index) => {
@@ -108,6 +115,16 @@ function getPatientInitials(name: string) {
   return initials || 'P';
 }
 
+function getRequestPatientAvatarSrc(src: string | null | undefined) {
+  const normalizedSrc = src?.trim();
+
+  if (!normalizedSrc || normalizedSrc.startsWith('/patient-avatars/')) {
+    return undefined;
+  }
+
+  return getOptimizedAvatarUrl(normalizedSrc, 240);
+}
+
 function StudentRequestProfileDialog({
   onAccept,
   onClose,
@@ -118,14 +135,8 @@ function StudentRequestProfileDialog({
   const patientReviews = patientProfile?.reviews ?? [];
   const patientComments = patientReviews.filter((review) => Boolean(review.comment?.trim()));
   const patientInitials = getPatientInitials(request.patientName);
-  const optimizedAvatarSrc = getOptimizedAvatarUrl(patientProfile?.avatarSrc, 240);
+  const optimizedAvatarSrc = getRequestPatientAvatarSrc(patientProfile?.avatarSrc);
   const averageRating = patientProfile?.averageRating ?? null;
-  const reviewsSummary =
-    averageRating !== null && patientReviews.length > 0
-      ? `${averageRating.toFixed(1)} de 5 en ${patientReviews.length} ${
-          patientReviews.length === 1 ? 'valoracion' : 'valoraciones'
-        }`
-      : 'Sin valoraciones registradas.';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
@@ -136,7 +147,6 @@ function StudentRequestProfileDialog({
         onClick={onClose}
       />
       <div
-        aria-describedby={`student-request-profile-description-${request.id}`}
         aria-labelledby={`student-request-profile-title-${request.id}`}
         aria-modal="true"
         className="relative w-full max-w-4xl overflow-hidden rounded-[1.9rem] border border-slate-200/80 bg-white shadow-[0_34px_90px_-36px_rgba(15,23,42,0.55)]"
@@ -161,13 +171,6 @@ function StudentRequestProfileDialog({
               >
                 Perfil de {request.patientName}
               </h2>
-              <p
-                className="text-sm leading-6 text-ink-muted"
-                id={`student-request-profile-description-${request.id}`}
-              >
-                Revisa la informacion principal del paciente antes de aceptar o rechazar la
-                solicitud.
-              </p>
             </div>
 
             <SurfaceCard
@@ -195,7 +198,7 @@ function StudentRequestProfileDialog({
                       {request.patientName}
                     </h3>
                     <p className="text-sm font-medium text-white/88">
-                      {`${request.patientAge} anos - ${request.patientCity}`}
+                      {`${request.patientAge} a\u00f1os - ${request.patientCity}`}
                     </p>
                     <span
                       className={classNames(
@@ -210,20 +213,7 @@ function StudentRequestProfileDialog({
                       Solicitud {getStatusLabel(request.status).toLowerCase()}
                     </span>
                   </div>
-                  <div className="grid gap-2.5 sm:grid-cols-3">
-                    <div className="rounded-[1.15rem] bg-white/10 px-3.5 py-3">
-                      <div className="flex items-start gap-2.5">
-                        <Phone aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-white" />
-                        <div className="min-w-0">
-                          <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white/65">
-                            Numero
-                          </p>
-                          <p className="mt-1 break-all text-sm font-semibold text-white">
-                            {patientProfile?.phone?.trim() || 'No disponible'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+                  <div className="grid gap-2.5 sm:grid-cols-2">
                     <div className="rounded-[1.15rem] bg-white/10 px-3.5 py-3">
                       <div className="flex items-start gap-2.5">
                         <Star
@@ -232,9 +222,18 @@ function StudentRequestProfileDialog({
                         />
                         <div className="min-w-0">
                           <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white/65">
-                            Valoracion
+                            {'Valoraci\u00f3n'}
                           </p>
-                          <p className="mt-1 text-sm font-semibold text-white">{reviewsSummary}</p>
+                          <div
+                            aria-label={
+                              averageRating !== null
+                                ? `Valoracion ${averageRating.toFixed(1)} de 5`
+                                : 'Sin valoracion'
+                            }
+                            className="mt-2 flex items-center gap-1.5"
+                          >
+                            {renderRatingStars(averageRating ?? 0, 'h-4 w-4')}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -269,9 +268,6 @@ function StudentRequestProfileDialog({
                     <h3 className="font-headline text-lg font-extrabold tracking-tight text-ink">
                       Motivo de la solicitud
                     </h3>
-                    <p className="mt-1 text-sm leading-6 text-ink-muted">
-                      Informacion compartida por el paciente al enviar la solicitud.
-                    </p>
                   </div>
                   <div className="rounded-[1.2rem] border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm leading-6 text-ink-muted">
                     {request.reason ?? 'Sin motivo registrado.'}
@@ -289,9 +285,6 @@ function StudentRequestProfileDialog({
                       <h3 className="font-headline text-lg font-extrabold tracking-tight text-ink">
                         Comentarios de otros estudiantes
                       </h3>
-                      <p className="mt-1 text-sm leading-6 text-ink-muted">
-                        Observaciones previas para ayudarte a tomar una decision con mas contexto.
-                      </p>
                     </div>
                     {averageRating !== null && patientReviews.length > 0 ? (
                       <div className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 ring-1 ring-amber-200">
@@ -339,7 +332,7 @@ function StudentRequestProfileDialog({
               </SurfaceCard>
             </div>
 
-            <div className="flex flex-wrap items-center justify-end gap-2.5">
+            <div className="flex flex-wrap items-center justify-center gap-2.5">
               <button
                 className="inline-flex items-center justify-center rounded-full bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
                 type="button"
@@ -613,14 +606,13 @@ export function StudentRequestsPage() {
         </div>
         {filteredRequests.length > 0 ? (
           <div className="admin-scrollbar min-h-0 flex-1 overflow-x-auto overflow-y-auto">
-            <table className="min-w-[70rem] lg:min-w-full">
+            <table className="min-w-[62rem] lg:min-w-full">
               <thead className="sticky top-0 z-10 bg-slate-100 text-left">
                 <tr className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-ink-muted">
-                  <th className="px-4 py-2.5 sm:px-5">Paciente</th>
+                  <th className="w-[17rem] px-4 py-2.5 sm:px-5">Paciente</th>
                   <th className="px-4 py-2.5">Motivo</th>
                   <th className="w-[9.5rem] px-4 py-2.5 text-left">Estado</th>
-                  <th className="px-4 py-2.5">Seguimiento</th>
-                  <th className="px-4 py-2.5 text-right sm:px-5">Acciones</th>
+                  <th className="w-[18rem] px-4 py-2.5 text-right sm:px-5">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200/80 bg-white">
@@ -630,11 +622,17 @@ export function StudentRequestsPage() {
                     className="align-top"
                     data-testid={`student-request-row-${request.id}`}
                   >
-                    <td className="px-4 py-3 sm:px-5">
+                    <td className="w-[17rem] px-4 py-3 sm:px-5">
                       <div className="space-y-1">
                         <p className="text-sm font-semibold text-ink">{request.patientName}</p>
                         <p className="text-xs text-ink-muted">
-                          {`${request.patientAge} a\u00f1os \u00b7 ${request.patientCity}`}
+                          {getPatientLocationLabel(request)}
+                        </p>
+                        <p className="text-xs text-ink-muted">
+                          Envio:{' '}
+                          <span className="font-medium text-ink">
+                            {formatRequestDate(request.sentAt)}
+                          </span>
                         </p>
                       </div>
                     </td>
@@ -653,32 +651,12 @@ export function StudentRequestsPage() {
                         {getStatusLabel(request.status)}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="space-y-1 text-sm text-ink-muted">
-                        <p>
-                          Envio:{' '}
-                          <span className="font-medium text-ink">
-                            {new Date(request.sentAt).toLocaleDateString('es-CO')}
-                          </span>
-                        </p>
-                        <p>
-                          Conversacion:{' '}
-                          <span className="font-medium text-ink">
-                            {request.conversationEnabled ? 'Habilitada' : 'No habilitada'}
-                          </span>
-                        </p>
-                        <p>
-                          Citas asociadas:{' '}
-                          <span className="font-medium text-ink">{request.appointmentsCount}</span>
-                        </p>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-right sm:px-5">
+                    <td className="w-[18rem] px-4 py-3 text-right sm:px-5">
                       {request.status === 'PENDIENTE' ? (
-                        <div className="flex flex-wrap justify-end gap-2">
+                        <div className="flex flex-nowrap items-center justify-end gap-2 whitespace-nowrap">
                           <button
                             aria-label={`Ver perfil de ${request.patientName}`}
-                            className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
+                            className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
                             type="button"
                             onClick={() => setSelectedRequestId(request.id)}
                           >
@@ -686,7 +664,7 @@ export function StudentRequestsPage() {
                             <span>{studentContent.requestsPage.actionLabels.viewProfile}</span>
                           </button>
                           <button
-                            className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition duration-200 hover:bg-emerald-100"
+                            className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition duration-200 hover:bg-emerald-100"
                             type="button"
                             onClick={() =>
                               handleRequestAction(
@@ -700,7 +678,7 @@ export function StudentRequestsPage() {
                             <span>{studentContent.requestsPage.actionLabels.accept}</span>
                           </button>
                           <button
-                            className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition duration-200 hover:bg-rose-100"
+                            className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition duration-200 hover:bg-rose-100"
                             type="button"
                             onClick={() =>
                               handleRequestAction(
@@ -715,10 +693,10 @@ export function StudentRequestsPage() {
                           </button>
                         </div>
                       ) : request.status === 'ACEPTADA' ? (
-                        <div className="flex flex-wrap justify-end gap-2">
+                        <div className="flex flex-nowrap items-center justify-end gap-2 whitespace-nowrap">
                           <button
                             aria-label={`Ver perfil de ${request.patientName}`}
-                            className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
+                            className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
                             type="button"
                             onClick={() => setSelectedRequestId(request.id)}
                           >
@@ -727,7 +705,7 @@ export function StudentRequestsPage() {
                           </button>
                           {request.conversationId ? (
                             <Link
-                              className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition duration-200 hover:bg-primary/15"
+                              className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition duration-200 hover:bg-primary/15"
                               to={`${ROUTES.studentConversations}?conversation=${request.conversationId}`}
                             >
                               <MessageSquareMore aria-hidden="true" className="h-3.5 w-3.5" />
@@ -737,7 +715,7 @@ export function StudentRequestsPage() {
                             </Link>
                           ) : null}
                           <button
-                            className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
+                            className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
                             type="button"
                             onClick={() =>
                               handleRequestAction(
@@ -752,10 +730,10 @@ export function StudentRequestsPage() {
                           </button>
                         </div>
                       ) : request.conversationId ? (
-                        <div className="flex flex-wrap justify-end gap-2">
+                        <div className="flex flex-nowrap items-center justify-end gap-2 whitespace-nowrap">
                           <button
                             aria-label={`Ver perfil de ${request.patientName}`}
-                            className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
+                            className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
                             type="button"
                             onClick={() => setSelectedRequestId(request.id)}
                           >
@@ -763,7 +741,7 @@ export function StudentRequestsPage() {
                             <span>{studentContent.requestsPage.actionLabels.viewProfile}</span>
                           </button>
                           <Link
-                            className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
+                            className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
                             to={`${ROUTES.studentConversations}?conversation=${request.conversationId}`}
                           >
                             <MessageSquareMore aria-hidden="true" className="h-3.5 w-3.5" />
@@ -773,10 +751,10 @@ export function StudentRequestsPage() {
                           </Link>
                         </div>
                       ) : (
-                        <div className="flex flex-wrap items-center justify-end gap-2">
+                        <div className="flex flex-nowrap items-center justify-end gap-2 whitespace-nowrap">
                           <button
                             aria-label={`Ver perfil de ${request.patientName}`}
-                            className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
+                            className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
                             type="button"
                             onClick={() => setSelectedRequestId(request.id)}
                           >
