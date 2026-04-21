@@ -1,5 +1,4 @@
 import {
-  CalendarDays,
   Check,
   Eye,
   MessageSquareMore,
@@ -33,6 +32,8 @@ type StudentRequestProfileDialogProps = {
   onReject: () => void;
   request: StudentRequest;
 };
+
+const preloadedPatientAvatarUrls = new Set<string>();
 
 const requestStatusOptions: Array<{ label: string; value: RequestStatusFilter }> = [
   { label: 'Todas', value: 'all' },
@@ -122,7 +123,18 @@ function getRequestPatientAvatarSrc(src: string | null | undefined) {
     return undefined;
   }
 
-  return getOptimizedAvatarUrl(normalizedSrc, 240);
+  return getOptimizedAvatarUrl(normalizedSrc, 160);
+}
+
+function preloadPatientAvatar(src: string | undefined) {
+  if (!src || preloadedPatientAvatarUrls.has(src) || typeof Image === 'undefined') {
+    return;
+  }
+
+  preloadedPatientAvatarUrls.add(src);
+  const image = new Image();
+  image.decoding = 'async';
+  image.src = src;
 }
 
 function StudentRequestProfileDialog({
@@ -177,82 +189,72 @@ function StudentRequestProfileDialog({
               className="overflow-hidden bg-brand-gradient text-white shadow-none"
               paddingClassName="p-0"
             >
-              <div className="flex flex-col gap-4 px-4 py-4 sm:px-5 sm:py-5 lg:flex-row lg:items-center">
-                <div className="shrink-0">
-                  {optimizedAvatarSrc ? (
-                    <img
-                      alt={patientProfile?.avatarAlt ?? `Foto de perfil de ${request.patientName}`}
-                      className="h-20 w-20 rounded-[1.55rem] object-cover ring-4 ring-white/20 sm:h-24 sm:w-24"
-                      decoding="async"
-                      src={optimizedAvatarSrc}
-                    />
-                  ) : (
-                    <span className="inline-flex h-20 w-20 items-center justify-center rounded-[1.55rem] bg-white/14 text-2xl font-extrabold uppercase text-white ring-4 ring-white/15 sm:h-24 sm:w-24 sm:text-[1.7rem]">
-                      {patientInitials}
-                    </span>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1 space-y-3">
-                  <div className="space-y-1">
+              <div className="flex flex-col gap-3 px-4 py-4 sm:px-5 sm:py-5 lg:flex-row lg:items-center lg:gap-4">
+                <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
+                  <div className="shrink-0">
+                    {optimizedAvatarSrc ? (
+                      <img
+                        alt={
+                          patientProfile?.avatarAlt ?? `Foto de perfil de ${request.patientName}`
+                        }
+                        className="h-20 w-20 rounded-[1.55rem] object-cover ring-4 ring-white/20 sm:h-24 sm:w-24"
+                        decoding="async"
+                        fetchPriority="high"
+                        height={96}
+                        loading="eager"
+                        src={optimizedAvatarSrc}
+                        width={96}
+                      />
+                    ) : (
+                      <span className="inline-flex h-20 w-20 items-center justify-center rounded-[1.55rem] bg-white/14 text-2xl font-extrabold uppercase text-white ring-4 ring-white/15 sm:h-24 sm:w-24 sm:text-[1.7rem]">
+                        {patientInitials}
+                      </span>
+                    )}
+                  </div>
+                  <div className="min-w-0 space-y-1">
                     <h3 className="font-headline text-[1.25rem] font-extrabold tracking-tight text-white">
                       {request.patientName}
                     </h3>
                     <p className="text-sm font-medium text-white/88">
                       {`${request.patientAge} a\u00f1os - ${request.patientCity}`}
                     </p>
-                    <span
-                      className={classNames(
-                        'inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset',
-                        request.status === 'ACEPTADA'
-                          ? 'bg-white/14 text-white ring-white/20'
-                          : request.status === 'PENDIENTE'
-                            ? 'bg-amber-200/15 text-white ring-amber-200/30'
-                            : 'bg-white/10 text-white ring-white/18',
-                      )}
-                    >
-                      Solicitud {getStatusLabel(request.status).toLowerCase()}
-                    </span>
                   </div>
-                  <div className="grid gap-2.5 sm:grid-cols-2">
-                    <div className="rounded-[1.15rem] bg-white/10 px-3.5 py-3">
-                      <div className="flex items-start gap-2.5">
-                        <Star
-                          aria-hidden="true"
-                          className="mt-0.5 h-4 w-4 shrink-0 fill-amber-300 text-amber-300"
-                        />
-                        <div className="min-w-0">
-                          <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white/65">
-                            {'Valoraci\u00f3n'}
-                          </p>
-                          <div
-                            aria-label={
-                              averageRating !== null
-                                ? `Valoracion ${averageRating.toFixed(1)} de 5`
-                                : 'Sin valoracion'
-                            }
-                            className="mt-2 flex items-center gap-1.5"
-                          >
-                            {renderRatingStars(averageRating ?? 0, 'h-4 w-4')}
-                          </div>
-                        </div>
-                      </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 lg:flex-nowrap lg:justify-end">
+                  <span
+                    className={classNames(
+                      'inline-flex shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-inset',
+                      request.status === 'ACEPTADA'
+                        ? 'bg-white/14 text-white ring-white/20'
+                        : request.status === 'PENDIENTE'
+                          ? 'bg-amber-200/15 text-white ring-amber-200/30'
+                          : 'bg-white/10 text-white ring-white/18',
+                    )}
+                  >
+                    Solicitud {getStatusLabel(request.status).toLowerCase()}
+                  </span>
+                  <div className="min-w-[8.5rem] rounded-[1.15rem] bg-white/10 px-3.5 py-2.5">
+                    <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white/65">
+                      {'Valoraci\u00f3n'}
+                    </p>
+                    <div
+                      aria-label={
+                        averageRating !== null
+                          ? `Valoracion ${averageRating.toFixed(1)} de 5`
+                          : 'Sin valoracion'
+                      }
+                      className="mt-2 flex items-center gap-1.5"
+                    >
+                      {renderRatingStars(averageRating ?? 0, 'h-4 w-4')}
                     </div>
-                    <div className="rounded-[1.15rem] bg-white/10 px-3.5 py-3">
-                      <div className="flex items-start gap-2.5">
-                        <CalendarDays
-                          aria-hidden="true"
-                          className="mt-0.5 h-4 w-4 shrink-0 text-white"
-                        />
-                        <div className="min-w-0">
-                          <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white/65">
-                            Solicitud enviada
-                          </p>
-                          <p className="mt-1 text-sm font-semibold text-white">
-                            {requestProfileDateFormatter.format(new Date(request.sentAt))}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+                  </div>
+                  <div className="min-w-[10rem] rounded-[1.15rem] bg-white/10 px-3.5 py-2.5">
+                    <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white/65">
+                      Solicitud enviada
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-white">
+                      {requestProfileDateFormatter.format(new Date(request.sentAt))}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -390,6 +392,12 @@ export function StudentRequestsPage() {
     () => requests.find((request) => request.id === selectedRequestId) ?? null,
     [requests, selectedRequestId],
   );
+
+  useEffect(() => {
+    requests.forEach((request) => {
+      preloadPatientAvatar(getRequestPatientAvatarSrc(request.patientProfile?.avatarSrc));
+    });
+  }, [requests]);
 
   useEffect(() => {
     if (!isStatusMenuOpen) {

@@ -79,6 +79,7 @@ export function StudentConversationsPage() {
   const [statusFilter, setStatusFilter] = useState<ConversationStatusFilter>('all');
   const [composerValue, setComposerValue] = useState('');
   const [composerError, setComposerError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
@@ -160,6 +161,7 @@ export function StudentConversationsPage() {
   useEffect(() => {
     setComposerValue('');
     setComposerError(null);
+    setSuccessMessage(null);
   }, [selectedConversation?.id]);
 
   useEffect(() => {
@@ -189,23 +191,28 @@ export function StudentConversationsPage() {
 
     if (!normalizedMessage) {
       setComposerError('Ingresa un mensaje antes de enviarlo.');
+      setSuccessMessage(null);
       return;
     }
 
     setComposerValue('');
     setComposerError(null);
+    setSuccessMessage(null);
 
     void (async () => {
       const sent = await sendConversationMessage(selectedConversation.id, normalizedMessage);
 
       if (!sent) {
         setComposerValue(normalizedMessage);
+        return;
       }
+
+      setSuccessMessage('Tu mensaje se envio correctamente.');
     })();
   };
 
   return (
-    <div className="student-page-compact flex h-full w-full min-h-0 flex-col gap-3 overflow-hidden">
+    <div className="student-page-compact flex h-full min-h-0 w-full flex-col gap-3 overflow-visible lg:overflow-hidden">
       <Seo
         description={studentContent.conversationsPage.meta.description}
         noIndex
@@ -217,7 +224,7 @@ export function StudentConversationsPage() {
         descriptionClassName="text-sm leading-6 sm:text-base"
         headingAlign="center"
         title={studentContent.conversationsPage.title}
-        titleClassName="text-[2rem] sm:text-[2.35rem]"
+        titleClassName="text-[1.45rem] sm:text-[1.7rem]"
       />
       {visibleErrorMessage ? (
         <SurfaceCard
@@ -227,12 +234,12 @@ export function StudentConversationsPage() {
           <p role="alert">{visibleErrorMessage}</p>
         </SurfaceCard>
       ) : null}
-      <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
-        <div className="border-b border-slate-200/80 px-4 py-3.5 sm:px-5 sm:py-3.5">
-          <div className="flex flex-col gap-3.5">
+      <AdminPanelCard className="min-h-0 flex-1" panelClassName="bg-[#f4f8ff]">
+        <div className="border-b border-slate-200/80 px-3 py-2.5 sm:px-4 sm:py-3">
+          <div className="flex flex-col gap-2.5">
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
               <div className="flex min-w-0 shrink-0 items-center gap-3">
-                <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[1.1rem] bg-primary/10 text-primary ring-1 ring-primary/10">
+                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-primary/10 text-primary ring-1 ring-primary/10">
                   <MessageSquareMore aria-hidden="true" className="h-5 w-5" />
                 </span>
                 <h2 className="min-w-0 font-headline text-[1.2rem] font-extrabold tracking-tight text-ink sm:text-[1.35rem]">
@@ -250,7 +257,7 @@ export function StudentConversationsPage() {
                     className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ghost"
                   />
                   <input
-                    className="h-11 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-11 pr-4 text-sm text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                    className="h-10 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-11 pr-4 text-sm text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
                     id="student-conversation-search"
                     placeholder={studentContent.conversationsPage.searchPlaceholder}
                     type="search"
@@ -271,7 +278,7 @@ export function StudentConversationsPage() {
                           }`
                     }
                     className={classNames(
-                      'relative inline-flex h-11 w-11 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                      'relative inline-flex h-10 w-10 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
                       statusFilter === 'all'
                         ? 'border-slate-200/90 hover:border-primary/30 hover:bg-white'
                         : 'border-primary/25 bg-primary/[0.08] text-primary hover:bg-primary/[0.12]',
@@ -354,9 +361,23 @@ export function StudentConversationsPage() {
             ) : null}
           </div>
         </div>
-        <div className="grid min-h-0 flex-1 gap-3 px-4 py-3.5 sm:px-5 sm:py-4 xl:grid-cols-[minmax(0,21rem)_minmax(0,1fr)] 2xl:grid-cols-[minmax(0,23rem)_minmax(0,1fr)]">
-          <SurfaceCard className="min-h-0 border border-slate-200/80 bg-white shadow-none" paddingClassName="p-0">
-            <div className="flex h-full min-h-[17rem] flex-col">
+        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 py-3 sm:px-4 lg:grid lg:grid-cols-[minmax(18rem,21.5rem)_minmax(0,1fr)] lg:overflow-hidden xl:grid-cols-[minmax(20rem,23rem)_minmax(0,1fr)]">
+          <SurfaceCard
+            className="min-h-[16rem] shrink-0 border border-slate-200/80 bg-white shadow-none lg:h-full lg:min-h-0 lg:shrink"
+            paddingClassName="p-0"
+          >
+            <div className="flex h-full min-h-[16rem] max-h-[22rem] flex-col lg:min-h-0 lg:max-h-none">
+              <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200/80 px-3.5 py-2.5">
+                <div className="min-w-0">
+                  <h3 className="font-headline text-[0.95rem] font-extrabold tracking-tight text-ink">
+                    Chats
+                  </h3>
+                  <p className="text-xs text-ink-muted">Selecciona un paciente para conversar.</p>
+                </div>
+                <span className="inline-flex min-w-[2rem] items-center justify-center rounded-full bg-primary/10 px-2 py-1 text-[0.7rem] font-bold text-primary">
+                  {filteredConversations.length}
+                </span>
+              </div>
               <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto p-2.5">
                 {filteredConversations.length > 0 ? (
                   <div className="space-y-2.5">
@@ -367,6 +388,7 @@ export function StudentConversationsPage() {
                       return (
                         <button
                           key={conversation.id}
+                          aria-current={isSelected ? 'true' : undefined}
                           className={classNames(
                             'w-full rounded-[1.35rem] border px-3.5 py-2.5 text-left transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
                             isSelected
@@ -394,7 +416,7 @@ export function StudentConversationsPage() {
                               </span>
                             ) : null}
                           </div>
-                          <p className="mt-2 line-clamp-2 text-sm leading-6 text-ink-muted">
+                          <p className="mt-2 line-clamp-2 break-words text-sm leading-6 text-ink-muted">
                             {lastMessage?.content ?? conversation.reason ?? 'Sin mensajes todavia.'}
                           </p>
                           <div className="mt-3 flex items-center justify-between gap-3">
@@ -424,10 +446,13 @@ export function StudentConversationsPage() {
               </div>
             </div>
           </SurfaceCard>
-          <SurfaceCard className="min-h-0 border border-slate-200/80 bg-white shadow-none" paddingClassName="p-0">
+          <SurfaceCard
+            className="min-h-[30rem] border border-slate-200/80 bg-white shadow-none lg:h-full lg:min-h-0"
+            paddingClassName="p-0"
+          >
             {selectedConversation ? (
-              <div className="flex h-full min-h-[22rem] flex-col">
-                <div className="border-b border-slate-200/80 px-4 py-3.5 sm:px-5">
+              <div className="flex h-full min-h-[30rem] flex-col lg:min-h-0">
+                <div className="shrink-0 border-b border-slate-200/80 px-4 py-3 sm:px-5">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="space-y-2">
                       <div className="flex flex-wrap items-center gap-2">
@@ -441,7 +466,7 @@ export function StudentConversationsPage() {
                           {selectedConversation.patientCity}
                         </span>
                       </div>
-                      <p className="text-sm leading-6 text-ink-muted">
+                      <p className="break-words text-sm leading-6 text-ink-muted">
                         {selectedConversation.reason ?? 'Conversacion iniciada desde una solicitud sin motivo especificado.'}
                       </p>
                     </div>
@@ -486,7 +511,7 @@ export function StudentConversationsPage() {
                           >
                             {message.authorName}
                           </p>
-                          <p className="mt-1 text-sm leading-6">{message.content}</p>
+                          <p className="mt-1 break-words text-sm leading-6">{message.content}</p>
                           <p
                             className={classNames(
                               'mt-2 text-[0.72rem] font-medium',
@@ -501,7 +526,7 @@ export function StudentConversationsPage() {
                   })}
                   <div ref={messagesEndRef} />
                 </div>
-                <div className="border-t border-slate-200/80 px-4 py-3.5 sm:px-5">
+                <div className="shrink-0 border-t border-slate-200/80 px-4 py-3 sm:px-5">
                   {selectedConversation.status === 'ACTIVA' ? (
                     <div className="space-y-3">
                       <div className="rounded-[1.25rem] border border-emerald-200/80 bg-emerald-50/75 px-4 py-3 text-sm text-emerald-800">
@@ -512,6 +537,14 @@ export function StudentConversationsPage() {
                           </p>
                         </div>
                       </div>
+                      {successMessage ? (
+                        <p
+                          className="rounded-[1rem] border border-emerald-200/80 bg-white px-3 py-2 text-sm font-semibold text-emerald-700"
+                          role="status"
+                        >
+                          {successMessage}
+                        </p>
+                      ) : null}
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
                         <div className="min-w-0 flex-1 space-y-1.5">
                           <label className="block text-sm font-semibold text-ink" htmlFor="student-conversation-message">
@@ -523,7 +556,7 @@ export function StudentConversationsPage() {
                             }
                             aria-invalid={Boolean(composerError)}
                             className={classNames(
-                              'min-h-[5.5rem] w-full rounded-[1.35rem] border bg-surface px-4 py-3 text-sm text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                              'min-h-[4.75rem] w-full rounded-[1.35rem] border bg-surface px-4 py-3 text-sm text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
                               composerError
                                 ? 'border-rose-300 focus-visible:border-rose-400 focus-visible:ring-rose-200/70'
                                 : 'border-slate-200 focus-visible:border-primary',
@@ -534,6 +567,7 @@ export function StudentConversationsPage() {
                             onChange={(event) => {
                               setComposerValue(event.target.value);
                               setComposerError(null);
+                              setSuccessMessage(null);
                             }}
                             onKeyDown={(event) => {
                               if (event.key === 'Enter' && !event.shiftKey) {
