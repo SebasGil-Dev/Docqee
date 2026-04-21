@@ -8,7 +8,6 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
 import { Seo } from '@/components/ui/Seo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
@@ -218,13 +217,6 @@ export function StudentConversationsPage() {
         description={studentContent.conversationsPage.meta.description}
         noIndex
         title={studentContent.conversationsPage.meta.title}
-      />
-      <AdminPageHeader
-        className="gap-2"
-        description=""
-        headingAlign="center"
-        title={studentContent.conversationsPage.title}
-        titleClassName="text-[1.18rem] sm:text-[1.32rem]"
       />
       {visibleErrorMessage ? (
         <SurfaceCard
