@@ -14,7 +14,10 @@ import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
 import { Seo } from '@/components/ui/Seo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { studentContent } from '@/content/studentContent';
-import type { StudentConversation, StudentConversationStatus } from '@/content/types';
+import type {
+  StudentConversation,
+  StudentConversationStatus,
+} from '@/content/types';
 import { classNames } from '@/lib/classNames';
 import { useStudentModuleStore } from '@/lib/studentModuleStore';
 
@@ -51,9 +54,16 @@ function getLastMessage(conversation: StudentConversation) {
 }
 
 export function StudentConversationsPage() {
-  const { conversations, errorMessage, isLoading, sendConversationMessage, refreshConversation } = useStudentModuleStore();
+  const {
+    conversations,
+    errorMessage,
+    isLoading,
+    sendConversationMessage,
+    refreshConversation,
+  } = useStudentModuleStore();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<ConversationStatusFilter>('all');
+  const [statusFilter, setStatusFilter] =
+    useState<ConversationStatusFilter>('all');
   const [composerValue, setComposerValue] = useState('');
   const [composerError, setComposerError] = useState<string | null>(null);
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
@@ -66,9 +76,14 @@ export function StudentConversationsPage() {
     () =>
       conversations
         .filter((conversation) => {
-          const matchesSearch = conversation.patientName.toLowerCase().includes(normalizedSearch);
+          const matchesSearch = conversation.patientName
+            .toLowerCase()
+            .includes(normalizedSearch);
 
-          return matchesSearch && (statusFilter === 'all' || conversation.status === statusFilter);
+          return (
+            matchesSearch &&
+            (statusFilter === 'all' || conversation.status === statusFilter)
+          );
         })
         .sort((a, b) => {
           const aTime = getLastMessage(a)?.sentAt ?? '';
@@ -79,7 +94,9 @@ export function StudentConversationsPage() {
   );
   const selectedConversation = useMemo(
     () =>
-      filteredConversations.find((conversation) => conversation.id === selectedConversationId) ??
+      filteredConversations.find(
+        (conversation) => conversation.id === selectedConversationId,
+      ) ??
       filteredConversations[0] ??
       null,
     [filteredConversations, selectedConversationId],
@@ -129,10 +146,21 @@ export function StudentConversationsPage() {
       return;
     }
 
-    if (!selectedConversationId || selectedConversation?.id !== selectedConversationId) {
-      setSearchParams({ conversation: fallbackConversation.id }, { replace: true });
+    if (
+      !selectedConversationId ||
+      selectedConversation?.id !== selectedConversationId
+    ) {
+      setSearchParams(
+        { conversation: fallbackConversation.id },
+        { replace: true },
+      );
     }
-  }, [filteredConversations, selectedConversation, selectedConversationId, setSearchParams]);
+  }, [
+    filteredConversations,
+    selectedConversation,
+    selectedConversationId,
+    setSearchParams,
+  ]);
 
   useEffect(() => {
     setComposerValue('');
@@ -147,9 +175,15 @@ export function StudentConversationsPage() {
       void refreshConversation(selectedConversation.id);
     }, 5000);
     return () => clearInterval(interval);
-  }, [selectedConversation?.id, selectedConversation?.status, refreshConversation]);
+  }, [
+    selectedConversation?.id,
+    selectedConversation?.status,
+    refreshConversation,
+  ]);
 
-  const lastMessageId = selectedConversation?.messages[selectedConversation.messages.length - 1]?.id;
+  const lastMessageId =
+    selectedConversation?.messages[selectedConversation.messages.length - 1]
+      ?.id;
 
   useEffect(() => {
     if (typeof messagesEndRef.current?.scrollIntoView === 'function') {
@@ -173,7 +207,10 @@ export function StudentConversationsPage() {
     setComposerError(null);
 
     void (async () => {
-      const sent = await sendConversationMessage(selectedConversation.id, normalizedMessage);
+      const sent = await sendConversationMessage(
+        selectedConversation.id,
+        normalizedMessage,
+      );
 
       if (!sent) {
         setComposerValue(normalizedMessage);
@@ -220,7 +257,9 @@ export function StudentConversationsPage() {
                   className="relative min-w-0 flex-1 sm:w-[18rem] sm:flex-none xl:w-[22rem]"
                   htmlFor="student-conversation-search"
                 >
-                  <span className="sr-only">{studentContent.conversationsPage.searchLabel}</span>
+                  <span className="sr-only">
+                    {studentContent.conversationsPage.searchLabel}
+                  </span>
                   <Search
                     aria-hidden="true"
                     className="pointer-events-none absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ghost"
@@ -228,7 +267,9 @@ export function StudentConversationsPage() {
                   <input
                     className="h-9 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-9 pr-3 text-xs text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
                     id="student-conversation-search"
-                    placeholder={studentContent.conversationsPage.searchPlaceholder}
+                    placeholder={
+                      studentContent.conversationsPage.searchPlaceholder
+                    }
                     type="search"
                     value={searchTerm}
                     onChange={(event) => setSearchTerm(event.target.value)}
@@ -243,7 +284,9 @@ export function StudentConversationsPage() {
                       statusFilter === 'all'
                         ? 'Filtrar conversaciones por estado'
                         : `Filtrar conversaciones por estado. Actual: ${
-                            conversationStatusOptions.find((option) => option.value === statusFilter)?.label
+                            conversationStatusOptions.find(
+                              (option) => option.value === statusFilter,
+                            )?.label
                           }`
                     }
                     className={classNames(
@@ -253,7 +296,9 @@ export function StudentConversationsPage() {
                         : 'border-primary/25 bg-primary/[0.08] text-primary hover:bg-primary/[0.12]',
                     )}
                     type="button"
-                    onClick={() => setIsStatusMenuOpen((currentValue) => !currentValue)}
+                    onClick={() =>
+                      setIsStatusMenuOpen((currentValue) => !currentValue)
+                    }
                   >
                     <SlidersHorizontal aria-hidden="true" className="h-4 w-4" />
                     {statusFilter !== 'all' ? (
@@ -296,10 +341,15 @@ export function StudentConversationsPage() {
                               <span
                                 className={classNames(
                                   'inline-flex h-5 w-5 items-center justify-center rounded-full',
-                                  isSelected ? 'bg-white/18 text-white' : 'bg-white text-slate-300',
+                                  isSelected
+                                    ? 'bg-white/18 text-white'
+                                    : 'bg-white text-slate-300',
                                 )}
                               >
-                                <Check aria-hidden="true" className="h-3.5 w-3.5" />
+                                <Check
+                                  aria-hidden="true"
+                                  className="h-3.5 w-3.5"
+                                />
                               </span>
                             </button>
                           );
@@ -323,7 +373,9 @@ export function StudentConversationsPage() {
                   <h3 className="font-headline text-[0.86rem] font-extrabold tracking-tight text-ink">
                     Chats
                   </h3>
-                  <p className="text-[0.65rem] text-ink-muted">Selecciona un paciente.</p>
+                  <p className="text-[0.65rem] text-ink-muted">
+                    Selecciona un paciente.
+                  </p>
                 </div>
                 <span className="inline-flex min-w-[1.7rem] items-center justify-center rounded-full bg-primary/10 px-1.5 py-0.5 text-[0.65rem] font-bold text-primary">
                   {filteredConversations.length}
@@ -334,7 +386,8 @@ export function StudentConversationsPage() {
                   <div className="space-y-2">
                     {filteredConversations.map((conversation) => {
                       const lastMessage = getLastMessage(conversation);
-                      const isSelected = selectedConversation?.id === conversation.id;
+                      const isSelected =
+                        selectedConversation?.id === conversation.id;
 
                       return (
                         <button
@@ -349,7 +402,10 @@ export function StudentConversationsPage() {
                           data-testid={`student-conversation-card-${conversation.id}`}
                           type="button"
                           onClick={() =>
-                            setSearchParams({ conversation: conversation.id }, { replace: true })
+                            setSearchParams(
+                              { conversation: conversation.id },
+                              { replace: true },
+                            )
                           }
                         >
                           <div className="flex items-start justify-between gap-3">
@@ -368,11 +424,15 @@ export function StudentConversationsPage() {
                             ) : null}
                           </div>
                           <p className="mt-1.5 line-clamp-2 break-words text-[0.76rem] leading-5 text-ink-muted">
-                            {lastMessage?.content ?? conversation.reason ?? 'Sin mensajes todavia.'}
+                            {lastMessage?.content ??
+                              conversation.reason ??
+                              'Sin mensajes todavia.'}
                           </p>
                           <div className="mt-2 flex items-center justify-end gap-2">
                             <span className="text-[0.66rem] font-medium text-ink-muted">
-                              {lastMessage ? formatTime(lastMessage.sentAt) : 'Sin hora'}
+                              {lastMessage
+                                ? formatTime(lastMessage.sentAt)
+                                : 'Sin hora'}
                             </span>
                           </div>
                         </button>
@@ -419,10 +479,10 @@ export function StudentConversationsPage() {
                         className={classNames(
                           'flex',
                           isStudentAuthor ? 'justify-end' : 'justify-start',
-                          )}
-                        >
-                          <div
-                            className={classNames(
+                        )}
+                      >
+                        <div
+                          className={classNames(
                             'max-w-[90%] rounded-[1rem] px-3 py-2 shadow-[0_12px_28px_-22px_rgba(15,23,42,0.35)] sm:max-w-[76%]',
                             isStudentAuthor
                               ? 'bg-brand-gradient text-white'
@@ -432,16 +492,22 @@ export function StudentConversationsPage() {
                           <p
                             className={classNames(
                               'text-[0.6rem] font-bold uppercase tracking-[0.14em]',
-                              isStudentAuthor ? 'text-white/70' : 'text-primary/75',
+                              isStudentAuthor
+                                ? 'text-white/70'
+                                : 'text-primary/75',
                             )}
                           >
                             {message.authorName}
                           </p>
-                          <p className="mt-1 break-words text-[0.82rem] leading-5">{message.content}</p>
+                          <p className="mt-1 break-words text-[0.82rem] leading-5">
+                            {message.content}
+                          </p>
                           <p
                             className={classNames(
                               'mt-1.5 text-[0.66rem] font-medium',
-                              isStudentAuthor ? 'text-white/75' : 'text-ink-muted',
+                              isStudentAuthor
+                                ? 'text-white/75'
+                                : 'text-ink-muted',
                             )}
                           >
                             {formatTimestamp(message.sentAt)}
@@ -456,17 +522,22 @@ export function StudentConversationsPage() {
                   {selectedConversation.status === 'ACTIVA' ? (
                     <div className="space-y-2">
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-                        <div className="min-w-0 flex-1 space-y-1">
-                          <label className="block text-xs font-semibold text-ink" htmlFor="student-conversation-message">
+                        <div className="min-w-0 flex-1">
+                          <label
+                            className="sr-only"
+                            htmlFor="student-conversation-message"
+                          >
                             Mensaje para el paciente
                           </label>
                           <textarea
                             aria-describedby={
-                              composerError ? 'student-conversation-message-error' : undefined
+                              composerError
+                                ? 'student-conversation-message-error'
+                                : undefined
                             }
                             aria-invalid={Boolean(composerError)}
                             className={classNames(
-                              'min-h-[3rem] w-full resize-none rounded-[0.95rem] border bg-surface px-3 py-2 text-[0.82rem] text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                              'h-10 min-h-[2.5rem] w-full resize-none rounded-[0.95rem] border bg-surface px-3 py-2 text-[0.82rem] text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
                               composerError
                                 ? 'border-rose-300 focus-visible:border-rose-400 focus-visible:ring-rose-200/70'
                                 : 'border-slate-200 focus-visible:border-primary',
@@ -487,26 +558,38 @@ export function StudentConversationsPage() {
                             }}
                           />
                           {composerError ? (
-                            <p className="text-xs text-rose-600" id="student-conversation-message-error">
+                            <p
+                              className="text-xs text-rose-600"
+                              id="student-conversation-message-error"
+                            >
                               {composerError}
                             </p>
                           ) : null}
                         </div>
                         <button
-                          aria-label={studentContent.conversationsPage.actionLabels.sendMessage}
+                          aria-label={
+                            studentContent.conversationsPage.actionLabels
+                              .sendMessage
+                          }
                           className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/12"
                           disabled={isLoading}
                           type="button"
                           onClick={handleSendMessage}
                         >
-                          <SendHorizontal aria-hidden="true" className="h-4 w-4" />
+                          <SendHorizontal
+                            aria-hidden="true"
+                            className="h-4 w-4"
+                          />
                         </button>
                       </div>
                     </div>
                   ) : (
                     <div className="rounded-[1.25rem] border border-amber-200/80 bg-amber-50/75 px-4 py-3 text-sm text-amber-800">
                       <div className="flex items-center gap-2">
-                        <LockKeyhole aria-hidden="true" className="h-4.5 w-4.5" />
+                        <LockKeyhole
+                          aria-hidden="true"
+                          className="h-4.5 w-4.5"
+                        />
                         <p className="font-medium">
                           {selectedConversation.status === 'SOLO_LECTURA'
                             ? 'Esta conversacion sigue visible solo para consulta, pero ya no permite nuevos mensajes.'
@@ -538,6 +621,3 @@ export function StudentConversationsPage() {
     </div>
   );
 }
-
-
-
