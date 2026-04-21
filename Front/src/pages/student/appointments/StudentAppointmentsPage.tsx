@@ -958,9 +958,9 @@ export function StudentAppointmentsPage() {
                           </button>
                         </div>
                       ) : appointment.status === 'ACEPTADA' ? (
-                        <div className="flex flex-col items-center gap-1.5">
+                        <div className="flex flex-nowrap items-center justify-center gap-1.5">
                           <button
-                            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700 transition duration-200 hover:bg-sky-100"
+                            className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-sky-50 px-2.5 py-1.5 text-xs font-semibold text-sky-700 transition duration-200 hover:bg-sky-100"
                             type="button"
                             onClick={() =>
                               handleStatusChange(appointment.id, 'FINALIZADA')
@@ -978,7 +978,7 @@ export function StudentAppointmentsPage() {
                             </span>
                           </button>
                           <button
-                            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition duration-200 hover:bg-rose-100"
+                            className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-rose-50 px-2.5 py-1.5 text-xs font-semibold text-rose-700 transition duration-200 hover:bg-rose-100"
                             type="button"
                             onClick={() => setAppointmentToCancel(appointment)}
                           >
