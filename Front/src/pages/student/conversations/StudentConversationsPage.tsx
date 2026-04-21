@@ -385,7 +385,7 @@ export function StudentConversationsPage() {
                                 {conversation.patientName}
                               </p>
                               <p className="text-xs text-ink-muted">
-                                {conversation.patientAge} anos - {conversation.patientCity}
+                                {`${conversation.patientAge} a\u00f1os - ${conversation.patientCity}`}
                               </p>
                             </div>
                             {conversation.unreadCount > 0 ? (
@@ -594,3 +594,6 @@ export function StudentConversationsPage() {
     </div>
   );
 }
+
+
+

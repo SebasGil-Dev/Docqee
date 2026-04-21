@@ -102,16 +102,15 @@ export const studentContent = {
       close: 'Cerrar',
       reject: 'Rechazar',
     },
-    description:
-      'Revisa las solicitudes de pacientes, responde cada caso y controla cuando una vinculacion sigue activa.',
+    description: '',
     emptyState: 'No encontramos solicitudes con los criterios seleccionados.',
     meta: {
       description:
         'Gestiona las solicitudes recibidas por el estudiante dentro de Docqee.',
       title: 'Docqee | Solicitudes',
     },
-    searchLabel: 'Buscar solicitud',
-    searchPlaceholder: 'Buscar por paciente o ciudad...',
+    searchLabel: 'Buscar paciente',
+    searchPlaceholder: 'Buscar por nombre del paciente...',
     successNoticePrefix: 'Solicitud actualizada:',
     title: 'Solicitudes',
   },

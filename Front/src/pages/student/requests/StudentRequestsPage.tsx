@@ -73,15 +73,8 @@ export function StudentRequestsPage() {
     () => requests.filter((request) => request.status === 'PENDIENTE').length,
     [requests],
   );
-  const activeConversationCount = useMemo(
-    () => requests.filter((request) => request.conversationEnabled).length,
-    [requests],
-  );
   const filteredRequests = requests.filter((request) => {
-    const matchesSearch =
-      request.patientName.toLowerCase().includes(normalizedSearch) ||
-      request.patientCity.toLowerCase().includes(normalizedSearch) ||
-      (request.reason ?? '').toLowerCase().includes(normalizedSearch);
+    const matchesSearch = request.patientName.toLowerCase().includes(normalizedSearch);
 
     return matchesSearch && (statusFilter === 'all' || request.status === statusFilter);
   });
@@ -160,7 +153,7 @@ export function StudentRequestsPage() {
           <p role="alert">{errorMessage}</p>
         </SurfaceCard>
       ) : null}
-      <div className="grid gap-2.5 md:grid-cols-2">
+      <div>
         <SurfaceCard className="min-w-0 overflow-hidden bg-brand-gradient text-white" paddingClassName="p-0">
           <div className="flex items-center gap-2.5 px-3.5 py-2">
             <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.9rem] bg-white/12 text-white ring-1 ring-white/18">
@@ -170,17 +163,6 @@ export function StudentRequestsPage() {
               {pendingCount}
             </span>
             <p className="min-w-0 text-[0.82rem] font-semibold text-white/90">Solicitudes pendientes</p>
-          </div>
-        </SurfaceCard>
-        <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-0">
-          <div className="flex items-center gap-2.5 px-3.5 py-2">
-            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.9rem] bg-primary/10 text-primary ring-1 ring-primary/10">
-              <MessageSquareMore aria-hidden="true" className="h-4 w-4" />
-            </span>
-            <span className="font-headline text-[1.28rem] font-extrabold tracking-tight text-ink">
-              {activeConversationCount}
-            </span>
-            <p className="min-w-0 text-[0.82rem] font-semibold text-ink-muted">Conversaciones activas</p>
           </div>
         </SurfaceCard>
       </div>
@@ -285,7 +267,7 @@ export function StudentRequestsPage() {
                 <tr className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-ink-muted">
                   <th className="px-4 py-2.5 sm:px-5">Paciente</th>
                   <th className="px-4 py-2.5">Motivo</th>
-                  <th className="px-4 py-2.5">Estado</th>
+                  <th className="w-[9.5rem] px-4 py-2.5 text-left">Estado</th>
                   <th className="px-4 py-2.5">Seguimiento</th>
                   <th className="px-4 py-2.5 text-right sm:px-5">Acciones</th>
                 </tr>
@@ -301,7 +283,7 @@ export function StudentRequestsPage() {
                       <div className="space-y-1">
                         <p className="text-sm font-semibold text-ink">{request.patientName}</p>
                         <p className="text-xs text-ink-muted">
-                          {request.patientAge} anos · {request.patientCity}
+                          {`${request.patientAge} a\u00f1os \u00b7 ${request.patientCity}`}
                         </p>
                       </div>
                     </td>
@@ -310,7 +292,7 @@ export function StudentRequestsPage() {
                         {request.reason ?? 'Sin motivo registrado.'}
                       </p>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="w-[9.5rem] px-4 py-3">
                       <span
                         className={classNames(
                           'inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset',
@@ -432,3 +414,6 @@ export function StudentRequestsPage() {
     </div>
   );
 }
+
+
+

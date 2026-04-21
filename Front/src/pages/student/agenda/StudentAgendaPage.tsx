@@ -355,7 +355,7 @@ export function StudentAgendaPage() {
   };
 
   return (
-    <div className="flex h-full w-full min-h-0 flex-col gap-2 overflow-hidden">
+    <div className="student-page-compact flex h-full w-full min-h-0 flex-col gap-2 overflow-hidden">
       <Seo
         description={studentContent.agendaPage.meta.description}
         noIndex

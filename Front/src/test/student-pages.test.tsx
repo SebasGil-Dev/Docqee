@@ -162,7 +162,7 @@ describe('Student pages', () => {
     expect(screen.getByText(/ricardo suarez cancelo la cita/i)).toBeInTheDocument();
   });
 
-  it('mueve notificaciones y perfil al menu hamburguesa en movil', async () => {
+  it('mantiene notificaciones en el header y perfil en el menu hamburguesa en movil', async () => {
     mockStudentViewport(true);
     const user = userEvent.setup();
 
@@ -194,8 +194,13 @@ describe('Student pages', () => {
       within(mobileNavigation).queryByRole('link', { name: /perfil/i }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /^Notificaciones(?: \(\d+\))?$/i }),
-    ).not.toBeInTheDocument();
+      screen.getByRole('button', { name: /^Notificaciones(?: \(\d+\))?$/i }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /^Notificaciones(?: \(\d+\))?$/i }));
+
+    expect(screen.getByRole('dialog', { name: /panel de notificaciones/i })).toBeInTheDocument();
+    expect(screen.getByText(/nueva solicitud de ana maria perez/i)).toBeInTheDocument();
 
     await user.click(
       screen.getByRole('button', { name: /abrir men[u\u00fa] de cuenta/i }),
@@ -420,6 +425,21 @@ describe('Student pages', () => {
     const user = userEvent.setup();
 
     renderStudentApp([ROUTES.studentRequests]);
+
+    expect(
+      screen.queryByText(/revisa las solicitudes de pacientes/i),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Conversaciones activas$/i)).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/buscar por nombre del paciente/i)).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('student-request-row-student-request-1')).getByText(/29 a\u00f1os/i),
+    ).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText(/buscar paciente/i), 'Soacha');
+
+    expect(screen.queryByText(/claudia moreno/i)).not.toBeInTheDocument();
+
+    await user.clear(screen.getByLabelText(/buscar paciente/i));
 
     await user.click(screen.getByRole('button', { name: /filtrar solicitudes por estado/i }));
     await user.click(screen.getByRole('menuitemradio', { name: /pendiente/i }));

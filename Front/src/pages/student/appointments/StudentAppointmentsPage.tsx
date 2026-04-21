@@ -664,7 +664,7 @@ export function StudentAppointmentsPage() {
                   <th className="px-4 py-3 sm:px-5">Paciente</th>
                   <th className="px-4 py-3">Programacion</th>
                   <th className="px-4 py-3">Atencion clinica</th>
-                  <th className="px-4 py-3">Estado</th>
+                  <th className="w-[9.5rem] px-4 py-3 text-left">Estado</th>
                   <th className="px-4 py-3 text-right sm:px-5">Acciones</th>
                 </tr>
               </thead>
@@ -719,7 +719,7 @@ export function StudentAppointmentsPage() {
                         </p>
                       </div>
                     </td>
-                    <td className="px-4 py-3.5">
+                    <td className="w-[9.5rem] px-4 py-3.5">
                       <span
                         className={classNames(
                           'inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset',
@@ -1134,3 +1134,4 @@ function AppointmentCommentsModal({
     </div>
   );
 }
+
