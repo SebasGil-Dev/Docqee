@@ -25,6 +25,7 @@ export function PatientAgendaPage() {
     () =>
       appointments.map((appointment) => ({
         additionalInfo: appointment.additionalInfo,
+        appointmentTypeId: appointment.id,
         appointmentType: appointment.appointmentType,
         city: appointment.city,
         createdAt: appointment.createdAt,

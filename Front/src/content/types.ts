@@ -966,6 +966,11 @@ export type StudentTreatmentType = {
   description: string;
 };
 
+export type StudentAppointmentType = {
+  id: string;
+  name: string;
+};
+
 export type StudentPracticeSite = {
   address: string;
   city: string;
@@ -995,6 +1000,7 @@ export type StudentAppointmentReview = {
 
 export type StudentAgendaAppointment = {
   additionalInfo: string | null;
+  appointmentTypeId: string;
   appointmentType: string;
   city: string;
   createdAt: string;
@@ -1081,6 +1087,7 @@ export type StudentConversation = {
 
 export type StudentModuleState = {
   appointments: StudentAgendaAppointment[];
+  appointmentTypes: StudentAppointmentType[];
   conversations: StudentConversation[];
   practiceSites: StudentPracticeSite[];
   profile: StudentProfile;
@@ -1122,6 +1129,7 @@ export type StudentScheduleBlockFormErrors = Partial<
 
 export type StudentAppointmentFormValues = {
   additionalInfo: string;
+  appointmentTypeId: string;
   endTime: string;
   requestId: string;
   siteId: string;

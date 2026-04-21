@@ -4,6 +4,7 @@ import type {
   PersonOperationalStatus,
   StudentAgendaAppointment,
   StudentAgendaAppointmentStatus,
+  StudentAppointmentType,
   StudentAppointmentFormValues,
   StudentAppointmentReview,
   StudentConversation,
@@ -221,6 +222,29 @@ function createMockState(): StudentStoreState {
     },
   ];
 
+  const appointmentTypes: StudentAppointmentType[] = [
+    {
+      id: 'appointment-type-1',
+      name: 'Valoracion inicial',
+    },
+    {
+      id: 'appointment-type-2',
+      name: 'Control restaurativo',
+    },
+    {
+      id: 'appointment-type-3',
+      name: 'Seguimiento preventivo',
+    },
+    {
+      id: 'appointment-type-4',
+      name: 'Revision de sensibilidad',
+    },
+    {
+      id: 'appointment-type-5',
+      name: 'Seguimiento final',
+    },
+  ];
+
   const scheduleBlocks: StudentScheduleBlock[] = [
     {
       dayOfWeek: null,
@@ -264,6 +288,7 @@ function createMockState(): StudentStoreState {
     {
       additionalInfo:
         'Pendiente de confirmar la propuesta inicial con el paciente.',
+      appointmentTypeId: 'appointment-type-1',
       appointmentType: 'Valoracion inicial',
       city: 'Bogota',
       createdAt: '2026-04-05T10:00:00.000Z',
@@ -284,6 +309,7 @@ function createMockState(): StudentStoreState {
     },
     {
       additionalInfo: 'Control confirmado con docente asignado en sede norte.',
+      appointmentTypeId: 'appointment-type-2',
       appointmentType: 'Control restaurativo',
       city: 'Bogota',
       createdAt: '2026-04-06T09:00:00.000Z',
@@ -305,6 +331,7 @@ function createMockState(): StudentStoreState {
     {
       additionalInfo:
         'Reprogramacion solicitada por ajuste de horario del paciente.',
+      appointmentTypeId: 'appointment-type-3',
       appointmentType: 'Seguimiento preventivo',
       city: 'Bogota',
       createdAt: '2026-04-07T10:00:00.000Z',
@@ -326,6 +353,7 @@ function createMockState(): StudentStoreState {
     {
       additionalInfo:
         'El paciente cancelo la asistencia y quedo registrado en agenda.',
+      appointmentTypeId: 'appointment-type-4',
       appointmentType: 'Revision de sensibilidad',
       city: 'Soacha',
       createdAt: '2026-04-08T11:00:00.000Z',
@@ -346,6 +374,7 @@ function createMockState(): StudentStoreState {
     },
     {
       additionalInfo: 'Cita completada con valoracion del paciente registrada.',
+      appointmentTypeId: 'appointment-type-5',
       appointmentType: 'Seguimiento final',
       city: 'Bogota',
       createdAt: '2026-04-03T09:00:00.000Z',
@@ -590,6 +619,7 @@ function createMockState(): StudentStoreState {
 
   return {
     appointments,
+    appointmentTypes,
     conversations,
     errorMessage: null,
     isLoading: false,
@@ -608,6 +638,7 @@ function createMockState(): StudentStoreState {
 function createEmptyRuntimeModuleState(): StudentModuleState {
   return {
     appointments: [],
+    appointmentTypes: [],
     conversations: [],
     practiceSites: [],
     profile: {
@@ -778,6 +809,18 @@ function isStudentSupervisor(value: unknown): value is StudentSupervisor {
   );
 }
 
+function isStudentAppointmentType(
+  value: unknown,
+): value is StudentAppointmentType {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<StudentAppointmentType>;
+
+  return typeof candidate.id === 'string' && typeof candidate.name === 'string';
+}
+
 function isStudentAppointmentReview(
   value: unknown,
 ): value is StudentAppointmentReview {
@@ -810,6 +853,7 @@ function isStudentAgendaAppointment(
   return (
     (candidate.additionalInfo === null ||
       typeof candidate.additionalInfo === 'string') &&
+    typeof candidate.appointmentTypeId === 'string' &&
     typeof candidate.appointmentType === 'string' &&
     typeof candidate.city === 'string' &&
     typeof candidate.endAt === 'string' &&
@@ -974,6 +1018,8 @@ function isStudentModuleData(value: unknown): value is StudentModuleState {
   return (
     Array.isArray(candidate.appointments) &&
     candidate.appointments.every(isStudentAgendaAppointment) &&
+    Array.isArray(candidate.appointmentTypes) &&
+    candidate.appointmentTypes.every(isStudentAppointmentType) &&
     Array.isArray(candidate.conversations) &&
     candidate.conversations.every(isStudentConversation) &&
     Array.isArray(candidate.practiceSites) &&
@@ -999,6 +1045,7 @@ function normalizeStudentModuleData(
 
   return {
     appointments: value.appointments ?? emptyState.appointments,
+    appointmentTypes: value.appointmentTypes ?? emptyState.appointmentTypes,
     conversations: value.conversations ?? emptyState.conversations,
     practiceSites: value.practiceSites ?? emptyState.practiceSites,
     profile: value.profile
@@ -1021,6 +1068,7 @@ function getPersistableStudentModuleState(
 ): StudentModuleState {
   return {
     appointments: currentState.appointments,
+    appointmentTypes: currentState.appointmentTypes,
     conversations: currentState.conversations,
     practiceSites: currentState.practiceSites,
     profile: currentState.profile,
@@ -1176,6 +1224,7 @@ function didPersistableStudentModuleStateChange(
 ) {
   return (
     previousState.appointments !== nextState.appointments ||
+    previousState.appointmentTypes !== nextState.appointmentTypes ||
     previousState.conversations !== nextState.conversations ||
     previousState.practiceSites !== nextState.practiceSites ||
     previousState.profile !== nextState.profile ||
@@ -1309,6 +1358,7 @@ function normalizeScheduleBlockInput(values: StudentScheduleBlockFormValues) {
 function normalizeAppointmentInput(values: StudentAppointmentFormValues) {
   return {
     additionalInfo: normalizeNullableText(values.additionalInfo),
+    appointmentTypeId: values.appointmentTypeId,
     endTime: values.endTime,
     requestId: values.requestId,
     siteId: values.siteId,
@@ -1359,18 +1409,6 @@ function rangesOverlap(
   return firstStart < secondEnd && secondStart < firstEnd;
 }
 
-function getAppointmentTypeLabel(treatmentNames: string[]) {
-  if (treatmentNames.length === 1) {
-    return treatmentNames[0] ?? 'Cita clinica';
-  }
-
-  if (treatmentNames.length > 1) {
-    return 'Atencion clinica programada';
-  }
-
-  return 'Cita clinica';
-}
-
 function findAppointmentValidationError(
   values: StudentAppointmentFormValues,
   appointmentId?: string,
@@ -1396,6 +1434,14 @@ function findAppointmentValidationError(
   );
   if (!supervisor || supervisor.status !== 'active') {
     return 'Selecciona un docente supervisor activo.';
+  }
+
+  const appointmentType = state.appointmentTypes.find(
+    (currentAppointmentType) =>
+      currentAppointmentType.id === normalized.appointmentTypeId,
+  );
+  if (!appointmentType) {
+    return 'Selecciona un tipo de cita valido.';
   }
 
   if (normalized.treatmentIds.length === 0) {
@@ -1651,6 +1697,10 @@ function upsertAppointmentMock(
   const supervisor = state.supervisors.find(
     (currentSupervisor) => currentSupervisor.id === normalized.supervisorId,
   );
+  const appointmentType = state.appointmentTypes.find(
+    (currentAppointmentType) =>
+      currentAppointmentType.id === normalized.appointmentTypeId,
+  );
   const treatmentNames: string[] = normalized.treatmentIds
     .map(
       (treatmentId) =>
@@ -1663,7 +1713,8 @@ function upsertAppointmentMock(
     );
   const nextAppointment: StudentAgendaAppointment = {
     additionalInfo: normalized.additionalInfo,
-    appointmentType: getAppointmentTypeLabel(treatmentNames),
+    appointmentType: appointmentType?.name ?? 'Cita clinica',
+    appointmentTypeId: normalized.appointmentTypeId,
     city: site?.city ?? '',
     createdAt: new Date().toISOString(),
     endAt: buildDateTime(
