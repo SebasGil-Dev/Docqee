@@ -362,28 +362,28 @@ export function StudentConversationsPage() {
             </div>
           </div>
         </div>
-        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2 py-2 sm:px-3 lg:grid lg:grid-cols-[minmax(16rem,19.5rem)_minmax(0,1fr)] lg:overflow-hidden xl:grid-cols-[minmax(18rem,21rem)_minmax(0,1fr)]">
+        <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto px-1.5 py-1.5 sm:px-2 lg:grid lg:grid-cols-[minmax(13.5rem,16rem)_minmax(0,1fr)] lg:overflow-hidden xl:grid-cols-[minmax(15rem,17.5rem)_minmax(0,1fr)]">
           <SurfaceCard
             className="min-h-[14rem] shrink-0 border border-slate-200/80 bg-white shadow-none lg:h-full lg:min-h-0 lg:shrink"
             paddingClassName="p-0"
           >
             <div className="flex h-full min-h-[14rem] max-h-[18rem] flex-col lg:min-h-0 lg:max-h-none">
-              <div className="flex shrink-0 items-center justify-between gap-2 border-b border-slate-200/80 px-3 py-2">
+              <div className="flex shrink-0 items-center justify-between gap-1.5 border-b border-slate-200/80 px-2.5 py-1.5">
                 <div className="min-w-0">
-                  <h3 className="font-headline text-[0.86rem] font-extrabold tracking-tight text-ink">
+                  <h3 className="font-headline text-[0.74rem] font-extrabold tracking-tight text-ink">
                     Chats
                   </h3>
-                  <p className="text-[0.65rem] text-ink-muted">
+                  <p className="text-[0.56rem] leading-tight text-ink-muted">
                     Selecciona un paciente.
                   </p>
                 </div>
-                <span className="inline-flex min-w-[1.7rem] items-center justify-center rounded-full bg-primary/10 px-1.5 py-0.5 text-[0.65rem] font-bold text-primary">
+                <span className="inline-flex min-w-[1.35rem] items-center justify-center rounded-full bg-primary/10 px-1 py-0.5 text-[0.56rem] font-bold leading-none text-primary">
                   {filteredConversations.length}
                 </span>
               </div>
-              <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto p-2">
+              <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto p-1.5">
                 {filteredConversations.length > 0 ? (
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     {filteredConversations.map((conversation) => {
                       const lastMessage = getLastMessage(conversation);
                       const isSelected =
@@ -394,7 +394,7 @@ export function StudentConversationsPage() {
                           key={conversation.id}
                           aria-current={isSelected ? 'true' : undefined}
                           className={classNames(
-                            'w-full rounded-[1rem] border px-3 py-2 text-left transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                            'w-full rounded-[0.85rem] border px-2 py-1.5 text-left transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
                             isSelected
                               ? 'border-primary/35 bg-primary/[0.08] shadow-[0_18px_40px_-28px_rgba(22,78,99,0.65)]'
                               : 'border-slate-200/80 bg-slate-50 hover:border-primary/20 hover:bg-slate-100/70',
@@ -408,28 +408,28 @@ export function StudentConversationsPage() {
                             )
                           }
                         >
-                          <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
-                              <p className="truncate text-[0.82rem] font-semibold text-ink">
+                              <p className="truncate text-[0.72rem] font-semibold leading-tight text-ink">
                                 {conversation.patientName}
                               </p>
-                              <p className="text-[0.66rem] text-ink-muted">
+                              <p className="text-[0.56rem] leading-tight text-ink-muted">
                                 {`${conversation.patientAge} a\u00f1os - ${conversation.patientCity}`}
                               </p>
                             </div>
                             {conversation.unreadCount > 0 ? (
-                              <span className="inline-flex min-w-[1.35rem] items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-[0.62rem] font-bold text-white">
+                              <span className="inline-flex min-w-[1.1rem] items-center justify-center rounded-full bg-primary px-1 py-0.5 text-[0.52rem] font-bold leading-none text-white">
                                 {conversation.unreadCount}
                               </span>
                             ) : null}
                           </div>
-                          <p className="mt-1.5 line-clamp-2 break-words text-[0.76rem] leading-5 text-ink-muted">
+                          <p className="mt-1 line-clamp-1 break-words text-[0.64rem] leading-4 text-ink-muted">
                             {lastMessage?.content ??
                               conversation.reason ??
                               'Sin mensajes todavia.'}
                           </p>
-                          <div className="mt-2 flex items-center justify-end gap-2">
-                            <span className="text-[0.66rem] font-medium text-ink-muted">
+                          <div className="mt-1 flex items-center justify-end gap-1.5">
+                            <span className="text-[0.56rem] font-medium leading-none text-ink-muted">
                               {lastMessage
                                 ? formatTime(lastMessage.sentAt)
                                 : 'Sin hora'}
@@ -455,11 +455,11 @@ export function StudentConversationsPage() {
           >
             {selectedConversation ? (
               <div className="flex h-full min-h-[26rem] flex-col lg:min-h-0">
-                <div className="shrink-0 border-b border-slate-200/80 px-3 py-2 sm:px-4">
-                  <div className="flex flex-wrap items-start justify-between gap-2">
+                <div className="shrink-0 border-b border-slate-200/80 px-2.5 py-1.5 sm:px-3">
+                  <div className="flex flex-wrap items-start justify-between gap-1.5">
                     <div className="min-w-0">
-                      <div className="flex min-w-0 flex-wrap items-center gap-2">
-                        <h2 className="truncate font-headline text-[1rem] font-extrabold tracking-tight text-ink sm:text-[1.08rem]">
+                      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                        <h2 className="truncate font-headline text-[0.84rem] font-extrabold tracking-tight text-ink sm:text-[0.9rem]">
                           {selectedConversation.patientName}
                         </h2>
                       </div>
@@ -467,7 +467,7 @@ export function StudentConversationsPage() {
                   </div>
                 </div>
                 <div
-                  className="admin-scrollbar min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-2.5 sm:px-4"
+                  className="admin-scrollbar min-h-0 flex-1 space-y-1.5 overflow-y-auto px-2.5 py-2 sm:px-3"
                   data-testid={`student-conversation-thread-${selectedConversation.id}`}
                 >
                   {selectedConversation.messages.map((message) => {
@@ -483,7 +483,7 @@ export function StudentConversationsPage() {
                       >
                         <div
                           className={classNames(
-                            'max-w-[90%] rounded-[1rem] px-3 py-2 shadow-[0_12px_28px_-22px_rgba(15,23,42,0.35)] sm:max-w-[76%]',
+                            'max-w-[88%] rounded-[0.85rem] px-2.5 py-1.5 shadow-[0_12px_28px_-22px_rgba(15,23,42,0.35)] sm:max-w-[72%]',
                             isStudentAuthor
                               ? 'bg-brand-gradient text-white'
                               : 'bg-slate-100 text-ink',
@@ -491,7 +491,7 @@ export function StudentConversationsPage() {
                         >
                           <p
                             className={classNames(
-                              'text-[0.6rem] font-bold uppercase tracking-[0.14em]',
+                              'text-[0.5rem] font-bold uppercase tracking-[0.1em]',
                               isStudentAuthor
                                 ? 'text-white/70'
                                 : 'text-primary/75',
@@ -499,12 +499,12 @@ export function StudentConversationsPage() {
                           >
                             {message.authorName}
                           </p>
-                          <p className="mt-1 break-words text-[0.82rem] leading-5">
+                          <p className="mt-0.5 break-words text-[0.7rem] leading-4">
                             {message.content}
                           </p>
                           <p
                             className={classNames(
-                              'mt-1.5 text-[0.66rem] font-medium',
+                              'mt-1 text-[0.54rem] font-medium leading-none',
                               isStudentAuthor
                                 ? 'text-white/75'
                                 : 'text-ink-muted',
@@ -518,10 +518,10 @@ export function StudentConversationsPage() {
                   })}
                   <div ref={messagesEndRef} />
                 </div>
-                <div className="shrink-0 border-t border-slate-200/80 px-3 py-2 sm:px-4">
+                <div className="shrink-0 border-t border-slate-200/80 px-2.5 py-1.5 sm:px-3">
                   {selectedConversation.status === 'ACTIVA' ? (
-                    <div className="space-y-2">
-                      <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                    <div className="space-y-1.5">
+                      <div className="flex flex-col gap-1.5 sm:flex-row sm:items-end">
                         <div className="min-w-0 flex-1">
                           <label
                             className="sr-only"
@@ -537,7 +537,7 @@ export function StudentConversationsPage() {
                             }
                             aria-invalid={Boolean(composerError)}
                             className={classNames(
-                              'h-10 min-h-[2.5rem] w-full resize-none rounded-[0.95rem] border bg-surface px-3 py-2 text-[0.82rem] text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                              'student-conversation-composer-textarea h-10 min-h-[2.5rem] w-full resize-none rounded-[0.85rem] border bg-surface px-2.5 py-1 text-[0.7rem] text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
                               composerError
                                 ? 'border-rose-300 focus-visible:border-rose-400 focus-visible:ring-rose-200/70'
                                 : 'border-slate-200 focus-visible:border-primary',
@@ -559,7 +559,7 @@ export function StudentConversationsPage() {
                           />
                           {composerError ? (
                             <p
-                              className="text-xs text-rose-600"
+                              className="text-[0.62rem] text-rose-600"
                               id="student-conversation-message-error"
                             >
                               {composerError}

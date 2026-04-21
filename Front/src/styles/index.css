@@ -249,6 +249,16 @@
     border-radius: 0.98rem;
   }
 
+  .student-page-compact .student-conversation-composer-textarea {
+    height: 1.95rem;
+    min-height: 1.95rem;
+    max-height: 1.95rem;
+    overflow: hidden;
+    padding-top: 0.28rem;
+    padding-bottom: 0.28rem;
+    line-height: 1.25rem;
+  }
+
   .student-page-compact .admin-status-badge {
     padding: 0.18rem 0.56rem;
     font-size: 0.6rem;
