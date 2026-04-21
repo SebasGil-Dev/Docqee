@@ -170,10 +170,11 @@ function formatDateTimeRange(startAt: string, endAt: string) {
     hour: 'numeric',
     minute: '2-digit',
   });
+  const dateParts = dateFormatter.formatToParts(startDate);
+  const day = dateParts.find((part) => part.type === 'day')?.value ?? '';
+  const month = dateParts.find((part) => part.type === 'month')?.value ?? '';
 
-  return `${dateFormatter
-    .format(startDate)
-    .replace(/\s+/, ' de ')}, ${timeFormatter.format(startDate)} A ${timeFormatter.format(endDate)}`;
+  return `${day} de ${month}, ${timeFormatter.format(startDate)} a ${timeFormatter.format(endDate)}`;
 }
 
 function formatTreatmentSummary(treatmentNames: string[]) {
@@ -783,19 +784,19 @@ export function StudentAppointmentsPage() {
           </div>
         </div>
         {filteredAppointments.length > 0 ? (
-          <div className="admin-scrollbar min-h-0 flex-1 overflow-x-auto overflow-y-auto">
-            <table className="min-w-[86rem] xl:min-w-full">
+          <div className="admin-scrollbar min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+            <table className="w-full table-fixed">
               <colgroup>
-                <col className="w-[19rem]" />
-                <col className="w-[17rem]" />
-                <col className="w-[18rem]" />
-                <col className="w-[9.5rem]" />
-                <col className="w-[18rem]" />
+                <col className="w-[22%]" />
+                <col className="w-[22%]" />
+                <col className="w-[24%]" />
+                <col className="w-[12%]" />
+                <col className="w-[20%]" />
               </colgroup>
               <thead className="sticky top-0 z-10 bg-slate-100 text-left">
                 <tr className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-ink-muted">
                   <th className="px-4 py-3 sm:px-5">Paciente</th>
-                  <th className="px-4 py-3 pl-6">Atención clínica</th>
+                  <th className="px-4 py-3 pl-5">Atención clínica</th>
                   <th className="px-4 py-3">Programación</th>
                   <th className="w-[9.5rem] px-4 py-3 text-left">Estado</th>
                   <th className="px-4 py-3 text-center sm:px-5">Acciones</th>
@@ -813,71 +814,73 @@ export function StudentAppointmentsPage() {
                       className="align-top"
                       data-testid={`student-appointment-row-${appointment.id}`}
                     >
-                      <td className="px-4 py-3.5 sm:px-5">
-                        <div className="space-y-1">
-                          <p className="text-sm font-semibold text-ink">
+                      <td className="px-4 py-3 sm:px-5">
+                        <div className="min-w-0">
+                          <p className="break-words text-sm font-semibold leading-5 text-ink">
                             {appointment.patientName}
                           </p>
                         </div>
                       </td>
-                      <td className="px-4 py-3.5 pl-6">
-                        <div className="max-w-[16rem] space-y-1 text-sm text-ink-muted">
-                          <p className="inline-flex items-center gap-1.5 font-semibold text-ink">
+                      <td className="px-4 py-3 pl-5">
+                        <div className="min-w-0 space-y-0.5 text-[0.82rem] leading-5 text-ink-muted">
+                          <p className="flex items-start gap-1.5 font-semibold text-ink">
                             <Stethoscope
                               aria-hidden="true"
-                              className="h-3.5 w-3.5 text-primary"
+                              className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary"
                             />
-                            <span>{appointment.appointmentType}</span>
+                            <span className="min-w-0 break-words">
+                              {appointment.appointmentType}
+                            </span>
                           </p>
-                          <p className="inline-flex items-center gap-1.5">
+                          <p className="flex items-start gap-1.5">
                             <GraduationCap
                               aria-hidden="true"
-                              className="h-3.5 w-3.5 text-primary"
+                              className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary"
                             />
-                            <span>
+                            <span className="min-w-0 break-words">
                               <span className="font-semibold text-ink">
                                 Docente =
                               </span>{' '}
                               {appointment.supervisorName}
                             </span>
                           </p>
-                          <p className="inline-flex items-center gap-1.5">
+                          <p className="flex items-start gap-1.5">
                             <BriefcaseMedical
                               aria-hidden="true"
-                              className="h-3.5 w-3.5 text-primary"
+                              className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary"
                             />
-                            <span>
+                            <span className="min-w-0 break-words">
                               {formatTreatmentSummary(appointment.treatmentNames)}
                             </span>
                           </p>
                         </div>
                       </td>
-                      <td className="px-4 py-3.5">
-                        <div className="max-w-[20rem] space-y-1 text-sm text-ink-muted">
-                          <p className="inline-flex items-center gap-1.5 font-semibold text-ink">
+                      <td className="px-4 py-3">
+                        <div className="min-w-0 space-y-0.5 text-[0.82rem] leading-5 text-ink-muted">
+                          <p className="flex items-start gap-1.5 font-semibold text-ink">
                             <Clock3
                               aria-hidden="true"
-                              className="h-3.5 w-3.5 text-primary"
+                              className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary"
                             />
-                            <span>
+                            <span className="min-w-0 break-words">
                               {formatDateTimeRange(
                                 appointment.startAt,
                                 appointment.endAt,
                               )}
                             </span>
                           </p>
-                          <p className="inline-flex items-center gap-1.5">
+                          <p className="flex items-start gap-1.5">
                             <MapPin
                               aria-hidden="true"
-                              className="h-3.5 w-3.5 text-primary"
+                              className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary"
                             />
-                            <span>
-                            {appointment.siteName} - {appointmentLocality}
+                            <span className="min-w-0 break-words">
+                              {appointment.siteName} - {appointmentLocality}
                             </span>
                           </p>
                         </div>
                       </td>
-                    <td className="w-[9.5rem] px-4 py-3.5">
+                    <td className="w-[9.5rem] px-4 py-3">
                       <span
                         className={classNames(
                           'inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset',
@@ -887,10 +890,10 @@ export function StudentAppointmentsPage() {
                         {getStatusLabel(appointment.status)}
                       </span>
                     </td>
-                    <td className="px-4 py-3.5 text-center sm:px-5">
+                    <td className="px-4 py-3 text-center sm:px-5">
                       {appointment.status === 'PROPUESTA' ||
                       appointment.status === 'REPROGRAMACION_PENDIENTE' ? (
-                        <div className="flex flex-nowrap justify-center gap-2">
+                        <div className="flex flex-col items-center gap-1.5">
                           <button
                             className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-primary ring-1 ring-slate-200 transition duration-200 hover:bg-slate-100"
                             type="button"
@@ -917,7 +920,7 @@ export function StudentAppointmentsPage() {
                           </button>
                         </div>
                       ) : appointment.status === 'ACEPTADA' ? (
-                        <div className="flex flex-nowrap justify-center gap-2">
+                        <div className="flex flex-col items-center gap-1.5">
                           <button
                             className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700 transition duration-200 hover:bg-sky-100"
                             type="button"
@@ -951,7 +954,7 @@ export function StudentAppointmentsPage() {
                           </button>
                         </div>
                       ) : appointment.status === 'FINALIZADA' ? (
-                        <div className="flex flex-wrap justify-center gap-2">
+                        <div className="flex flex-col items-center gap-1.5">
                           {!appointment.myRating ? (
                             <button
                               className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 transition duration-200 hover:bg-amber-100"
