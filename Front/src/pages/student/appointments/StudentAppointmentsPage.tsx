@@ -796,7 +796,7 @@ export function StudentAppointmentsPage() {
               <thead className="sticky top-0 z-10 bg-slate-100 text-left">
                 <tr className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-ink-muted">
                   <th className="px-4 py-3 sm:px-5">Paciente</th>
-                  <th className="px-4 py-3">Atención clínica</th>
+                  <th className="py-3 pl-2 pr-4">Atención clínica</th>
                   <th className="px-4 py-3">Programación</th>
                   <th className="w-[9.5rem] px-4 py-3 text-left">Estado</th>
                   <th className="px-4 py-3 text-center sm:px-5">Acciones</th>
@@ -821,7 +821,7 @@ export function StudentAppointmentsPage() {
                           </p>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="py-3 pl-2 pr-4">
                         <div className="min-w-0 space-y-0.5 text-[0.82rem] leading-5 text-ink-muted">
                           <p className="flex items-start gap-1.5 font-semibold text-ink">
                             <Stethoscope
