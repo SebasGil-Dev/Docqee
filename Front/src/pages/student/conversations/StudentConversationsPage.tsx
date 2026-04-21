@@ -32,6 +32,8 @@ const conversationStatusOptions: Array<{
   { label: 'Cerrada', value: 'CERRADA' },
 ];
 
+const CONVERSATION_POLL_INTERVAL_MS = 5_000;
+
 function formatTime(value: string) {
   return new Intl.DateTimeFormat('es-CO', {
     hour: 'numeric',
@@ -162,8 +164,10 @@ export function StudentConversationsPage() {
       return undefined;
     }
     const interval = setInterval(() => {
-      void refreshConversation(selectedConversation.id);
-    }, 5000);
+      if (document.visibilityState === 'visible') {
+        void refreshConversation(selectedConversation.id);
+      }
+    }, CONVERSATION_POLL_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [
     selectedConversation?.id,

@@ -41,7 +41,10 @@ import { useStudentModuleStore } from '@/lib/studentModuleStore';
 type AppointmentStatusFilter = StudentAgendaAppointmentStatus | 'all';
 type AppointmentSortOrder = 'arrival' | 'proximity';
 
-const appointmentStatusOptions: Array<{ label: string; value: AppointmentStatusFilter }> = [
+const appointmentStatusOptions: Array<{
+  label: string;
+  value: AppointmentStatusFilter;
+}> = [
   { label: 'Todas', value: 'all' },
   { label: 'Propuesta', value: 'PROPUESTA' },
   { label: 'Aceptada', value: 'ACEPTADA' },
@@ -73,48 +76,50 @@ function StudentAppointmentsDialogFrame({
   title: string;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
+    <div className="fixed inset-0 z-50 overflow-y-auto px-2 py-2 sm:px-4 sm:py-4">
       <button
         aria-label="Cerrar ventana"
-        className="absolute inset-0 bg-slate-950/40 backdrop-blur-[2px]"
+        className="fixed inset-0 bg-slate-950/40 backdrop-blur-[2px]"
         type="button"
         onClick={onClose}
       />
       <div
-        aria-describedby={description ? 'student-appointments-dialog-description' : undefined}
+        aria-describedby={
+          description ? 'student-appointments-dialog-description' : undefined
+        }
         aria-labelledby="student-appointments-dialog-title"
         aria-modal="true"
-        className="relative w-full max-w-3xl overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white shadow-[0_34px_90px_-36px_rgba(15,23,42,0.55)]"
+        className="student-appointment-dialog relative mx-auto w-full max-w-3xl overflow-visible rounded-[1.35rem] border border-slate-200/80 bg-white shadow-[0_34px_90px_-36px_rgba(15,23,42,0.55)]"
         role="dialog"
       >
-        <div className="absolute right-4 top-4">
+        <div className="absolute right-2.5 top-2.5 z-30">
           <button
             aria-label="Cerrar ventana"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200"
             type="button"
             onClick={onClose}
           >
-            <X aria-hidden="true" className="h-4 w-4" />
+            <X aria-hidden="true" className="h-3.5 w-3.5" />
           </button>
         </div>
-        <div className="px-5 pb-5 pt-6 sm:px-6 sm:pb-6">
-          <div className="space-y-1.5">
+        <div className="px-3 pb-3 pt-3 sm:px-4 sm:pb-4 sm:pt-4">
+          <div className="space-y-1">
             <h2
-              className="font-headline text-[1.4rem] font-extrabold tracking-tight text-ink"
+              className="font-headline text-[1.05rem] font-extrabold tracking-tight text-ink sm:text-[1.18rem]"
               id="student-appointments-dialog-title"
             >
               {title}
             </h2>
             {description ? (
               <p
-                className="pr-10 text-[0.86rem] leading-6 text-ink-muted"
+                className="pr-8 text-[0.72rem] leading-5 text-ink-muted sm:text-[0.76rem]"
                 id="student-appointments-dialog-description"
               >
                 {description}
               </p>
             ) : null}
           </div>
-          <div className="mt-5">{children}</div>
+          <div className="mt-3">{children}</div>
         </div>
       </div>
     </div>
@@ -187,7 +192,9 @@ function getInitialAppointmentFormValues(
   };
 }
 
-function validateAppointmentForm(values: StudentAppointmentFormValues): StudentAppointmentFormErrors {
+function validateAppointmentForm(
+  values: StudentAppointmentFormValues,
+): StudentAppointmentFormErrors {
   const errors: StudentAppointmentFormErrors = {};
 
   if (!values.requestId) {
@@ -206,7 +213,11 @@ function validateAppointmentForm(values: StudentAppointmentFormValues): StudentA
     errors.endTime = 'Selecciona la hora de finalizacion.';
   }
 
-  if (values.startTime && values.endTime && values.endTime <= values.startTime) {
+  if (
+    values.startTime &&
+    values.endTime &&
+    values.endTime <= values.startTime
+  ) {
     errors.endTime = 'La hora final debe ser posterior a la inicial.';
   }
 
@@ -241,36 +252,48 @@ export function StudentAppointmentsPage() {
     submitAppointmentReview,
   } = useStudentModuleStore();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<AppointmentStatusFilter>('all');
+  const [statusFilter, setStatusFilter] =
+    useState<AppointmentStatusFilter>('all');
   const [sortOrder, setSortOrder] = useState<AppointmentSortOrder>('arrival');
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const [isAppointmentDialogOpen, setIsAppointmentDialogOpen] = useState(false);
-  const [appointmentErrors, setAppointmentErrors] = useState<StudentAppointmentFormErrors>(
-    {},
+  const [appointmentErrors, setAppointmentErrors] =
+    useState<StudentAppointmentFormErrors>({});
+  const [appointmentValues, setAppointmentValues] =
+    useState<StudentAppointmentFormValues>(initialAppointmentFormValues);
+  const [editingAppointmentId, setEditingAppointmentId] = useState<
+    string | null
+  >(null);
+  const [appointmentApiError, setAppointmentApiError] = useState<string | null>(
+    null,
   );
-  const [appointmentValues, setAppointmentValues] = useState<StudentAppointmentFormValues>(
-    initialAppointmentFormValues,
-  );
-  const [editingAppointmentId, setEditingAppointmentId] = useState<string | null>(null);
-  const [appointmentApiError, setAppointmentApiError] = useState<string | null>(null);
   const [appointmentToCancel, setAppointmentToCancel] =
     useState<StudentAgendaAppointment | null>(null);
   const [commentsAppointment, setCommentsAppointment] =
     useState<StudentAgendaAppointment | null>(null);
-  const [ratingTarget, setRatingTarget] = useState<{ appointmentId: string; patientName: string } | null>(null);
+  const [ratingTarget, setRatingTarget] = useState<{
+    appointmentId: string;
+    patientName: string;
+  } | null>(null);
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const pendingCount = useMemo(
-    () => appointments.filter((appointment) => appointment.status === 'PROPUESTA').length,
+    () =>
+      appointments.filter((appointment) => appointment.status === 'PROPUESTA')
+        .length,
     [appointments],
   );
   const acceptedCount = useMemo(
-    () => appointments.filter((appointment) => appointment.status === 'ACEPTADA').length,
+    () =>
+      appointments.filter((appointment) => appointment.status === 'ACEPTADA')
+        .length,
     [appointments],
   );
   const completedCount = useMemo(
-    () => appointments.filter((appointment) => appointment.status === 'FINALIZADA').length,
+    () =>
+      appointments.filter((appointment) => appointment.status === 'FINALIZADA')
+        .length,
     [appointments],
   );
   const acceptedRequests = useMemo(
@@ -278,7 +301,8 @@ export function StudentAppointmentsPage() {
     [requests],
   );
   const activePracticeSites = useMemo(
-    () => practiceSites.filter((practiceSite) => practiceSite.status === 'active'),
+    () =>
+      practiceSites.filter((practiceSite) => practiceSite.status === 'active'),
     [practiceSites],
   );
   const activeSupervisors = useMemo(
@@ -291,8 +315,13 @@ export function StudentAppointmentsPage() {
   );
   const filteredAppointments = useMemo(() => {
     const filtered = appointments.filter((appointment) => {
-      const matchesSearch = appointment.patientName.toLowerCase().includes(normalizedSearch);
-      return matchesSearch && (statusFilter === 'all' || appointment.status === statusFilter);
+      const matchesSearch = appointment.patientName
+        .toLowerCase()
+        .includes(normalizedSearch);
+      return (
+        matchesSearch &&
+        (statusFilter === 'all' || appointment.status === statusFilter)
+      );
     });
 
     if (sortOrder === 'proximity') {
@@ -309,11 +338,14 @@ export function StudentAppointmentsPage() {
     }
 
     return [...filtered].sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     );
   }, [appointments, normalizedSearch, sortOrder, statusFilter]);
   const selectedRequest =
-    acceptedRequests.find((request) => request.id === appointmentValues.requestId) ?? null;
+    acceptedRequests.find(
+      (request) => request.id === appointmentValues.requestId,
+    ) ?? null;
 
   useEffect(() => {
     if (!isStatusMenuOpen) {
@@ -381,7 +413,9 @@ export function StudentAppointmentsPage() {
       return {
         ...currentValues,
         treatmentIds: isSelected
-          ? currentValues.treatmentIds.filter((currentId) => currentId !== treatmentId)
+          ? currentValues.treatmentIds.filter(
+              (currentId) => currentId !== treatmentId,
+            )
           : [...currentValues.treatmentIds, treatmentId],
       };
     });
@@ -473,7 +507,10 @@ export function StudentAppointmentsPage() {
         </SurfaceCard>
       ) : null}
       <div className="grid gap-2.5 md:grid-cols-3">
-        <SurfaceCard className="min-w-0 overflow-hidden bg-brand-gradient text-white" paddingClassName="p-0">
+        <SurfaceCard
+          className="min-w-0 overflow-hidden bg-brand-gradient text-white"
+          paddingClassName="p-0"
+        >
           <div className="flex items-center gap-2.5 px-3.5 py-2">
             <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.9rem] bg-white/12 text-white">
               <Clock3 aria-hidden="true" className="h-4 w-4" />
@@ -481,10 +518,15 @@ export function StudentAppointmentsPage() {
             <span className="font-headline text-[1.28rem] font-extrabold tracking-tight text-white">
               {pendingCount}
             </span>
-            <p className="min-w-0 text-[0.82rem] font-semibold text-white/90">Propuestas activas</p>
+            <p className="min-w-0 text-[0.82rem] font-semibold text-white/90">
+              Propuestas activas
+            </p>
           </div>
         </SurfaceCard>
-        <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-0">
+        <SurfaceCard
+          className="border border-slate-200/80 bg-white shadow-none"
+          paddingClassName="p-0"
+        >
           <div className="flex items-center gap-2.5 px-3.5 py-2">
             <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.9rem] bg-emerald-50 text-emerald-700">
               <CalendarCheck2 aria-hidden="true" className="h-4 w-4" />
@@ -492,10 +534,15 @@ export function StudentAppointmentsPage() {
             <span className="font-headline text-[1.28rem] font-extrabold tracking-tight text-ink">
               {acceptedCount}
             </span>
-            <p className="min-w-0 text-[0.82rem] font-semibold text-ink-muted">Aceptadas</p>
+            <p className="min-w-0 text-[0.82rem] font-semibold text-ink-muted">
+              Aceptadas
+            </p>
           </div>
         </SurfaceCard>
-        <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-0">
+        <SurfaceCard
+          className="border border-slate-200/80 bg-white shadow-none"
+          paddingClassName="p-0"
+        >
           <div className="flex items-center gap-2.5 px-3.5 py-2">
             <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.9rem] bg-sky-50 text-sky-700">
               <CheckCircle2 aria-hidden="true" className="h-4 w-4" />
@@ -503,7 +550,9 @@ export function StudentAppointmentsPage() {
             <span className="font-headline text-[1.28rem] font-extrabold tracking-tight text-ink">
               {completedCount}
             </span>
-            <p className="min-w-0 text-[0.82rem] font-semibold text-ink-muted">Finalizadas</p>
+            <p className="min-w-0 text-[0.82rem] font-semibold text-ink-muted">
+              Finalizadas
+            </p>
           </div>
         </SurfaceCard>
       </div>
@@ -514,7 +563,9 @@ export function StudentAppointmentsPage() {
               className="relative min-w-0 flex-1 sm:max-w-[32rem] xl:max-w-[36rem]"
               htmlFor="student-appointment-search"
             >
-              <span className="sr-only">{studentContent.appointmentsPage.searchLabel}</span>
+              <span className="sr-only">
+                {studentContent.appointmentsPage.searchLabel}
+              </span>
               <Search
                 aria-hidden="true"
                 className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ghost"
@@ -535,7 +586,9 @@ export function StudentAppointmentsPage() {
                 onClick={openCreateDialog}
               >
                 <Plus aria-hidden="true" className="h-4 w-4" />
-                <span>{studentContent.appointmentsPage.actionLabels.create}</span>
+                <span>
+                  {studentContent.appointmentsPage.actionLabels.create}
+                </span>
               </button>
               <div className="relative shrink-0" ref={statusMenuRef}>
                 <button
@@ -546,8 +599,9 @@ export function StudentAppointmentsPage() {
                     statusFilter === 'all'
                       ? 'Filtrar citas por estado'
                       : `Filtrar citas por estado. Actual: ${
-                          appointmentStatusOptions.find((option) => option.value === statusFilter)
-                            ?.label
+                          appointmentStatusOptions.find(
+                            (option) => option.value === statusFilter,
+                          )?.label
                         }`
                   }
                   className={classNames(
@@ -557,9 +611,14 @@ export function StudentAppointmentsPage() {
                       : 'border-slate-200/90 hover:border-primary/30 hover:bg-white',
                   )}
                   type="button"
-                  onClick={() => setIsStatusMenuOpen((currentValue) => !currentValue)}
+                  onClick={() =>
+                    setIsStatusMenuOpen((currentValue) => !currentValue)
+                  }
                 >
-                  <SlidersHorizontal aria-hidden="true" className="h-[1.05rem] w-[1.05rem]" />
+                  <SlidersHorizontal
+                    aria-hidden="true"
+                    className="h-[1.05rem] w-[1.05rem]"
+                  />
                   {statusFilter !== 'all' || sortOrder !== 'arrival' ? (
                     <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary ring-2 ring-white" />
                   ) : null}
@@ -600,10 +659,15 @@ export function StudentAppointmentsPage() {
                             <span
                               className={classNames(
                                 'inline-flex h-5 w-5 items-center justify-center rounded-full',
-                                isSelected ? 'bg-white/18 text-white' : 'bg-white text-slate-300',
+                                isSelected
+                                  ? 'bg-white/18 text-white'
+                                  : 'bg-white text-slate-300',
                               )}
                             >
-                              <Check aria-hidden="true" className="h-3.5 w-3.5" />
+                              <Check
+                                aria-hidden="true"
+                                className="h-3.5 w-3.5"
+                              />
                             </span>
                           </button>
                         );
@@ -615,10 +679,16 @@ export function StudentAppointmentsPage() {
                       </p>
                     </div>
                     <div className="space-y-1">
-                      {([
-                        { label: 'Orden de llegada', value: 'arrival' as AppointmentSortOrder },
-                        { label: 'Proximas primero', value: 'proximity' as AppointmentSortOrder },
-                      ]).map((option) => {
+                      {[
+                        {
+                          label: 'Orden de llegada',
+                          value: 'arrival' as AppointmentSortOrder,
+                        },
+                        {
+                          label: 'Proximas primero',
+                          value: 'proximity' as AppointmentSortOrder,
+                        },
+                      ].map((option) => {
                         const isSelected = sortOrder === option.value;
                         return (
                           <button
@@ -641,10 +711,15 @@ export function StudentAppointmentsPage() {
                             <span
                               className={classNames(
                                 'inline-flex h-5 w-5 items-center justify-center rounded-full',
-                                isSelected ? 'bg-white/18 text-white' : 'bg-white text-slate-300',
+                                isSelected
+                                  ? 'bg-white/18 text-white'
+                                  : 'bg-white text-slate-300',
                               )}
                             >
-                              <Check aria-hidden="true" className="h-3.5 w-3.5" />
+                              <Check
+                                aria-hidden="true"
+                                className="h-3.5 w-3.5"
+                              />
                             </span>
                           </button>
                         );
@@ -677,20 +752,37 @@ export function StudentAppointmentsPage() {
                   >
                     <td className="px-4 py-3.5 sm:px-5">
                       <div className="space-y-1.5">
-                        <p className="text-sm font-semibold text-ink">{appointment.patientName}</p>
+                        <p className="text-sm font-semibold text-ink">
+                          {appointment.patientName}
+                        </p>
                         <p className="inline-flex items-center gap-1.5 text-xs text-ink-muted">
-                          <UserRound aria-hidden="true" className="h-3.5 w-3.5 text-primary" />
+                          <UserRound
+                            aria-hidden="true"
+                            className="h-3.5 w-3.5 text-primary"
+                          />
                           Solicitud vinculada
                         </p>
-                        <p className="text-xs text-ink-muted">ID relacion: {appointment.requestId}</p>
+                        <p className="text-xs text-ink-muted">
+                          ID relacion: {appointment.requestId}
+                        </p>
                       </div>
                     </td>
                     <td className="px-4 py-3.5">
                       <div className="max-w-[19rem] space-y-1.5 text-sm text-ink-muted">
-                        <p className="font-semibold text-ink">{appointment.appointmentType}</p>
-                        <p>{formatDateTimeRange(appointment.startAt, appointment.endAt)}</p>
+                        <p className="font-semibold text-ink">
+                          {appointment.appointmentType}
+                        </p>
+                        <p>
+                          {formatDateTimeRange(
+                            appointment.startAt,
+                            appointment.endAt,
+                          )}
+                        </p>
                         <p className="inline-flex items-center gap-1.5">
-                          <MapPin aria-hidden="true" className="h-3.5 w-3.5 text-primary" />
+                          <MapPin
+                            aria-hidden="true"
+                            className="h-3.5 w-3.5 text-primary"
+                          />
                           <span>
                             {appointment.siteName} - {appointment.city}
                           </span>
@@ -700,7 +792,10 @@ export function StudentAppointmentsPage() {
                     <td className="px-4 py-3.5">
                       <div className="max-w-[24rem] space-y-2 text-sm text-ink-muted">
                         <p className="inline-flex items-center gap-1.5">
-                          <GraduationCap aria-hidden="true" className="h-3.5 w-3.5 text-primary" />
+                          <GraduationCap
+                            aria-hidden="true"
+                            className="h-3.5 w-3.5 text-primary"
+                          />
                           <span>Docente: {appointment.supervisorName}</span>
                         </p>
                         <div className="flex flex-wrap gap-1.5">
@@ -709,13 +804,17 @@ export function StudentAppointmentsPage() {
                               key={`${appointment.id}-${treatmentName}`}
                               className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[0.72rem] font-semibold text-primary"
                             >
-                              <Stethoscope aria-hidden="true" className="h-3.5 w-3.5" />
+                              <Stethoscope
+                                aria-hidden="true"
+                                className="h-3.5 w-3.5"
+                              />
                               <span>{treatmentName}</span>
                             </span>
                           ))}
                         </div>
                         <p className="leading-6">
-                          {appointment.additionalInfo ?? 'Sin notas adicionales.'}
+                          {appointment.additionalInfo ??
+                            'Sin notas adicionales.'}
                         </p>
                       </div>
                     </td>
@@ -738,8 +837,16 @@ export function StudentAppointmentsPage() {
                             type="button"
                             onClick={() => handleEditAppointment(appointment)}
                           >
-                            <PencilLine aria-hidden="true" className="h-3.5 w-3.5" />
-                            <span>{studentContent.appointmentsPage.actionLabels.edit}</span>
+                            <PencilLine
+                              aria-hidden="true"
+                              className="h-3.5 w-3.5"
+                            />
+                            <span>
+                              {
+                                studentContent.appointmentsPage.actionLabels
+                                  .edit
+                              }
+                            </span>
                           </button>
                           <button
                             className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition duration-200 hover:bg-rose-100"
@@ -747,7 +854,12 @@ export function StudentAppointmentsPage() {
                             onClick={() => setAppointmentToCancel(appointment)}
                           >
                             <Ban aria-hidden="true" className="h-3.5 w-3.5" />
-                            <span>{studentContent.appointmentsPage.actionLabels.cancel}</span>
+                            <span>
+                              {
+                                studentContent.appointmentsPage.actionLabels
+                                  .cancel
+                              }
+                            </span>
                           </button>
                         </div>
                       ) : appointment.status === 'ACEPTADA' ? (
@@ -755,10 +867,20 @@ export function StudentAppointmentsPage() {
                           <button
                             className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700 transition duration-200 hover:bg-sky-100"
                             type="button"
-                            onClick={() => handleStatusChange(appointment.id, 'FINALIZADA')}
+                            onClick={() =>
+                              handleStatusChange(appointment.id, 'FINALIZADA')
+                            }
                           >
-                            <CheckCircle2 aria-hidden="true" className="h-3.5 w-3.5" />
-                            <span>{studentContent.appointmentsPage.actionLabels.finalize}</span>
+                            <CheckCircle2
+                              aria-hidden="true"
+                              className="h-3.5 w-3.5"
+                            />
+                            <span>
+                              {
+                                studentContent.appointmentsPage.actionLabels
+                                  .finalize
+                              }
+                            </span>
                           </button>
                           <button
                             className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition duration-200 hover:bg-rose-100"
@@ -766,7 +888,12 @@ export function StudentAppointmentsPage() {
                             onClick={() => setAppointmentToCancel(appointment)}
                           >
                             <Ban aria-hidden="true" className="h-3.5 w-3.5" />
-                            <span>{studentContent.appointmentsPage.actionLabels.cancel}</span>
+                            <span>
+                              {
+                                studentContent.appointmentsPage.actionLabels
+                                  .cancel
+                              }
+                            </span>
                           </button>
                         </div>
                       ) : appointment.status === 'FINALIZADA' ? (
@@ -775,14 +902,25 @@ export function StudentAppointmentsPage() {
                             <button
                               className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 transition duration-200 hover:bg-amber-100"
                               type="button"
-                              onClick={() => setRatingTarget({ appointmentId: appointment.id, patientName: appointment.patientName })}
+                              onClick={() =>
+                                setRatingTarget({
+                                  appointmentId: appointment.id,
+                                  patientName: appointment.patientName,
+                                })
+                              }
                             >
-                              <Star aria-hidden="true" className="h-3.5 w-3.5" />
+                              <Star
+                                aria-hidden="true"
+                                className="h-3.5 w-3.5"
+                              />
                               <span>Calificar paciente</span>
                             </button>
                           ) : (
                             <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-600">
-                              <Star aria-hidden="true" className="h-3 w-3 fill-amber-400 text-amber-400" />
+                              <Star
+                                aria-hidden="true"
+                                className="h-3 w-3 fill-amber-400 text-amber-400"
+                              />
                               {appointment.myRating}/5
                             </span>
                           )}
@@ -791,12 +929,17 @@ export function StudentAppointmentsPage() {
                             type="button"
                             onClick={() => setCommentsAppointment(appointment)}
                           >
-                            <MessageSquare aria-hidden="true" className="h-3.5 w-3.5" />
+                            <MessageSquare
+                              aria-hidden="true"
+                              className="h-3.5 w-3.5"
+                            />
                             <span>Ver comentarios</span>
                           </button>
                         </div>
                       ) : (
-                        <span className="text-xs font-medium text-ink-muted">Sin acciones</span>
+                        <span className="text-xs font-medium text-ink-muted">
+                          Sin acciones
+                        </span>
                       )}
                     </td>
                   </tr>
@@ -807,7 +950,9 @@ export function StudentAppointmentsPage() {
         ) : (
           <div className="px-4 py-8 text-center sm:px-5">
             <p className="text-sm font-medium text-ink-muted">
-              {isLoading ? 'Cargando citas...' : studentContent.appointmentsPage.emptyState}
+              {isLoading
+                ? 'Cargando citas...'
+                : studentContent.appointmentsPage.emptyState}
             </p>
           </div>
         )}
@@ -818,9 +963,10 @@ export function StudentAppointmentsPage() {
           onClose={closeAppointmentDialog}
           title={editingAppointmentId ? 'Editar cita' : 'Agendar cita'}
         >
-          <div className="space-y-4">
-            <div className="grid gap-3 lg:grid-cols-2">
+          <div className="space-y-2.5">
+            <div className="grid gap-2 sm:grid-cols-2">
               <AdminDropdownField
+                containerClassName="student-appointment-dialog-field"
                 error={appointmentErrors.requestId}
                 icon={UserRound}
                 id="student-appointment-request"
@@ -832,9 +978,12 @@ export function StudentAppointmentsPage() {
                 }))}
                 placeholder="Selecciona una solicitud"
                 value={appointmentValues.requestId}
-                onChange={(value) => handleAppointmentFieldChange('requestId', value)}
+                onChange={(value) =>
+                  handleAppointmentFieldChange('requestId', value)
+                }
               />
               <AdminDropdownField
+                containerClassName="student-appointment-dialog-field"
                 error={appointmentErrors.siteId}
                 icon={MapPin}
                 id="student-appointment-site"
@@ -846,27 +995,33 @@ export function StudentAppointmentsPage() {
                 }))}
                 placeholder="Selecciona una sede"
                 value={appointmentValues.siteId}
-                onChange={(value) => handleAppointmentFieldChange('siteId', value)}
+                onChange={(value) =>
+                  handleAppointmentFieldChange('siteId', value)
+                }
               />
             </div>
             {selectedRequest ? (
               <SurfaceCard
                 className="border border-slate-200/80 bg-slate-50 shadow-none"
-                paddingClassName="p-3.5"
+                paddingClassName="p-2.5"
               >
-                <div className="space-y-1.5">
-                  <p className="text-sm font-semibold text-ink">{selectedRequest.patientName}</p>
-                  <p className="text-[0.82rem] text-ink-muted">
-                    Motivo: {selectedRequest.reason ?? 'Sin motivo especificado.'}
+                <div className="space-y-1">
+                  <p className="text-[0.76rem] font-semibold text-ink">
+                    {selectedRequest.patientName}
                   </p>
-                  <p className="text-[0.82rem] text-ink-muted">
-                    Citas acumuladas en la relacion: {selectedRequest.appointmentsCount}
+                  <p className="line-clamp-1 text-[0.68rem] text-ink-muted">
+                    Motivo:{' '}
+                    {selectedRequest.reason ?? 'Sin motivo especificado.'}
+                  </p>
+                  <p className="text-[0.68rem] text-ink-muted">
+                    Citas acumuladas: {selectedRequest.appointmentsCount}
                   </p>
                 </div>
               </SurfaceCard>
             ) : null}
-            <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(10rem,0.8fr)_minmax(10rem,0.8fr)]">
+            <div className="grid gap-2 sm:grid-cols-3">
               <AdminTextField
+                containerClassName="student-appointment-dialog-field"
                 error={appointmentErrors.startDate}
                 icon={CalendarCheck2}
                 id="student-appointment-date"
@@ -875,17 +1030,23 @@ export function StudentAppointmentsPage() {
                 placeholder=""
                 type="date"
                 value={appointmentValues.startDate}
-                onChange={(value) => handleAppointmentFieldChange('startDate', value)}
+                onChange={(value) =>
+                  handleAppointmentFieldChange('startDate', value)
+                }
               />
               <AdminTimePickerField
+                containerClassName="student-appointment-dialog-field"
                 error={appointmentErrors.startTime}
                 id="student-appointment-start-time"
                 label="Hora de inicio"
                 name="studentAppointmentStartTime"
                 value={appointmentValues.startTime}
-                onChange={(value) => handleAppointmentFieldChange('startTime', value)}
+                onChange={(value) =>
+                  handleAppointmentFieldChange('startTime', value)
+                }
               />
               <AdminTimePickerField
+                containerClassName="student-appointment-dialog-field"
                 disabled={!appointmentValues.startTime}
                 error={appointmentErrors.endTime}
                 id="student-appointment-end-time"
@@ -893,10 +1054,13 @@ export function StudentAppointmentsPage() {
                 min={appointmentValues.startTime || undefined}
                 name="studentAppointmentEndTime"
                 value={appointmentValues.endTime}
-                onChange={(value) => handleAppointmentFieldChange('endTime', value)}
+                onChange={(value) =>
+                  handleAppointmentFieldChange('endTime', value)
+                }
               />
             </div>
             <AdminDropdownField
+              containerClassName="student-appointment-dialog-field"
               error={appointmentErrors.supervisorId}
               icon={GraduationCap}
               id="student-appointment-supervisor"
@@ -908,54 +1072,64 @@ export function StudentAppointmentsPage() {
               }))}
               placeholder="Selecciona un docente supervisor"
               value={appointmentValues.supervisorId}
-              onChange={(value) => handleAppointmentFieldChange('supervisorId', value)}
+              onChange={(value) =>
+                handleAppointmentFieldChange('supervisorId', value)
+              }
             />
-            <div className="space-y-2">
-              <div className="flex items-center justify-between gap-3">
+            <div className="space-y-1.5">
+              <div className="flex items-start justify-between gap-2">
                 <div>
-                  <h3 className="text-[0.88rem] font-semibold text-ink">Tratamientos asociados</h3>
-                  <p className="text-[0.8rem] text-ink-muted">
+                  <h3 className="text-[0.74rem] font-semibold text-ink">
+                    Tratamientos asociados
+                  </h3>
+                  <p className="text-[0.66rem] text-ink-muted">
                     Selecciona uno o varios tratamientos activos para la cita.
                   </p>
                 </div>
                 {appointmentErrors.treatmentIds ? (
-                  <p className="text-[0.75rem] font-medium text-rose-700">
+                  <p className="text-[0.66rem] font-medium text-rose-700">
                     {appointmentErrors.treatmentIds}
                   </p>
                 ) : null}
               </div>
-              <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="admin-scrollbar grid max-h-[9.5rem] gap-1.5 overflow-y-auto pr-1 sm:grid-cols-2 md:grid-cols-3">
                 {activeTreatments.map((treatment) => {
-                  const isSelected = appointmentValues.treatmentIds.includes(treatment.treatmentTypeId);
+                  const isSelected = appointmentValues.treatmentIds.includes(
+                    treatment.treatmentTypeId,
+                  );
 
                   return (
                     <button
                       key={treatment.id}
                       className={classNames(
-                        'rounded-[1.15rem] border px-3 py-3 text-left transition duration-200',
+                        'rounded-[0.85rem] border px-2 py-1.5 text-left transition duration-200',
                         isSelected
                           ? 'border-primary/35 bg-primary/[0.08] shadow-[0_18px_36px_-30px_rgba(22,78,99,0.8)]'
                           : 'border-slate-200/80 bg-white hover:border-primary/20 hover:bg-slate-50',
                       )}
                       type="button"
-                      onClick={() => handleTreatmentToggle(treatment.treatmentTypeId)}
+                      onClick={() =>
+                        handleTreatmentToggle(treatment.treatmentTypeId)
+                      }
                     >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="space-y-1">
-                          <p className="text-[0.86rem] font-semibold text-ink">{treatment.name}</p>
-                          <p className="text-[0.78rem] leading-5 text-ink-muted">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="space-y-0.5">
+                          <p className="text-[0.72rem] font-semibold leading-tight text-ink">
+                            {treatment.name}
+                          </p>
+                          <p className="line-clamp-2 text-[0.62rem] leading-4 text-ink-muted">
                             {treatment.description}
                           </p>
                         </div>
                         <span
                           className={classNames(
-                            'inline-flex h-5 w-5 items-center justify-center rounded-full text-[0.72rem] font-bold',
+                            'inline-flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full text-[0.68rem] font-bold',
                             isSelected
                               ? 'bg-primary text-white'
                               : 'bg-slate-100 text-slate-400',
                           )}
                         >
-                          <Check aria-hidden="true" className="h-3.5 w-3.5" />
+                          <Check aria-hidden="true" className="h-3 w-3" />
                         </span>
                       </div>
                     </button>
@@ -963,35 +1137,44 @@ export function StudentAppointmentsPage() {
                 })}
               </div>
             </div>
-            <div className="space-y-1.5">
-              <label className="block text-[0.84rem] font-semibold text-ink" htmlFor="student-appointment-additional-info">
+            <div className="space-y-1">
+              <label
+                className="block text-[0.72rem] font-semibold text-ink"
+                htmlFor="student-appointment-additional-info"
+              >
                 Informacion adicional
               </label>
               <textarea
-                className="min-h-[5rem] w-full rounded-[1.1rem] border border-slate-200 bg-surface px-3 py-2.25 text-[0.84rem] text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                className="student-appointment-dialog-notes min-h-[3rem] w-full rounded-[0.85rem] border border-slate-200 bg-surface px-2.5 py-1.5 text-[0.72rem] text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
                 id="student-appointment-additional-info"
                 placeholder="Registra observaciones operativas o notas de preparacion para la cita."
                 value={appointmentValues.additionalInfo}
                 onChange={(event) =>
-                  handleAppointmentFieldChange('additionalInfo', event.target.value)
+                  handleAppointmentFieldChange(
+                    'additionalInfo',
+                    event.target.value,
+                  )
                 }
               />
             </div>
             {appointmentApiError ? (
-              <div className="rounded-[1.1rem] border border-rose-200 bg-rose-50/90 px-3.5 py-3 text-sm font-medium text-rose-800" role="alert">
+              <div
+                className="rounded-[0.9rem] border border-rose-200 bg-rose-50/90 px-2.5 py-2 text-[0.72rem] font-medium text-rose-800"
+                role="alert"
+              >
                 {appointmentApiError}
               </div>
             ) : null}
-            <div className="flex flex-wrap items-center justify-end gap-2.5">
+            <div className="flex flex-wrap items-center justify-end gap-2">
               <button
-                className="inline-flex items-center justify-center rounded-full bg-slate-100 px-4 py-2.5 text-sm font-semibold text-ink-muted transition duration-200 hover:bg-slate-200"
+                className="inline-flex items-center justify-center rounded-full bg-slate-100 px-3 py-1.5 text-[0.76rem] font-semibold text-ink-muted transition duration-200 hover:bg-slate-200"
                 type="button"
                 onClick={closeAppointmentDialog}
               >
                 Cancelar
               </button>
               <button
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
+                className="inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-gradient px-3 py-1.5 text-[0.76rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
                 disabled={isLoading || acceptedRequests.length === 0}
                 type="button"
                 onClick={handleAppointmentSubmit}
@@ -1005,8 +1188,9 @@ export function StudentAppointmentsPage() {
               </button>
             </div>
             {acceptedRequests.length === 0 ? (
-              <p className="text-sm font-medium text-amber-700">
-                Necesitas una solicitud aceptada para poder programar nuevas citas.
+              <p className="text-[0.72rem] font-medium text-amber-700">
+                Necesitas una solicitud aceptada para poder programar nuevas
+                citas.
               </p>
             ) : null}
           </div>
@@ -1031,7 +1215,9 @@ export function StudentAppointmentsPage() {
       {commentsAppointment ? (
         <AppointmentCommentsModal
           appointment={commentsAppointment}
-          reviews={reviews.filter((r) => r.appointmentId === commentsAppointment.id)}
+          reviews={reviews.filter(
+            (r) => r.appointmentId === commentsAppointment.id,
+          )}
           onClose={() => setCommentsAppointment(null)}
         />
       ) : null}
@@ -1044,7 +1230,11 @@ export function StudentAppointmentsPage() {
           onSubmit={(appointmentId, rating, comment) => {
             void (async () => {
               setIsSubmittingRating(true);
-              const success = await submitAppointmentReview(appointmentId, rating, comment);
+              const success = await submitAppointmentReview(
+                appointmentId,
+                rating,
+                comment,
+              );
               setIsSubmittingRating(false);
               if (success) setRatingTarget(null);
             })();
@@ -1090,8 +1280,12 @@ function AppointmentCommentsModal({
             <p className="text-[0.6rem] font-bold uppercase tracking-[0.18em] text-primary/70">
               Comentarios de la sesion
             </p>
-            <p className="mt-0.5 text-sm font-semibold text-ink">{appointment.patientName}</p>
-            <p className="text-xs text-ink-muted">{appointment.appointmentType}</p>
+            <p className="mt-0.5 text-sm font-semibold text-ink">
+              {appointment.patientName}
+            </p>
+            <p className="text-xs text-ink-muted">
+              {appointment.appointmentType}
+            </p>
           </div>
           <button
             aria-label="Cerrar"
@@ -1115,15 +1309,25 @@ function AppointmentCommentsModal({
                   className="rounded-[1rem] border border-slate-200/80 bg-slate-50 px-4 py-3.5"
                 >
                   <div className="mb-2 flex items-center justify-between">
-                    <p className="text-xs font-semibold text-ink">{review.patientName}</p>
+                    <p className="text-xs font-semibold text-ink">
+                      {review.patientName}
+                    </p>
                     <p className="text-[0.68rem] text-ink-muted">
-                      {new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(review.createdAt))}
+                      {new Intl.DateTimeFormat('es-CO', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      }).format(new Date(review.createdAt))}
                     </p>
                   </div>
                   {review.comment ? (
-                    <p className="text-sm leading-6 text-ink-muted">{review.comment}</p>
+                    <p className="text-sm leading-6 text-ink-muted">
+                      {review.comment}
+                    </p>
                   ) : (
-                    <p className="text-sm italic text-ink-muted/70">Sin comentario escrito.</p>
+                    <p className="text-sm italic text-ink-muted/70">
+                      Sin comentario escrito.
+                    </p>
                   )}
                 </div>
               ))}
@@ -1134,4 +1338,3 @@ function AppointmentCommentsModal({
     </div>
   );
 }
-
