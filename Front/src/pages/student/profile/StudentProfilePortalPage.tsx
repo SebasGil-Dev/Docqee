@@ -923,11 +923,11 @@ export function StudentProfilePage() {
         </form>
         <AdminConfirmationDialog
           cancelLabel="No, conservar enlace"
-          confirmLabel="Si, eliminar enlace"
+          confirmLabel="Sí, eliminar enlace"
           description={
             linkPendingDeletion
-              ? `El enlace ${linkPendingDeletion.url} se eliminara de tu perfil y este cambio se guardara automaticamente.`
-              : 'El enlace se eliminara de tu perfil y este cambio se guardara automaticamente.'
+              ? `El enlace ${linkPendingDeletion.url} se eliminará de tu perfil y este cambio se guardará automáticamente.`
+              : 'El enlace se eliminará de tu perfil y este cambio se guardará automáticamente.'
           }
           isOpen={!!linkPendingDeletion}
           isSubmitting={isSavingProfile}

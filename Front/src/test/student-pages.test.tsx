@@ -130,11 +130,11 @@ describe('Student pages', () => {
 
     const confirmDialog = screen.getByRole('dialog', { name: /eliminar enlace/i });
     expect(
-      within(confirmDialog).getByText(/este cambio se guardara automaticamente/i),
+      within(confirmDialog).getByText(/este cambio se guardará automáticamente/i),
     ).toBeInTheDocument();
 
     await user.click(
-      within(confirmDialog).getByRole('button', { name: /si, eliminar enlace/i }),
+      within(confirmDialog).getByRole('button', { name: /sí, eliminar enlace/i }),
     );
 
     expect(await screen.findByRole('status')).toHaveTextContent(

@@ -249,20 +249,22 @@ export function StudentTreatmentsPage() {
       ) : null}
       <SurfaceCard className="overflow-hidden bg-brand-gradient text-white" paddingClassName="p-0">
         <div className="flex flex-col gap-3 px-4 py-3.5 sm:px-5 sm:py-4 lg:flex-row lg:items-center lg:justify-between lg:gap-3 2xl:px-6">
-          <div className="flex min-w-0 flex-1 items-center gap-3">
-            {profile.avatarSrc ? (
-              <img
-                alt={profile.avatarAlt}
-                className="h-12 w-12 rounded-[1.2rem] object-cover ring-4 ring-white/20 sm:h-14 sm:w-14"
-                decoding="async"
-                src={getOptimizedAvatarUrl(profile.avatarSrc, 160)}
-              />
-            ) : (
-              <span className="inline-flex h-12 w-12 items-center justify-center rounded-[1.2rem] bg-white/14 text-base font-extrabold uppercase text-white ring-4 ring-white/15 sm:h-14 sm:w-14 sm:text-lg">
-                {studentInitials}
-              </span>
-            )}
-            <div className="flex min-w-0 flex-col gap-1.5">
+          <div className="flex min-w-0 flex-1 items-start gap-3 sm:items-center">
+            <div className="order-2 shrink-0 lg:order-1">
+              {profile.avatarSrc ? (
+                <img
+                  alt={profile.avatarAlt}
+                  className="h-12 w-12 rounded-[1.2rem] object-cover ring-4 ring-white/20 sm:h-14 sm:w-14"
+                  decoding="async"
+                  src={getOptimizedAvatarUrl(profile.avatarSrc, 160)}
+                />
+              ) : (
+                <span className="inline-flex h-12 w-12 items-center justify-center rounded-[1.2rem] bg-white/14 text-base font-extrabold uppercase text-white ring-4 ring-white/15 sm:h-14 sm:w-14 sm:text-lg">
+                  {studentInitials}
+                </span>
+              )}
+            </div>
+            <div className="order-1 flex min-w-0 flex-1 flex-col gap-1.5 lg:order-2">
               <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-2.5">
                 <h2 className="max-w-[14rem] truncate font-headline text-[1.05rem] font-extrabold tracking-tight text-white sm:max-w-[16rem] sm:text-[1.18rem] lg:max-w-none lg:whitespace-normal lg:overflow-visible xl:max-w-none">
                   {studentDisplayName.compactName === studentDisplayName.fullName ? (
