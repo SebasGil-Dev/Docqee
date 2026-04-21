@@ -542,11 +542,8 @@ describe('Student pages', () => {
     );
     await user.click(screen.getByRole('button', { name: /enviar mensaje/i }));
 
-    expect(await screen.findByRole('status')).toHaveTextContent(
-      /tu mensaje se envio correctamente/i,
-    );
     expect(
-      within(screen.getByTestId('student-conversation-thread-student-conversation-1')).getByText(
+      await within(screen.getByTestId('student-conversation-thread-student-conversation-1')).findByText(
         /hola julian, manana en la tarde te puedo compartir una propuesta de horario/i,
       ),
     ).toBeInTheDocument();

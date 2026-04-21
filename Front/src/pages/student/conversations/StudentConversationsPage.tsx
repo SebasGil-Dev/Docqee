@@ -56,7 +56,6 @@ export function StudentConversationsPage() {
   const [statusFilter, setStatusFilter] = useState<ConversationStatusFilter>('all');
   const [composerValue, setComposerValue] = useState('');
   const [composerError, setComposerError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
@@ -138,7 +137,6 @@ export function StudentConversationsPage() {
   useEffect(() => {
     setComposerValue('');
     setComposerError(null);
-    setSuccessMessage(null);
   }, [selectedConversation?.id]);
 
   useEffect(() => {
@@ -168,39 +166,34 @@ export function StudentConversationsPage() {
 
     if (!normalizedMessage) {
       setComposerError('Ingresa un mensaje antes de enviarlo.');
-      setSuccessMessage(null);
       return;
     }
 
     setComposerValue('');
     setComposerError(null);
-    setSuccessMessage(null);
 
     void (async () => {
       const sent = await sendConversationMessage(selectedConversation.id, normalizedMessage);
 
       if (!sent) {
         setComposerValue(normalizedMessage);
-        return;
       }
-
-      setSuccessMessage('Tu mensaje se envio correctamente.');
     })();
   };
 
   return (
-    <div className="student-page-compact flex h-full min-h-0 w-full flex-col gap-3 overflow-visible lg:overflow-hidden">
+    <div className="student-page-compact flex h-full min-h-0 w-full flex-col gap-2 overflow-visible lg:overflow-hidden">
       <Seo
         description={studentContent.conversationsPage.meta.description}
         noIndex
         title={studentContent.conversationsPage.meta.title}
       />
       <AdminPageHeader
-        className="gap-3"
+        className="gap-2"
         description=""
         headingAlign="center"
         title={studentContent.conversationsPage.title}
-        titleClassName="text-[1.45rem] sm:text-[1.7rem]"
+        titleClassName="text-[1.18rem] sm:text-[1.32rem]"
       />
       {visibleErrorMessage ? (
         <SurfaceCard
@@ -211,29 +204,29 @@ export function StudentConversationsPage() {
         </SurfaceCard>
       ) : null}
       <AdminPanelCard className="min-h-0 flex-1" panelClassName="bg-[#f4f8ff]">
-        <div className="border-b border-slate-200/80 px-3 py-2.5 sm:px-4 sm:py-3">
-          <div className="flex flex-col gap-2.5">
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-              <div className="flex min-w-0 shrink-0 items-center gap-3">
-                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-primary/10 text-primary ring-1 ring-primary/10">
-                  <MessageSquareMore aria-hidden="true" className="h-5 w-5" />
+        <div className="border-b border-slate-200/80 px-2.5 py-2 sm:px-3">
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+              <div className="flex min-w-0 shrink-0 items-center gap-2">
+                <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.9rem] bg-primary/10 text-primary ring-1 ring-primary/10">
+                  <MessageSquareMore aria-hidden="true" className="h-4 w-4" />
                 </span>
-                <h2 className="min-w-0 font-headline text-[1.2rem] font-extrabold tracking-tight text-ink sm:text-[1.35rem]">
+                <h2 className="min-w-0 font-headline text-[1rem] font-extrabold tracking-tight text-ink sm:text-[1.08rem]">
                   Chat con pacientes
                 </h2>
               </div>
-              <div className="flex w-full items-center justify-end gap-2.5 sm:w-auto">
+              <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
                 <label
-                  className="relative min-w-0 flex-1 sm:w-[22rem] sm:flex-none xl:w-[26rem]"
+                  className="relative min-w-0 flex-1 sm:w-[18rem] sm:flex-none xl:w-[22rem]"
                   htmlFor="student-conversation-search"
                 >
                   <span className="sr-only">{studentContent.conversationsPage.searchLabel}</span>
                   <Search
                     aria-hidden="true"
-                    className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ghost"
+                    className="pointer-events-none absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ghost"
                   />
                   <input
-                    className="h-10 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-11 pr-4 text-sm text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                    className="h-9 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-9 pr-3 text-xs text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
                     id="student-conversation-search"
                     placeholder={studentContent.conversationsPage.searchPlaceholder}
                     type="search"
@@ -254,7 +247,7 @@ export function StudentConversationsPage() {
                           }`
                     }
                     className={classNames(
-                      'relative inline-flex h-10 w-10 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                      'relative inline-flex h-9 w-9 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
                       statusFilter === 'all'
                         ? 'border-slate-200/90 hover:border-primary/30 hover:bg-white'
                         : 'border-primary/25 bg-primary/[0.08] text-primary hover:bg-primary/[0.12]',
@@ -262,19 +255,19 @@ export function StudentConversationsPage() {
                     type="button"
                     onClick={() => setIsStatusMenuOpen((currentValue) => !currentValue)}
                   >
-                    <SlidersHorizontal aria-hidden="true" className="h-[1.05rem] w-[1.05rem]" />
+                    <SlidersHorizontal aria-hidden="true" className="h-4 w-4" />
                     {statusFilter !== 'all' ? (
                       <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary ring-2 ring-white" />
                     ) : null}
                   </button>
                   {isStatusMenuOpen ? (
                     <div
-                      className="absolute right-0 top-[calc(100%+0.6rem)] z-20 w-[14rem] overflow-hidden rounded-[1.4rem] border border-slate-200/80 bg-white/95 p-2 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.45)] backdrop-blur"
+                      className="absolute right-0 top-[calc(100%+0.5rem)] z-20 w-[12.5rem] overflow-hidden rounded-[1.2rem] border border-slate-200/80 bg-white/95 p-1.5 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.45)] backdrop-blur"
                       id="student-conversation-status-menu"
                       role="menu"
                     >
                       <div className="px-2.5 pb-2 pt-1">
-                        <p className="text-[0.7rem] font-bold uppercase tracking-[0.24em] text-primary/75">
+                        <p className="text-[0.62rem] font-bold uppercase tracking-[0.2em] text-primary/75">
                           Filtrar por estado
                         </p>
                       </div>
@@ -287,7 +280,7 @@ export function StudentConversationsPage() {
                               key={option.value}
                               aria-checked={isSelected}
                               className={classNames(
-                                'flex w-full items-center justify-between rounded-[1rem] px-3 py-2.5 text-left text-sm font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                                'flex w-full items-center justify-between rounded-[0.85rem] px-2.5 py-2 text-left text-xs font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
                                 isSelected
                                   ? 'bg-primary text-white shadow-[0_14px_30px_-20px_rgba(22,78,99,0.9)]'
                                   : 'bg-slate-50/70 text-ink hover:bg-slate-100',
@@ -319,26 +312,26 @@ export function StudentConversationsPage() {
             </div>
           </div>
         </div>
-        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 py-3 sm:px-4 lg:grid lg:grid-cols-[minmax(18rem,21.5rem)_minmax(0,1fr)] lg:overflow-hidden xl:grid-cols-[minmax(20rem,23rem)_minmax(0,1fr)]">
+        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2 py-2 sm:px-3 lg:grid lg:grid-cols-[minmax(16rem,19.5rem)_minmax(0,1fr)] lg:overflow-hidden xl:grid-cols-[minmax(18rem,21rem)_minmax(0,1fr)]">
           <SurfaceCard
-            className="min-h-[16rem] shrink-0 border border-slate-200/80 bg-white shadow-none lg:h-full lg:min-h-0 lg:shrink"
+            className="min-h-[14rem] shrink-0 border border-slate-200/80 bg-white shadow-none lg:h-full lg:min-h-0 lg:shrink"
             paddingClassName="p-0"
           >
-            <div className="flex h-full min-h-[16rem] max-h-[22rem] flex-col lg:min-h-0 lg:max-h-none">
-              <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200/80 px-3.5 py-2.5">
+            <div className="flex h-full min-h-[14rem] max-h-[18rem] flex-col lg:min-h-0 lg:max-h-none">
+              <div className="flex shrink-0 items-center justify-between gap-2 border-b border-slate-200/80 px-3 py-2">
                 <div className="min-w-0">
-                  <h3 className="font-headline text-[0.95rem] font-extrabold tracking-tight text-ink">
+                  <h3 className="font-headline text-[0.86rem] font-extrabold tracking-tight text-ink">
                     Chats
                   </h3>
-                  <p className="text-xs text-ink-muted">Selecciona un paciente para conversar.</p>
+                  <p className="text-[0.65rem] text-ink-muted">Selecciona un paciente.</p>
                 </div>
-                <span className="inline-flex min-w-[2rem] items-center justify-center rounded-full bg-primary/10 px-2 py-1 text-[0.7rem] font-bold text-primary">
+                <span className="inline-flex min-w-[1.7rem] items-center justify-center rounded-full bg-primary/10 px-1.5 py-0.5 text-[0.65rem] font-bold text-primary">
                   {filteredConversations.length}
                 </span>
               </div>
-              <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto p-2.5">
+              <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto p-2">
                 {filteredConversations.length > 0 ? (
-                  <div className="space-y-2.5">
+                  <div className="space-y-2">
                     {filteredConversations.map((conversation) => {
                       const lastMessage = getLastMessage(conversation);
                       const isSelected = selectedConversation?.id === conversation.id;
@@ -348,7 +341,7 @@ export function StudentConversationsPage() {
                           key={conversation.id}
                           aria-current={isSelected ? 'true' : undefined}
                           className={classNames(
-                            'w-full rounded-[1.35rem] border px-3.5 py-2.5 text-left transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                            'w-full rounded-[1rem] border px-3 py-2 text-left transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
                             isSelected
                               ? 'border-primary/35 bg-primary/[0.08] shadow-[0_18px_40px_-28px_rgba(22,78,99,0.65)]'
                               : 'border-slate-200/80 bg-slate-50 hover:border-primary/20 hover:bg-slate-100/70',
@@ -361,24 +354,24 @@ export function StudentConversationsPage() {
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
-                              <p className="truncate text-sm font-semibold text-ink">
+                              <p className="truncate text-[0.82rem] font-semibold text-ink">
                                 {conversation.patientName}
                               </p>
-                              <p className="text-xs text-ink-muted">
+                              <p className="text-[0.66rem] text-ink-muted">
                                 {`${conversation.patientAge} a\u00f1os - ${conversation.patientCity}`}
                               </p>
                             </div>
                             {conversation.unreadCount > 0 ? (
-                              <span className="inline-flex min-w-[1.45rem] items-center justify-center rounded-full bg-primary px-2 py-1 text-[0.68rem] font-bold text-white">
+                              <span className="inline-flex min-w-[1.35rem] items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-[0.62rem] font-bold text-white">
                                 {conversation.unreadCount}
                               </span>
                             ) : null}
                           </div>
-                          <p className="mt-2 line-clamp-2 break-words text-sm leading-6 text-ink-muted">
+                          <p className="mt-1.5 line-clamp-2 break-words text-[0.76rem] leading-5 text-ink-muted">
                             {lastMessage?.content ?? conversation.reason ?? 'Sin mensajes todavia.'}
                           </p>
-                          <div className="mt-3 flex items-center justify-end gap-3">
-                            <span className="text-[0.72rem] font-medium text-ink-muted">
+                          <div className="mt-2 flex items-center justify-end gap-2">
+                            <span className="text-[0.66rem] font-medium text-ink-muted">
                               {lastMessage ? formatTime(lastMessage.sentAt) : 'Sin hora'}
                             </span>
                           </div>
@@ -397,27 +390,24 @@ export function StudentConversationsPage() {
             </div>
           </SurfaceCard>
           <SurfaceCard
-            className="min-h-[30rem] border border-slate-200/80 bg-white shadow-none lg:h-full lg:min-h-0"
+            className="min-h-[26rem] border border-slate-200/80 bg-white shadow-none lg:h-full lg:min-h-0"
             paddingClassName="p-0"
           >
             {selectedConversation ? (
-              <div className="flex h-full min-h-[30rem] flex-col lg:min-h-0">
-                <div className="shrink-0 border-b border-slate-200/80 px-4 py-3 sm:px-5">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
+              <div className="flex h-full min-h-[26rem] flex-col lg:min-h-0">
+                <div className="shrink-0 border-b border-slate-200/80 px-3 py-2 sm:px-4">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="flex min-w-0 flex-wrap items-center gap-2">
+                        <h2 className="truncate font-headline text-[1rem] font-extrabold tracking-tight text-ink sm:text-[1.08rem]">
                           {selectedConversation.patientName}
                         </h2>
                       </div>
-                      <p className="break-words text-sm leading-6 text-ink-muted">
-                        {selectedConversation.reason ?? 'Conversacion iniciada desde una solicitud sin motivo especificado.'}
-                      </p>
                     </div>
                   </div>
                 </div>
                 <div
-                  className="admin-scrollbar min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3.5 sm:px-5"
+                  className="admin-scrollbar min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-2.5 sm:px-4"
                   data-testid={`student-conversation-thread-${selectedConversation.id}`}
                 >
                   {selectedConversation.messages.map((message) => {
@@ -429,11 +419,11 @@ export function StudentConversationsPage() {
                         className={classNames(
                           'flex',
                           isStudentAuthor ? 'justify-end' : 'justify-start',
-                        )}
-                      >
-                        <div
-                          className={classNames(
-                            'max-w-[90%] rounded-[1.45rem] px-3.5 py-2.5 shadow-[0_12px_28px_-22px_rgba(15,23,42,0.35)] sm:max-w-[78%]',
+                          )}
+                        >
+                          <div
+                            className={classNames(
+                            'max-w-[90%] rounded-[1rem] px-3 py-2 shadow-[0_12px_28px_-22px_rgba(15,23,42,0.35)] sm:max-w-[76%]',
                             isStudentAuthor
                               ? 'bg-brand-gradient text-white'
                               : 'bg-slate-100 text-ink',
@@ -441,16 +431,16 @@ export function StudentConversationsPage() {
                         >
                           <p
                             className={classNames(
-                              'text-[0.68rem] font-bold uppercase tracking-[0.18em]',
+                              'text-[0.6rem] font-bold uppercase tracking-[0.14em]',
                               isStudentAuthor ? 'text-white/70' : 'text-primary/75',
                             )}
                           >
                             {message.authorName}
                           </p>
-                          <p className="mt-1 break-words text-sm leading-6">{message.content}</p>
+                          <p className="mt-1 break-words text-[0.82rem] leading-5">{message.content}</p>
                           <p
                             className={classNames(
-                              'mt-2 text-[0.72rem] font-medium',
+                              'mt-1.5 text-[0.66rem] font-medium',
                               isStudentAuthor ? 'text-white/75' : 'text-ink-muted',
                             )}
                           >
@@ -462,20 +452,12 @@ export function StudentConversationsPage() {
                   })}
                   <div ref={messagesEndRef} />
                 </div>
-                <div className="shrink-0 border-t border-slate-200/80 px-4 py-3 sm:px-5">
+                <div className="shrink-0 border-t border-slate-200/80 px-3 py-2 sm:px-4">
                   {selectedConversation.status === 'ACTIVA' ? (
-                    <div className="space-y-3">
-                      {successMessage ? (
-                        <p
-                          className="rounded-[1rem] border border-emerald-200/80 bg-white px-3 py-2 text-sm font-semibold text-emerald-700"
-                          role="status"
-                        >
-                          {successMessage}
-                        </p>
-                      ) : null}
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-                        <div className="min-w-0 flex-1 space-y-1.5">
-                          <label className="block text-sm font-semibold text-ink" htmlFor="student-conversation-message">
+                    <div className="space-y-2">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                        <div className="min-w-0 flex-1 space-y-1">
+                          <label className="block text-xs font-semibold text-ink" htmlFor="student-conversation-message">
                             Mensaje para el paciente
                           </label>
                           <textarea
@@ -484,18 +466,18 @@ export function StudentConversationsPage() {
                             }
                             aria-invalid={Boolean(composerError)}
                             className={classNames(
-                              'min-h-[4.75rem] w-full rounded-[1.35rem] border bg-surface px-4 py-3 text-sm text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                              'min-h-[3rem] w-full resize-none rounded-[0.95rem] border bg-surface px-3 py-2 text-[0.82rem] text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
                               composerError
                                 ? 'border-rose-300 focus-visible:border-rose-400 focus-visible:ring-rose-200/70'
                                 : 'border-slate-200 focus-visible:border-primary',
                             )}
                             id="student-conversation-message"
                             placeholder="Escribe una respuesta clara para continuar el caso."
+                            rows={1}
                             value={composerValue}
                             onChange={(event) => {
                               setComposerValue(event.target.value);
                               setComposerError(null);
-                              setSuccessMessage(null);
                             }}
                             onKeyDown={(event) => {
                               if (event.key === 'Enter' && !event.shiftKey) {
@@ -505,19 +487,19 @@ export function StudentConversationsPage() {
                             }}
                           />
                           {composerError ? (
-                            <p className="text-sm text-rose-600" id="student-conversation-message-error">
+                            <p className="text-xs text-rose-600" id="student-conversation-message-error">
                               {composerError}
                             </p>
                           ) : null}
                         </div>
                         <button
-                          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 sm:min-w-[10rem]"
+                          aria-label={studentContent.conversationsPage.actionLabels.sendMessage}
+                          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/12"
                           disabled={isLoading}
                           type="button"
                           onClick={handleSendMessage}
                         >
                           <SendHorizontal aria-hidden="true" className="h-4 w-4" />
-                          <span>{studentContent.conversationsPage.actionLabels.sendMessage}</span>
                         </button>
                       </div>
                     </div>
