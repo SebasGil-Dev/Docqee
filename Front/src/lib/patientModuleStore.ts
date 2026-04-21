@@ -574,6 +574,21 @@ function createMockState(): PatientStoreState {
   };
 }
 
+function upsertPatientRequest(
+  requests: PatientRequest[],
+  request: PatientRequest,
+) {
+  const existingRequest = requests.some(
+    (currentRequest) => currentRequest.id === request.id,
+  );
+
+  return existingRequest
+    ? requests.map((currentRequest) =>
+        currentRequest.id === request.id ? request : currentRequest,
+      )
+    : [request, ...requests];
+}
+
 function readSessionStorage() {
   if (typeof window === 'undefined') {
     return null;
@@ -1353,7 +1368,7 @@ async function createRequest(studentId: string, reason: string) {
         errorMessage: null,
         isLoading: false,
         isReady: true,
-        requests: [request, ...state.requests],
+        requests: upsertPatientRequest(state.requests, request),
         shouldRefresh: false,
       },
       {
