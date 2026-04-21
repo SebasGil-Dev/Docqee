@@ -818,36 +818,99 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
   async updateRequestStatus(
     studentAccountId: number,
     requestId: number,
-    payload: { status: 'ACEPTADA' | 'RECHAZADA' },
+    payload: { status: 'ACEPTADA' | 'RECHAZADA' | 'CERRADA' },
   ): Promise<StudentRequestDto> {
     const solicitud = await this.prisma.solicitud.findFirst({
       where: { id_solicitud: requestId, id_cuenta_estudiante: studentAccountId },
+      include: { conversacion: true },
     });
 
     if (!solicitud) {
       throw new NotFoundException('La solicitud no existe o no te pertenece.');
     }
 
-    if (solicitud.estado !== 'PENDIENTE') {
-      throw new NotFoundException('Solo se pueden responder solicitudes pendientes.');
+    if (payload.status === 'CERRADA') {
+      if (solicitud.estado !== 'ACEPTADA') {
+        throw new BadRequestException('Solo se pueden cerrar solicitudes aceptadas.');
+      }
+
+      const updated = await this.prisma.$transaction(async (tx) => {
+        await tx.conversacion.updateMany({
+          where: { id_solicitud: requestId },
+          data: { estado: 'CERRADA' },
+        });
+
+        return tx.solicitud.update({
+          where: { id_solicitud: requestId },
+          data: {
+            estado: 'CERRADA',
+            fecha_cierre: new Date(),
+            fecha_actualizacion: new Date(),
+          },
+          include: {
+            cuenta_paciente: {
+              include: {
+                persona: true,
+                localidad: { include: { ciudad: true } },
+              },
+            },
+            conversacion: true,
+            cita: true,
+          },
+        });
+      });
+      const patientReviewsByAccountId = await this.getPatientReviewsByAccountId(
+        [updated.cuenta_paciente.id_cuenta],
+        studentAccountId,
+      );
+
+      return this.toStudentRequestDto(
+        updated,
+        patientReviewsByAccountId.get(updated.cuenta_paciente.id_cuenta) ?? [],
+      );
     }
 
-    const updated = await this.prisma.solicitud.update({
-      where: { id_solicitud: requestId },
-      data: {
-        estado: payload.status,
-        fecha_respuesta: new Date(),
-      },
-      include: {
-        cuenta_paciente: {
-          include: {
-            persona: true,
-            localidad: { include: { ciudad: true } },
-          },
+    if (solicitud.estado !== 'PENDIENTE') {
+      throw new BadRequestException('Solo se pueden responder solicitudes pendientes.');
+    }
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      await tx.solicitud.update({
+        where: { id_solicitud: requestId },
+        data: {
+          estado: payload.status,
+          fecha_respuesta: new Date(),
+          fecha_actualizacion: new Date(),
         },
-        conversacion: true,
-        cita: true,
-      },
+      });
+
+      if (payload.status === 'ACEPTADA') {
+        await tx.conversacion.upsert({
+          where: { id_solicitud: requestId },
+          create: {
+            id_solicitud: requestId,
+            estado: 'ACTIVA',
+          },
+          update: {
+            estado: 'ACTIVA',
+            solo_lectura_at: null,
+          },
+        });
+      }
+
+      return tx.solicitud.findUniqueOrThrow({
+        where: { id_solicitud: requestId },
+        include: {
+          cuenta_paciente: {
+            include: {
+              persona: true,
+              localidad: { include: { ciudad: true } },
+            },
+          },
+          conversacion: true,
+          cita: true,
+        },
+      });
     });
     const patientReviewsByAccountId = await this.getPatientReviewsByAccountId(
       [updated.cuenta_paciente.id_cuenta],

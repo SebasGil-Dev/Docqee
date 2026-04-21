@@ -1888,7 +1888,7 @@ function respondToRequestMock(
                     nextStatus === 'ACEPTADA'
                       ? 'ACTIVA'
                       : nextStatus === 'CERRADA' || nextStatus === 'CANCELADA'
-                        ? 'SOLO_LECTURA'
+                        ? 'CERRADA'
                         : conversation.status,
                   unreadCount:
                     nextStatus === 'ACEPTADA' ? conversation.unreadCount : 0,
