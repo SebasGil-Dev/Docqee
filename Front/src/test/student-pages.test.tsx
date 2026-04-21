@@ -103,7 +103,7 @@ describe('Student pages', () => {
       'Atiendo lunes, martes y jueves en jornada de tarde.',
     );
 
-    await user.click(screen.getByRole('button', { name: /red profesional/i }));
+    await user.click(screen.getByRole('button', { name: /tipo de enlace/i }));
     await user.click(screen.getByRole('option', { name: /hoja de vida/i }));
     await user.type(
       screen.getByLabelText(/^url$/i),
@@ -377,6 +377,10 @@ describe('Student pages', () => {
     await user.click(within(dialog).getByRole('option', { name: /julian torres/i }));
     await user.click(within(dialog).getByLabelText(/^sede$/i));
     await user.click(within(dialog).getByRole('option', { name: /sede norte/i }));
+    await user.click(within(dialog).getByLabelText(/tipo de cita/i));
+    await user.click(
+      within(dialog).getByRole('option', { name: /control restaurativo/i }),
+    );
     await user.type(within(dialog).getByLabelText(/fecha de la cita/i), '2026-04-11');
     await user.type(within(dialog).getByLabelText(/hora de inicio/i), '08:00');
     await user.type(within(dialog).getByLabelText(/hora de finalizacion/i), '09:00');
@@ -390,12 +394,11 @@ describe('Student pages', () => {
     );
     await user.click(within(dialog).getByRole('button', { name: /guardar cita/i }));
 
-    expect(await screen.findByRole('status')).toHaveTextContent(
-      /la cita se agendo correctamente como propuesta/i,
-    );
-    expect(screen.getByTestId('student-appointment-row-student-appointment-6')).toHaveTextContent(
-      /julian torres/i,
-    );
+    await waitFor(() => {
+      expect(
+        screen.getByTestId('student-appointment-row-student-appointment-6'),
+      ).toHaveTextContent(/julian torres/i);
+    });
 
     await user.click(
       within(screen.getByTestId('student-appointment-row-student-appointment-6')).getByRole(

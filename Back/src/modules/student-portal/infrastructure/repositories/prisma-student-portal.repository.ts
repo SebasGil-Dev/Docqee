@@ -8,6 +8,7 @@ import { UpsertStudentAppointmentDto } from '../../application/dto/upsert-studen
 import { UpsertStudentScheduleBlockDto } from '../../application/dto/upsert-student-schedule-block.dto';
 import { UpdateStudentProfileDto } from '../../application/dto/update-student-profile.dto';
 import { StudentAgendaAppointmentDto } from '../../application/dto/student-agenda-appointment.dto';
+import { StudentAppointmentTypeDto } from '../../application/dto/student-appointment-type.dto';
 import { StudentAppointmentReviewDto } from '../../application/dto/student-appointment-review.dto';
 import { StudentConversationDto } from '../../application/dto/student-conversation.dto';
 import { StudentConversationMessageDto } from '../../application/dto/student-conversation-message.dto';
@@ -240,7 +241,7 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
   }
 
   async getDashboard(studentAccountId: number): Promise<StudentPortalDashboardDto> {
-    const [student, solicitudes, bloques, valoraciones] = await Promise.all([
+    const [student, solicitudes, bloques, valoraciones, tiposCita] = await Promise.all([
       this.prisma.cuenta_estudiante.findUnique({
         where: { id_cuenta: studentAccountId },
         include: {
@@ -307,6 +308,9 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
         },
         orderBy: { fecha_creacion: 'desc' },
       }),
+      this.prisma.tipo_cita.findMany({
+        orderBy: { nombre: 'asc' },
+      }),
     ]);
 
     const studentName = student
@@ -321,6 +325,10 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       treatmentTypeId: String(t.id_tipo_tratamiento),
       name: t.tipo_tratamiento.nombre,
       status: t.estado === 'ACTIVO' ? 'active' : 'inactive',
+    }));
+    const appointmentTypes: StudentAppointmentTypeDto[] = tiposCita.map((tipoCita) => ({
+      id: String(tipoCita.id_tipo_cita),
+      name: tipoCita.nombre,
     }));
 
     const practiceSites: StudentPracticeSiteDto[] = (student?.estudiante_sede_practica ?? []).map((sp) => ({
@@ -351,6 +359,7 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     const appointments: StudentAgendaAppointmentDto[] = solicitudes.flatMap((s) =>
       s.cita.map((c) => ({
         additionalInfo: c.informacion_adicional ?? null,
+        appointmentTypeId: String(c.id_tipo_cita),
         appointmentType: c.tipo_cita.nombre,
         city: c.sede.localidad.ciudad.nombre,
         createdAt: c.fecha_creacion.toISOString(),
@@ -422,6 +431,7 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
 
     return {
       appointments,
+      appointmentTypes,
       conversations,
       practiceSites,
       profile,
@@ -1019,15 +1029,10 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     return new Date(Date.UTC(year, month - 1, day, hours + 5, minutes, 0, 0));
   }
 
-  private getAppointmentTypeLabel(treatmentNames: string[]): string {
-    if (treatmentNames.length === 1) return treatmentNames[0] ?? 'Cita clinica';
-    if (treatmentNames.length > 1) return 'Atencion clinica programada';
-    return 'Cita clinica';
-  }
-
   private toCitaAppointmentDto(
     cita: {
       id_cita: number;
+      id_tipo_cita: number;
       id_sede: number;
       informacion_adicional: string | null;
       fecha_hora_inicio: Date;
@@ -1045,6 +1050,7 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
   ): StudentAgendaAppointmentDto {
     return {
       additionalInfo: cita.informacion_adicional ?? null,
+      appointmentTypeId: String(cita.id_tipo_cita),
       appointmentType: cita.tipo_cita.nombre,
       city: cita.sede.localidad.ciudad.nombre,
       createdAt: cita.fecha_creacion.toISOString(),
@@ -1119,6 +1125,14 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       throw new NotFoundException('La sede no existe o no esta activa.');
     }
 
+    const tipoCita = await this.prisma.tipo_cita.findUnique({
+      where: { id_tipo_cita: payload.appointmentTypeId },
+    });
+
+    if (!tipoCita) {
+      throw new NotFoundException('El tipo de cita seleccionado no existe.');
+    }
+
     // Verify all treatments exist
     const tratamientos = await this.prisma.tipo_tratamiento.findMany({
       where: { id_tipo_tratamiento: { in: payload.treatmentIds } },
@@ -1128,14 +1142,6 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     if (tratamientos.length !== payload.treatmentIds.length) {
       throw new BadRequestException('Uno o mas tratamientos seleccionados no son validos.');
     }
-
-    // Find or create the tipo_cita based on treatment names
-    const tipoCitaNombre = this.getAppointmentTypeLabel(tratamientos.map((t) => t.nombre));
-    const tipoCita = await this.prisma.tipo_cita.upsert({
-      where: { nombre: tipoCitaNombre },
-      create: { nombre: tipoCitaNombre },
-      update: {},
-    });
 
     const startAt = this.buildCitaDateTime(payload.startDate, payload.startTime);
     const endAt = this.buildCitaDateTime(payload.startDate, payload.endTime);
@@ -1225,6 +1231,14 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       throw new NotFoundException('La sede no existe o no esta activa.');
     }
 
+    const tipoCita = await this.prisma.tipo_cita.findUnique({
+      where: { id_tipo_cita: payload.appointmentTypeId },
+    });
+
+    if (!tipoCita) {
+      throw new NotFoundException('El tipo de cita seleccionado no existe.');
+    }
+
     // Verify supervisor
     const student = await this.prisma.cuenta_estudiante.findUnique({
       where: { id_cuenta: studentAccountId },
@@ -1252,13 +1266,6 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     if (tratamientos.length !== payload.treatmentIds.length) {
       throw new BadRequestException('Uno o mas tratamientos seleccionados no son validos.');
     }
-
-    const tipoCitaNombre = this.getAppointmentTypeLabel(tratamientos.map((t) => t.nombre));
-    const tipoCita = await this.prisma.tipo_cita.upsert({
-      where: { nombre: tipoCitaNombre },
-      create: { nombre: tipoCitaNombre },
-      update: {},
-    });
 
     const startAt = this.buildCitaDateTime(payload.startDate, payload.startTime);
     const endAt = this.buildCitaDateTime(payload.startDate, payload.endTime);
@@ -1417,6 +1424,7 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
 
     return {
       additionalInfo: cita.informacion_adicional ?? null,
+      appointmentTypeId: String(cita.id_tipo_cita),
       appointmentType: cita.tipo_cita.nombre,
       city: cita.sede.localidad.ciudad.nombre,
       createdAt: cita.fecha_creacion.toISOString(),

@@ -1,4 +1,5 @@
 import { StudentAgendaAppointmentDto } from './student-agenda-appointment.dto';
+import { StudentAppointmentTypeDto } from './student-appointment-type.dto';
 import { StudentAppointmentReviewDto } from './student-appointment-review.dto';
 import { StudentConversationDto } from './student-conversation.dto';
 import { StudentPracticeSiteDto } from './student-practice-site.dto';
@@ -10,6 +11,7 @@ import { StudentTreatmentDto } from './student-treatment.dto';
 
 export class StudentPortalDashboardDto {
   appointments!: StudentAgendaAppointmentDto[];
+  appointmentTypes!: StudentAppointmentTypeDto[];
   conversations!: StudentConversationDto[];
   practiceSites!: StudentPracticeSiteDto[];
   profile!: StudentProfileDto;

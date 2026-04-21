@@ -55,6 +55,7 @@ const appointmentStatusOptions: Array<{
 
 const initialAppointmentFormValues: StudentAppointmentFormValues = {
   additionalInfo: '',
+  appointmentTypeId: '',
   endTime: '',
   requestId: '',
   siteId: '',
@@ -182,6 +183,7 @@ function getInitialAppointmentFormValues(
 
   return {
     additionalInfo: appointment.additionalInfo ?? '',
+    appointmentTypeId: appointment.appointmentTypeId,
     endTime: appointment.endAt.slice(11, 16),
     requestId: appointment.requestId,
     siteId: appointment.siteId,
@@ -199,6 +201,10 @@ function validateAppointmentForm(
 
   if (!values.requestId) {
     errors.requestId = 'Selecciona una solicitud aceptada.';
+  }
+
+  if (!values.appointmentTypeId) {
+    errors.appointmentTypeId = 'Selecciona el tipo de cita.';
   }
 
   if (!values.startDate) {
@@ -239,6 +245,7 @@ function validateAppointmentForm(
 export function StudentAppointmentsPage() {
   const {
     appointments,
+    appointmentTypes,
     checkAppointmentConflict,
     errorMessage,
     isLoading,
@@ -313,6 +320,10 @@ export function StudentAppointmentsPage() {
     () => treatments.filter((treatment) => treatment.status === 'active'),
     [treatments],
   );
+  const availableAppointmentTypes = useMemo(
+    () => appointmentTypes,
+    [appointmentTypes],
+  );
   const filteredAppointments = useMemo(() => {
     const filtered = appointments.filter((appointment) => {
       const matchesSearch = appointment.patientName
@@ -342,11 +353,6 @@ export function StudentAppointmentsPage() {
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     );
   }, [appointments, normalizedSearch, sortOrder, statusFilter]);
-  const selectedRequest =
-    acceptedRequests.find(
-      (request) => request.id === appointmentValues.requestId,
-    ) ?? null;
-
   useEffect(() => {
     if (!isStatusMenuOpen) {
       return undefined;
@@ -1000,25 +1006,23 @@ export function StudentAppointmentsPage() {
                 }
               />
             </div>
-            {selectedRequest ? (
-              <SurfaceCard
-                className="border border-slate-200/80 bg-slate-50 shadow-none"
-                paddingClassName="p-2.5"
-              >
-                <div className="space-y-1">
-                  <p className="text-[0.76rem] font-semibold text-ink">
-                    {selectedRequest.patientName}
-                  </p>
-                  <p className="line-clamp-1 text-[0.68rem] text-ink-muted">
-                    Motivo:{' '}
-                    {selectedRequest.reason ?? 'Sin motivo especificado.'}
-                  </p>
-                  <p className="text-[0.68rem] text-ink-muted">
-                    Citas acumuladas: {selectedRequest.appointmentsCount}
-                  </p>
-                </div>
-              </SurfaceCard>
-            ) : null}
+            <AdminDropdownField
+              containerClassName="student-appointment-dialog-field"
+              error={appointmentErrors.appointmentTypeId}
+              icon={Stethoscope}
+              id="student-appointment-type"
+              label="Tipo de cita"
+              name="studentAppointmentType"
+              options={availableAppointmentTypes.map((appointmentType) => ({
+                id: appointmentType.id,
+                label: appointmentType.name,
+              }))}
+              placeholder="Selecciona el tipo de cita"
+              value={appointmentValues.appointmentTypeId}
+              onChange={(value) =>
+                handleAppointmentFieldChange('appointmentTypeId', value)
+              }
+            />
             <div className="grid gap-2 sm:grid-cols-3">
               <AdminTextField
                 containerClassName="student-appointment-dialog-field"

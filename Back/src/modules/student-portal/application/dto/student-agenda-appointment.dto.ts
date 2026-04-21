@@ -1,5 +1,6 @@
 export class StudentAgendaAppointmentDto {
   additionalInfo!: string | null;
+  appointmentTypeId!: string;
   appointmentType!: string;
   city!: string;
   createdAt!: string;
