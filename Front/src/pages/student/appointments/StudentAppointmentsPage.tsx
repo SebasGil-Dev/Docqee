@@ -785,13 +785,20 @@ export function StudentAppointmentsPage() {
         {filteredAppointments.length > 0 ? (
           <div className="admin-scrollbar min-h-0 flex-1 overflow-x-auto overflow-y-auto">
             <table className="min-w-[86rem] xl:min-w-full">
+              <colgroup>
+                <col className="w-[19rem]" />
+                <col className="w-[17rem]" />
+                <col className="w-[18rem]" />
+                <col className="w-[9.5rem]" />
+                <col className="w-[18rem]" />
+              </colgroup>
               <thead className="sticky top-0 z-10 bg-slate-100 text-left">
                 <tr className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-ink-muted">
                   <th className="px-4 py-3 sm:px-5">Paciente</th>
-                  <th className="px-4 py-3">Atención clínica</th>
+                  <th className="px-4 py-3 pl-6">Atención clínica</th>
                   <th className="px-4 py-3">Programación</th>
                   <th className="w-[9.5rem] px-4 py-3 text-left">Estado</th>
-                  <th className="px-4 py-3 text-right sm:px-5">Acciones</th>
+                  <th className="px-4 py-3 text-center sm:px-5">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200/80 bg-white">
@@ -813,8 +820,8 @@ export function StudentAppointmentsPage() {
                           </p>
                         </div>
                       </td>
-                      <td className="px-4 py-3.5">
-                        <div className="max-w-[18rem] space-y-1 text-sm text-ink-muted">
+                      <td className="px-4 py-3.5 pl-6">
+                        <div className="max-w-[16rem] space-y-1 text-sm text-ink-muted">
                           <p className="inline-flex items-center gap-1.5 font-semibold text-ink">
                             <Stethoscope
                               aria-hidden="true"
@@ -880,12 +887,12 @@ export function StudentAppointmentsPage() {
                         {getStatusLabel(appointment.status)}
                       </span>
                     </td>
-                    <td className="px-4 py-3.5 text-right sm:px-5">
+                    <td className="px-4 py-3.5 text-center sm:px-5">
                       {appointment.status === 'PROPUESTA' ||
                       appointment.status === 'REPROGRAMACION_PENDIENTE' ? (
-                        <div className="flex justify-end gap-2">
+                        <div className="flex flex-nowrap justify-center gap-2">
                           <button
-                            className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-primary ring-1 ring-slate-200 transition duration-200 hover:bg-slate-100"
+                            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-primary ring-1 ring-slate-200 transition duration-200 hover:bg-slate-100"
                             type="button"
                             onClick={() => handleViewAppointment(appointment)}
                           >
@@ -896,7 +903,7 @@ export function StudentAppointmentsPage() {
                             <span>Ver cita</span>
                           </button>
                           <button
-                            className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition duration-200 hover:bg-rose-100"
+                            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition duration-200 hover:bg-rose-100"
                             type="button"
                             onClick={() => setAppointmentToCancel(appointment)}
                           >
@@ -910,9 +917,9 @@ export function StudentAppointmentsPage() {
                           </button>
                         </div>
                       ) : appointment.status === 'ACEPTADA' ? (
-                        <div className="flex justify-end gap-2">
+                        <div className="flex flex-nowrap justify-center gap-2">
                           <button
-                            className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700 transition duration-200 hover:bg-sky-100"
+                            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700 transition duration-200 hover:bg-sky-100"
                             type="button"
                             onClick={() =>
                               handleStatusChange(appointment.id, 'FINALIZADA')
@@ -930,7 +937,7 @@ export function StudentAppointmentsPage() {
                             </span>
                           </button>
                           <button
-                            className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition duration-200 hover:bg-rose-100"
+                            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition duration-200 hover:bg-rose-100"
                             type="button"
                             onClick={() => setAppointmentToCancel(appointment)}
                           >
@@ -944,10 +951,10 @@ export function StudentAppointmentsPage() {
                           </button>
                         </div>
                       ) : appointment.status === 'FINALIZADA' ? (
-                        <div className="flex flex-wrap justify-end gap-2">
+                        <div className="flex flex-wrap justify-center gap-2">
                           {!appointment.myRating ? (
                             <button
-                              className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 transition duration-200 hover:bg-amber-100"
+                              className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 transition duration-200 hover:bg-amber-100"
                               type="button"
                               onClick={() =>
                                 setRatingTarget({
@@ -972,7 +979,7 @@ export function StudentAppointmentsPage() {
                             </span>
                           )}
                           <button
-                            className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
+                            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
                             type="button"
                             onClick={() => setCommentsAppointment(appointment)}
                           >
@@ -984,7 +991,7 @@ export function StudentAppointmentsPage() {
                           </button>
                         </div>
                       ) : (
-                        <span className="text-xs font-medium text-ink-muted">
+                        <span className="inline-flex justify-center text-xs font-medium text-ink-muted">
                           Sin acciones
                         </span>
                       )}
