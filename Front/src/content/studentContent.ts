@@ -93,7 +93,7 @@ export const studentContent = {
         'Gestiona el perfil profesional visible del estudiante dentro de Docqee.',
       title: 'Docqee | Mi Perfil',
     },
-    successMessage: 'Tu perfil se actualizo correctamente en esta demo frontend.',
+    successMessage: 'Tu perfil se actualizo correctamente.',
     title: 'Mi perfil',
   },
   requestsPage: {

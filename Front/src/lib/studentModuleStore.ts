@@ -1275,6 +1275,32 @@ function updateProfileMock(values: StudentProfileFormValues) {
   });
 }
 
+function updatePracticeSitesMock(siteIds: string[]) {
+  const selectedSiteIds = new Set(siteIds);
+
+  updateState({
+    ...state,
+    practiceSites: state.practiceSites.map((practiceSite) => ({
+      ...practiceSite,
+      status: selectedSiteIds.has(practiceSite.siteId) ? 'active' : 'inactive',
+    })),
+  });
+}
+
+function updateTreatmentsMock(treatmentTypeIds: string[]) {
+  const selectedTreatmentTypeIds = new Set(treatmentTypeIds);
+
+  updateState({
+    ...state,
+    treatments: state.treatments.map((treatment) => ({
+      ...treatment,
+      status: selectedTreatmentTypeIds.has(treatment.treatmentTypeId)
+        ? 'active'
+        : 'inactive',
+    })),
+  });
+}
+
 function toggleTreatmentStatusMock(treatmentId: string) {
   const currentTreatment = state.treatments.find((treatment) => treatment.id === treatmentId);
 
@@ -2102,7 +2128,10 @@ async function getUniversitySites(): Promise<StudentPracticeSite[]> {
 }
 
 async function updatePracticeSites(siteIds: string[]): Promise<boolean> {
-  if (IS_TEST_MODE) return true;
+  if (IS_TEST_MODE) {
+    updatePracticeSitesMock(siteIds);
+    return true;
+  }
 
   patchState({ errorMessage: null, isLoading: true });
 
@@ -2126,7 +2155,10 @@ async function getTreatmentTypes(): Promise<StudentTreatmentType[]> {
 }
 
 async function updateTreatments(treatmentTypeIds: string[]): Promise<boolean> {
-  if (IS_TEST_MODE) return true;
+  if (IS_TEST_MODE) {
+    updateTreatmentsMock(treatmentTypeIds);
+    return true;
+  }
 
   patchState({ errorMessage: null, isLoading: true });
 

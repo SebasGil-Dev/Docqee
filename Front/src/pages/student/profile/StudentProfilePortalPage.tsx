@@ -105,6 +105,7 @@ export function StudentProfilePage() {
   const [errors, setErrors] = useState<StudentProfileFormErrors>({});
   const [linkDraft, setLinkDraft] = useState<StudentLinkDraft>(initialLinkDraft);
   const [linkError, setLinkError] = useState<string | null>(null);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [avatarUploadStatus, setAvatarUploadStatus] =
     useState<AvatarUploadStatus>('idle');
@@ -113,14 +114,10 @@ export function StudentProfilePage() {
   const [selectedSiteIds, setSelectedSiteIds] = useState<Set<string>>(() =>
     new Set(practiceSites.map((s) => s.siteId)),
   );
-  const [sedesSaveMessage, setSedesSaveMessage] = useState<string | null>(null);
-  const [isSedeSaving, setIsSedeSaving] = useState(false);
   const [treatmentTypes, setTreatmentTypes] = useState<StudentTreatmentType[]>([]);
   const [selectedTreatmentTypeIds, setSelectedTreatmentTypeIds] = useState<Set<string>>(() =>
     new Set(treatments.map((t) => t.treatmentTypeId)),
   );
-  const [treatmentSaveMessage, setTreatmentSaveMessage] = useState<string | null>(null);
-  const [isTreatmentSaving, setIsTreatmentSaving] = useState(false);
   const avatarPreviewUrlRef = useRef<string | null>(null);
   const avatarUploadPromiseRef = useRef<Promise<string | null> | null>(null);
   const avatarUploadSequenceRef = useRef(0);
@@ -143,6 +140,7 @@ export function StudentProfilePage() {
     setLinkError(null);
     setAvatarUploadStatus('idle');
     setAvatarUploadMessage(null);
+    setIsSavingProfile(false);
     setSaveMessage(null);
   }, [profile]);
 
@@ -173,15 +171,7 @@ export function StudentProfilePage() {
       }
       return next;
     });
-    setSedesSaveMessage(null);
-  };
-
-  const handleSaveSedes = () => {
-    setIsSedeSaving(true);
-    void updatePracticeSites([...selectedSiteIds]).then((ok) => {
-      setIsSedeSaving(false);
-      if (ok) setSedesSaveMessage('Sedes de practica actualizadas correctamente.');
-    });
+    setSaveMessage(null);
   };
 
   useEffect(() => {
@@ -202,15 +192,7 @@ export function StudentProfilePage() {
       }
       return next;
     });
-    setTreatmentSaveMessage(null);
-  };
-
-  const handleSaveTreatments = () => {
-    setIsTreatmentSaving(true);
-    void updateTreatments([...selectedTreatmentTypeIds]).then((ok) => {
-      setIsTreatmentSaving(false);
-      if (ok) setTreatmentSaveMessage('Tratamientos actualizados correctamente.');
-    });
+    setSaveMessage(null);
   };
 
   const handleFieldChange = <K extends keyof StudentProfileFormValues>(
@@ -331,6 +313,10 @@ export function StudentProfilePage() {
   const handleSubmit = (event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
 
+    if (isSavingProfile) {
+      return;
+    }
+
     const nextErrors = validateProfile(values);
     setErrors(nextErrors);
 
@@ -339,33 +325,56 @@ export function StudentProfilePage() {
     }
 
     void (async () => {
-      if (avatarUploadStatus === 'error') {
-        return;
-      }
+      setIsSavingProfile(true);
 
-      let submissionValues = values;
+      const nextSelectedTreatmentTypeIds = [...selectedTreatmentTypeIds];
+      const nextSelectedSiteIds = [...selectedSiteIds];
 
-      if (avatarUploadPromiseRef.current) {
-        setAvatarUploadMessage('Terminando de subir la foto...');
-        const uploadedAvatarSrc = await avatarUploadPromiseRef.current;
-
-        if (!uploadedAvatarSrc) {
+      try {
+        if (avatarUploadStatus === 'error') {
           return;
         }
 
-        submissionValues = {
-          ...values,
-          avatarSrc: uploadedAvatarSrc,
-        };
+        let submissionValues = values;
+
+        if (avatarUploadPromiseRef.current) {
+          setAvatarUploadMessage('Terminando de subir la foto...');
+          const uploadedAvatarSrc = await avatarUploadPromiseRef.current;
+
+          if (!uploadedAvatarSrc) {
+            return;
+          }
+
+          submissionValues = {
+            ...values,
+            avatarSrc: uploadedAvatarSrc,
+          };
+        }
+
+        const updated = await updateProfile(submissionValues);
+
+        if (!updated) {
+          return;
+        }
+
+        const updatedTreatments = await updateTreatments(
+          nextSelectedTreatmentTypeIds,
+        );
+
+        if (!updatedTreatments) {
+          return;
+        }
+
+        const updatedPracticeSites = await updatePracticeSites(nextSelectedSiteIds);
+
+        if (!updatedPracticeSites) {
+          return;
+        }
+
+        setSaveMessage(studentContent.profilePage.successMessage);
+      } finally {
+        setIsSavingProfile(false);
       }
-
-      const updated = await updateProfile(submissionValues);
-
-      if (!updated) {
-        return;
-      }
-
-      setSaveMessage(studentContent.profilePage.successMessage);
     })();
   };
 
@@ -618,30 +627,14 @@ export function StudentProfilePage() {
                 paddingClassName="p-4 sm:p-5"
               >
                 <div className="space-y-3.5">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
-                        Tratamientos que realizas
-                      </h2>
-                      <p className="mt-1 text-sm leading-6 text-ink-muted">
-                        Selecciona los tratamientos que ofreces en tu practica clinica.
-                      </p>
-                    </div>
-                    <button
-                      className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-4 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 disabled:opacity-60"
-                      disabled={isTreatmentSaving}
-                      type="button"
-                      onClick={handleSaveTreatments}
-                    >
-                      <Save aria-hidden="true" className="h-4 w-4" />
-                      <span>Guardar tratamientos</span>
-                    </button>
-                  </div>
-                  {treatmentSaveMessage ? (
-                    <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
-                      {treatmentSaveMessage}
+                  <div>
+                    <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
+                      Tratamientos que realizas
+                    </h2>
+                    <p className="mt-1 text-sm leading-6 text-ink-muted">
+                      Selecciona los tratamientos que ofreces en tu practica clinica.
                     </p>
-                  ) : null}
+                  </div>
                   {treatmentTypes.length === 0 ? (
                     <div className="rounded-[1.35rem] border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-ink-muted">
                       No hay tipos de tratamiento disponibles.
@@ -693,30 +686,14 @@ export function StudentProfilePage() {
                 paddingClassName="p-4 sm:p-5"
               >
                 <div className="space-y-3.5">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
-                        Sedes de practica clinica
-                      </h2>
-                      <p className="mt-1 text-sm leading-6 text-ink-muted">
-                        Selecciona las sedes de tu universidad a las que perteneces.
-                      </p>
-                    </div>
-                    <button
-                      className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-4 py-3 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 disabled:opacity-60"
-                      disabled={isSedeSaving}
-                      type="button"
-                      onClick={handleSaveSedes}
-                    >
-                      <Save aria-hidden="true" className="h-4 w-4" />
-                      <span>Guardar sedes</span>
-                    </button>
-                  </div>
-                  {sedesSaveMessage ? (
-                    <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
-                      {sedesSaveMessage}
+                  <div>
+                    <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
+                      Sedes de practica clinica
+                    </h2>
+                    <p className="mt-1 text-sm leading-6 text-ink-muted">
+                      Selecciona las sedes de tu universidad a las que perteneces.
                     </p>
-                  ) : null}
+                  </div>
                   {universitySites.length === 0 ? (
                     <div className="rounded-[1.35rem] border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-ink-muted">
                       No hay sedes disponibles para tu universidad.
@@ -872,13 +849,17 @@ export function StudentProfilePage() {
           <div className="flex flex-wrap items-center justify-center gap-3 border-t border-slate-200/80 bg-white px-5 py-3.5 sm:px-6">
             <button
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-2.5 text-sm font-semibold text-ink transition duration-300 hover:bg-slate-100"
-              disabled={isLoading}
+              disabled={isLoading || isSavingProfile}
               type="button"
               onClick={() => {
                 setValues(getInitialValues(profile));
                 setErrors({});
                 setLinkDraft(initialLinkDraft);
                 setLinkError(null);
+                setSelectedSiteIds(new Set(practiceSites.map((s) => s.siteId)));
+                setSelectedTreatmentTypeIds(
+                  new Set(treatments.map((t) => t.treatmentTypeId)),
+                );
                 setSaveMessage(null);
               }}
             >
@@ -887,7 +868,7 @@ export function StudentProfilePage() {
             </button>
             <button
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-5 py-2.5 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110"
-              disabled={isLoading}
+              disabled={isLoading || isSavingProfile}
               type="submit"
             >
               <Save aria-hidden="true" className="h-4 w-4" />

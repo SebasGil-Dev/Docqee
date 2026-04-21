@@ -85,6 +85,13 @@ describe('Student pages', () => {
 
     renderStudentApp([ROUTES.studentProfile]);
 
+    expect(
+      screen.queryByRole('button', { name: /guardar tratamientos/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /guardar sedes/i }),
+    ).not.toBeInTheDocument();
+
     await user.clear(screen.getByLabelText(/descripcion profesional/i));
     await user.type(
       screen.getByLabelText(/descripcion profesional/i),
@@ -96,7 +103,7 @@ describe('Student pages', () => {
       'Atiendo lunes, martes y jueves en jornada de tarde.',
     );
 
-    await user.click(screen.getByLabelText(/tipo de enlace/i));
+    await user.click(screen.getByRole('button', { name: /red profesional/i }));
     await user.click(screen.getByRole('option', { name: /hoja de vida/i }));
     await user.type(
       screen.getByLabelText(/^url$/i),
@@ -106,7 +113,7 @@ describe('Student pages', () => {
     await user.click(screen.getByRole('button', { name: /guardar cambios/i }));
 
     expect(await screen.findByRole('status')).toHaveTextContent(
-      /tu perfil se actualizo correctamente/i,
+      /^tu perfil se actualizo correctamente\.$/i,
     );
     expect(screen.getByText(/https:\/\/drive.google.com\/file\/d\/demo-cv/i)).toBeInTheDocument();
   });
