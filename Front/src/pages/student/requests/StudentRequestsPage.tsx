@@ -189,41 +189,31 @@ function StudentRequestProfileDialog({
               className="overflow-hidden bg-brand-gradient text-white shadow-none"
               paddingClassName="p-0"
             >
-              <div className="flex flex-col gap-3 px-4 py-4 sm:px-5 sm:py-5 lg:flex-row lg:items-center lg:gap-4">
-                <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
-                  <div className="shrink-0">
-                    {optimizedAvatarSrc ? (
-                      <img
-                        alt={
-                          patientProfile?.avatarAlt ?? `Foto de perfil de ${request.patientName}`
-                        }
-                        className="h-20 w-20 rounded-[1.55rem] object-cover ring-4 ring-white/20 sm:h-24 sm:w-24"
-                        decoding="async"
-                        fetchPriority="high"
-                        height={96}
-                        loading="eager"
-                        src={optimizedAvatarSrc}
-                        width={96}
-                      />
-                    ) : (
-                      <span className="inline-flex h-20 w-20 items-center justify-center rounded-[1.55rem] bg-white/14 text-2xl font-extrabold uppercase text-white ring-4 ring-white/15 sm:h-24 sm:w-24 sm:text-[1.7rem]">
-                        {patientInitials}
-                      </span>
-                    )}
-                  </div>
-                  <div className="min-w-0 space-y-1">
-                    <h3 className="font-headline text-[1.25rem] font-extrabold tracking-tight text-white">
-                      {request.patientName}
-                    </h3>
-                    <p className="text-sm font-medium text-white/88">
-                      {`${request.patientAge} a\u00f1os - ${request.patientCity}`}
-                    </p>
-                  </div>
+              <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-3 px-4 py-4 sm:px-5 sm:py-5 lg:grid-cols-[auto_minmax(0,1fr)_minmax(9rem,0.7fr)_minmax(10rem,0.75fr)] lg:items-stretch">
+                <div className="flex shrink-0 items-center">
+                  {optimizedAvatarSrc ? (
+                    <img
+                      alt={
+                        patientProfile?.avatarAlt ?? `Foto de perfil de ${request.patientName}`
+                      }
+                      className="h-20 w-20 rounded-[1.55rem] object-cover ring-4 ring-white/20 sm:h-24 sm:w-24"
+                      decoding="async"
+                      fetchPriority="high"
+                      height={96}
+                      loading="eager"
+                      src={optimizedAvatarSrc}
+                      width={96}
+                    />
+                  ) : (
+                    <span className="inline-flex h-20 w-20 items-center justify-center rounded-[1.55rem] bg-white/14 text-2xl font-extrabold uppercase text-white ring-4 ring-white/15 sm:h-24 sm:w-24 sm:text-[1.7rem]">
+                      {patientInitials}
+                    </span>
+                  )}
                 </div>
-                <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 lg:flex-nowrap lg:justify-end">
+                <div className="flex min-w-0 flex-col justify-center gap-2 rounded-[1.15rem] bg-white/10 px-3.5 py-2.5">
                   <span
                     className={classNames(
-                      'inline-flex shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-inset',
+                      'inline-flex w-fit shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-inset',
                       request.status === 'ACEPTADA'
                         ? 'bg-white/14 text-white ring-white/20'
                         : request.status === 'PENDIENTE'
@@ -233,29 +223,37 @@ function StudentRequestProfileDialog({
                   >
                     Solicitud {getStatusLabel(request.status).toLowerCase()}
                   </span>
-                  <div className="min-w-[8.5rem] rounded-[1.15rem] bg-white/10 px-3.5 py-2.5">
-                    <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white/65">
-                      {'Valoraci\u00f3n'}
-                    </p>
-                    <div
-                      aria-label={
-                        averageRating !== null
-                          ? `Valoracion ${averageRating.toFixed(1)} de 5`
-                          : 'Sin valoracion'
-                      }
-                      className="mt-2 flex items-center gap-1.5"
-                    >
-                      {renderRatingStars(averageRating ?? 0, 'h-4 w-4')}
-                    </div>
-                  </div>
-                  <div className="min-w-[10rem] rounded-[1.15rem] bg-white/10 px-3.5 py-2.5">
-                    <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white/65">
-                      Solicitud enviada
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-white">
-                      {requestProfileDateFormatter.format(new Date(request.sentAt))}
+                  <div className="min-w-0">
+                    <h3 className="truncate font-headline text-[1.25rem] font-extrabold tracking-tight text-white">
+                      {request.patientName}
+                    </h3>
+                    <p className="text-sm font-medium text-white/88">
+                      {`${request.patientAge} a\u00f1os - ${request.patientCity}`}
                     </p>
                   </div>
+                </div>
+                <div className="col-span-2 flex min-w-0 flex-col justify-center rounded-[1.15rem] bg-white/10 px-3.5 py-2.5 lg:col-span-1">
+                  <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white/65">
+                    {'Valoraci\u00f3n'}
+                  </p>
+                  <div
+                    aria-label={
+                      averageRating !== null
+                        ? `Valoracion ${averageRating.toFixed(1)} de 5`
+                        : 'Sin valoracion'
+                    }
+                    className="mt-2 flex items-center gap-1.5"
+                  >
+                    {renderRatingStars(averageRating ?? 0, 'h-4 w-4')}
+                  </div>
+                </div>
+                <div className="col-span-2 flex min-w-0 flex-col justify-center rounded-[1.15rem] bg-white/10 px-3.5 py-2.5 lg:col-span-1">
+                  <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white/65">
+                    Solicitud enviada
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-white">
+                    {requestProfileDateFormatter.format(new Date(request.sentAt))}
+                  </p>
                 </div>
               </div>
             </SurfaceCard>

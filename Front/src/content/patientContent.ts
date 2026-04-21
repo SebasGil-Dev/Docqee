@@ -32,8 +32,7 @@ export const patientContent = {
     actionLabels: {
       sendMessage: 'Enviar mensaje',
     },
-    description:
-      'Habla con los estudiantes cuando una solicitud fue aceptada y consulta hilos previos en solo lectura.',
+    description: '',
     emptyState: 'No encontramos conversaciones con los criterios seleccionados.',
     meta: {
       description: 'Gestiona el chat del paciente dentro de Docqee.',
