@@ -787,8 +787,8 @@ export function StudentAppointmentsPage() {
           <div className="admin-scrollbar min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
             <table className="w-full table-fixed">
               <colgroup>
-                <col className="w-[22%]" />
-                <col className="w-[22%]" />
+                <col className="w-[17%]" />
+                <col className="w-[27%]" />
                 <col className="w-[24%]" />
                 <col className="w-[12%]" />
                 <col className="w-[20%]" />
