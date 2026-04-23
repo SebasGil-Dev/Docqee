@@ -197,6 +197,9 @@ export function PatientSearchStudentsPage() {
   const initialLocalityFilter = savedCity === 'all' ? 'all' : (savedLocality ?? defaultLocalityFilter);
   const [searchTerm, setSearchTerm] = useState('');
   const [hasInteractedWithSearch, setHasInteractedWithSearch] = useState(false);
+  const [hasTouchedLocationFilters, setHasTouchedLocationFilters] = useState(
+    savedCity !== null,
+  );
   const [reason, setReason] = useState('');
   const [reasonError, setReasonError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -215,11 +218,13 @@ export function PatientSearchStudentsPage() {
     university: 'all',
   });
   const normalizedSearch = searchTerm.trim().toLowerCase();
+  const hasCustomLocationCriteria =
+    hasTouchedLocationFilters &&
+    (cityFilter !== 'all' || localityFilter !== 'all');
   const hasSearchCriteria = Boolean(
     normalizedSearch ||
     treatmentFilter !== 'all' ||
-    cityFilter !== 'all' ||
-    localityFilter !== 'all' ||
+    hasCustomLocationCriteria ||
     universityFilter !== 'all',
   );
   const treatmentOptions = useMemo(
@@ -301,10 +306,13 @@ export function PatientSearchStudentsPage() {
     }
 
     const timeoutId = window.setTimeout(() => {
+      const shouldSearchAcrossLocations =
+        Boolean(searchTerm.trim()) && !hasTouchedLocationFilters;
+
       void searchStudents({
-        city: cityFilter,
+        city: shouldSearchAcrossLocations ? 'all' : cityFilter,
         limit: hasSearchCriteria ? 20 : INITIAL_STUDENT_RESULTS_LIMIT,
-        locality: localityFilter,
+        locality: shouldSearchAcrossLocations ? 'all' : localityFilter,
         search: searchTerm,
         treatment: treatmentFilter,
         university: universityFilter,
@@ -318,6 +326,7 @@ export function PatientSearchStudentsPage() {
     cityFilter,
     hasInteractedWithSearch,
     hasSearchCriteria,
+    hasTouchedLocationFilters,
     isReady,
     localityFilter,
     searchStudents,
@@ -412,8 +421,11 @@ export function PatientSearchStudentsPage() {
       filters.university ?? latestSearchFiltersRef.current.university;
     const resolvedSearch =
       filters.search ?? latestSearchFiltersRef.current.search;
+    const shouldSearchAcrossLocations =
+      Boolean(resolvedSearch.trim()) && !hasTouchedLocationFilters;
     const nextHasCustomLocationCriteria =
-      nextCity !== defaultCityFilter || nextLocality !== defaultLocalityFilter;
+      hasTouchedLocationFilters &&
+      (nextCity !== 'all' || nextLocality !== 'all');
     const nextHasSearchCriteria = Boolean(
       resolvedSearch.trim() ||
       nextTreatment !== 'all' ||
@@ -422,9 +434,9 @@ export function PatientSearchStudentsPage() {
     );
 
     void searchStudents({
-      city: nextCity,
+      city: shouldSearchAcrossLocations ? 'all' : nextCity,
       limit: nextHasSearchCriteria ? 20 : 6,
-      locality: nextLocality,
+      locality: shouldSearchAcrossLocations ? 'all' : nextLocality,
       search: resolvedSearch,
       treatment: nextTreatment,
       university: nextUniversity,
@@ -492,6 +504,12 @@ export function PatientSearchStudentsPage() {
                   const nextSearch = event.target.value;
                   setHasInteractedWithSearch(true);
                   latestSearchFiltersRef.current.search = nextSearch;
+                  if (nextSearch.trim() && !hasTouchedLocationFilters) {
+                    latestSearchFiltersRef.current.city = 'all';
+                    latestSearchFiltersRef.current.locality = 'all';
+                    setCityFilter('all');
+                    setLocalityFilter('all');
+                  }
                   setSearchTerm(nextSearch);
                   runImmediateSearchInTest({ search: nextSearch });
                 }}
@@ -537,6 +555,7 @@ export function PatientSearchStudentsPage() {
                   localStorage.setItem('patient-student-city-filter', nextCity);
                   localStorage.setItem('patient-student-locality-filter', 'all');
                   setHasInteractedWithSearch(true);
+                  setHasTouchedLocationFilters(true);
                   latestSearchFiltersRef.current.city = nextCity;
                   latestSearchFiltersRef.current.locality = 'all';
                   setCityFilter(nextCity);
@@ -568,6 +587,7 @@ export function PatientSearchStudentsPage() {
                   const nextLocality = event.target.value;
                   localStorage.setItem('patient-student-locality-filter', nextLocality);
                   setHasInteractedWithSearch(true);
+                  setHasTouchedLocationFilters(true);
                   latestSearchFiltersRef.current.locality = nextLocality;
                   setLocalityFilter(nextLocality);
                   runImmediateSearchInTest({ locality: nextLocality });

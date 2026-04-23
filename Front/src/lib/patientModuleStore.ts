@@ -83,6 +83,7 @@ type CachedStudentSearch = {
 
 type PersistedStudentDirectoryIndexCache = CachedStudentSearch & {
   userId: number;
+  version: number;
 };
 
 const PATIENT_MODULE_CACHE_STORAGE_KEY = 'docqee.patient.module-cache';
@@ -93,6 +94,7 @@ const PATIENT_STUDENT_SEARCH_CACHE_MAX_AGE_MS = 10 * 60 * 1000;
 const PATIENT_STUDENT_SEARCH_CACHE_MAX_ENTRIES = 48;
 const PATIENT_STUDENT_DIRECTORY_INDEX_MAX_AGE_MS = 10 * 60 * 1000;
 const PATIENT_STUDENT_DIRECTORY_PREFETCH_LIMIT = 120;
+const PATIENT_STUDENT_DIRECTORY_INDEX_CACHE_VERSION = 2;
 
 const listeners = new Set<() => void>();
 const studentSearchCache = new Map<string, CachedStudentSearch>();
@@ -927,6 +929,7 @@ function persistStudentDirectoryIndex(students: PatientStudentDirectoryItem[]) {
     students,
     updatedAt: Date.now(),
     userId: session.user.id,
+    version: PATIENT_STUDENT_DIRECTORY_INDEX_CACHE_VERSION,
   };
 
   storage.setItem(
@@ -958,6 +961,7 @@ function readPersistedStudentDirectoryIndex() {
       !Array.isArray(parsedCache.students) ||
       parsedCache.students.length < PATIENT_STUDENT_DIRECTORY_PREFETCH_LIMIT ||
       typeof parsedCache.updatedAt !== 'number' ||
+      parsedCache.version !== PATIENT_STUDENT_DIRECTORY_INDEX_CACHE_VERSION ||
       parsedCache.userId !== session.user.id ||
       Date.now() - parsedCache.updatedAt >
         PATIENT_STUDENT_DIRECTORY_INDEX_MAX_AGE_MS
@@ -971,6 +975,37 @@ function readPersistedStudentDirectoryIndex() {
     storage.removeItem(PATIENT_STUDENT_DIRECTORY_INDEX_STORAGE_KEY);
     return null;
   }
+}
+
+function clearStudentDirectorySearchState(options: { persisted?: boolean } = {}) {
+  studentSearchCache.clear();
+  studentSearchPromises.clear();
+  studentDirectoryIndex = null;
+  studentDirectoryIndexPromise = null;
+  studentDirectoryIndexUpdatedAt = 0;
+
+  if (!options.persisted) {
+    return;
+  }
+
+  const storage = readSessionStorage();
+  storage?.removeItem(PATIENT_STUDENT_DIRECTORY_INDEX_STORAGE_KEY);
+}
+
+function hasNewlyClosedPatientRequest(
+  previousRequests: PatientRequest[],
+  nextRequests: PatientRequest[],
+) {
+  return nextRequests.some((request) => {
+    if (request.status !== 'CERRADA') {
+      return false;
+    }
+
+    return (
+      previousRequests.find((previousRequest) => previousRequest.id === request.id)
+        ?.status !== 'CERRADA'
+    );
+  });
 }
 
 function filterStudentDirectoryIndex(
@@ -1254,6 +1289,10 @@ async function loadRuntimeState(forceRefresh = false) {
 
   runtimeLoadPromise = getPatientPortalDashboard()
     .then((payload) => {
+      if (hasNewlyClosedPatientRequest(state.requests, payload.requests)) {
+        clearStudentDirectorySearchState({ persisted: true });
+      }
+
       const nextState: PatientStoreState = {
         ...createEmptyRuntimeState(),
         ...payload,
@@ -1405,6 +1444,7 @@ async function searchStudents(filters: PatientStudentDirectorySearchParams) {
   const cachedStudents = getCachedStudentSearch(cacheKey);
   const requestSequence = ++studentSearchRequestSequence;
   const localSearchSource = getFallbackStudentSearchSource();
+  const hasActiveFilters = hasActiveStudentSearchFilters(filters);
 
   if (cachedStudents) {
     patchState({
@@ -1413,6 +1453,10 @@ async function searchStudents(filters: PatientStudentDirectorySearchParams) {
       isSearchingStudents: false,
       students: cachedStudents,
     });
+
+    if (hasActiveFilters) {
+      void refreshStudentSearchFromServer(filters, cacheKey, requestSequence);
+    }
 
     return cachedStudents;
   }
@@ -1444,7 +1488,7 @@ async function searchStudents(filters: PatientStudentDirectorySearchParams) {
       );
     }
 
-    if (hasActiveStudentSearchFilters(filters)) {
+    if (hasActiveFilters) {
       // Always sync with server when filters are active: local index is proximity-sorted
       // so it may not contain students from other localities even if the index is "complete".
       void refreshStudentSearchFromServer(filters, cacheKey, requestSequence);
