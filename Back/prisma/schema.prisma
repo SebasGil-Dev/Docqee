@@ -184,6 +184,7 @@ model docente_universidad {
   fecha_creacion         DateTime           @default(now()) @db.Timestamptz(6)
   fecha_actualizacion    DateTime           @default(now()) @db.Timestamptz(6)
   cita                   cita[]
+  reprogramacion_cita_nuevo_docente reprogramacion_cita[] @relation("reprogramacion_cita_nuevo_docente")
   docente                docente            @relation(fields: [id_docente], references: [id_docente], onDelete: NoAction, onUpdate: NoAction, map: "fk_docente_universidad_docente")
   universidad            universidad        @relation(fields: [id_universidad], references: [id_universidad], onDelete: NoAction, onUpdate: NoAction, map: "fk_docente_universidad_universidad")
 
@@ -331,6 +332,8 @@ model reprogramacion_cita {
   id_cita                                                               Int
   propuesta_por_cuenta                                                  Int
   respuesta_por_cuenta                                                  Int?
+  nueva_id_sede                                                         Int?
+  nuevo_id_docente_universidad                                          Int?
   nueva_fecha_hora_inicio                                               DateTime                   @db.Timestamptz(6)
   nueva_fecha_hora_fin                                                  DateTime                   @db.Timestamptz(6)
   motivo                                                                String?
@@ -340,6 +343,8 @@ model reprogramacion_cita {
   cita                                                                  cita                       @relation(fields: [id_cita], references: [id_cita], onDelete: NoAction, onUpdate: NoAction, map: "fk_reprogramacion_cita")
   cuenta_acceso_reprogramacion_cita_propuesta_por_cuentaTocuenta_acceso cuenta_acceso              @relation("reprogramacion_cita_propuesta_por_cuentaTocuenta_acceso", fields: [propuesta_por_cuenta], references: [id_cuenta], onDelete: NoAction, onUpdate: NoAction, map: "fk_reprogramacion_propuesta")
   cuenta_acceso_reprogramacion_cita_respuesta_por_cuentaTocuenta_acceso cuenta_acceso?             @relation("reprogramacion_cita_respuesta_por_cuentaTocuenta_acceso", fields: [respuesta_por_cuenta], references: [id_cuenta], onDelete: NoAction, onUpdate: NoAction, map: "fk_reprogramacion_respuesta")
+  nueva_sede                                                            sede?                       @relation("reprogramacion_cita_nueva_sede", fields: [nueva_id_sede], references: [id_sede], onDelete: NoAction, onUpdate: NoAction, map: "fk_reprogramacion_nueva_sede")
+  nuevo_docente_universidad                                             docente_universidad?        @relation("reprogramacion_cita_nuevo_docente", fields: [nuevo_id_docente_universidad], references: [id_docente_universidad], onDelete: NoAction, onUpdate: NoAction, map: "fk_reprogramacion_nuevo_docente")
 }
 
 model sede {
@@ -353,6 +358,7 @@ model sede {
   fecha_actualizacion      DateTime                   @default(now()) @db.Timestamptz(6)
   cita                     cita[]
   estudiante_sede_practica estudiante_sede_practica[]
+  reprogramacion_cita_nueva_sede reprogramacion_cita[] @relation("reprogramacion_cita_nueva_sede")
   localidad                localidad                  @relation(fields: [id_localidad], references: [id_localidad], onDelete: NoAction, onUpdate: NoAction, map: "fk_sede_localidad")
   universidad              universidad                @relation(fields: [id_universidad], references: [id_universidad], onDelete: NoAction, onUpdate: NoAction, map: "fk_sede_universidad")
 

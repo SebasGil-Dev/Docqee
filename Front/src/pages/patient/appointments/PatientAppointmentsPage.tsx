@@ -396,7 +396,7 @@ export function PatientAppointmentsPage() {
                         <p className="font-semibold text-ink">{appointment.appointmentType}</p>
                         {appointment.isRescheduleProposal ? (
                           <p className="text-xs font-semibold text-primary">
-                            Nueva fecha propuesta
+                            Nueva propuesta de cita
                           </p>
                         ) : null}
                         <p>{formatDateTimeRange(appointment.startAt, appointment.endAt)}</p>

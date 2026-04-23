@@ -88,6 +88,18 @@ function buildLocalDateTime(dateValue: string, timeValue: string) {
   return new Date(year, month - 1, day, hours, minutes, 0, 0);
 }
 
+function floorDateToMinute(date: Date) {
+  return new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    date.getHours(),
+    date.getMinutes(),
+    0,
+    0,
+  );
+}
+
 function StudentAppointmentsDialogFrame({
   children,
   description,
@@ -248,6 +260,7 @@ function validateAppointmentForm(
 ): StudentAppointmentFormErrors {
   const errors: StudentAppointmentFormErrors = {};
   const now = new Date();
+  const currentMinute = floorDateToMinute(now);
   const todayValue = formatDateInputValue(now);
 
   if (!values.requestId) {
@@ -268,9 +281,9 @@ function validateAppointmentForm(
     errors.startTime = 'Selecciona la hora de inicio.';
   } else if (
     values.startDate &&
-    buildLocalDateTime(values.startDate, values.startTime) <= now
+    buildLocalDateTime(values.startDate, values.startTime) < currentMinute
   ) {
-    errors.startTime = 'Selecciona una hora de inicio posterior a la hora actual.';
+    errors.startTime = 'Selecciona una hora de inicio actual o futura.';
   }
 
   if (!values.endTime) {
@@ -426,7 +439,7 @@ export function StudentAppointmentsPage() {
         ? 'Consulta la cita y usa Editar cita para habilitar cambios.'
         : 'Consulta los detalles de la cita.'
       : appointmentDialogMode === 'reschedule'
-        ? 'Propón una nueva fecha y hora para la cita ya aceptada.'
+        ? 'Propón una nueva fecha, hora, sede y docente para la cita ya aceptada.'
       : 'Agenda una cita a partir de una solicitud aceptada, con sede, docente supervisor y tratamientos validos.';
   const filteredAppointments = useMemo(() => {
     const filtered = appointments.filter((appointment) => {
@@ -516,7 +529,8 @@ export function StudentAppointmentsPage() {
         typeof nextValue === 'string' &&
         nextValue === formatDateInputValue(new Date()) &&
         nextValues.startTime &&
-        buildLocalDateTime(nextValue, nextValues.startTime) <= new Date()
+        buildLocalDateTime(nextValue, nextValues.startTime) <
+          floorDateToMinute(new Date())
       ) {
         nextValues.startTime = '';
         nextValues.endTime = '';
@@ -1180,7 +1194,7 @@ export function StudentAppointmentsPage() {
               />
               <AdminDropdownField
                 containerClassName="student-appointment-dialog-field"
-                disabled={isAppointmentDialogReadOnly || isRescheduleMode}
+                disabled={isAppointmentDialogReadOnly}
                 error={appointmentErrors.siteId}
                 icon={MapPin}
                 id="student-appointment-site"
@@ -1263,7 +1277,7 @@ export function StudentAppointmentsPage() {
             </div>
             <AdminDropdownField
               containerClassName="student-appointment-dialog-field"
-              disabled={isAppointmentDialogReadOnly || isRescheduleMode}
+              disabled={isAppointmentDialogReadOnly}
               error={appointmentErrors.supervisorId}
               icon={GraduationCap}
               id="student-appointment-supervisor"

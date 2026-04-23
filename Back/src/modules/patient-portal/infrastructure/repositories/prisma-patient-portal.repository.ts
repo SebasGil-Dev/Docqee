@@ -132,10 +132,26 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     super();
   }
 
+  private floorDateToMinute(date: Date): Date {
+    return new Date(Math.floor(date.getTime() / 60000) * 60000);
+  }
+
+  private minuteRangesOverlap(
+    firstStart: Date,
+    firstEnd: Date,
+    secondStart: Date,
+    secondEnd: Date,
+  ): boolean {
+    return (
+      this.floorDateToMinute(firstStart) < this.floorDateToMinute(secondEnd) &&
+      this.floorDateToMinute(secondStart) < this.floorDateToMinute(firstEnd)
+    );
+  }
+
   private assertAppointmentStartsInFuture(startAt: Date) {
-    if (startAt <= new Date()) {
+    if (this.floorDateToMinute(startAt) < this.floorDateToMinute(new Date())) {
       throw new BadRequestException(
-        "La cita debe iniciar en una fecha y hora futuras.",
+        "La cita debe iniciar en una fecha y hora actuales o futuras.",
       );
     }
   }
@@ -146,32 +162,43 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     endAt: Date,
     excludeAppointmentId?: number,
   ): Promise<string | null> {
-    const conflicting = await this.prisma.cita.findFirst({
+    const normalizedStartAt = this.floorDateToMinute(startAt);
+    const normalizedEndAt = this.floorDateToMinute(endAt);
+    const conflictingAppointments = await this.prisma.cita.findMany({
       where: {
         solicitud: { id_cuenta_estudiante: studentAccountId },
         estado: { in: ["PROPUESTA", "ACEPTADA"] },
         ...(excludeAppointmentId !== undefined
           ? { id_cita: { not: excludeAppointmentId } }
           : {}),
-        fecha_hora_inicio: { lt: endAt },
-        fecha_hora_fin: { gt: startAt },
+        fecha_hora_inicio: { lt: normalizedEndAt },
+        fecha_hora_fin: { gt: normalizedStartAt },
       },
       include: { tipo_cita: true },
     });
+
+    const conflicting = conflictingAppointments.find((appointment) =>
+      this.minuteRangesOverlap(
+        normalizedStartAt,
+        normalizedEndAt,
+        appointment.fecha_hora_inicio,
+        appointment.fecha_hora_fin,
+      ),
+    );
 
     if (conflicting) {
       return `El estudiante ya tiene una cita (${conflicting.tipo_cita.nombre}) programada para ese horario.`;
     }
 
     const pendingRescheduleConflict =
-      await this.prisma.reprogramacion_cita.findFirst({
+      await this.prisma.reprogramacion_cita.findMany({
         where: {
           estado: "PENDIENTE",
           ...(excludeAppointmentId !== undefined
             ? { id_cita: { not: excludeAppointmentId } }
             : {}),
-          nueva_fecha_hora_inicio: { lt: endAt },
-          nueva_fecha_hora_fin: { gt: startAt },
+          nueva_fecha_hora_inicio: { lt: normalizedEndAt },
+          nueva_fecha_hora_fin: { gt: normalizedStartAt },
           cita: {
             solicitud: { id_cuenta_estudiante: studentAccountId },
           },
@@ -179,8 +206,17 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         include: { cita: { include: { tipo_cita: true } } },
       });
 
-    if (pendingRescheduleConflict) {
-      return `El estudiante ya tiene una reprogramacion pendiente (${pendingRescheduleConflict.cita.tipo_cita.nombre}) para ese horario.`;
+    const conflictingReschedule = pendingRescheduleConflict.find((reschedule) =>
+      this.minuteRangesOverlap(
+        normalizedStartAt,
+        normalizedEndAt,
+        reschedule.nueva_fecha_hora_inicio,
+        reschedule.nueva_fecha_hora_fin,
+      ),
+    );
+
+    if (conflictingReschedule) {
+      return `El estudiante ya tiene una reprogramacion pendiente (${conflictingReschedule.cita.tipo_cita.nombre}) para ese horario.`;
     }
 
     return null;
@@ -192,32 +228,43 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     endAt: Date,
     excludeAppointmentId?: number,
   ): Promise<string | null> {
-    const conflicting = await this.prisma.cita.findFirst({
+    const normalizedStartAt = this.floorDateToMinute(startAt);
+    const normalizedEndAt = this.floorDateToMinute(endAt);
+    const conflictingAppointments = await this.prisma.cita.findMany({
       where: {
         solicitud: { id_cuenta_paciente: patientAccountId },
         estado: { in: ["PROPUESTA", "ACEPTADA"] },
         ...(excludeAppointmentId !== undefined
           ? { id_cita: { not: excludeAppointmentId } }
           : {}),
-        fecha_hora_inicio: { lt: endAt },
-        fecha_hora_fin: { gt: startAt },
+        fecha_hora_inicio: { lt: normalizedEndAt },
+        fecha_hora_fin: { gt: normalizedStartAt },
       },
       include: { tipo_cita: true },
     });
+
+    const conflicting = conflictingAppointments.find((appointment) =>
+      this.minuteRangesOverlap(
+        normalizedStartAt,
+        normalizedEndAt,
+        appointment.fecha_hora_inicio,
+        appointment.fecha_hora_fin,
+      ),
+    );
 
     if (conflicting) {
       return `Ya tienes una cita (${conflicting.tipo_cita.nombre}) programada para ese horario.`;
     }
 
     const pendingRescheduleConflict =
-      await this.prisma.reprogramacion_cita.findFirst({
+      await this.prisma.reprogramacion_cita.findMany({
         where: {
           estado: "PENDIENTE",
           ...(excludeAppointmentId !== undefined
             ? { id_cita: { not: excludeAppointmentId } }
             : {}),
-          nueva_fecha_hora_inicio: { lt: endAt },
-          nueva_fecha_hora_fin: { gt: startAt },
+          nueva_fecha_hora_inicio: { lt: normalizedEndAt },
+          nueva_fecha_hora_fin: { gt: normalizedStartAt },
           cita: {
             solicitud: { id_cuenta_paciente: patientAccountId },
           },
@@ -225,8 +272,17 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         include: { cita: { include: { tipo_cita: true } } },
       });
 
-    if (pendingRescheduleConflict) {
-      return `Ya tienes una reprogramacion pendiente (${pendingRescheduleConflict.cita.tipo_cita.nombre}) para ese horario.`;
+    const conflictingReschedule = pendingRescheduleConflict.find((reschedule) =>
+      this.minuteRangesOverlap(
+        normalizedStartAt,
+        normalizedEndAt,
+        reschedule.nueva_fecha_hora_inicio,
+        reschedule.nueva_fecha_hora_fin,
+      ),
+    );
+
+    if (conflictingReschedule) {
+      return `Ya tienes una reprogramacion pendiente (${conflictingReschedule.cita.tipo_cita.nombre}) para ese horario.`;
     }
 
     return null;
@@ -784,6 +840,10 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
                   where: { estado: "PENDIENTE" },
                   orderBy: { fecha_creacion: "desc" },
                   take: 1,
+                  include: {
+                    nueva_sede: { include: { localidad: { include: { ciudad: true } } } },
+                    nuevo_docente_universidad: { include: { docente: true } },
+                  },
                 },
                 valoracion: {
                   where: { id_cuenta_emisor: patientAccountId },
@@ -839,22 +899,25 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     const appointments: PatientAppointmentDto[] = solicitudes.flatMap((s) =>
       s.cita.map((c) => {
         const pendingReschedule = c.reprogramacion_cita[0] ?? null;
+        const displaySite = pendingReschedule?.nueva_sede ?? c.sede;
+        const displayTeacher =
+          pendingReschedule?.nuevo_docente_universidad ?? c.docente_universidad;
 
         return {
           additionalInfo: c.informacion_adicional ?? null,
           appointmentType: c.tipo_cita.nombre,
-          city: c.sede.localidad.ciudad.nombre,
+          city: displaySite.localidad.ciudad.nombre,
           createdAt: c.fecha_creacion.toISOString(),
           endAt: (pendingReschedule?.nueva_fecha_hora_fin ?? c.fecha_hora_fin).toISOString(),
           id: String(c.id_cita),
           isRescheduleProposal: Boolean(pendingReschedule),
           myRating: c.valoracion[0]?.calificacion ?? null,
           respondedAt: c.respondida_at?.toISOString() ?? null,
-          siteName: c.sede.nombre,
+          siteName: displaySite.nombre,
           startAt: (pendingReschedule?.nueva_fecha_hora_inicio ?? c.fecha_hora_inicio).toISOString(),
           status: c.estado,
           studentName: `${s.cuenta_estudiante.persona.nombres} ${s.cuenta_estudiante.persona.apellidos}`,
-          teacherName: `${c.docente_universidad.docente.nombres} ${c.docente_universidad.docente.apellidos}`,
+          teacherName: `${displayTeacher.docente.nombres} ${displayTeacher.docente.apellidos}`,
           universityName: s.cuenta_estudiante.universidad.nombre,
         };
       }),
@@ -1142,6 +1205,10 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
           where: { estado: "PENDIENTE" },
           orderBy: { fecha_creacion: "desc" },
           take: 1,
+          include: {
+            nueva_sede: { include: { localidad: { include: { ciudad: true } } } },
+            nuevo_docente_universidad: { include: { docente: true } },
+          },
         },
         solicitud: {
           include: {
@@ -1184,6 +1251,10 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         where: { estado: "PENDIENTE" },
         orderBy: { fecha_creacion: "desc" },
         take: 1,
+        include: {
+          nueva_sede: { include: { localidad: { include: { ciudad: true } } } },
+          nuevo_docente_universidad: { include: { docente: true } },
+        },
       },
       solicitud: {
         include: {
@@ -1244,6 +1315,10 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
           where: { id_cita: appointmentId },
           data: {
             estado: "ACEPTADA",
+            id_docente_universidad:
+              pendingReschedule.nuevo_id_docente_universidad ??
+              cita.id_docente_universidad,
+            id_sede: pendingReschedule.nueva_id_sede ?? cita.id_sede,
             fecha_hora_inicio: pendingReschedule.nueva_fecha_hora_inicio,
             fecha_hora_fin: pendingReschedule.nueva_fecha_hora_fin,
             respondida_at: responseDate,

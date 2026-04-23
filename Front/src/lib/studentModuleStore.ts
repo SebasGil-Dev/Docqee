@@ -1381,6 +1381,18 @@ function buildDateTime(dateValue: string, timeValue: string) {
   return new Date(year, month - 1, day, hours, minutes, 0, 0);
 }
 
+function floorDateToMinute(date: Date) {
+  return new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    date.getHours(),
+    date.getMinutes(),
+    0,
+    0,
+  );
+}
+
 function doesScheduleBlockMatchDate(
   block: StudentScheduleBlock,
   dateValue: string,
@@ -1469,8 +1481,8 @@ function findAppointmentValidationError(
 
   const startAt = buildDateTime(normalized.startDate, normalized.startTime);
   const endAt = buildDateTime(normalized.startDate, normalized.endTime);
-  if (startAt <= new Date()) {
-    return 'La cita debe iniciar en una fecha y hora futuras.';
+  if (startAt < floorDateToMinute(new Date())) {
+    return 'La cita debe iniciar en una fecha y hora actuales o futuras.';
   }
 
   if (endAt <= startAt) {
@@ -1822,19 +1834,30 @@ function rescheduleAppointmentMock(
   }
 
   const normalized = normalizeAppointmentInput(values);
+  const site = state.practiceSites.find(
+    (practiceSite) => practiceSite.siteId === normalized.siteId,
+  );
+  const supervisor = state.supervisors.find(
+    (currentSupervisor) => currentSupervisor.id === normalized.supervisorId,
+  );
   const nextAppointment: StudentAgendaAppointment = {
     ...currentAppointment,
+    city: site?.city ?? currentAppointment.city,
     endAt: buildDateTime(
       normalized.startDate,
       normalized.endTime,
     ).toISOString(),
     isRescheduleProposal: true,
     respondedAt: null,
+    siteId: normalized.siteId,
+    siteName: site?.name ?? currentAppointment.siteName,
     startAt: buildDateTime(
       normalized.startDate,
       normalized.startTime,
     ).toISOString(),
     status: 'PROPUESTA',
+    supervisorId: normalized.supervisorId,
+    supervisorName: supervisor?.name ?? currentAppointment.supervisorName,
   };
 
   updateState({
