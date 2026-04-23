@@ -1,3 +1,6 @@
+ALTER TABLE "cita"
+ADD COLUMN IF NOT EXISTS "recordatorio_24h_enviado" BOOLEAN NOT NULL DEFAULT FALSE;
+
 ALTER TABLE "reprogramacion_cita"
 ADD COLUMN IF NOT EXISTS "nueva_id_sede" INTEGER,
 ADD COLUMN IF NOT EXISTS "nuevo_id_docente_universidad" INTEGER;
