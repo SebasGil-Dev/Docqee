@@ -1322,7 +1322,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       },
     } as const;
 
-    if (payload.status === "ACEPTADA") {
+    if (payload.status === "ACEPTADA" && !isAlreadyAcceptedResponse) {
       const acceptedStartAt =
         pendingReschedule?.nueva_fecha_hora_inicio ?? cita.fecha_hora_inicio;
       const acceptedEndAt =
@@ -1359,19 +1359,27 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         // No-op: the previous attempt may have updated the cita but failed on
         // a secondary side effect such as notification delivery.
       } else if (payload.status === "ACEPTADA" && pendingReschedule) {
-        await this.prisma.$transaction([
-          this.prisma.reprogramacion_cita.update({
+        await this.prisma.$transaction(async (tx) => {
+          const updatedReschedule = await tx.reprogramacion_cita.updateMany({
             where: {
               id_reprogramacion_cita:
                 pendingReschedule.id_reprogramacion_cita,
+              estado: "PENDIENTE",
             },
             data: {
               estado: "ACEPTADA",
               respuesta_por_cuenta: patientAccountId,
               fecha_respuesta: responseDate,
             },
-          }),
-          this.prisma.cita.update({
+          });
+
+          if (updatedReschedule.count === 0) {
+            throw new BadRequestException(
+              "La propuesta de reprogramacion ya no esta disponible. Actualiza la pagina e intentalo de nuevo.",
+            );
+          }
+
+          await tx.cita.update({
             where: { id_cita: appointmentId },
             data: {
               estado: "ACEPTADA",
@@ -1384,30 +1392,38 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
               respondida_at: responseDate,
               fecha_actualizacion: responseDate,
             },
-          }),
-        ]);
+          });
+        });
       } else if (payload.status === "RECHAZADA" && pendingReschedule) {
-        await this.prisma.$transaction([
-          this.prisma.reprogramacion_cita.update({
+        await this.prisma.$transaction(async (tx) => {
+          const updatedReschedule = await tx.reprogramacion_cita.updateMany({
             where: {
               id_reprogramacion_cita:
                 pendingReschedule.id_reprogramacion_cita,
+              estado: "PENDIENTE",
             },
             data: {
               estado: "RECHAZADA",
               respuesta_por_cuenta: patientAccountId,
               fecha_respuesta: responseDate,
             },
-          }),
-          this.prisma.cita.update({
+          });
+
+          if (updatedReschedule.count === 0) {
+            throw new BadRequestException(
+              "La propuesta de reprogramacion ya no esta disponible. Actualiza la pagina e intentalo de nuevo.",
+            );
+          }
+
+          await tx.cita.update({
             where: { id_cita: appointmentId },
             data: {
               estado: "ACEPTADA",
               respondida_at: responseDate,
               fecha_actualizacion: responseDate,
             },
-          }),
-        ]);
+          });
+        });
       } else {
         await this.prisma.cita.update({
           where: { id_cita: appointmentId },
@@ -1437,6 +1453,17 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         );
       }
 
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        (error.code === "P2002" || error.code === "P2003" || error.code === "P2014")
+      ) {
+        throw new BadRequestException(
+          payload.status === "CANCELADA"
+            ? PATIENT_CANCEL_NOTICE_ERROR_MESSAGE
+            : PATIENT_RESCHEDULE_RESPONSE_ERROR_MESSAGE,
+        );
+      }
+
       if (this.isDatabaseConstraintError(error)) {
         throw new BadRequestException(
           payload.status === "CANCELADA"
@@ -1452,10 +1479,14 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       await this.resetAppointmentReminderSafely(appointmentId);
     }
 
-    const updated = await this.prisma.cita.findUniqueOrThrow({
+    const updated = await this.prisma.cita.findUnique({
       where: { id_cita: appointmentId },
       include: updateInclude,
     });
+
+    if (!updated) {
+      throw new NotFoundException("La cita no existe o no te pertenece.");
+    }
 
     if (payload.status === 'CANCELADA') {
       await this.createNotificationSafely({
