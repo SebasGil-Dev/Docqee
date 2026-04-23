@@ -1646,6 +1646,8 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       throw new BadRequestException('Ya existe una reprogramacion pendiente para esta cita.');
     }
 
+    this.assertAppointmentHasMinimumNotice(cita.fecha_hora_inicio);
+
     const sede = await this.prisma.sede.findFirst({
       where: { id_sede: payload.siteId, estado: 'ACTIVO' },
     });

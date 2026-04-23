@@ -16,14 +16,13 @@ export class TasksService {
   @Cron(CronExpression.EVERY_HOUR)
   async sendAppointmentReminders() {
     const now = new Date();
-    const windowStart = new Date(now.getTime() + 23 * 60 * 60 * 1000);
-    const windowEnd = new Date(now.getTime() + 25 * 60 * 60 * 1000);
+    const next24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
     const citas = await this.prisma.cita.findMany({
       where: {
         estado: 'ACEPTADA',
         recordatorio_24h_enviado: false,
-        fecha_hora_inicio: { gte: windowStart, lte: windowEnd },
+        fecha_hora_inicio: { gt: now, lte: next24Hours },
       },
       include: {
         tipo_cita: true,

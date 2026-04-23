@@ -1367,6 +1367,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
               id_sede: pendingReschedule.nueva_id_sede ?? cita.id_sede,
               fecha_hora_inicio: pendingReschedule.nueva_fecha_hora_inicio,
               fecha_hora_fin: pendingReschedule.nueva_fecha_hora_fin,
+              recordatorio_24h_enviado: false,
               respondida_at: responseDate,
               fecha_actualizacion: responseDate,
             },
