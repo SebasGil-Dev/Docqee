@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
 import { PrismaService } from '@/shared/database/prisma.service';
@@ -28,6 +28,10 @@ const APPOINTMENT_CHANGE_NOTICE_MS =
   APPOINTMENT_CHANGE_NOTICE_HOURS * 60 * 60 * 1000;
 const RESCHEDULE_NOTICE_ERROR_MESSAGE =
   'No se puede reprogramar esta cita porque esta demasiado proxima o la fecha propuesta no cumple las reglas de agenda. Elige un horario con al menos 48 horas de anticipacion.';
+const CREATE_APPOINTMENT_ERROR_MESSAGE =
+  'No se pudo agendar la cita porque la fecha u hora no cumple las reglas de agenda.';
+const STUDENT_CANCEL_NOTICE_ERROR_MESSAGE =
+  'No se puede cancelar esta cita porque faltan menos de 48 horas para la hora programada.';
 
 type StudentRequestPatientReviewRecord = {
   calificacion: number;
@@ -105,6 +109,8 @@ function getPatientReviewAuthorName(review: StudentRequestPatientReviewRecord) {
 
 @Injectable()
 export class PrismaStudentPortalRepository extends StudentPortalRepository {
+  private readonly logger = new Logger(PrismaStudentPortalRepository.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly mailService: MailService,
@@ -1263,11 +1269,32 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     }
   }
 
+  private assertAppointmentCanBeCancelled(startAt: Date) {
+    const earliestStartAt = new Date(Date.now() + APPOINTMENT_CHANGE_NOTICE_MS);
+
+    if (this.floorDateToMinute(startAt) < this.floorDateToMinute(earliestStartAt)) {
+      throw new BadRequestException(STUDENT_CANCEL_NOTICE_ERROR_MESSAGE);
+    }
+  }
+
   private isDatabaseConstraintError(error: unknown) {
     return (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       (error.code === 'P2004' || error.code === 'P2010')
     );
+  }
+
+  private async createNotificationSafely(
+    data: Prisma.notificacionUncheckedCreateInput,
+  ) {
+    try {
+      await this.prisma.notificacion.create({ data });
+    } catch (error) {
+      this.logger.error(
+        'No pudimos crear la notificacion del portal de estudiante.',
+        error,
+      );
+    }
   }
 
   private assertAppointmentDateRange(startAt: Date, endAt: Date) {
@@ -1436,43 +1463,56 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       throw new BadRequestException(patientConflict);
     }
 
-    const cita = await this.prisma.$transaction(async (tx) => {
-      if (solicitud.conversacion?.estado !== 'ACTIVA') {
-        const activatedConversation = await tx.conversacion.updateMany({
-          where: { id_solicitud: payload.requestId },
-          data: {
-            estado: 'ACTIVA',
-            solo_lectura_at: null,
-          },
-        });
-
-        if (activatedConversation.count === 0) {
-          await tx.conversacion.create({
-            data: {
+    let cita: Prisma.citaGetPayload<{ include: ReturnType<PrismaStudentPortalRepository['getCitaWithRelationsArgs']> }>;
+    try {
+      cita = await this.prisma.$transaction(async (tx) => {
+        if (solicitud.conversacion?.estado !== 'ACTIVA') {
+          await tx.conversacion.upsert({
+            where: { id_solicitud: payload.requestId },
+            create: {
               id_solicitud: payload.requestId,
               estado: 'ACTIVA',
             },
+            update: {
+              estado: 'ACTIVA',
+              solo_lectura_at: null,
+            },
           });
         }
+
+        return tx.cita.create({
+          data: {
+            id_solicitud: payload.requestId,
+            id_docente_universidad: payload.supervisorId,
+            id_sede: payload.siteId,
+            id_tipo_cita: tipoCita.id_tipo_cita,
+            fecha_hora_inicio: startAt,
+            fecha_hora_fin: endAt,
+            informacion_adicional: payload.additionalInfo?.trim() || null,
+            estado: 'PROPUESTA',
+            cita_tratamiento: {
+              create: payload.treatmentIds.map((id_tipo_tratamiento) => ({ id_tipo_tratamiento })),
+            },
+          },
+          include: this.getCitaWithRelationsArgs(),
+        });
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new BadRequestException(
+          'Ya existe una conversacion asociada a la solicitud. Actualiza e intenta nuevamente.',
+        );
       }
 
-      return tx.cita.create({
-        data: {
-          id_solicitud: payload.requestId,
-          id_docente_universidad: payload.supervisorId,
-          id_sede: payload.siteId,
-          id_tipo_cita: tipoCita.id_tipo_cita,
-          fecha_hora_inicio: startAt,
-          fecha_hora_fin: endAt,
-          informacion_adicional: payload.additionalInfo?.trim() || null,
-          estado: 'PROPUESTA',
-          cita_tratamiento: {
-            create: payload.treatmentIds.map((id_tipo_tratamiento) => ({ id_tipo_tratamiento })),
-          },
-        },
-        include: this.getCitaWithRelationsArgs(),
-      });
-    });
+      if (this.isDatabaseConstraintError(error)) {
+        throw new BadRequestException(CREATE_APPOINTMENT_ERROR_MESSAGE);
+      }
+
+      throw error;
+    }
 
     return this.toCitaAppointmentDto(cita);
   }
@@ -1706,14 +1746,13 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
             fecha_actualizacion: new Date(),
           },
         }),
-        this.prisma.notificacion.create({
-          data: {
-            id_cuenta_destino: cita.solicitud.id_cuenta_paciente,
-            tipo: 'REPROGRAMACION',
-            contenido: 'El estudiante solicito reprogramar tu cita. Revisa la nueva fecha y hora propuesta.',
-          },
-        }),
       ]);
+
+      await this.createNotificationSafely({
+        id_cuenta_destino: cita.solicitud.id_cuenta_paciente,
+        tipo: 'REPROGRAMACION',
+        contenido: 'El estudiante solicito reprogramar tu cita. Revisa la nueva fecha y hora propuesta.',
+      });
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -1761,6 +1800,10 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       );
     }
 
+    if (status === 'CANCELADA') {
+      this.assertAppointmentCanBeCancelled(cita.fecha_hora_inicio);
+    }
+
     const responseDate = new Date();
 
     if (status === 'CANCELADA') {
@@ -1774,31 +1817,49 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       });
     }
 
-    const updated = await this.prisma.cita.update({
-      where: { id_cita: appointmentId },
-      data: {
-        estado: status as any,
-        ...(status === 'CANCELADA'
-          ? {
-              cancelada_por_cuenta: studentAccountId,
-              respondida_at: responseDate,
-              motivo_cancelacion: 'Cancelada por el estudiante',
-            }
-          : {}),
-        ...(status === 'FINALIZADA'
-          ? { finalizada_at: responseDate, respondida_at: responseDate }
-          : {}),
-      },
-      include: this.getCitaWithRelationsArgs(),
-    });
+    let updated: Prisma.citaGetPayload<{ include: ReturnType<PrismaStudentPortalRepository['getCitaWithRelationsArgs']> }>;
+    try {
+      updated = await this.prisma.cita.update({
+        where: { id_cita: appointmentId },
+        data: {
+          estado: status as any,
+          ...(status === 'CANCELADA'
+            ? {
+                cancelada_por_cuenta: studentAccountId,
+                respondida_at: responseDate,
+                motivo_cancelacion: 'Cancelada por el estudiante',
+              }
+            : {}),
+          ...(status === 'FINALIZADA'
+            ? { finalizada_at: responseDate, respondida_at: responseDate }
+            : {}),
+        },
+        include: this.getCitaWithRelationsArgs(),
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException('La cita no existe o no te pertenece.');
+      }
+
+      if (this.isDatabaseConstraintError(error)) {
+        throw new BadRequestException(
+          status === 'CANCELADA'
+            ? STUDENT_CANCEL_NOTICE_ERROR_MESSAGE
+            : 'No se pudo actualizar el estado de la cita.',
+        );
+      }
+
+      throw error;
+    }
 
     if (status === 'CANCELADA') {
-      await this.prisma.notificacion.create({
-        data: {
-          id_cuenta_destino: updated.solicitud.id_cuenta_paciente,
-          tipo: 'CANCELACION_CITA',
-          contenido: 'El estudiante cancelo una de tus citas agendadas.',
-        },
+      await this.createNotificationSafely({
+        id_cuenta_destino: updated.solicitud.id_cuenta_paciente,
+        tipo: 'CANCELACION_CITA',
+        contenido: 'El estudiante cancelo una de tus citas agendadas.',
       });
 
       const patientAccountId = updated.solicitud.id_cuenta_paciente;
