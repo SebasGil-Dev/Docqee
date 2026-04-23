@@ -1453,38 +1453,7 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       include: this.getCitaWithRelationsArgs(),
     });
 
-    const dto = this.toCitaAppointmentDto(cita);
-
-    // Send email notification to patient about the new appointment proposal
-    const patientAccount = await this.prisma.cuenta_acceso.findUnique({
-      where: { id_cuenta: solicitud.id_cuenta_paciente },
-      select: { correo: true },
-    });
-    const patientPerson = await this.prisma.cuenta_paciente.findUnique({
-      where: { id_cuenta: solicitud.id_cuenta_paciente },
-      include: { persona: true },
-    });
-    const studentInfo = await this.prisma.cuenta_estudiante.findUnique({
-      where: { id_cuenta: studentAccountId },
-      include: { persona: true },
-    });
-
-    if (patientAccount && patientPerson && studentInfo) {
-      const patientName = `${patientPerson.persona.nombres} ${patientPerson.persona.apellidos}`;
-      const studentName = `${studentInfo.persona.nombres} ${studentInfo.persona.apellidos}`;
-      void this.mailService.sendAppointmentProposalToPatient(
-        patientAccount.correo,
-        patientName,
-        studentName,
-        dto.appointmentType,
-        dto.siteName,
-        dto.city,
-        dto.startAt,
-        dto.endAt,
-      );
-    }
-
-    return dto;
+    return this.toCitaAppointmentDto(cita);
   }
 
   async updateAppointment(
