@@ -1357,7 +1357,7 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     studentAccountId: number,
     payload: UpsertStudentAppointmentDto,
   ): Promise<StudentAgendaAppointmentDto> {
-    // Verify solicitud belongs to this student and has an active conversation.
+    // Verify solicitud belongs to this student.
     const solicitud = await this.prisma.solicitud.findFirst({
       where: { id_solicitud: payload.requestId, id_cuenta_estudiante: studentAccountId },
       include: { conversacion: true },
@@ -1367,8 +1367,8 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       throw new NotFoundException('La solicitud no existe o no te pertenece.');
     }
 
-    if (solicitud.estado !== 'ACEPTADA' || solicitud.conversacion?.estado !== 'ACTIVA') {
-      throw new BadRequestException('Solo puedes programar citas para solicitudes aceptadas y activas.');
+    if (solicitud.estado !== 'ACEPTADA') {
+      throw new BadRequestException('Solo puedes programar citas para solicitudes aceptadas.');
     }
 
     // Verify supervisor belongs to the student's university
@@ -1436,21 +1436,42 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       throw new BadRequestException(patientConflict);
     }
 
-    const cita = await this.prisma.cita.create({
-      data: {
-        id_solicitud: payload.requestId,
-        id_docente_universidad: payload.supervisorId,
-        id_sede: payload.siteId,
-        id_tipo_cita: tipoCita.id_tipo_cita,
-        fecha_hora_inicio: startAt,
-        fecha_hora_fin: endAt,
-        informacion_adicional: payload.additionalInfo?.trim() || null,
-        estado: 'PROPUESTA',
-        cita_tratamiento: {
-          create: payload.treatmentIds.map((id_tipo_tratamiento) => ({ id_tipo_tratamiento })),
+    const cita = await this.prisma.$transaction(async (tx) => {
+      if (solicitud.conversacion?.estado !== 'ACTIVA') {
+        const activatedConversation = await tx.conversacion.updateMany({
+          where: { id_solicitud: payload.requestId },
+          data: {
+            estado: 'ACTIVA',
+            solo_lectura_at: null,
+          },
+        });
+
+        if (activatedConversation.count === 0) {
+          await tx.conversacion.create({
+            data: {
+              id_solicitud: payload.requestId,
+              estado: 'ACTIVA',
+            },
+          });
+        }
+      }
+
+      return tx.cita.create({
+        data: {
+          id_solicitud: payload.requestId,
+          id_docente_universidad: payload.supervisorId,
+          id_sede: payload.siteId,
+          id_tipo_cita: tipoCita.id_tipo_cita,
+          fecha_hora_inicio: startAt,
+          fecha_hora_fin: endAt,
+          informacion_adicional: payload.additionalInfo?.trim() || null,
+          estado: 'PROPUESTA',
+          cita_tratamiento: {
+            create: payload.treatmentIds.map((id_tipo_tratamiento) => ({ id_tipo_tratamiento })),
+          },
         },
-      },
-      include: this.getCitaWithRelationsArgs(),
+        include: this.getCitaWithRelationsArgs(),
+      });
     });
 
     return this.toCitaAppointmentDto(cita);
