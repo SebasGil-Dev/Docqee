@@ -27,7 +27,7 @@ const APPOINTMENT_CHANGE_NOTICE_HOURS = 48;
 const APPOINTMENT_CHANGE_NOTICE_MS =
   APPOINTMENT_CHANGE_NOTICE_HOURS * 60 * 60 * 1000;
 const RESCHEDULE_NOTICE_ERROR_MESSAGE =
-  'No se puede reprogramar esta cita porque esta demasiado proxima o la fecha propuesta no cumple las reglas de agenda. Elige un horario con al menos 48 horas de anticipacion.';
+  'No se puede reprogramar esta cita porque esta demasiado proxima o la fecha propuesta no cumple las reglas de agenda. Elige un horario con mas de 48 horas de anticipacion.';
 const CREATE_APPOINTMENT_ERROR_MESSAGE =
   'No se pudo agendar la cita porque la fecha u hora no cumple las reglas de agenda.';
 const STUDENT_CANCEL_NOTICE_ERROR_MESSAGE =
@@ -1264,7 +1264,7 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
   private assertAppointmentHasMinimumNotice(startAt: Date) {
     const earliestStartAt = new Date(Date.now() + APPOINTMENT_CHANGE_NOTICE_MS);
 
-    if (this.floorDateToMinute(startAt) < this.floorDateToMinute(earliestStartAt)) {
+    if (this.floorDateToMinute(startAt) <= this.floorDateToMinute(earliestStartAt)) {
       throw new BadRequestException(RESCHEDULE_NOTICE_ERROR_MESSAGE);
     }
   }
