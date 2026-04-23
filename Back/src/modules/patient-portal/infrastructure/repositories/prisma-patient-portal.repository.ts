@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
@@ -130,6 +131,8 @@ const PATIENT_INITIAL_STUDENT_DIRECTORY_LIMIT = 5;
 
 @Injectable()
 export class PrismaPatientPortalRepository extends PatientPortalRepository {
+  private readonly logger = new Logger(PrismaPatientPortalRepository.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly mailService: MailService,
@@ -166,6 +169,19 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       error instanceof Prisma.PrismaClientKnownRequestError &&
       (error.code === "P2004" || error.code === "P2010")
     );
+  }
+
+  private async createNotificationSafely(
+    data: Prisma.notificacionUncheckedCreateInput,
+  ) {
+    try {
+      await this.prisma.notificacion.create({ data });
+    } catch (error) {
+      this.logger.error(
+        "No pudimos crear la notificacion de cita del paciente.",
+        error,
+      );
+    }
   }
 
   private async checkStudentAppointmentConflicts(
@@ -1242,10 +1258,21 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
 
     const pendingReschedule = cita.reprogramacion_cita[0] ?? null;
     const isRescheduleResponse = Boolean(pendingReschedule);
+    const isAlreadyAcceptedResponse =
+      payload.status === "ACEPTADA" &&
+      cita.estado === "ACEPTADA" &&
+      !pendingReschedule;
+    const isAlreadyRejectedRescheduleResponse =
+      payload.status === "RECHAZADA" &&
+      cita.estado === "ACEPTADA" &&
+      !pendingReschedule;
 
     if (
       (payload.status === "ACEPTADA" || payload.status === "RECHAZADA") &&
-      cita.estado !== "PROPUESTA"
+      cita.estado !== "PROPUESTA" &&
+      !isRescheduleResponse &&
+      !isAlreadyAcceptedResponse &&
+      !isAlreadyRejectedRescheduleResponse
     ) {
       throw new BadRequestException("Solo puedes responder propuestas de cita.");
     }
@@ -1311,7 +1338,13 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     }
 
     try {
-      if (payload.status === "ACEPTADA" && pendingReschedule) {
+      if (
+        isAlreadyAcceptedResponse ||
+        isAlreadyRejectedRescheduleResponse
+      ) {
+        // No-op: the previous attempt may have updated the cita but failed on
+        // a secondary side effect such as notification delivery.
+      } else if (payload.status === "ACEPTADA" && pendingReschedule) {
         await this.prisma.$transaction([
           this.prisma.reprogramacion_cita.update({
             where: {
@@ -1407,12 +1440,10 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     });
 
     if (payload.status === 'CANCELADA') {
-      await this.prisma.notificacion.create({
-        data: {
-          id_cuenta_destino: updated.solicitud.id_cuenta_estudiante,
-          tipo: 'CANCELACION_CITA',
-          contenido: 'El paciente cancelo una de tus citas agendadas.',
-        },
+      await this.createNotificationSafely({
+        id_cuenta_destino: updated.solicitud.id_cuenta_estudiante,
+        tipo: 'CANCELACION_CITA',
+        contenido: 'El paciente cancelo una de tus citas agendadas.',
       });
 
       const studentEmail = updated.solicitud.cuenta_estudiante.cuenta_acceso.correo;
@@ -1442,15 +1473,13 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
           updated.fecha_hora_fin.toISOString(),
         );
       }
-    } else if (payload.status === 'ACEPTADA') {
-      await this.prisma.notificacion.create({
-        data: {
-          id_cuenta_destino: updated.solicitud.id_cuenta_estudiante,
-          tipo: 'RESPUESTA_CITA',
-          contenido: isRescheduleResponse
-            ? 'El paciente acepto la reprogramacion de tu cita.'
-            : 'El paciente acepto tu propuesta de cita.',
-        },
+    } else if (payload.status === 'ACEPTADA' && !isAlreadyAcceptedResponse) {
+      await this.createNotificationSafely({
+        id_cuenta_destino: updated.solicitud.id_cuenta_estudiante,
+        tipo: 'RESPUESTA_CITA',
+        contenido: isRescheduleResponse
+          ? 'El paciente acepto la reprogramacion de tu cita.'
+          : 'El paciente acepto tu propuesta de cita.',
       });
 
       // Send confirmation emails to both student and patient
@@ -1494,15 +1523,16 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
           endAt,
         );
       }
-    } else if (payload.status === 'RECHAZADA') {
-      await this.prisma.notificacion.create({
-        data: {
-          id_cuenta_destino: updated.solicitud.id_cuenta_estudiante,
-          tipo: 'RESPUESTA_CITA',
-          contenido: isRescheduleResponse
-            ? 'El paciente no acepto la reprogramacion. La cita conserva la fecha y hora originales.'
-            : 'El paciente rechazo tu propuesta de cita.',
-        },
+    } else if (
+      payload.status === 'RECHAZADA' &&
+      !isAlreadyRejectedRescheduleResponse
+    ) {
+      await this.createNotificationSafely({
+        id_cuenta_destino: updated.solicitud.id_cuenta_estudiante,
+        tipo: 'RESPUESTA_CITA',
+        contenido: isRescheduleResponse
+          ? 'El paciente no acepto la reprogramacion. La cita conserva la fecha y hora originales.'
+          : 'El paciente rechazo tu propuesta de cita.',
       });
     }
 
