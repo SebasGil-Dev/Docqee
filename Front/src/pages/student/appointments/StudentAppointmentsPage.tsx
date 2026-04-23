@@ -69,16 +69,40 @@ const initialAppointmentFormValues: StudentAppointmentFormValues = {
   treatmentIds: [],
 };
 
-function padDatePart(value: number) {
-  return String(value).padStart(2, '0');
+const BOGOTA_TIME_ZONE = 'America/Bogota';
+const bogotaDateTimeFormatter = new Intl.DateTimeFormat('en-US', {
+  day: '2-digit',
+  hour: '2-digit',
+  hourCycle: 'h23',
+  minute: '2-digit',
+  month: '2-digit',
+  timeZone: BOGOTA_TIME_ZONE,
+  year: 'numeric',
+});
+
+function getBogotaDateTimeParts(value: Date | string) {
+  const date = typeof value === 'string' ? new Date(value) : value;
+  const parts = bogotaDateTimeFormatter.formatToParts(date);
+  const findPart = (type: string) =>
+    parts.find((part) => part.type === type)?.value ?? '';
+
+  return {
+    day: findPart('day'),
+    hour: findPart('hour'),
+    minute: findPart('minute'),
+    month: findPart('month'),
+    year: findPart('year'),
+  };
 }
 
-function formatDateInputValue(date: Date) {
-  return `${date.getFullYear()}-${padDatePart(date.getMonth() + 1)}-${padDatePart(date.getDate())}`;
+function formatDateInputValue(value: Date | string) {
+  const parts = getBogotaDateTimeParts(value);
+  return `${parts.year}-${parts.month}-${parts.day}`;
 }
 
-function formatTimeInputValue(date: Date) {
-  return `${padDatePart(date.getHours())}:${padDatePart(date.getMinutes())}`;
+function formatTimeInputValue(value: Date | string) {
+  const parts = getBogotaDateTimeParts(value);
+  return `${parts.hour}:${parts.minute}`;
 }
 
 function buildLocalDateTime(dateValue: string, timeValue: string) {
@@ -88,16 +112,9 @@ function buildLocalDateTime(dateValue: string, timeValue: string) {
   return new Date(year, month - 1, day, hours, minutes, 0, 0);
 }
 
-function floorDateToMinute(date: Date) {
-  return new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate(),
-    date.getHours(),
-    date.getMinutes(),
-    0,
-    0,
-  );
+function getCurrentBogotaMinute() {
+  const now = new Date();
+  return buildLocalDateTime(formatDateInputValue(now), formatTimeInputValue(now));
 }
 
 function StudentAppointmentsDialogFrame({
@@ -200,12 +217,14 @@ function formatDateTimeRange(startAt: string, endAt: string) {
   const dateFormatter = new Intl.DateTimeFormat('es-CO', {
     day: 'numeric',
     month: 'short',
+    timeZone: BOGOTA_TIME_ZONE,
   });
   const startDate = new Date(startAt);
   const endDate = new Date(endAt);
   const timeFormatter = new Intl.DateTimeFormat('es-CO', {
     hour: 'numeric',
     minute: '2-digit',
+    timeZone: BOGOTA_TIME_ZONE,
   });
   const dateParts = dateFormatter.formatToParts(startDate);
   const day = dateParts.find((part) => part.type === 'day')?.value ?? '';
@@ -235,6 +254,27 @@ function canEditAppointment(appointment: StudentAgendaAppointment) {
   );
 }
 
+function hasAppointmentEnded(
+  appointment: StudentAgendaAppointment,
+  currentTimestamp: number,
+) {
+  return new Date(appointment.endAt).getTime() <= currentTimestamp;
+}
+
+function getAppointmentDisplayStatus(
+  appointment: StudentAgendaAppointment,
+  currentTimestamp: number,
+): StudentAgendaAppointmentStatus {
+  if (
+    appointment.status === 'ACEPTADA' &&
+    hasAppointmentEnded(appointment, currentTimestamp)
+  ) {
+    return 'FINALIZADA';
+  }
+
+  return appointment.status;
+}
+
 function getInitialAppointmentFormValues(
   appointment?: StudentAgendaAppointment | null,
 ): StudentAppointmentFormValues {
@@ -245,11 +285,11 @@ function getInitialAppointmentFormValues(
   return {
     additionalInfo: appointment.additionalInfo ?? '',
     appointmentTypeId: appointment.appointmentTypeId,
-    endTime: appointment.endAt.slice(11, 16),
+    endTime: formatTimeInputValue(appointment.endAt),
     requestId: appointment.requestId,
     siteId: appointment.siteId,
-    startDate: appointment.startAt.slice(0, 10),
-    startTime: appointment.startAt.slice(11, 16),
+    startDate: formatDateInputValue(appointment.startAt),
+    startTime: formatTimeInputValue(appointment.startAt),
     supervisorId: appointment.supervisorId,
     treatmentIds: appointment.treatmentIds,
   };
@@ -259,8 +299,8 @@ function validateAppointmentForm(
   values: StudentAppointmentFormValues,
 ): StudentAppointmentFormErrors {
   const errors: StudentAppointmentFormErrors = {};
+  const currentMinute = getCurrentBogotaMinute();
   const now = new Date();
-  const currentMinute = floorDateToMinute(now);
   const todayValue = formatDateInputValue(now);
 
   if (!values.requestId) {
@@ -358,6 +398,7 @@ export function StudentAppointmentsPage() {
     patientName: string;
   } | null>(null);
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+  const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const now = new Date();
@@ -374,15 +415,21 @@ export function StudentAppointmentsPage() {
   );
   const acceptedCount = useMemo(
     () =>
-      appointments.filter((appointment) => appointment.status === 'ACEPTADA')
-        .length,
-    [appointments],
+      appointments.filter(
+        (appointment) =>
+          getAppointmentDisplayStatus(appointment, currentTimestamp) ===
+          'ACEPTADA',
+      ).length,
+    [appointments, currentTimestamp],
   );
   const completedCount = useMemo(
     () =>
-      appointments.filter((appointment) => appointment.status === 'FINALIZADA')
-        .length,
-    [appointments],
+      appointments.filter(
+        (appointment) =>
+          getAppointmentDisplayStatus(appointment, currentTimestamp) ===
+          'FINALIZADA',
+      ).length,
+    [appointments, currentTimestamp],
   );
   const acceptedRequests = useMemo(
     () => requests.filter((request) => request.status === 'ACEPTADA'),
@@ -448,7 +495,9 @@ export function StudentAppointmentsPage() {
         .includes(normalizedSearch);
       return (
         matchesSearch &&
-        (statusFilter === 'all' || appointment.status === statusFilter)
+        (statusFilter === 'all' ||
+          getAppointmentDisplayStatus(appointment, currentTimestamp) ===
+            statusFilter)
       );
     });
 
@@ -469,7 +518,20 @@ export function StudentAppointmentsPage() {
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     );
-  }, [appointments, normalizedSearch, sortOrder, statusFilter]);
+  }, [
+    appointments,
+    currentTimestamp,
+    normalizedSearch,
+    sortOrder,
+    statusFilter,
+  ]);
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setCurrentTimestamp(Date.now());
+    }, 30_000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
   useEffect(() => {
     if (!isStatusMenuOpen) {
       return undefined;
@@ -530,7 +592,7 @@ export function StudentAppointmentsPage() {
         nextValue === formatDateInputValue(new Date()) &&
         nextValues.startTime &&
         buildLocalDateTime(nextValue, nextValues.startTime) <
-          floorDateToMinute(new Date())
+          getCurrentBogotaMinute()
       ) {
         nextValues.startTime = '';
         nextValues.endTime = '';
@@ -603,11 +665,36 @@ export function StudentAppointmentsPage() {
   const handleRescheduleAppointment = (
     appointment: StudentAgendaAppointment,
   ) => {
-    if (appointment.status !== 'ACEPTADA') {
+    if (
+      appointment.status !== 'ACEPTADA' ||
+      hasAppointmentEnded(appointment, currentTimestamp)
+    ) {
       return;
     }
 
     openAppointmentDialog(appointment, 'reschedule');
+  };
+
+  const handleOpenRatingAppointment = (
+    appointment: StudentAgendaAppointment,
+  ) => {
+    void (async () => {
+      if (appointment.status !== 'FINALIZADA') {
+        const wasUpdated = await updateAppointmentStatus(
+          appointment.id,
+          'FINALIZADA',
+        );
+
+        if (!wasUpdated) {
+          return;
+        }
+      }
+
+      setRatingTarget({
+        appointmentId: appointment.id,
+        patientName: appointment.patientName,
+      });
+    })();
   };
 
   const handleEnableAppointmentEditing = () => {
@@ -932,11 +1019,11 @@ export function StudentAppointmentsPage() {
           <div className="admin-scrollbar min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
             <table className="w-full table-fixed">
               <colgroup>
-                <col className="w-[17%]" />
-                <col className="w-[25%]" />
-                <col className="w-[24%]" />
-                <col className="w-[14%]" />
-                <col className="w-[20%]" />
+                <col className="w-[16%]" />
+                <col className="w-[22%]" />
+                <col className="w-[22%]" />
+                <col className="w-[12%]" />
+                <col className="w-[28%]" />
               </colgroup>
               <thead className="sticky top-0 z-10 bg-slate-100 text-left">
                 <tr className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-ink-muted">
@@ -952,6 +1039,10 @@ export function StudentAppointmentsPage() {
                   const appointmentLocality =
                     practiceSitesBySiteId.get(appointment.siteId)?.locality ??
                     appointment.city;
+                  const displayStatus = getAppointmentDisplayStatus(
+                    appointment,
+                    currentTimestamp,
+                  );
 
                   return (
                     <tr
@@ -1029,16 +1120,16 @@ export function StudentAppointmentsPage() {
                       <span
                         className={classNames(
                           'inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset',
-                          getStatusBadgeClasses(appointment.status),
+                          getStatusBadgeClasses(displayStatus),
                         )}
                       >
-                        {getStatusLabel(appointment.status)}
+                        {getStatusLabel(displayStatus)}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-center sm:px-5">
-                      {appointment.status === 'PROPUESTA' ||
-                      appointment.status === 'REPROGRAMACION_PENDIENTE' ? (
-                        <div className="flex flex-nowrap items-center justify-center gap-1.5">
+                      {displayStatus === 'PROPUESTA' ||
+                      displayStatus === 'REPROGRAMACION_PENDIENTE' ? (
+                        <div className="flex max-w-full flex-wrap items-center justify-center gap-1">
                           <button
                             className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-white px-2.5 py-1.5 text-xs font-semibold text-primary ring-1 ring-slate-200 transition duration-200 hover:bg-slate-100"
                             type="button"
@@ -1064,8 +1155,8 @@ export function StudentAppointmentsPage() {
                             </span>
                           </button>
                         </div>
-                      ) : appointment.status === 'ACEPTADA' ? (
-                        <div className="flex flex-nowrap items-center justify-center gap-1.5">
+                      ) : displayStatus === 'ACEPTADA' ? (
+                        <div className="flex max-w-full flex-wrap items-center justify-center gap-1">
                           <button
                             className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-white px-2 py-1.5 text-[0.68rem] font-semibold text-primary ring-1 ring-slate-200 transition duration-200 hover:bg-slate-100"
                             type="button"
@@ -1104,17 +1195,25 @@ export function StudentAppointmentsPage() {
                             </span>
                           </button>
                         </div>
-                      ) : appointment.status === 'FINALIZADA' ? (
-                        <div className="flex flex-col items-center gap-1.5">
+                      ) : displayStatus === 'FINALIZADA' ? (
+                        <div className="flex max-w-full flex-wrap items-center justify-center gap-1">
+                          <button
+                            className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-white px-2.5 py-1.5 text-xs font-semibold text-primary ring-1 ring-slate-200 transition duration-200 hover:bg-slate-100"
+                            type="button"
+                            onClick={() => handleViewAppointment(appointment)}
+                          >
+                            <Eye
+                              aria-hidden="true"
+                              className="h-3.5 w-3.5"
+                            />
+                            <span>Ver cita</span>
+                          </button>
                           {!appointment.myRating ? (
                             <button
-                              className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 transition duration-200 hover:bg-amber-100"
+                              className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-700 transition duration-200 hover:bg-amber-100"
                               type="button"
                               onClick={() =>
-                                setRatingTarget({
-                                  appointmentId: appointment.id,
-                                  patientName: appointment.patientName,
-                                })
+                                handleOpenRatingAppointment(appointment)
                               }
                             >
                               <Star
@@ -1124,7 +1223,7 @@ export function StudentAppointmentsPage() {
                               <span>Calificar paciente</span>
                             </button>
                           ) : (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-600">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-600">
                               <Star
                                 aria-hidden="true"
                                 className="h-3 w-3 fill-amber-400 text-amber-400"
@@ -1133,7 +1232,7 @@ export function StudentAppointmentsPage() {
                             </span>
                           )}
                           <button
-                            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
+                            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-slate-100 px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
                             type="button"
                             onClick={() => setCommentsAppointment(appointment)}
                           >

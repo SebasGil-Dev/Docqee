@@ -9,6 +9,7 @@
     "build": "prisma generate && nest build && tsc-alias",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "seed": "ts-node --project tsconfig.json prisma/seed.ts"
   },

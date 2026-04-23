@@ -1381,15 +1381,47 @@ function buildDateTime(dateValue: string, timeValue: string) {
   return new Date(year, month - 1, day, hours, minutes, 0, 0);
 }
 
-function floorDateToMinute(date: Date) {
-  return new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate(),
-    date.getHours(),
-    date.getMinutes(),
-    0,
-    0,
+const BOGOTA_TIME_ZONE = 'America/Bogota';
+const bogotaDateTimeFormatter = new Intl.DateTimeFormat('en-US', {
+  day: '2-digit',
+  hour: '2-digit',
+  hourCycle: 'h23',
+  minute: '2-digit',
+  month: '2-digit',
+  timeZone: BOGOTA_TIME_ZONE,
+  year: 'numeric',
+});
+
+function getBogotaDateTimeParts(value: Date | string) {
+  const date = typeof value === 'string' ? new Date(value) : value;
+  const parts = bogotaDateTimeFormatter.formatToParts(date);
+  const findPart = (type: string) =>
+    parts.find((part) => part.type === type)?.value ?? '';
+
+  return {
+    day: findPart('day'),
+    hour: findPart('hour'),
+    minute: findPart('minute'),
+    month: findPart('month'),
+    year: findPart('year'),
+  };
+}
+
+function formatBogotaDateInputValue(value: Date | string) {
+  const parts = getBogotaDateTimeParts(value);
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+function formatBogotaTimeInputValue(value: Date | string) {
+  const parts = getBogotaDateTimeParts(value);
+  return `${parts.hour}:${parts.minute}`;
+}
+
+function getCurrentBogotaMinute() {
+  const now = new Date();
+  return buildDateTime(
+    formatBogotaDateInputValue(now),
+    formatBogotaTimeInputValue(now),
   );
 }
 
@@ -1481,7 +1513,7 @@ function findAppointmentValidationError(
 
   const startAt = buildDateTime(normalized.startDate, normalized.startTime);
   const endAt = buildDateTime(normalized.startDate, normalized.endTime);
-  if (startAt < floorDateToMinute(new Date())) {
+  if (startAt < getCurrentBogotaMinute()) {
     return 'La cita debe iniciar en una fecha y hora actuales o futuras.';
   }
 
@@ -1501,7 +1533,7 @@ function findAppointmentValidationError(
       return false;
     }
 
-    const appointmentDate = appointment.startAt.slice(0, 10);
+    const appointmentDate = formatBogotaDateInputValue(appointment.startAt);
 
     if (appointmentDate !== normalized.startDate) {
       return false;
@@ -1510,8 +1542,8 @@ function findAppointmentValidationError(
     return rangesOverlap(
       normalized.startTime,
       normalized.endTime,
-      appointment.startAt.slice(11, 16),
-      appointment.endAt.slice(11, 16),
+      formatBogotaTimeInputValue(appointment.startAt),
+      formatBogotaTimeInputValue(appointment.endAt),
     );
   });
 
