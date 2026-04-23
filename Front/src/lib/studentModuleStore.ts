@@ -37,6 +37,7 @@ import {
   updateStudentPortalAppointmentStatus,
   getStudentPortalUniversitySites,
   getStudentPortalTreatmentTypes,
+  rescheduleStudentPortalAppointment,
   updateStudentPortalPracticeSites,
   updateStudentPortalTreatments,
   updateStudentPortalProfile,
@@ -78,6 +79,10 @@ type StudentModuleActions = {
   upsertAppointment: (
     values: StudentAppointmentFormValues,
     appointmentId?: string,
+  ) => Promise<StudentAgendaAppointment | null>;
+  rescheduleAppointment: (
+    appointmentId: string,
+    values: StudentAppointmentFormValues,
   ) => Promise<StudentAgendaAppointment | null>;
   upsertScheduleBlock: (
     values: StudentScheduleBlockFormValues,
@@ -702,6 +707,7 @@ function isStudentAgendaStatus(
   return (
     value === 'PROPUESTA' ||
     value === 'ACEPTADA' ||
+    value === 'RECHAZADA' ||
     value === 'CANCELADA' ||
     value === 'FINALIZADA' ||
     value === 'REPROGRAMACION_PENDIENTE'
@@ -1463,6 +1469,10 @@ function findAppointmentValidationError(
 
   const startAt = buildDateTime(normalized.startDate, normalized.startTime);
   const endAt = buildDateTime(normalized.startDate, normalized.endTime);
+  if (startAt <= new Date()) {
+    return 'La cita debe iniciar en una fecha y hora futuras.';
+  }
+
   if (endAt <= startAt) {
     return 'La hora final debe ser posterior a la hora inicial.';
   }
@@ -1780,6 +1790,59 @@ function upsertAppointmentMock(
             : currentCount,
       };
     }),
+  });
+
+  return nextAppointment;
+}
+
+function rescheduleAppointmentMock(
+  appointmentId: string,
+  values: StudentAppointmentFormValues,
+) {
+  const currentAppointment = state.appointments.find(
+    (appointment) => appointment.id === appointmentId,
+  );
+
+  if (!currentAppointment || currentAppointment.status !== 'ACEPTADA') {
+    patchState({
+      errorMessage: 'Solo puedes reprogramar citas aceptadas.',
+      isLoading: false,
+    });
+    return null;
+  }
+
+  const validationError = findAppointmentValidationError(values, appointmentId);
+
+  if (validationError) {
+    patchState({
+      errorMessage: validationError,
+      isLoading: false,
+    });
+    return null;
+  }
+
+  const normalized = normalizeAppointmentInput(values);
+  const nextAppointment: StudentAgendaAppointment = {
+    ...currentAppointment,
+    endAt: buildDateTime(
+      normalized.startDate,
+      normalized.endTime,
+    ).toISOString(),
+    isRescheduleProposal: true,
+    respondedAt: null,
+    startAt: buildDateTime(
+      normalized.startDate,
+      normalized.startTime,
+    ).toISOString(),
+    status: 'PROPUESTA',
+  };
+
+  updateState({
+    ...state,
+    appointments: state.appointments.map((appointment) =>
+      appointment.id === appointmentId ? nextAppointment : appointment,
+    ),
+    errorMessage: null,
   });
 
   return nextAppointment;
@@ -2153,6 +2216,50 @@ async function upsertAppointment(
   } catch (error) {
     patchState({
       errorMessage: getErrorMessage(error, 'No pudimos guardar la cita.'),
+      isLoading: false,
+    });
+    return null;
+  }
+}
+
+async function rescheduleAppointment(
+  appointmentId: string,
+  values: StudentAppointmentFormValues,
+) {
+  if (IS_TEST_MODE) {
+    return rescheduleAppointmentMock(appointmentId, values);
+  }
+
+  patchState({
+    errorMessage: null,
+    isLoading: true,
+  });
+
+  try {
+    const appointment = await rescheduleStudentPortalAppointment(
+      appointmentId,
+      values,
+    );
+
+    updateState({
+      ...state,
+      appointments: state.appointments.map((currentAppointment) =>
+        currentAppointment.id === appointmentId
+          ? appointment
+          : currentAppointment,
+      ),
+      errorMessage: null,
+      isLoading: false,
+      isReady: true,
+    });
+
+    return appointment;
+  } catch (error) {
+    patchState({
+      errorMessage: getErrorMessage(
+        error,
+        'No pudimos enviar la reprogramacion.',
+      ),
       isLoading: false,
     });
     return null;
@@ -2702,6 +2809,7 @@ export function useStudentModuleStore(
     updateTreatments,
     updateProfile,
     upsertAppointment,
+    rescheduleAppointment,
     upsertScheduleBlock,
     checkAppointmentConflict: findAppointmentValidationError,
     submitAppointmentReview,

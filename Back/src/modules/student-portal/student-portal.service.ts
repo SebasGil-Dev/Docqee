@@ -89,6 +89,10 @@ export class StudentPortalService {
     return this.studentPortalRepository.updateAppointment(user.id, appointmentId, payload);
   }
 
+  rescheduleAppointment(user: RequestUser, appointmentId: number, payload: UpsertStudentAppointmentDto) {
+    return this.studentPortalRepository.rescheduleAppointment(user.id, appointmentId, payload);
+  }
+
   updateAppointmentStatus(user: RequestUser, appointmentId: number, status: string) {
     return this.studentPortalRepository.updateAppointmentStatus(user.id, appointmentId, status);
   }

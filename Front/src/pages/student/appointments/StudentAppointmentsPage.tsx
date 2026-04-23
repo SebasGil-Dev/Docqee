@@ -51,6 +51,7 @@ const appointmentStatusOptions: Array<{
   { label: 'Todas', value: 'all' },
   { label: 'Propuesta', value: 'PROPUESTA' },
   { label: 'Aceptada', value: 'ACEPTADA' },
+  { label: 'Rechazada', value: 'RECHAZADA' },
   { label: 'Reprogramacion', value: 'REPROGRAMACION_PENDIENTE' },
   { label: 'Cancelada', value: 'CANCELADA' },
   { label: 'Finalizada', value: 'FINALIZADA' },
@@ -67,6 +68,25 @@ const initialAppointmentFormValues: StudentAppointmentFormValues = {
   supervisorId: '',
   treatmentIds: [],
 };
+
+function padDatePart(value: number) {
+  return String(value).padStart(2, '0');
+}
+
+function formatDateInputValue(date: Date) {
+  return `${date.getFullYear()}-${padDatePart(date.getMonth() + 1)}-${padDatePart(date.getDate())}`;
+}
+
+function formatTimeInputValue(date: Date) {
+  return `${padDatePart(date.getHours())}:${padDatePart(date.getMinutes())}`;
+}
+
+function buildLocalDateTime(dateValue: string, timeValue: string) {
+  const [year = 0, month = 1, day = 1] = dateValue.split('-').map(Number);
+  const [hours = 0, minutes = 0] = timeValue.split(':').map(Number);
+
+  return new Date(year, month - 1, day, hours, minutes, 0, 0);
+}
 
 function StudentAppointmentsDialogFrame({
   children,
@@ -134,6 +154,8 @@ function getStatusLabel(status: StudentAgendaAppointmentStatus) {
   switch (status) {
     case 'ACEPTADA':
       return 'Aceptada';
+    case 'RECHAZADA':
+      return 'Rechazada';
     case 'CANCELADA':
       return 'Cancelada';
     case 'FINALIZADA':
@@ -149,6 +171,8 @@ function getStatusBadgeClasses(status: StudentAgendaAppointmentStatus) {
   switch (status) {
     case 'ACEPTADA':
       return 'bg-emerald-50 text-emerald-700 ring-emerald-200';
+    case 'RECHAZADA':
+      return 'bg-rose-50 text-rose-700 ring-rose-200';
     case 'CANCELADA':
       return 'bg-rose-50 text-rose-700 ring-rose-200';
     case 'FINALIZADA':
@@ -194,8 +218,8 @@ function formatTreatmentSummary(treatmentNames: string[]) {
 
 function canEditAppointment(appointment: StudentAgendaAppointment) {
   return (
-    appointment.status === 'PROPUESTA' ||
-    appointment.status === 'REPROGRAMACION_PENDIENTE'
+    appointment.status === 'PROPUESTA' &&
+    appointment.isRescheduleProposal !== true
   );
 }
 
@@ -223,6 +247,8 @@ function validateAppointmentForm(
   values: StudentAppointmentFormValues,
 ): StudentAppointmentFormErrors {
   const errors: StudentAppointmentFormErrors = {};
+  const now = new Date();
+  const todayValue = formatDateInputValue(now);
 
   if (!values.requestId) {
     errors.requestId = 'Selecciona una solicitud aceptada.';
@@ -234,10 +260,17 @@ function validateAppointmentForm(
 
   if (!values.startDate) {
     errors.startDate = 'Selecciona la fecha de la cita.';
+  } else if (values.startDate < todayValue) {
+    errors.startDate = 'Selecciona una fecha actual o futura.';
   }
 
   if (!values.startTime) {
     errors.startTime = 'Selecciona la hora de inicio.';
+  } else if (
+    values.startDate &&
+    buildLocalDateTime(values.startDate, values.startTime) <= now
+  ) {
+    errors.startTime = 'Selecciona una hora de inicio posterior a la hora actual.';
   }
 
   if (!values.endTime) {
@@ -277,6 +310,7 @@ export function StudentAppointmentsPage() {
     practiceSites,
     requests,
     reviews,
+    rescheduleAppointment,
     supervisors,
     treatments,
     updateAppointmentStatus,
@@ -313,6 +347,12 @@ export function StudentAppointmentsPage() {
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const normalizedSearch = searchTerm.trim().toLowerCase();
+  const now = new Date();
+  const minAppointmentDate = formatDateInputValue(now);
+  const minStartTime =
+    appointmentValues.startDate === minAppointmentDate
+      ? formatTimeInputValue(now)
+      : undefined;
   const pendingCount = useMemo(
     () =>
       appointments.filter((appointment) => appointment.status === 'PROPUESTA')
@@ -382,7 +422,9 @@ export function StudentAppointmentsPage() {
         : 'Agendar cita';
   const appointmentDialogDescription =
     appointmentDialogMode === 'view'
-      ? 'Consulta la cita y usa Editar cita para habilitar cambios.'
+      ? canEditCurrentDialogAppointment
+        ? 'Consulta la cita y usa Editar cita para habilitar cambios.'
+        : 'Consulta los detalles de la cita.'
       : appointmentDialogMode === 'reschedule'
         ? 'Propón una nueva fecha y hora para la cita ya aceptada.'
       : 'Agenda una cita a partir de una solicitud aceptada, con sede, docente supervisor y tratamientos validos.';
@@ -463,10 +505,34 @@ export function StudentAppointmentsPage() {
     field: keyof StudentAppointmentFormValues,
     nextValue: string | string[],
   ) => {
-    setAppointmentValues((currentValues) => ({
-      ...currentValues,
-      [field]: nextValue,
-    }));
+    setAppointmentValues((currentValues) => {
+      const nextValues = {
+        ...currentValues,
+        [field]: nextValue,
+      };
+
+      if (
+        field === 'startDate' &&
+        typeof nextValue === 'string' &&
+        nextValue === formatDateInputValue(new Date()) &&
+        nextValues.startTime &&
+        buildLocalDateTime(nextValue, nextValues.startTime) <= new Date()
+      ) {
+        nextValues.startTime = '';
+        nextValues.endTime = '';
+      }
+
+      if (
+        field === 'startTime' &&
+        typeof nextValue === 'string' &&
+        nextValues.endTime &&
+        nextValues.endTime <= nextValue
+      ) {
+        nextValues.endTime = '';
+      }
+
+      return nextValues;
+    });
     setAppointmentErrors((currentErrors) => {
       const nextErrors = { ...currentErrors };
       delete nextErrors[field];
@@ -523,11 +589,23 @@ export function StudentAppointmentsPage() {
   const handleRescheduleAppointment = (
     appointment: StudentAgendaAppointment,
   ) => {
+    if (appointment.status !== 'ACEPTADA') {
+      return;
+    }
+
     openAppointmentDialog(appointment, 'reschedule');
   };
 
   const handleEnableAppointmentEditing = () => {
     if (!editingAppointmentId) {
+      return;
+    }
+
+    const currentAppointment = appointments.find(
+      (appointment) => appointment.id === editingAppointmentId,
+    );
+
+    if (!currentAppointment || !canEditAppointment(currentAppointment)) {
       return;
     }
 
@@ -556,10 +634,13 @@ export function StudentAppointmentsPage() {
     }
 
     void (async () => {
-      const appointment = await upsertAppointment(
-        appointmentValues,
-        editingAppointmentId ?? undefined,
-      );
+      const appointment =
+        appointmentDialogMode === 'reschedule' && editingAppointmentId
+          ? await rescheduleAppointment(editingAppointmentId, appointmentValues)
+          : await upsertAppointment(
+              appointmentValues,
+              editingAppointmentId ?? undefined,
+            );
 
       if (!appointment) {
         setAppointmentApiError(errorMessage);
@@ -972,7 +1053,18 @@ export function StudentAppointmentsPage() {
                       ) : appointment.status === 'ACEPTADA' ? (
                         <div className="flex flex-nowrap items-center justify-center gap-1.5">
                           <button
-                            className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-sky-50 px-2.5 py-1.5 text-xs font-semibold text-sky-700 transition duration-200 hover:bg-sky-100"
+                            className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-white px-2 py-1.5 text-[0.68rem] font-semibold text-primary ring-1 ring-slate-200 transition duration-200 hover:bg-slate-100"
+                            type="button"
+                            onClick={() => handleViewAppointment(appointment)}
+                          >
+                            <Eye
+                              aria-hidden="true"
+                              className="h-3.5 w-3.5"
+                            />
+                            <span>Ver cita</span>
+                          </button>
+                          <button
+                            className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-sky-50 px-2 py-1.5 text-[0.68rem] font-semibold text-sky-700 transition duration-200 hover:bg-sky-100"
                             type="button"
                             onClick={() =>
                               handleRescheduleAppointment(appointment)
@@ -985,7 +1077,7 @@ export function StudentAppointmentsPage() {
                             <span>Reprogramar</span>
                           </button>
                           <button
-                            className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-rose-50 px-2.5 py-1.5 text-xs font-semibold text-rose-700 transition duration-200 hover:bg-rose-100"
+                            className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-rose-50 px-2 py-1.5 text-[0.68rem] font-semibold text-rose-700 transition duration-200 hover:bg-rose-100"
                             type="button"
                             onClick={() => setAppointmentToCancel(appointment)}
                           >
@@ -1131,6 +1223,7 @@ export function StudentAppointmentsPage() {
                 icon={CalendarCheck2}
                 id="student-appointment-date"
                 label="Fecha de la cita"
+                min={minAppointmentDate}
                 name="studentAppointmentDate"
                 placeholder=""
                 type="date"
@@ -1145,6 +1238,7 @@ export function StudentAppointmentsPage() {
                 error={appointmentErrors.startTime}
                 id="student-appointment-start-time"
                 label="Hora de inicio"
+                min={minStartTime}
                 name="studentAppointmentStartTime"
                 value={appointmentValues.startTime}
                 onChange={(value) =>

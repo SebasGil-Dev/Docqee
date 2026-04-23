@@ -925,6 +925,7 @@ export type StudentScheduleBlockType = 'ESPECIFICO' | 'RECURRENTE';
 export type StudentAgendaAppointmentStatus =
   | 'PROPUESTA'
   | 'ACEPTADA'
+  | 'RECHAZADA'
   | 'CANCELADA'
   | 'FINALIZADA'
   | 'REPROGRAMACION_PENDIENTE';
@@ -1006,6 +1007,7 @@ export type StudentAgendaAppointment = {
   createdAt: string;
   endAt: string;
   id: string;
+  isRescheduleProposal?: boolean;
   myRating: number | null;
   patientName: string;
   requestId: string;
@@ -1272,6 +1274,7 @@ export type PatientAppointment = {
   createdAt: string;
   endAt: string;
   id: string;
+  isRescheduleProposal?: boolean;
   myRating: number | null;
   respondedAt: string | null;
   siteName: string;

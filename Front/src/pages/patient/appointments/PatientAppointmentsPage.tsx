@@ -394,6 +394,11 @@ export function PatientAppointmentsPage() {
                     <td className="px-4 py-3.5">
                       <div className="max-w-[28rem] space-y-1.5 text-sm text-ink-muted 2xl:max-w-[34rem]">
                         <p className="font-semibold text-ink">{appointment.appointmentType}</p>
+                        {appointment.isRescheduleProposal ? (
+                          <p className="text-xs font-semibold text-primary">
+                            Nueva fecha propuesta
+                          </p>
+                        ) : null}
                         <p>{formatDateTimeRange(appointment.startAt, appointment.endAt)}</p>
                         <p className="inline-flex items-center gap-1.5">
                           <MapPin aria-hidden="true" className="h-3.5 w-3.5 text-primary" />
@@ -413,7 +418,9 @@ export function PatientAppointmentsPage() {
                           getStatusBadgeClasses(appointment.status),
                         )}
                       >
-                        {getStatusLabel(appointment.status)}
+                        {appointment.isRescheduleProposal
+                          ? 'Reprogramacion propuesta'
+                          : getStatusLabel(appointment.status)}
                       </span>
                     </td>
                     <td className="px-4 py-3.5 text-right sm:px-5">

@@ -77,6 +77,12 @@ export abstract class StudentPortalRepository {
     payload: UpsertStudentAppointmentDto,
   ): Promise<StudentAgendaAppointmentDto>;
 
+  abstract rescheduleAppointment(
+    studentAccountId: number,
+    appointmentId: number,
+    payload: UpsertStudentAppointmentDto,
+  ): Promise<StudentAgendaAppointmentDto>;
+
   abstract updateAppointmentStatus(
     studentAccountId: number,
     appointmentId: number,
