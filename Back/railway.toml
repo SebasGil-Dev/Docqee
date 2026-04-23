@@ -1,5 +1,5 @@
 [deploy]
-preDeployCommand = "npx prisma migrate deploy"
+preDeployCommand = "npx prisma db execute --schema prisma/schema.prisma --file prisma/migrations/20260422090000_add_reschedule_site_supervisor/migration.sql"
 healthcheckPath = "/health"
 healthcheckTimeout = 120
 restartPolicyType = "on_failure"
