@@ -1647,7 +1647,6 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
 
     this.assertAppointmentDateRange(startAt, endAt);
     this.assertAppointmentStartsInFuture(startAt);
-    this.assertAppointmentHasMinimumNotice(startAt);
 
     const conflict = await this.checkAppointmentConflicts(studentAccountId, startAt, endAt, appointmentId);
     if (conflict) {

@@ -184,6 +184,20 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     }
   }
 
+  private async resetAppointmentReminderSafely(appointmentId: number) {
+    try {
+      await this.prisma.cita.update({
+        where: { id_cita: appointmentId },
+        data: { recordatorio_24h_enviado: false },
+      });
+    } catch (error) {
+      this.logger.error(
+        "No pudimos reiniciar el recordatorio de la cita reprogramada.",
+        error,
+      );
+    }
+  }
+
   private async checkStudentAppointmentConflicts(
     studentAccountId: number,
     startAt: Date,
@@ -1367,7 +1381,6 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
               id_sede: pendingReschedule.nueva_id_sede ?? cita.id_sede,
               fecha_hora_inicio: pendingReschedule.nueva_fecha_hora_inicio,
               fecha_hora_fin: pendingReschedule.nueva_fecha_hora_fin,
-              recordatorio_24h_enviado: false,
               respondida_at: responseDate,
               fecha_actualizacion: responseDate,
             },
@@ -1433,6 +1446,10 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       }
 
       throw error;
+    }
+
+    if (payload.status === "ACEPTADA" && isRescheduleResponse) {
+      await this.resetAppointmentReminderSafely(appointmentId);
     }
 
     const updated = await this.prisma.cita.findUniqueOrThrow({
