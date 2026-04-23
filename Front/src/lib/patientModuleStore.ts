@@ -1261,7 +1261,14 @@ function updateAppointmentStatusMock(
     ...state,
     appointments: state.appointments.map((appointment) =>
       appointment.id === appointmentId
-        ? { ...appointment, status }
+        ? {
+            ...appointment,
+            isRescheduleProposal: false,
+            status:
+              appointment.isRescheduleProposal && status === 'RECHAZADA'
+                ? 'ACEPTADA'
+                : status,
+          }
         : appointment,
     ),
   });

@@ -136,6 +136,19 @@ export function updateStudentPortalAppointment(
   );
 }
 
+export function rescheduleStudentPortalAppointment(
+  appointmentId: string,
+  values: StudentAppointmentFormValues,
+) {
+  return apiRequest<StudentAgendaAppointment>(
+    `/student-portal/appointments/${appointmentId}/reschedule`,
+    {
+      body: values,
+      method: 'POST',
+    },
+  );
+}
+
 export function updateStudentPortalAppointmentStatus(
   appointmentId: string,
   status: StudentAgendaAppointmentStatus,

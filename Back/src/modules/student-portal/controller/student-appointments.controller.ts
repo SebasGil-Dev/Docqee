@@ -44,6 +44,15 @@ export class StudentAppointmentsController {
     return this.studentPortalService.updateAppointment(user, appointmentId, body);
   }
 
+  @Post(':appointmentId/reschedule')
+  rescheduleAppointment(
+    @CurrentUser() user: RequestUser,
+    @Param('appointmentId', ParseIntPipe) appointmentId: number,
+    @Body() body: UpsertStudentAppointmentDto,
+  ) {
+    return this.studentPortalService.rescheduleAppointment(user, appointmentId, body);
+  }
+
   @Patch(':appointmentId/status')
   updateAppointmentStatus(
     @CurrentUser() user: RequestUser,

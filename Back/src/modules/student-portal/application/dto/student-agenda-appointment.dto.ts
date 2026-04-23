@@ -6,6 +6,7 @@ export class StudentAgendaAppointmentDto {
   createdAt!: string;
   endAt!: string;
   id!: string;
+  isRescheduleProposal!: boolean;
   myRating!: number | null;
   patientName!: string;
   requestId!: string;

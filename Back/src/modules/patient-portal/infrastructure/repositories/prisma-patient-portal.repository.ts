@@ -132,6 +132,106 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     super();
   }
 
+  private assertAppointmentStartsInFuture(startAt: Date) {
+    if (startAt <= new Date()) {
+      throw new BadRequestException(
+        "La cita debe iniciar en una fecha y hora futuras.",
+      );
+    }
+  }
+
+  private async checkStudentAppointmentConflicts(
+    studentAccountId: number,
+    startAt: Date,
+    endAt: Date,
+    excludeAppointmentId?: number,
+  ): Promise<string | null> {
+    const conflicting = await this.prisma.cita.findFirst({
+      where: {
+        solicitud: { id_cuenta_estudiante: studentAccountId },
+        estado: { in: ["PROPUESTA", "ACEPTADA"] },
+        ...(excludeAppointmentId !== undefined
+          ? { id_cita: { not: excludeAppointmentId } }
+          : {}),
+        fecha_hora_inicio: { lt: endAt },
+        fecha_hora_fin: { gt: startAt },
+      },
+      include: { tipo_cita: true },
+    });
+
+    if (conflicting) {
+      return `El estudiante ya tiene una cita (${conflicting.tipo_cita.nombre}) programada para ese horario.`;
+    }
+
+    const pendingRescheduleConflict =
+      await this.prisma.reprogramacion_cita.findFirst({
+        where: {
+          estado: "PENDIENTE",
+          ...(excludeAppointmentId !== undefined
+            ? { id_cita: { not: excludeAppointmentId } }
+            : {}),
+          nueva_fecha_hora_inicio: { lt: endAt },
+          nueva_fecha_hora_fin: { gt: startAt },
+          cita: {
+            solicitud: { id_cuenta_estudiante: studentAccountId },
+          },
+        },
+        include: { cita: { include: { tipo_cita: true } } },
+      });
+
+    if (pendingRescheduleConflict) {
+      return `El estudiante ya tiene una reprogramacion pendiente (${pendingRescheduleConflict.cita.tipo_cita.nombre}) para ese horario.`;
+    }
+
+    return null;
+  }
+
+  private async checkPatientAppointmentConflicts(
+    patientAccountId: number,
+    startAt: Date,
+    endAt: Date,
+    excludeAppointmentId?: number,
+  ): Promise<string | null> {
+    const conflicting = await this.prisma.cita.findFirst({
+      where: {
+        solicitud: { id_cuenta_paciente: patientAccountId },
+        estado: { in: ["PROPUESTA", "ACEPTADA"] },
+        ...(excludeAppointmentId !== undefined
+          ? { id_cita: { not: excludeAppointmentId } }
+          : {}),
+        fecha_hora_inicio: { lt: endAt },
+        fecha_hora_fin: { gt: startAt },
+      },
+      include: { tipo_cita: true },
+    });
+
+    if (conflicting) {
+      return `Ya tienes una cita (${conflicting.tipo_cita.nombre}) programada para ese horario.`;
+    }
+
+    const pendingRescheduleConflict =
+      await this.prisma.reprogramacion_cita.findFirst({
+        where: {
+          estado: "PENDIENTE",
+          ...(excludeAppointmentId !== undefined
+            ? { id_cita: { not: excludeAppointmentId } }
+            : {}),
+          nueva_fecha_hora_inicio: { lt: endAt },
+          nueva_fecha_hora_fin: { gt: startAt },
+          cita: {
+            solicitud: { id_cuenta_paciente: patientAccountId },
+          },
+        },
+        include: { cita: { include: { tipo_cita: true } } },
+      });
+
+    if (pendingRescheduleConflict) {
+      return `Ya tienes una reprogramacion pendiente (${pendingRescheduleConflict.cita.tipo_cita.nombre}) para ese horario.`;
+    }
+
+    return null;
+  }
+
   private toRequestDto(request: {
     id_solicitud: number;
     id_cuenta_estudiante: number;
@@ -680,6 +780,11 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
                 tipo_cita: true,
                 sede: { include: { localidad: { include: { ciudad: true } } } },
                 docente_universidad: { include: { docente: true } },
+                reprogramacion_cita: {
+                  where: { estado: "PENDIENTE" },
+                  orderBy: { fecha_creacion: "desc" },
+                  take: 1,
+                },
                 valoracion: {
                   where: { id_cuenta_emisor: patientAccountId },
                   select: { calificacion: true },
@@ -732,22 +837,27 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     );
 
     const appointments: PatientAppointmentDto[] = solicitudes.flatMap((s) =>
-      s.cita.map((c) => ({
-        additionalInfo: c.informacion_adicional ?? null,
-        appointmentType: c.tipo_cita.nombre,
-        city: c.sede.localidad.ciudad.nombre,
-        createdAt: c.fecha_creacion.toISOString(),
-        endAt: c.fecha_hora_fin.toISOString(),
-        id: String(c.id_cita),
-        myRating: c.valoracion[0]?.calificacion ?? null,
-        respondedAt: c.respondida_at?.toISOString() ?? null,
-        siteName: c.sede.nombre,
-        startAt: c.fecha_hora_inicio.toISOString(),
-        status: c.estado,
-        studentName: `${s.cuenta_estudiante.persona.nombres} ${s.cuenta_estudiante.persona.apellidos}`,
-        teacherName: `${c.docente_universidad.docente.nombres} ${c.docente_universidad.docente.apellidos}`,
-        universityName: s.cuenta_estudiante.universidad.nombre,
-      })),
+      s.cita.map((c) => {
+        const pendingReschedule = c.reprogramacion_cita[0] ?? null;
+
+        return {
+          additionalInfo: c.informacion_adicional ?? null,
+          appointmentType: c.tipo_cita.nombre,
+          city: c.sede.localidad.ciudad.nombre,
+          createdAt: c.fecha_creacion.toISOString(),
+          endAt: (pendingReschedule?.nueva_fecha_hora_fin ?? c.fecha_hora_fin).toISOString(),
+          id: String(c.id_cita),
+          isRescheduleProposal: Boolean(pendingReschedule),
+          myRating: c.valoracion[0]?.calificacion ?? null,
+          respondedAt: c.respondida_at?.toISOString() ?? null,
+          siteName: c.sede.nombre,
+          startAt: (pendingReschedule?.nueva_fecha_hora_inicio ?? c.fecha_hora_inicio).toISOString(),
+          status: c.estado,
+          studentName: `${s.cuenta_estudiante.persona.nombres} ${s.cuenta_estudiante.persona.apellidos}`,
+          teacherName: `${c.docente_universidad.docente.nombres} ${c.docente_universidad.docente.apellidos}`,
+          universityName: s.cuenta_estudiante.universidad.nombre,
+        };
+      }),
     );
 
     const conversations: PatientConversationDto[] = solicitudes
@@ -1028,39 +1138,11 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         tipo_cita: true,
         sede: { include: { localidad: { include: { ciudad: true } } } },
         docente_universidad: { include: { docente: true } },
-        solicitud: {
-          include: {
-            cuenta_estudiante: {
-              include: { persona: true, universidad: true },
-            },
-          },
+        reprogramacion_cita: {
+          where: { estado: "PENDIENTE" },
+          orderBy: { fecha_creacion: "desc" },
+          take: 1,
         },
-      },
-    });
-
-    if (!cita) {
-      throw new NotFoundException("La cita no existe o no te pertenece.");
-    }
-
-    const updated = await this.prisma.cita.update({
-      where: { id_cita: appointmentId },
-      data: {
-        estado: payload.status,
-        ...(payload.status === 'CANCELADA'
-          ? {
-              cancelada_por_cuenta: patientAccountId,
-              respondida_at: new Date(),
-              motivo_cancelacion: 'Cancelada por el paciente',
-            }
-          : {}),
-        ...(payload.status === 'ACEPTADA' || payload.status === 'RECHAZADA'
-          ? { respondida_at: new Date() }
-          : {}),
-      },
-      include: {
-        tipo_cita: true,
-        sede: { include: { localidad: { include: { ciudad: true } } } },
-        docente_universidad: { include: { docente: true } },
         solicitud: {
           include: {
             cuenta_estudiante: {
@@ -1073,6 +1155,147 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
           },
         },
       },
+    });
+
+    if (!cita) {
+      throw new NotFoundException("La cita no existe o no te pertenece.");
+    }
+
+    const pendingReschedule = cita.reprogramacion_cita[0] ?? null;
+    const isRescheduleResponse = Boolean(pendingReschedule);
+
+    if (
+      (payload.status === "ACEPTADA" || payload.status === "RECHAZADA") &&
+      cita.estado !== "PROPUESTA"
+    ) {
+      throw new BadRequestException("Solo puedes responder propuestas de cita.");
+    }
+
+    if (payload.status === "CANCELADA" && cita.estado !== "ACEPTADA") {
+      throw new BadRequestException("Solo puedes cancelar citas aceptadas.");
+    }
+
+    const responseDate = new Date();
+    const updateInclude = {
+      tipo_cita: true,
+      sede: { include: { localidad: { include: { ciudad: true } } } },
+      docente_universidad: { include: { docente: true } },
+      reprogramacion_cita: {
+        where: { estado: "PENDIENTE" },
+        orderBy: { fecha_creacion: "desc" },
+        take: 1,
+      },
+      solicitud: {
+        include: {
+          cuenta_estudiante: {
+            include: {
+              persona: true,
+              universidad: true,
+              cuenta_acceso: { select: { correo: true } },
+            },
+          },
+        },
+      },
+    } as const;
+
+    if (payload.status === "ACEPTADA") {
+      const acceptedStartAt =
+        pendingReschedule?.nueva_fecha_hora_inicio ?? cita.fecha_hora_inicio;
+      const acceptedEndAt =
+        pendingReschedule?.nueva_fecha_hora_fin ?? cita.fecha_hora_fin;
+
+      this.assertAppointmentStartsInFuture(acceptedStartAt);
+
+      const studentConflict = await this.checkStudentAppointmentConflicts(
+        cita.solicitud.id_cuenta_estudiante,
+        acceptedStartAt,
+        acceptedEndAt,
+        appointmentId,
+      );
+      if (studentConflict) {
+        throw new BadRequestException(studentConflict);
+      }
+
+      const patientConflict = await this.checkPatientAppointmentConflicts(
+        patientAccountId,
+        acceptedStartAt,
+        acceptedEndAt,
+        appointmentId,
+      );
+      if (patientConflict) {
+        throw new BadRequestException(patientConflict);
+      }
+    }
+
+    if (payload.status === "ACEPTADA" && pendingReschedule) {
+      await this.prisma.$transaction([
+        this.prisma.reprogramacion_cita.update({
+          where: {
+            id_reprogramacion_cita:
+              pendingReschedule.id_reprogramacion_cita,
+          },
+          data: {
+            estado: "ACEPTADA",
+            respuesta_por_cuenta: patientAccountId,
+            fecha_respuesta: responseDate,
+          },
+        }),
+        this.prisma.cita.update({
+          where: { id_cita: appointmentId },
+          data: {
+            estado: "ACEPTADA",
+            fecha_hora_inicio: pendingReschedule.nueva_fecha_hora_inicio,
+            fecha_hora_fin: pendingReschedule.nueva_fecha_hora_fin,
+            respondida_at: responseDate,
+            fecha_actualizacion: responseDate,
+          },
+        }),
+      ]);
+    } else if (payload.status === "RECHAZADA" && pendingReschedule) {
+      await this.prisma.$transaction([
+        this.prisma.reprogramacion_cita.update({
+          where: {
+            id_reprogramacion_cita:
+              pendingReschedule.id_reprogramacion_cita,
+          },
+          data: {
+            estado: "RECHAZADA",
+            respuesta_por_cuenta: patientAccountId,
+            fecha_respuesta: responseDate,
+          },
+        }),
+        this.prisma.cita.update({
+          where: { id_cita: appointmentId },
+          data: {
+            estado: "ACEPTADA",
+            respondida_at: responseDate,
+            fecha_actualizacion: responseDate,
+          },
+        }),
+      ]);
+    } else {
+      await this.prisma.cita.update({
+        where: { id_cita: appointmentId },
+        data: {
+          estado: payload.status,
+          ...(payload.status === "CANCELADA"
+            ? {
+                cancelada_por_cuenta: patientAccountId,
+                respondida_at: responseDate,
+                motivo_cancelacion: "Cancelada por el paciente",
+              }
+            : {}),
+          ...(payload.status === "ACEPTADA" || payload.status === "RECHAZADA"
+            ? { respondida_at: responseDate }
+            : {}),
+          fecha_actualizacion: responseDate,
+        },
+      });
+    }
+
+    const updated = await this.prisma.cita.findUniqueOrThrow({
+      where: { id_cita: appointmentId },
+      include: updateInclude,
     });
 
     if (payload.status === 'CANCELADA') {
@@ -1116,7 +1339,9 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         data: {
           id_cuenta_destino: updated.solicitud.id_cuenta_estudiante,
           tipo: 'RESPUESTA_CITA',
-          contenido: 'El paciente acepto tu propuesta de cita.',
+          contenido: isRescheduleResponse
+            ? 'El paciente acepto la reprogramacion de tu cita.'
+            : 'El paciente acepto tu propuesta de cita.',
         },
       });
 
@@ -1166,7 +1391,9 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         data: {
           id_cuenta_destino: updated.solicitud.id_cuenta_estudiante,
           tipo: 'RESPUESTA_CITA',
-          contenido: 'El paciente rechazo tu propuesta de cita.',
+          contenido: isRescheduleResponse
+            ? 'El paciente no acepto la reprogramacion. La cita conserva la fecha y hora originales.'
+            : 'El paciente rechazo tu propuesta de cita.',
         },
       });
     }
@@ -1178,6 +1405,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       createdAt: updated.fecha_creacion.toISOString(),
       endAt: updated.fecha_hora_fin.toISOString(),
       id: String(updated.id_cita),
+      isRescheduleProposal: false,
       myRating: null,
       respondedAt: updated.respondida_at?.toISOString() ?? null,
       siteName: updated.sede.nombre,
@@ -1243,6 +1471,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       createdAt: cita.fecha_creacion.toISOString(),
       endAt: cita.fecha_hora_fin.toISOString(),
       id: String(cita.id_cita),
+      isRescheduleProposal: false,
       myRating: payload.rating,
       respondedAt: cita.respondida_at?.toISOString() ?? null,
       siteName: cita.sede.nombre,
