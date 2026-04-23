@@ -1482,48 +1482,6 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
           ? 'El paciente acepto la reprogramacion de tu cita.'
           : 'El paciente acepto tu propuesta de cita.',
       });
-
-      // Send confirmation emails to both student and patient
-      const patientAccount = await this.prisma.cuenta_acceso.findUnique({
-        where: { id_cuenta: patientAccountId },
-        select: { correo: true },
-      });
-      const patientPerson = await this.prisma.cuenta_paciente.findUnique({
-        where: { id_cuenta: patientAccountId },
-        include: { persona: true },
-      });
-
-      const studentEmail = updated.solicitud.cuenta_estudiante.cuenta_acceso.correo;
-      const studentName = `${updated.solicitud.cuenta_estudiante.persona.nombres} ${updated.solicitud.cuenta_estudiante.persona.apellidos}`;
-      const appointmentType = updated.tipo_cita.nombre;
-      const siteName = updated.sede.nombre;
-      const city = updated.sede.localidad.ciudad.nombre;
-      const startAt = updated.fecha_hora_inicio.toISOString();
-      const endAt = updated.fecha_hora_fin.toISOString();
-
-      if (patientAccount && patientPerson) {
-        const patientName = `${patientPerson.persona.nombres} ${patientPerson.persona.apellidos}`;
-        void this.mailService.sendAppointmentConfirmedToStudent(
-          studentEmail,
-          studentName,
-          patientName,
-          appointmentType,
-          siteName,
-          city,
-          startAt,
-          endAt,
-        );
-        void this.mailService.sendAppointmentConfirmedToPatient(
-          patientAccount.correo,
-          patientName,
-          studentName,
-          appointmentType,
-          siteName,
-          city,
-          startAt,
-          endAt,
-        );
-      }
     } else if (
       payload.status === 'RECHAZADA' &&
       !isAlreadyRejectedRescheduleResponse
