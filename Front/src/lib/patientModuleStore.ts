@@ -13,7 +13,7 @@ import type {
   PatientRequestStatus,
   PatientStudentDirectoryItem,
 } from '@/content/types';
-import { IS_TEST_MODE } from '@/lib/apiClient';
+import { ApiError, IS_TEST_MODE } from '@/lib/apiClient';
 import { readAuthSession } from '@/lib/authSession';
 import {
   createPatientPortalRequest,
@@ -524,6 +524,24 @@ function createMockState(): PatientStoreState {
       studentName: 'Camila Perez',
       teacherName: 'Dr. Julian Herrera',
       universityName: 'Universidad Metropolitana',
+    },
+    {
+      additionalInfo:
+        'Nueva propuesta para mover la cita a un horario con mas disponibilidad.',
+      appointmentType: 'Control preventivo',
+      city: 'Bogota',
+      createdAt: '2026-04-18T09:30:00.000Z',
+      endAt: '2026-04-28T17:00:00.000Z',
+      id: 'patient-appointment-4',
+      isRescheduleProposal: true,
+      myRating: null,
+      respondedAt: null,
+      siteName: 'Sede Escuela Clinica',
+      startAt: '2026-04-28T16:00:00.000Z',
+      status: 'PROPUESTA',
+      studentName: 'Valentina Rios',
+      teacherName: 'Dr. Sebastian Mora',
+      universityName: 'Universidad Clinica del Norte',
     },
   ];
 
@@ -1073,7 +1091,15 @@ function patchStudentsFromLocalSearchSource(
 }
 
 function getErrorMessage(error: unknown, fallbackMessage: string) {
-  return error instanceof Error ? error.message : fallbackMessage;
+  if (error instanceof ApiError && error.statusCode >= 500) {
+    return fallbackMessage;
+  }
+
+  if (error instanceof Error && error.message !== 'Unexpected server error') {
+    return error.message;
+  }
+
+  return fallbackMessage;
 }
 
 function normalizeProfile(values: PatientProfileFormValues): PatientProfile {
@@ -1884,7 +1910,12 @@ async function updateAppointmentStatus(
     return true;
   } catch (error) {
     patchState({
-      errorMessage: getErrorMessage(error, 'No pudimos actualizar la cita.'),
+      errorMessage: getErrorMessage(
+        error,
+        status === 'ACEPTADA' || status === 'RECHAZADA'
+          ? 'No pudimos responder la reprogramación. Verifica que la propuesta siga vigente y que la fecha no esté vencida.'
+          : 'No pudimos actualizar la cita.',
+      ),
       isLoading: false,
     });
     return false;

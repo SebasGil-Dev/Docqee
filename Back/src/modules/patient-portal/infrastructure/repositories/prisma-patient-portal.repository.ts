@@ -26,6 +26,11 @@ import { UpdatePatientProfileDto } from "../../application/dto/update-patient-pr
 import { UpdatePatientRequestStatusDto } from "../../application/dto/update-patient-request-status.dto";
 import { PatientPortalRepository } from "../../domain/repositories/patient-portal.repository";
 
+const PATIENT_RESCHEDULE_RESPONSE_ERROR_MESSAGE =
+  "No pudimos responder la reprogramacion porque la fecha propuesta esta demasiado proxima o ya no cumple las reglas de agenda. Coordina una nueva fecha con el estudiante.";
+const PATIENT_CANCEL_NOTICE_ERROR_MESSAGE =
+  "No puedes cancelar esta cita porque faltan menos de 48 horas para la hora programada.";
+
 const studentDirectorySelect =
   Prisma.validator<Prisma.cuenta_estudianteSelect>()({
     id_cuenta: true,
@@ -154,6 +159,13 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         "La cita debe iniciar en una fecha y hora actuales o futuras.",
       );
     }
+  }
+
+  private isDatabaseConstraintError(error: unknown) {
+    return (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      (error.code === "P2004" || error.code === "P2010")
+    );
   }
 
   private async checkStudentAppointmentConflicts(
@@ -1298,74 +1310,95 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       }
     }
 
-    if (payload.status === "ACEPTADA" && pendingReschedule) {
-      await this.prisma.$transaction([
-        this.prisma.reprogramacion_cita.update({
-          where: {
-            id_reprogramacion_cita:
-              pendingReschedule.id_reprogramacion_cita,
-          },
-          data: {
-            estado: "ACEPTADA",
-            respuesta_por_cuenta: patientAccountId,
-            fecha_respuesta: responseDate,
-          },
-        }),
-        this.prisma.cita.update({
+    try {
+      if (payload.status === "ACEPTADA" && pendingReschedule) {
+        await this.prisma.$transaction([
+          this.prisma.reprogramacion_cita.update({
+            where: {
+              id_reprogramacion_cita:
+                pendingReschedule.id_reprogramacion_cita,
+            },
+            data: {
+              estado: "ACEPTADA",
+              respuesta_por_cuenta: patientAccountId,
+              fecha_respuesta: responseDate,
+            },
+          }),
+          this.prisma.cita.update({
+            where: { id_cita: appointmentId },
+            data: {
+              estado: "ACEPTADA",
+              id_docente_universidad:
+                pendingReschedule.nuevo_id_docente_universidad ??
+                cita.id_docente_universidad,
+              id_sede: pendingReschedule.nueva_id_sede ?? cita.id_sede,
+              fecha_hora_inicio: pendingReschedule.nueva_fecha_hora_inicio,
+              fecha_hora_fin: pendingReschedule.nueva_fecha_hora_fin,
+              respondida_at: responseDate,
+              fecha_actualizacion: responseDate,
+            },
+          }),
+        ]);
+      } else if (payload.status === "RECHAZADA" && pendingReschedule) {
+        await this.prisma.$transaction([
+          this.prisma.reprogramacion_cita.update({
+            where: {
+              id_reprogramacion_cita:
+                pendingReschedule.id_reprogramacion_cita,
+            },
+            data: {
+              estado: "RECHAZADA",
+              respuesta_por_cuenta: patientAccountId,
+              fecha_respuesta: responseDate,
+            },
+          }),
+          this.prisma.cita.update({
+            where: { id_cita: appointmentId },
+            data: {
+              estado: "ACEPTADA",
+              respondida_at: responseDate,
+              fecha_actualizacion: responseDate,
+            },
+          }),
+        ]);
+      } else {
+        await this.prisma.cita.update({
           where: { id_cita: appointmentId },
           data: {
-            estado: "ACEPTADA",
-            id_docente_universidad:
-              pendingReschedule.nuevo_id_docente_universidad ??
-              cita.id_docente_universidad,
-            id_sede: pendingReschedule.nueva_id_sede ?? cita.id_sede,
-            fecha_hora_inicio: pendingReschedule.nueva_fecha_hora_inicio,
-            fecha_hora_fin: pendingReschedule.nueva_fecha_hora_fin,
-            respondida_at: responseDate,
+            estado: payload.status,
+            ...(payload.status === "CANCELADA"
+              ? {
+                  cancelada_por_cuenta: patientAccountId,
+                  respondida_at: responseDate,
+                  motivo_cancelacion: "Cancelada por el paciente",
+                }
+              : {}),
+            ...(payload.status === "ACEPTADA" || payload.status === "RECHAZADA"
+              ? { respondida_at: responseDate }
+              : {}),
             fecha_actualizacion: responseDate,
           },
-        }),
-      ]);
-    } else if (payload.status === "RECHAZADA" && pendingReschedule) {
-      await this.prisma.$transaction([
-        this.prisma.reprogramacion_cita.update({
-          where: {
-            id_reprogramacion_cita:
-              pendingReschedule.id_reprogramacion_cita,
-          },
-          data: {
-            estado: "RECHAZADA",
-            respuesta_por_cuenta: patientAccountId,
-            fecha_respuesta: responseDate,
-          },
-        }),
-        this.prisma.cita.update({
-          where: { id_cita: appointmentId },
-          data: {
-            estado: "ACEPTADA",
-            respondida_at: responseDate,
-            fecha_actualizacion: responseDate,
-          },
-        }),
-      ]);
-    } else {
-      await this.prisma.cita.update({
-        where: { id_cita: appointmentId },
-        data: {
-          estado: payload.status,
-          ...(payload.status === "CANCELADA"
-            ? {
-                cancelada_por_cuenta: patientAccountId,
-                respondida_at: responseDate,
-                motivo_cancelacion: "Cancelada por el paciente",
-              }
-            : {}),
-          ...(payload.status === "ACEPTADA" || payload.status === "RECHAZADA"
-            ? { respondida_at: responseDate }
-            : {}),
-          fecha_actualizacion: responseDate,
-        },
-      });
+        });
+      }
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      ) {
+        throw new BadRequestException(
+          "La propuesta de reprogramacion ya no esta disponible. Actualiza la pagina e intentalo de nuevo.",
+        );
+      }
+
+      if (this.isDatabaseConstraintError(error)) {
+        throw new BadRequestException(
+          payload.status === "CANCELADA"
+            ? PATIENT_CANCEL_NOTICE_ERROR_MESSAGE
+            : PATIENT_RESCHEDULE_RESPONSE_ERROR_MESSAGE,
+        );
+      }
+
+      throw error;
     }
 
     const updated = await this.prisma.cita.findUniqueOrThrow({

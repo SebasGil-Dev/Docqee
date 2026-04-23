@@ -17,7 +17,7 @@ import { PatientRatingModal } from '@/components/patient/PatientRatingModal';
 import { Seo } from '@/components/ui/Seo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { patientContent } from '@/content/patientContent';
-import type { PatientAppointmentStatus } from '@/content/types';
+import type { PatientAppointment, PatientAppointmentStatus } from '@/content/types';
 import { classNames } from '@/lib/classNames';
 import { usePatientModuleStore } from '@/lib/patientModuleStore';
 
@@ -80,6 +80,30 @@ function formatDateTimeRange(startAt: string, endAt: string) {
   return `${formatter.format(startDate)} - ${timeFormatter.format(endDate)}`;
 }
 
+function getAppointmentUpdateMessage(
+  appointment: PatientAppointment,
+  status: PatientAppointmentStatus,
+) {
+  if (appointment.isRescheduleProposal && status === 'ACEPTADA') {
+    return 'La reprogramacion fue aceptada y la cita quedo actualizada.';
+  }
+
+  if (appointment.isRescheduleProposal && status === 'RECHAZADA') {
+    return 'La reprogramacion fue rechazada y la cita conserva su horario anterior.';
+  }
+
+  switch (status) {
+    case 'ACEPTADA':
+      return 'La cita fue aceptada correctamente.';
+    case 'RECHAZADA':
+      return 'La cita fue rechazada correctamente.';
+    case 'CANCELADA':
+      return 'La cita fue cancelada correctamente.';
+    default:
+      return 'La cita fue actualizada correctamente.';
+  }
+}
+
 type RatingTarget = { appointmentId: string; studentName: string };
 
 export function PatientAppointmentsPage() {
@@ -91,6 +115,7 @@ export function PatientAppointmentsPage() {
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const [ratingTarget, setRatingTarget] = useState<RatingTarget | null>(null);
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const proposalCount = useMemo(
@@ -157,11 +182,17 @@ export function PatientAppointmentsPage() {
   }, [isStatusMenuOpen]);
 
   const handleAppointmentStatusChange = (
-    appointmentId: string,
+    appointment: PatientAppointment,
     status: PatientAppointmentStatus,
   ) => {
     void (async () => {
-      await updateAppointmentStatus(appointmentId, status);
+      setSuccessMessage(null);
+
+      const updated = await updateAppointmentStatus(appointment.id, status);
+
+      if (updated) {
+        setSuccessMessage(getAppointmentUpdateMessage(appointment, status));
+      }
     })();
   };
 
@@ -185,6 +216,19 @@ export function PatientAppointmentsPage() {
         description={patientContent.appointmentsPage.description}
         title={patientContent.appointmentsPage.title}
       />
+      {successMessage ? (
+        <SurfaceCard
+          className="border border-emerald-200 bg-emerald-50/90 text-sm font-medium text-emerald-800"
+          paddingClassName="p-3.5"
+        >
+          <p role="status">
+            <span className="font-semibold">
+              {patientContent.appointmentsPage.successNoticePrefix}
+            </span>{' '}
+            {successMessage}
+          </p>
+        </SurfaceCard>
+      ) : null}
       {errorMessage ? (
         <SurfaceCard
           className="border border-rose-200 bg-rose-50/90 text-sm font-medium text-rose-800"
@@ -430,7 +474,7 @@ export function PatientAppointmentsPage() {
                             className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition duration-200 hover:bg-emerald-100"
                             type="button"
                             onClick={() =>
-                              handleAppointmentStatusChange(appointment.id, 'ACEPTADA')
+                              handleAppointmentStatusChange(appointment, 'ACEPTADA')
                             }
                           >
                             <CheckCircle2 aria-hidden="true" className="h-3.5 w-3.5" />
@@ -440,7 +484,7 @@ export function PatientAppointmentsPage() {
                             className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition duration-200 hover:bg-rose-100"
                             type="button"
                             onClick={() =>
-                              handleAppointmentStatusChange(appointment.id, 'RECHAZADA')
+                              handleAppointmentStatusChange(appointment, 'RECHAZADA')
                             }
                           >
                             <XCircle aria-hidden="true" className="h-3.5 w-3.5" />
@@ -453,7 +497,7 @@ export function PatientAppointmentsPage() {
                             className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
                             type="button"
                             onClick={() =>
-                              handleAppointmentStatusChange(appointment.id, 'CANCELADA')
+                              handleAppointmentStatusChange(appointment, 'CANCELADA')
                             }
                           >
                             <Ban aria-hidden="true" className="h-3.5 w-3.5" />

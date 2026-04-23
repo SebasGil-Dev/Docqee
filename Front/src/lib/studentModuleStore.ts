@@ -21,7 +21,7 @@ import type {
   StudentTreatment,
   StudentTreatmentType,
 } from '@/content/types';
-import { IS_TEST_MODE } from '@/lib/apiClient';
+import { ApiError, IS_TEST_MODE } from '@/lib/apiClient';
 import { readAuthSession } from '@/lib/authSession';
 import {
   createStudentPortalAppointment,
@@ -1224,6 +1224,10 @@ function getSnapshot() {
   return state;
 }
 
+export function getStudentModuleErrorMessage() {
+  return state.errorMessage;
+}
+
 function didPersistableStudentModuleStateChange(
   previousState: StudentStoreState,
   nextState: StudentStoreState,
@@ -1319,7 +1323,15 @@ function buildConversationForRequest(
 }
 
 function getErrorMessage(error: unknown, fallbackMessage: string) {
-  return error instanceof Error ? error.message : fallbackMessage;
+  if (error instanceof ApiError && error.statusCode >= 500) {
+    return fallbackMessage;
+  }
+
+  if (error instanceof Error && error.message !== 'Unexpected server error') {
+    return error.message;
+  }
+
+  return fallbackMessage;
 }
 
 function normalizeProfile(values: StudentProfileFormValues): StudentProfile {
@@ -2313,7 +2325,7 @@ async function rescheduleAppointment(
     patchState({
       errorMessage: getErrorMessage(
         error,
-        'No pudimos enviar la reprogramacion.',
+        'No se puede reprogramar esta cita porque la fecha u hora propuesta no cumple las reglas de agenda. Revisa que no se cruce con otra cita, un bloqueo o una cita demasiado próxima.',
       ),
       isLoading: false,
     });

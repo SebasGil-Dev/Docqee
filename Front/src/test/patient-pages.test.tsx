@@ -199,6 +199,35 @@ describe('Patient pages', () => {
     });
   });
 
+  it('permite rechazar una reprogramacion propuesta', async () => {
+    const user = userEvent.setup();
+
+    renderPatientApp([ROUTES.patientAppointments]);
+
+    expect(
+      within(
+        screen.getByTestId('patient-appointment-row-patient-appointment-4'),
+      ).getByText(/reprogramacion propuesta/i),
+    ).toBeInTheDocument();
+
+    await user.click(
+      within(
+        screen.getByTestId('patient-appointment-row-patient-appointment-4'),
+      ).getByRole('button', { name: /rechazar/i }),
+    );
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      /reprogramacion fue rechazada/i,
+    );
+    await waitFor(() => {
+      expect(
+        within(
+          screen.getByTestId('patient-appointment-row-patient-appointment-4'),
+        ).getByText(/^Aceptada$/i),
+      ).toBeInTheDocument();
+    });
+  });
+
   it('permite marcar todas las notificaciones del paciente como leidas', async () => {
     const user = userEvent.setup();
 

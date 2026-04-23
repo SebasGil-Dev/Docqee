@@ -1,4 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 
 import { PrismaService } from '@/shared/database/prisma.service';
 import { MailService } from '@/shared/mail/mail.service';
@@ -21,6 +22,12 @@ import { StudentScheduleBlockDto } from '../../application/dto/student-schedule-
 import { StudentSupervisorDto } from '../../application/dto/student-supervisor.dto';
 import { StudentTreatmentDto } from '../../application/dto/student-treatment.dto';
 import { StudentPortalRepository } from '../../domain/repositories/student-portal.repository';
+
+const APPOINTMENT_CHANGE_NOTICE_HOURS = 48;
+const APPOINTMENT_CHANGE_NOTICE_MS =
+  APPOINTMENT_CHANGE_NOTICE_HOURS * 60 * 60 * 1000;
+const RESCHEDULE_NOTICE_ERROR_MESSAGE =
+  'No se puede reprogramar esta cita porque esta demasiado proxima o la fecha propuesta no cumple las reglas de agenda. Elige un horario con al menos 48 horas de anticipacion.';
 
 type StudentRequestPatientReviewRecord = {
   calificacion: number;
@@ -1248,6 +1255,21 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     }
   }
 
+  private assertAppointmentHasMinimumNotice(startAt: Date) {
+    const earliestStartAt = new Date(Date.now() + APPOINTMENT_CHANGE_NOTICE_MS);
+
+    if (this.floorDateToMinute(startAt) < this.floorDateToMinute(earliestStartAt)) {
+      throw new BadRequestException(RESCHEDULE_NOTICE_ERROR_MESSAGE);
+    }
+  }
+
+  private isDatabaseConstraintError(error: unknown) {
+    return (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      (error.code === 'P2004' || error.code === 'P2010')
+    );
+  }
+
   private assertAppointmentDateRange(startAt: Date, endAt: Date) {
     if (endAt <= startAt) {
       throw new BadRequestException('La hora final debe ser posterior a la inicial.');
@@ -1654,6 +1676,7 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
 
     this.assertAppointmentDateRange(startAt, endAt);
     this.assertAppointmentStartsInFuture(startAt);
+    this.assertAppointmentHasMinimumNotice(startAt);
 
     const conflict = await this.checkAppointmentConflicts(studentAccountId, startAt, endAt, appointmentId);
     if (conflict) {
@@ -1670,35 +1693,52 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       throw new BadRequestException(patientConflict);
     }
 
-    await this.prisma.$transaction([
-      this.prisma.reprogramacion_cita.create({
-        data: {
-          id_cita: appointmentId,
-          propuesta_por_cuenta: studentAccountId,
-          nueva_id_sede: payload.siteId,
-          nuevo_id_docente_universidad: payload.supervisorId,
-          nueva_fecha_hora_inicio: startAt,
-          nueva_fecha_hora_fin: endAt,
-          motivo: payload.additionalInfo?.trim() || null,
-          estado: 'PENDIENTE',
-        },
-      }),
-      this.prisma.cita.update({
-        where: { id_cita: appointmentId },
-        data: {
-          estado: 'PROPUESTA',
-          respondida_at: null,
-          fecha_actualizacion: new Date(),
-        },
-      }),
-      this.prisma.notificacion.create({
-        data: {
-          id_cuenta_destino: cita.solicitud.id_cuenta_paciente,
-          tipo: 'REPROGRAMACION',
-          contenido: 'El estudiante solicito reprogramar tu cita. Revisa la nueva fecha y hora propuesta.',
-        },
-      }),
-    ]);
+    try {
+      await this.prisma.$transaction([
+        this.prisma.reprogramacion_cita.create({
+          data: {
+            id_cita: appointmentId,
+            propuesta_por_cuenta: studentAccountId,
+            nueva_id_sede: payload.siteId,
+            nuevo_id_docente_universidad: payload.supervisorId,
+            nueva_fecha_hora_inicio: startAt,
+            nueva_fecha_hora_fin: endAt,
+            motivo: payload.additionalInfo?.trim() || null,
+            estado: 'PENDIENTE',
+          },
+        }),
+        this.prisma.cita.update({
+          where: { id_cita: appointmentId },
+          data: {
+            estado: 'PROPUESTA',
+            respondida_at: null,
+            fecha_actualizacion: new Date(),
+          },
+        }),
+        this.prisma.notificacion.create({
+          data: {
+            id_cuenta_destino: cita.solicitud.id_cuenta_paciente,
+            tipo: 'REPROGRAMACION',
+            contenido: 'El estudiante solicito reprogramar tu cita. Revisa la nueva fecha y hora propuesta.',
+          },
+        }),
+      ]);
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new BadRequestException(
+          'Ya existe una reprogramacion pendiente para esta cita.',
+        );
+      }
+
+      if (this.isDatabaseConstraintError(error)) {
+        throw new BadRequestException(RESCHEDULE_NOTICE_ERROR_MESSAGE);
+      }
+
+      throw error;
+    }
 
     const updated = await this.prisma.cita.findUniqueOrThrow({
       where: { id_cita: appointmentId },

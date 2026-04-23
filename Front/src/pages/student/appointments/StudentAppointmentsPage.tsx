@@ -39,7 +39,10 @@ import type {
   StudentAppointmentReview,
 } from '@/content/types';
 import { classNames } from '@/lib/classNames';
-import { useStudentModuleStore } from '@/lib/studentModuleStore';
+import {
+  getStudentModuleErrorMessage,
+  useStudentModuleStore,
+} from '@/lib/studentModuleStore';
 
 type AppointmentStatusFilter = StudentAgendaAppointmentStatus | 'all';
 type AppointmentSortOrder = 'arrival' | 'proximity';
@@ -744,7 +747,12 @@ export function StudentAppointmentsPage() {
             );
 
       if (!appointment) {
-        setAppointmentApiError(errorMessage);
+        setAppointmentApiError(
+          getStudentModuleErrorMessage() ??
+            (appointmentDialogMode === 'reschedule'
+              ? 'No se puede reprogramar esta cita porque la fecha u hora propuesta no cumple las reglas de agenda. Revisa que no se cruce con otra cita, un bloqueo o una cita demasiado próxima.'
+              : 'No pudimos guardar la cita.'),
+        );
         return;
       }
 
@@ -1484,7 +1492,7 @@ export function StudentAppointmentsPage() {
             </div>
             {appointmentApiError ? (
               <div
-                className="rounded-[0.9rem] border border-rose-200 bg-rose-50/90 px-2.5 py-2 text-[0.72rem] font-medium text-rose-800"
+                className="rounded-[0.9rem] border border-amber-200 bg-amber-50/90 px-2.5 py-2 text-[0.72rem] font-medium text-amber-800"
                 role="alert"
               >
                 {appointmentApiError}
