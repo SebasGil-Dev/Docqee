@@ -965,18 +965,24 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
           pendingReschedule?.nuevo_docente_universidad ?? c.docente_universidad;
 
         return {
-          additionalInfo: c.informacion_adicional ?? null,
+          additionalInfo:
+            pendingReschedule?.motivo ?? c.informacion_adicional ?? null,
           appointmentType: c.tipo_cita.nombre,
           city: displaySite.localidad.ciudad.nombre,
-          createdAt: c.fecha_creacion.toISOString(),
+          createdAt: (
+            pendingReschedule?.fecha_creacion ?? c.fecha_creacion
+          ).toISOString(),
           endAt: (pendingReschedule?.nueva_fecha_hora_fin ?? c.fecha_hora_fin).toISOString(),
           id: String(c.id_cita),
           isRescheduleProposal: Boolean(pendingReschedule),
           myRating: c.valoracion[0]?.calificacion ?? null,
-          respondedAt: c.respondida_at?.toISOString() ?? null,
+          respondedAt:
+            pendingReschedule?.fecha_respuesta?.toISOString() ??
+            c.respondida_at?.toISOString() ??
+            null,
           siteName: displaySite.nombre,
           startAt: (pendingReschedule?.nueva_fecha_hora_inicio ?? c.fecha_hora_inicio).toISOString(),
-          status: c.estado,
+          status: pendingReschedule ? "PROPUESTA" : c.estado,
           studentName: `${s.cuenta_estudiante.persona.nombres} ${s.cuenta_estudiante.persona.apellidos}`,
           teacherName: `${displayTeacher.docente.nombres} ${displayTeacher.docente.apellidos}`,
           universityName: s.cuenta_estudiante.universidad.nombre,
@@ -1444,18 +1450,33 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
             },
           });
         });
+      } else if (payload.status === "CANCELADA") {
+        await this.prisma.$transaction(async (tx) => {
+          await tx.reprogramacion_cita.updateMany({
+            where: { id_cita: appointmentId, estado: "PENDIENTE" },
+            data: {
+              estado: "RECHAZADA",
+              respuesta_por_cuenta: patientAccountId,
+              fecha_respuesta: responseDate,
+            },
+          });
+
+          await tx.cita.update({
+            where: { id_cita: appointmentId },
+            data: {
+              estado: payload.status,
+              cancelada_por_cuenta: patientAccountId,
+              respondida_at: responseDate,
+              motivo_cancelacion: "Cancelada por el paciente",
+              fecha_actualizacion: responseDate,
+            },
+          });
+        });
       } else {
         await this.prisma.cita.update({
           where: { id_cita: appointmentId },
           data: {
             estado: payload.status,
-            ...(payload.status === "CANCELADA"
-              ? {
-                  cancelada_por_cuenta: patientAccountId,
-                  respondida_at: responseDate,
-                  motivo_cancelacion: "Cancelada por el paciente",
-                }
-              : {}),
             ...(payload.status === "ACEPTADA" || payload.status === "RECHAZADA"
               ? { respondida_at: responseDate }
               : {}),
