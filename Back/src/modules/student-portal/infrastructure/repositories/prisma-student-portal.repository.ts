@@ -390,22 +390,30 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
           pendingReschedule?.nuevo_docente_universidad ?? c.docente_universidad;
 
         return {
-          additionalInfo: c.informacion_adicional ?? null,
+          additionalInfo:
+            pendingReschedule?.motivo ?? c.informacion_adicional ?? null,
           appointmentTypeId: String(c.id_tipo_cita),
           appointmentType: c.tipo_cita.nombre,
           city: displaySite.localidad.ciudad.nombre,
-          createdAt: c.fecha_creacion.toISOString(),
+          createdAt: (
+            pendingReschedule?.fecha_creacion ?? c.fecha_creacion
+          ).toISOString(),
           endAt: (pendingReschedule?.nueva_fecha_hora_fin ?? c.fecha_hora_fin).toISOString(),
           id: String(c.id_cita),
           isRescheduleProposal: Boolean(pendingReschedule),
           myRating: c.valoracion[0]?.calificacion ?? null,
           patientName: `${s.cuenta_paciente.persona.nombres} ${s.cuenta_paciente.persona.apellidos}`,
           requestId: String(s.id_solicitud),
-          respondedAt: c.respondida_at?.toISOString() ?? null,
+          respondedAt:
+            pendingReschedule?.fecha_respuesta?.toISOString() ??
+            c.respondida_at?.toISOString() ??
+            null,
           siteId: String(pendingReschedule?.nueva_id_sede ?? c.id_sede),
           siteName: displaySite.nombre,
           startAt: (pendingReschedule?.nueva_fecha_hora_inicio ?? c.fecha_hora_inicio).toISOString(),
-          status: c.estado,
+          status: pendingReschedule
+            ? 'REPROGRAMACION_PENDIENTE'
+            : c.estado,
           supervisorId: String(
             pendingReschedule?.nuevo_id_docente_universidad ?? c.id_docente_universidad,
           ),
@@ -1320,6 +1328,9 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       docente_universidad: { docente: { nombres: string; apellidos: string } };
       cita_tratamiento: { id_tipo_tratamiento: number; tipo_tratamiento: { nombre: string } }[];
       reprogramacion_cita?: {
+        fecha_creacion: Date;
+        fecha_respuesta: Date | null;
+        motivo: string | null;
         nueva_id_sede: number | null;
         nuevo_id_docente_universidad: number | null;
         nueva_fecha_hora_inicio: Date;
@@ -1334,24 +1345,33 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     const displaySite = pendingReschedule?.nueva_sede ?? cita.sede;
     const displaySupervisor =
       pendingReschedule?.nuevo_docente_universidad ?? cita.docente_universidad;
+    const displayStatus = pendingReschedule
+      ? 'REPROGRAMACION_PENDIENTE'
+      : cita.estado;
 
     return {
-      additionalInfo: cita.informacion_adicional ?? null,
+      additionalInfo:
+        pendingReschedule?.motivo ?? cita.informacion_adicional ?? null,
       appointmentTypeId: String(cita.id_tipo_cita),
       appointmentType: cita.tipo_cita.nombre,
       city: displaySite.localidad.ciudad.nombre,
-      createdAt: cita.fecha_creacion.toISOString(),
+      createdAt: (
+        pendingReschedule?.fecha_creacion ?? cita.fecha_creacion
+      ).toISOString(),
       endAt: (pendingReschedule?.nueva_fecha_hora_fin ?? cita.fecha_hora_fin).toISOString(),
       id: String(cita.id_cita),
       isRescheduleProposal: Boolean(pendingReschedule),
       myRating: null,
       patientName: `${cita.solicitud.cuenta_paciente.persona.nombres} ${cita.solicitud.cuenta_paciente.persona.apellidos}`,
       requestId: String(cita.solicitud.id_solicitud),
-      respondedAt: cita.respondida_at?.toISOString() ?? null,
+      respondedAt:
+        pendingReschedule?.fecha_respuesta?.toISOString() ??
+        cita.respondida_at?.toISOString() ??
+        null,
       siteId: String(pendingReschedule?.nueva_id_sede ?? cita.id_sede),
       siteName: displaySite.nombre,
       startAt: (pendingReschedule?.nueva_fecha_hora_inicio ?? cita.fecha_hora_inicio).toISOString(),
-      status: cita.estado,
+      status: displayStatus,
       supervisorId: String(
         pendingReschedule?.nuevo_id_docente_universidad ?? cita.id_docente_universidad,
       ),
@@ -1678,23 +1698,33 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
 
     this.assertAppointmentHasMinimumNotice(cita.fecha_hora_inicio);
 
-    const sede = await this.prisma.sede.findFirst({
-      where: { id_sede: payload.siteId, estado: 'ACTIVO' },
-    });
-
-    if (!sede) {
-      throw new NotFoundException('La sede no existe o no esta activa.');
-    }
-
     const student = await this.prisma.cuenta_estudiante.findUnique({
       where: { id_cuenta: studentAccountId },
       select: { id_universidad: true },
     });
 
+    if (!student) {
+      throw new NotFoundException('No se encontro la cuenta del estudiante.');
+    }
+
+    const sede = await this.prisma.sede.findFirst({
+      where: {
+        id_sede: payload.siteId,
+        id_universidad: student.id_universidad,
+        estado: 'ACTIVO',
+      },
+    });
+
+    if (!sede) {
+      throw new NotFoundException(
+        'La sede no existe, no esta activa o no pertenece a tu universidad.',
+      );
+    }
+
     const docente = await this.prisma.docente_universidad.findFirst({
       where: {
         id_docente_universidad: payload.supervisorId,
-        id_universidad: student?.id_universidad,
+        id_universidad: student.id_universidad,
         estado: 'ACTIVO',
       },
     });
@@ -1725,28 +1755,18 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     }
 
     try {
-      await this.prisma.$transaction([
-        this.prisma.reprogramacion_cita.create({
-          data: {
-            id_cita: appointmentId,
-            propuesta_por_cuenta: studentAccountId,
-            nueva_id_sede: payload.siteId,
-            nuevo_id_docente_universidad: payload.supervisorId,
-            nueva_fecha_hora_inicio: startAt,
-            nueva_fecha_hora_fin: endAt,
-            motivo: payload.additionalInfo?.trim() || null,
-            estado: 'PENDIENTE',
-          },
-        }),
-        this.prisma.cita.update({
-          where: { id_cita: appointmentId },
-          data: {
-            estado: 'PROPUESTA',
-            respondida_at: null,
-            fecha_actualizacion: new Date(),
-          },
-        }),
-      ]);
+      await this.prisma.reprogramacion_cita.create({
+        data: {
+          id_cita: appointmentId,
+          propuesta_por_cuenta: studentAccountId,
+          nueva_id_sede: payload.siteId,
+          nuevo_id_docente_universidad: payload.supervisorId,
+          nueva_fecha_hora_inicio: startAt,
+          nueva_fecha_hora_fin: endAt,
+          motivo: payload.additionalInfo?.trim() || null,
+          estado: 'PENDIENTE',
+        },
+      });
 
       await this.createNotificationSafely({
         id_cuenta_destino: cita.solicitud.id_cuenta_paciente,
@@ -1806,36 +1826,42 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
 
     const responseDate = new Date();
 
-    if (status === 'CANCELADA') {
-      await this.prisma.reprogramacion_cita.updateMany({
-        where: { id_cita: appointmentId, estado: 'PENDIENTE' },
-        data: {
-          estado: 'RECHAZADA',
-          respuesta_por_cuenta: studentAccountId,
-          fecha_respuesta: responseDate,
-        },
-      });
-    }
-
     let updated: Prisma.citaGetPayload<{ include: ReturnType<PrismaStudentPortalRepository['getCitaWithRelationsArgs']> }>;
     try {
-      updated = await this.prisma.cita.update({
-        where: { id_cita: appointmentId },
-        data: {
-          estado: status as any,
-          ...(status === 'CANCELADA'
-            ? {
-                cancelada_por_cuenta: studentAccountId,
-                respondida_at: responseDate,
-                motivo_cancelacion: 'Cancelada por el estudiante',
-              }
-            : {}),
-          ...(status === 'FINALIZADA'
-            ? { finalizada_at: responseDate, respondida_at: responseDate }
-            : {}),
-        },
-        include: this.getCitaWithRelationsArgs(),
-      });
+      if (status === 'CANCELADA') {
+        updated = await this.prisma.$transaction(async (tx) => {
+          await tx.reprogramacion_cita.updateMany({
+            where: { id_cita: appointmentId, estado: 'PENDIENTE' },
+            data: {
+              estado: 'RECHAZADA',
+              respuesta_por_cuenta: studentAccountId,
+              fecha_respuesta: responseDate,
+            },
+          });
+
+          return tx.cita.update({
+            where: { id_cita: appointmentId },
+            data: {
+              estado: status as any,
+              cancelada_por_cuenta: studentAccountId,
+              respondida_at: responseDate,
+              motivo_cancelacion: 'Cancelada por el estudiante',
+            },
+            include: this.getCitaWithRelationsArgs(),
+          });
+        });
+      } else {
+        updated = await this.prisma.cita.update({
+          where: { id_cita: appointmentId },
+          data: {
+            estado: status as any,
+            ...(status === 'FINALIZADA'
+              ? { finalizada_at: responseDate, respondida_at: responseDate }
+              : {}),
+          },
+          include: this.getCitaWithRelationsArgs(),
+        });
+      }
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
