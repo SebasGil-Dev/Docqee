@@ -29,7 +29,10 @@ type AdminModuleStoreState = AdminModuleState & {
 
 type AdminModuleActions = {
   deleteCredential: (credentialId: string) => Promise<boolean>;
-  editCredentialEmail: (credentialId: string, email: string) => Promise<boolean>;
+  editCredentialEmail: (
+    credentialId: string,
+    email: string,
+  ) => Promise<boolean>;
   refresh: () => Promise<void>;
   registerUniversity: (
     values: RegisterUniversityFormValues,
@@ -37,7 +40,9 @@ type AdminModuleActions = {
   resendCredential: (credentialId: string) => Promise<string | null>;
   sendAllCredentials: () => Promise<number>;
   sendCredential: (credentialId: string) => Promise<string | null>;
-  toggleUniversityStatus: (universityId: string) => Promise<UniversityStatus | null>;
+  toggleUniversityStatus: (
+    universityId: string,
+  ) => Promise<UniversityStatus | null>;
 };
 
 type UseAdminModuleStoreOptions = {
@@ -69,7 +74,7 @@ function createMockState(): AdminModuleStoreState {
       createdAt: '2026-04-01T10:00:00.000Z',
       credentialId: null,
       id: 'uni-1',
-      mainCity: 'Bogota',
+      mainCity: 'Bogota D.C.',
       mainCityId: 'city-bogota',
       mainLocality: 'Usaquen',
       mainLocalityId: 'locality-bogota-usaquen',
@@ -200,9 +205,11 @@ function isAdminUniversity(value: unknown): value is AdminUniversity {
     typeof candidate.adminEmail === 'string' &&
     typeof candidate.adminFirstName === 'string' &&
     typeof candidate.adminLastName === 'string' &&
-    (candidate.adminPhone === null || typeof candidate.adminPhone === 'string') &&
+    (candidate.adminPhone === null ||
+      typeof candidate.adminPhone === 'string') &&
     typeof candidate.createdAt === 'string' &&
-    (candidate.credentialId === null || typeof candidate.credentialId === 'string') &&
+    (candidate.credentialId === null ||
+      typeof candidate.credentialId === 'string') &&
     typeof candidate.id === 'string' &&
     typeof candidate.mainCity === 'string' &&
     typeof candidate.mainCityId === 'string' &&
@@ -223,9 +230,11 @@ function isPendingCredential(value: unknown): value is PendingCredential {
   return (
     typeof candidate.administratorEmail === 'string' &&
     typeof candidate.administratorName === 'string' &&
-    (candidate.deliveryStatus === 'generated' || candidate.deliveryStatus === 'sent') &&
+    (candidate.deliveryStatus === 'generated' ||
+      candidate.deliveryStatus === 'sent') &&
     typeof candidate.id === 'string' &&
-    (candidate.lastSentAt === null || typeof candidate.lastSentAt === 'string') &&
+    (candidate.lastSentAt === null ||
+      typeof candidate.lastSentAt === 'string') &&
     typeof candidate.sentCount === 'number' &&
     typeof candidate.universityId === 'string' &&
     typeof candidate.universityName === 'string' &&
@@ -279,7 +288,9 @@ function readPersistedAdminModuleCache() {
   }
 
   try {
-    const parsedCache = JSON.parse(rawCache) as Partial<PersistedAdminModuleCache>;
+    const parsedCache = JSON.parse(
+      rawCache,
+    ) as Partial<PersistedAdminModuleCache>;
 
     if (
       typeof parsedCache.updatedAt !== 'number' ||
@@ -389,7 +400,9 @@ function preserveCurrentUniversityStatuses(
   return universities.map((university) => {
     const currentStatus = currentStatusByUniversityId.get(university.id);
 
-    return currentStatus ? { ...university, status: currentStatus } : university;
+    return currentStatus
+      ? { ...university, status: currentStatus }
+      : university;
   });
 }
 
@@ -430,7 +443,8 @@ function getCityById(cityId: string) {
 }
 
 function getLocalityById(cityId: string, localityId: string) {
-  const localities = patientRegisterCatalogDataSource.getLocalitiesByCity(cityId);
+  const localities =
+    patientRegisterCatalogDataSource.getLocalitiesByCity(cityId);
 
   if (!Array.isArray(localities)) {
     return null;
@@ -440,16 +454,17 @@ function getLocalityById(cityId: string, localityId: string) {
 }
 
 function markCredentialAsSentMock(credentialId: string) {
-  const nextCredentials: PendingCredential[] = state.credentials.map((credential) =>
-    credential.id === credentialId
-      ? {
-          ...credential,
-          deliveryStatus: 'sent' as const,
-          lastSentAt: new Date().toISOString(),
-          sentCount: credential.sentCount + 1,
-          universityStatus: 'pending' as const,
-        }
-      : credential,
+  const nextCredentials: PendingCredential[] = state.credentials.map(
+    (credential) =>
+      credential.id === credentialId
+        ? {
+            ...credential,
+            deliveryStatus: 'sent' as const,
+            lastSentAt: new Date().toISOString(),
+            sentCount: credential.sentCount + 1,
+            universityStatus: 'pending' as const,
+          }
+        : credential,
   );
 
   setAdminModuleRecords(state.universities, nextCredentials, {
@@ -462,21 +477,23 @@ function markCredentialAsSentMock(credentialId: string) {
 function markAllGeneratedCredentialsAsSent() {
   let sentCount = 0;
   const nextTimestamp = new Date().toISOString();
-  const nextCredentials: PendingCredential[] = state.credentials.map((credential) => {
-    if (credential.deliveryStatus !== 'generated') {
-      return credential;
-    }
+  const nextCredentials: PendingCredential[] = state.credentials.map(
+    (credential) => {
+      if (credential.deliveryStatus !== 'generated') {
+        return credential;
+      }
 
-    sentCount += 1;
+      sentCount += 1;
 
-    return {
-      ...credential,
-      deliveryStatus: 'sent' as const,
-      lastSentAt: nextTimestamp,
-      sentCount: credential.sentCount + 1,
-      universityStatus: 'pending' as const,
-    };
-  });
+      return {
+        ...credential,
+        deliveryStatus: 'sent' as const,
+        lastSentAt: nextTimestamp,
+        sentCount: credential.sentCount + 1,
+        universityStatus: 'pending' as const,
+      };
+    },
+  );
 
   if (sentCount === 0) {
     return 0;
@@ -498,16 +515,20 @@ function syncCredentialAsSent(
     sentCount?: number;
   },
 ) {
-  const nextCredentials: PendingCredential[] = state.credentials.map((credential) =>
-    credential.id === credentialId
-      ? {
-          ...credential,
-          deliveryStatus: 'sent' as const,
-          lastSentAt: options?.lastSentAt ?? credential.lastSentAt ?? new Date().toISOString(),
-          sentCount: options?.sentCount ?? credential.sentCount + 1,
-          universityStatus: 'pending' as const,
-        }
-      : credential,
+  const nextCredentials: PendingCredential[] = state.credentials.map(
+    (credential) =>
+      credential.id === credentialId
+        ? {
+            ...credential,
+            deliveryStatus: 'sent' as const,
+            lastSentAt:
+              options?.lastSentAt ??
+              credential.lastSentAt ??
+              new Date().toISOString(),
+            sentCount: options?.sentCount ?? credential.sentCount + 1,
+            universityStatus: 'pending' as const,
+          }
+        : credential,
   );
 
   setAdminModuleRecords(state.universities, nextCredentials, {
@@ -567,7 +588,9 @@ function registerUniversityMock(values: RegisterUniversityFormValues) {
 }
 
 function toggleUniversityStatusMock(universityId: string) {
-  const currentUniversity = state.universities.find((university) => university.id === universityId);
+  const currentUniversity = state.universities.find(
+    (university) => university.id === universityId,
+  );
 
   if (!currentUniversity || currentUniversity.status === 'pending') {
     return null;
@@ -579,7 +602,9 @@ function toggleUniversityStatusMock(universityId: string) {
   updateState({
     ...state,
     universities: state.universities.map((university) =>
-      university.id === universityId ? { ...university, status: nextStatus } : university,
+      university.id === universityId
+        ? { ...university, status: nextStatus }
+        : university,
     ),
   });
 
@@ -627,7 +652,9 @@ function editCredentialEmailMock(credentialId: string, email: string) {
 }
 
 function deleteCredentialMock(credentialId: string) {
-  const currentCredential = state.credentials.find((credential) => credential.id === credentialId);
+  const currentCredential = state.credentials.find(
+    (credential) => credential.id === credentialId,
+  );
 
   if (!currentCredential) {
     return;
@@ -635,7 +662,9 @@ function deleteCredentialMock(credentialId: string) {
 
   updateState({
     ...state,
-    credentials: state.credentials.filter((credential) => credential.id !== credentialId),
+    credentials: state.credentials.filter(
+      (credential) => credential.id !== credentialId,
+    ),
     universities: state.universities.filter(
       (university) =>
         !(
@@ -664,12 +693,14 @@ async function loadRuntimeState(forceRefresh = false) {
     errorMessage: null,
     isLoading: true,
   });
-  const requestUniversityStatusMutationVersion = universityStatusMutationVersion;
+  const requestUniversityStatusMutationVersion =
+    universityStatusMutationVersion;
 
   runtimeLoadPromise = getPlatformAdminOverview()
     .then(({ universities, credentials }) => {
       const syncedUniversities =
-        requestUniversityStatusMutationVersion === universityStatusMutationVersion
+        requestUniversityStatusMutationVersion ===
+        universityStatusMutationVersion
           ? universities
           : preserveCurrentUniversityStatuses(universities, state.universities);
 
@@ -683,7 +714,10 @@ async function loadRuntimeState(forceRefresh = false) {
     })
     .catch((error) => {
       patchState({
-        errorMessage: getErrorMessage(error, 'No pudimos cargar el modulo administrativo.'),
+        errorMessage: getErrorMessage(
+          error,
+          'No pudimos cargar el modulo administrativo.',
+        ),
         isLoading: false,
         shouldRefresh: false,
       });
@@ -744,7 +778,10 @@ async function registerUniversity(values: RegisterUniversityFormValues) {
     };
   } catch (error) {
     patchState({
-      errorMessage: getErrorMessage(error, 'No pudimos registrar la universidad.'),
+      errorMessage: getErrorMessage(
+        error,
+        'No pudimos registrar la universidad.',
+      ),
       isLoading: false,
     });
     return null;
@@ -792,7 +829,8 @@ async function toggleUniversityStatus(universityId: string) {
   });
 
   try {
-    const updatedUniversity = await togglePlatformAdminUniversityStatus(universityId);
+    const updatedUniversity =
+      await togglePlatformAdminUniversityStatus(universityId);
 
     if (updatedUniversity.status !== optimisticStatus) {
       const syncedUniversities = state.universities.map((university) =>
@@ -815,7 +853,10 @@ async function toggleUniversityStatus(universityId: string) {
     );
 
     setAdminModuleRecords(revertedUniversities, state.credentials, {
-      errorMessage: getErrorMessage(error, 'No pudimos actualizar el estado de la universidad.'),
+      errorMessage: getErrorMessage(
+        error,
+        'No pudimos actualizar el estado de la universidad.',
+      ),
       isLoading: false,
       isReady: true,
       shouldRefresh: false,
@@ -874,7 +915,10 @@ async function resendCredential(credentialId: string) {
     return result.temporaryPassword;
   } catch (error) {
     patchState({
-      errorMessage: getErrorMessage(error, 'No pudimos reenviar la credencial.'),
+      errorMessage: getErrorMessage(
+        error,
+        'No pudimos reenviar la credencial.',
+      ),
       isLoading: false,
     });
     return null;
@@ -897,7 +941,10 @@ async function sendAllCredentials() {
     return result.sentCount;
   } catch (error) {
     patchState({
-      errorMessage: getErrorMessage(error, 'No pudimos enviar las credenciales pendientes.'),
+      errorMessage: getErrorMessage(
+        error,
+        'No pudimos enviar las credenciales pendientes.',
+      ),
       isLoading: false,
     });
     return 0;
@@ -917,12 +964,17 @@ async function deleteCredential(credentialId: string) {
 
   try {
     await deletePlatformAdminCredential(credentialId);
-    const credential = state.credentials.find((item) => item.id === credentialId);
+    const credential = state.credentials.find(
+      (item) => item.id === credentialId,
+    );
 
     setAdminModuleRecords(
       state.universities.filter(
         (university) =>
-          !(university.id === credential?.universityId && university.status === 'pending'),
+          !(
+            university.id === credential?.universityId &&
+            university.status === 'pending'
+          ),
       ),
       state.credentials.filter((item) => item.id !== credentialId),
       {
@@ -935,7 +987,10 @@ async function deleteCredential(credentialId: string) {
     return true;
   } catch (error) {
     patchState({
-      errorMessage: getErrorMessage(error, 'No pudimos eliminar la credencial.'),
+      errorMessage: getErrorMessage(
+        error,
+        'No pudimos eliminar la credencial.',
+      ),
       isLoading: false,
     });
     return false;
@@ -951,7 +1006,8 @@ async function editCredentialEmail(credentialId: string, email: string) {
 
   if (!credential) {
     patchState({
-      errorMessage: 'No pudimos encontrar la credencial que intentas actualizar.',
+      errorMessage:
+        'No pudimos encontrar la credencial que intentas actualizar.',
     });
     return false;
   }

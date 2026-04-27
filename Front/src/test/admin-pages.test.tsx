@@ -122,6 +122,21 @@ describe('Admin pages', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('normaliza la localidad y muestra controles de paginacion en universidades', () => {
+    renderAdminApp([ROUTES.adminUniversities]);
+
+    expect(
+      screen.getAllByText(/Bogot\u00e1 D\.C\. .* Usaquen/i).length,
+    ).toBeGreaterThan(0);
+    expect(screen.getByText(/P\u00e1gina 1 de 1/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /pagina anterior/i }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: /pagina siguiente/i }),
+    ).toBeDisabled();
+  });
+
   it('filtra credenciales por universidad y por estado', async () => {
     const user = userEvent.setup();
 
@@ -346,7 +361,9 @@ describe('Admin pages', () => {
     await user.click(
       within(credentialRow!).getByRole('button', { name: /^Enviar$/i }),
     );
-    await user.click(screen.getByRole('button', { name: /s[i\u00ed], enviar/i }));
+    await user.click(
+      screen.getByRole('button', { name: /s[i\u00ed], enviar/i }),
+    );
 
     expect(within(credentialRow!).getByText(/^Enviada$/i)).toBeInTheDocument();
     expect(
@@ -418,7 +435,9 @@ describe('Admin pages', () => {
     await user.click(
       within(credentialRow!).getByRole('button', { name: /^Enviar$/i }),
     );
-    await user.click(screen.getByRole('button', { name: /s[i\u00ed], enviar/i }));
+    await user.click(
+      screen.getByRole('button', { name: /s[i\u00ed], enviar/i }),
+    );
 
     expect(within(credentialRow!).getByText(/^Enviada$/i)).toBeInTheDocument();
   });
@@ -515,7 +534,7 @@ describe('Admin pages', () => {
     );
 
     expect(
-      screen.getByRole('button', { name: /cerrar sesi[o\u00f3]n/i }),
+      screen.getByRole('menuitem', { name: /cerrar sesi[o\u00f3]n/i }),
     ).toBeInTheDocument();
 
     await user.click(
@@ -525,7 +544,9 @@ describe('Admin pages', () => {
     );
 
     expect(
-      await screen.findByRole('heading', { name: /Env[i\u00ed]o de credenciales/i }),
+      await screen.findByRole('heading', {
+        name: /Env[i\u00ed]o de credenciales/i,
+      }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /cerrar menu lateral/i }),
