@@ -523,7 +523,7 @@ export function AdminUniversitiesPage() {
                           </td>
                           <td
                             className={classNames(
-                              'hidden px-3 pt-2.75 md:table-cell',
+                              'hidden px-3 pt-3 md:table-cell',
                               isLast ? 'pb-2.5 sm:pb-3' : 'pb-2 sm:pb-2.75',
                             )}
                           >
