@@ -609,9 +609,6 @@ export function StudentTreatmentsPage() {
                             new Date(review.createdAt),
                           )}
                         </p>
-                        <p className="mt-0.5 text-[0.64rem] leading-4 text-ink-muted md:hidden">
-                          {review.appointmentLabel}
-                        </p>
                       </td>
                       <td className="hidden px-3 py-2 align-top text-[0.74rem] leading-5 text-ink-muted md:table-cell">
                         {review.appointmentLabel}
@@ -639,7 +636,7 @@ export function StudentTreatmentsPage() {
                           {review.comment ??
                             'El paciente no dejo un comentario escrito para esta cita.'}
                         </p>
-                        <span className="mt-0.5 inline-flex max-w-full items-center gap-1 rounded-full bg-white/70 px-2 py-0.5 text-[0.6rem] font-semibold text-ink-muted lg:hidden">
+                        <span className="mt-0.5 hidden max-w-full items-center gap-1 rounded-full bg-white/70 px-2 py-0.5 text-[0.6rem] font-semibold text-ink-muted md:inline-flex lg:hidden">
                           <MapPin
                             aria-hidden="true"
                             className="h-3 w-3 shrink-0"
