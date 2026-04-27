@@ -304,7 +304,7 @@ export function StudentAgendaCalendar({
     >
       <div className="space-y-2.5">
         <div className="flex flex-col gap-2 border-b border-slate-200/70 pb-2.5">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="inline-flex rounded-full border border-slate-200/80 bg-white/90 p-0.5 shadow-[0_12px_28px_-24px_rgba(15,23,42,0.28)]">
               {(['day', 'week', 'month'] as const).map((option) => (
                 <button
@@ -322,18 +322,6 @@ export function StudentAgendaCalendar({
                 </button>
               ))}
             </div>
-            {onAddBlock ? (
-              <button
-                className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full bg-brand-gradient px-3.5 text-[0.76rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
-                type="button"
-                onClick={onAddBlock}
-              >
-                <Plus aria-hidden="true" className="h-3.5 w-3.5" />
-                <span>{addBlockLabel ?? 'Agregar bloqueo'}</span>
-              </button>
-            ) : null}
-          </div>
-          <div className="space-y-1.5">
             <div className="flex flex-wrap items-center gap-1.5">
               <button
                 aria-label="Periodo anterior"
@@ -362,24 +350,34 @@ export function StudentAgendaCalendar({
                 {rangeLabel}
               </span>
             </div>
-            <div className="flex flex-wrap items-center gap-1 text-[0.52rem] font-semibold uppercase tracking-[0.1em] text-ink-muted">
-              {[
-                ['Pendiente', 'proposal'],
-                ['Aceptada', 'accepted'],
-                ['Finalizada', 'completed'],
-                ['Cancelada', 'cancelled'],
-                ['Reprogramacion', 'reschedule'],
-                ...(showBlockLegend ? [['Bloqueo', 'block']] : []),
-              ].map(([label, tone]) => (
-                <span
-                  key={label}
-                  className="inline-flex items-center gap-1 rounded-full border border-slate-200/70 bg-white/78 px-1.5 py-0.5"
-                >
-                  <span className={classNames('h-2 w-2 rounded-full', getToneClasses(tone as AgendaTone).dot)} />
-                  <span>{label}</span>
-                </span>
-              ))}
-            </div>
+            {onAddBlock ? (
+              <button
+                className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full bg-brand-gradient px-3.5 text-[0.76rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+                type="button"
+                onClick={onAddBlock}
+              >
+                <Plus aria-hidden="true" className="h-3.5 w-3.5" />
+                <span>{addBlockLabel ?? 'Agregar bloqueo'}</span>
+              </button>
+            ) : null}
+          </div>
+          <div className="flex flex-wrap items-center gap-1 text-[0.52rem] font-semibold uppercase tracking-[0.1em] text-ink-muted">
+            {[
+              ['Pendiente', 'proposal'],
+              ['Aceptada', 'accepted'],
+              ['Finalizada', 'completed'],
+              ['Cancelada', 'cancelled'],
+              ['Reprogramacion', 'reschedule'],
+              ...(showBlockLegend ? [['Bloqueo', 'block']] : []),
+            ].map(([label, tone]) => (
+              <span
+                key={label}
+                className="inline-flex items-center gap-1 rounded-full border border-slate-200/70 bg-white/78 px-1.5 py-0.5"
+              >
+                <span className={classNames('h-2 w-2 rounded-full', getToneClasses(tone as AgendaTone).dot)} />
+                <span>{label}</span>
+              </span>
+            ))}
           </div>
         </div>
         <div

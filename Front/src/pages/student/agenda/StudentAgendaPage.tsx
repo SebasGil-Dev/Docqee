@@ -2,6 +2,7 @@ import {
   CalendarDays,
   Clock3,
   PencilLine,
+  Plus,
   Power,
   PowerOff,
   Repeat,
@@ -361,14 +362,24 @@ export function StudentAgendaPage() {
         noIndex
         title={studentContent.agendaPage.meta.title}
       />
-      <AdminPageHeader
-        className="gap-2"
-        description={studentContent.agendaPage.description}
-        descriptionClassName="text-sm leading-5 sm:text-[0.95rem]"
-        headingAlign="center"
-        title={studentContent.agendaPage.title}
-        titleClassName="text-[1.8rem] sm:text-[2.1rem]"
-      />
+      <div className="relative">
+        <AdminPageHeader
+          className="gap-2"
+          description={studentContent.agendaPage.description}
+          descriptionClassName="text-sm leading-5 sm:text-[0.95rem]"
+          headingAlign="center"
+          title={studentContent.agendaPage.title}
+          titleClassName="text-[1.8rem] sm:text-[2.1rem]"
+        />
+        <button
+          className="mt-2 inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-full bg-brand-gradient px-3.5 text-[0.76rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 sm:absolute sm:right-0 sm:top-1/2 sm:mt-0 sm:w-auto sm:-translate-y-1/2"
+          type="button"
+          onClick={handleOpenCreateDialog}
+        >
+          <Plus aria-hidden="true" className="h-3.5 w-3.5" />
+          <span>{studentContent.agendaPage.actionLabels.add}</span>
+        </button>
+      </div>
       {saveMessage ? (
         <SurfaceCard
           className="border border-emerald-200 bg-emerald-50/90 text-sm font-medium text-emerald-800"
@@ -390,8 +401,6 @@ export function StudentAgendaPage() {
         <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-2.5 py-2 sm:px-2.5 sm:py-2">
           <StudentAgendaCalendar
             appointments={appointments}
-            addBlockLabel={studentContent.agendaPage.actionLabels.add}
-            onAddBlock={handleOpenCreateDialog}
             scheduleBlocks={scheduleBlocks}
             onSelectScheduleBlock={handleSelectBlock}
           />

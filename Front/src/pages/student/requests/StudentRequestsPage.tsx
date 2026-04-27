@@ -962,15 +962,15 @@ export function StudentRequestsPage() {
                         <div className="flex flex-nowrap items-center justify-center gap-0.5 sm:gap-1">
                           <button
                             aria-label={`Ver perfil de ${request.patientName}`}
-                            className="inline-flex shrink-0 items-center gap-[0.08rem] whitespace-nowrap rounded-full bg-slate-100 px-0.5 py-0.5 text-[0.5rem] font-semibold text-slate-700 transition duration-200 hover:bg-slate-200 sm:gap-1 sm:px-2 sm:py-1 sm:text-[0.72rem]"
+                            className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full bg-slate-100 px-1 py-0.5 text-[0.56rem] font-semibold text-slate-700 transition duration-200 hover:bg-slate-200 sm:gap-1 sm:px-2 sm:py-1 sm:text-[0.72rem]"
                             type="button"
                             onClick={() => setSelectedRequestId(request.id)}
                           >
                             <Eye
                               aria-hidden="true"
-                              className="h-2 w-2 sm:h-3 sm:w-3"
+                              className="h-2.5 w-2.5 sm:h-3 sm:w-3"
                             />
-                            <span className="text-[0.45rem] leading-none sm:text-[0.72rem]">
+                            <span className="text-[0.52rem] leading-none sm:text-[0.72rem]">
                               {
                                 studentContent.requestsPage.actionLabels
                                   .viewProfile
@@ -978,7 +978,7 @@ export function StudentRequestsPage() {
                             </span>
                           </button>
                           <button
-                            className="inline-flex shrink-0 items-center gap-[0.08rem] whitespace-nowrap rounded-full bg-emerald-50 px-0.5 py-0.5 text-[0.5rem] font-semibold text-emerald-700 transition duration-200 hover:bg-emerald-100 sm:gap-1 sm:px-2 sm:py-1 sm:text-[0.72rem]"
+                            className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full bg-emerald-50 px-1 py-0.5 text-[0.56rem] font-semibold text-emerald-700 transition duration-200 hover:bg-emerald-100 sm:gap-1 sm:px-2 sm:py-1 sm:text-[0.72rem]"
                             type="button"
                             onClick={() =>
                               handleResponsiveRequestAction(
@@ -990,14 +990,14 @@ export function StudentRequestsPage() {
                           >
                             <Check
                               aria-hidden="true"
-                              className="h-2 w-2 sm:h-3 sm:w-3"
+                              className="h-2.5 w-2.5 sm:h-3 sm:w-3"
                             />
-                            <span className="text-[0.45rem] leading-none sm:text-[0.72rem]">
+                            <span className="text-[0.52rem] leading-none sm:text-[0.72rem]">
                               {studentContent.requestsPage.actionLabels.accept}
                             </span>
                           </button>
                           <button
-                            className="inline-flex shrink-0 items-center gap-[0.08rem] whitespace-nowrap rounded-full bg-rose-50 px-0.5 py-0.5 text-[0.5rem] font-semibold text-rose-700 transition duration-200 hover:bg-rose-100 sm:gap-1 sm:px-2 sm:py-1 sm:text-[0.72rem]"
+                            className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full bg-rose-50 px-1 py-0.5 text-[0.56rem] font-semibold text-rose-700 transition duration-200 hover:bg-rose-100 sm:gap-1 sm:px-2 sm:py-1 sm:text-[0.72rem]"
                             type="button"
                             onClick={() =>
                               handleResponsiveRequestAction(
@@ -1009,9 +1009,9 @@ export function StudentRequestsPage() {
                           >
                             <XCircle
                               aria-hidden="true"
-                              className="h-2 w-2 sm:h-3 sm:w-3"
+                              className="h-2.5 w-2.5 sm:h-3 sm:w-3"
                             />
-                            <span className="text-[0.45rem] leading-none sm:text-[0.72rem]">
+                            <span className="text-[0.52rem] leading-none sm:text-[0.72rem]">
                               {studentContent.requestsPage.actionLabels.reject}
                             </span>
                           </button>

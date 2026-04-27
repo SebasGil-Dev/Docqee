@@ -481,6 +481,21 @@ export function StudentAppointmentsPage() {
   );
   const isAppointmentDialogReadOnly = appointmentDialogMode === 'view';
   const isRescheduleMode = appointmentDialogMode === 'reschedule';
+  const dialogTreatmentOptions = useMemo(() => {
+    if (isAppointmentDialogReadOnly || isRescheduleMode) {
+      return treatments.filter((treatment) =>
+        appointmentValues.treatmentIds.includes(treatment.treatmentTypeId),
+      );
+    }
+
+    return activeTreatments;
+  }, [
+    activeTreatments,
+    appointmentValues.treatmentIds,
+    isAppointmentDialogReadOnly,
+    isRescheduleMode,
+    treatments,
+  ]);
   const canEditCurrentDialogAppointment = useMemo(() => {
     if (!editingAppointmentId) {
       return false;
@@ -1157,7 +1172,7 @@ export function StudentAppointmentsPage() {
                   <th className="hidden w-[27%] py-1.5 pl-0 pr-2 sm:table-cell sm:py-2 sm:pr-3 md:w-[20%]">
                     Programación
                   </th>
-                  <th className="w-[21%] py-1.5 pl-0 pr-2 text-left sm:w-[15%] sm:py-2 sm:pr-3 md:w-[12%]">
+                  <th className="w-[21%] py-1.5 pl-0 pr-2 text-center sm:w-[15%] sm:py-2 sm:pr-3 md:w-[12%]">
                     Estado
                   </th>
                   <th className="w-[17%] py-1.5 pl-0 pr-2 text-center sm:w-[13%] sm:py-2 sm:pr-3 md:w-[12%]">
@@ -1282,7 +1297,7 @@ export function StudentAppointmentsPage() {
                           </p>
                         </div>
                       </td>
-                      <td className="py-2 pl-0 pr-2 text-center sm:py-2 sm:pr-3 sm:text-left">
+                      <td className="py-2 pl-0 pr-2 text-center sm:py-2 sm:pr-3">
                         <span
                           className={classNames(
                             'inline-flex rounded-full px-1.5 py-0.5 text-[0.6rem] font-semibold leading-4 ring-1 ring-inset sm:px-2.5 sm:py-0.5 sm:text-[0.68rem]',
@@ -1542,7 +1557,14 @@ export function StudentAppointmentsPage() {
                 handleAppointmentFieldChange('appointmentTypeId', value)
               }
             />
-            <div className="grid gap-2 sm:grid-cols-3">
+            <div
+              className={classNames(
+                'grid gap-2',
+                isAppointmentDialogReadOnly
+                  ? 'grid-cols-3'
+                  : 'sm:grid-cols-3',
+              )}
+            >
               <AdminTextField
                 containerClassName="student-appointment-dialog-field"
                 disabled={isAppointmentDialogReadOnly}
@@ -1613,7 +1635,9 @@ export function StudentAppointmentsPage() {
                     Tratamientos asociados
                   </h3>
                   <p className="text-[0.66rem] text-ink-muted">
-                    Selecciona uno o varios tratamientos activos para la cita.
+                    {isAppointmentDialogReadOnly || isRescheduleMode
+                      ? 'Tratamientos seleccionados para esta cita.'
+                      : 'Selecciona uno o varios tratamientos activos para la cita.'}
                   </p>
                 </div>
                 {appointmentErrors.treatmentIds ? (
@@ -1623,7 +1647,12 @@ export function StudentAppointmentsPage() {
                 ) : null}
               </div>
               <div className="admin-scrollbar grid max-h-[9.5rem] gap-1.5 overflow-y-auto pr-1 sm:grid-cols-2 md:grid-cols-3">
-                {activeTreatments.map((treatment) => {
+                {dialogTreatmentOptions.length === 0 ? (
+                  <p className="rounded-[0.85rem] border border-dashed border-slate-200 bg-white px-2.5 py-2 text-[0.72rem] font-medium text-ink-muted sm:col-span-2 md:col-span-3">
+                    No hay tratamientos asociados a esta cita.
+                  </p>
+                ) : null}
+                {dialogTreatmentOptions.map((treatment) => {
                   const isSelected = appointmentValues.treatmentIds.includes(
                     treatment.treatmentTypeId,
                   );
