@@ -233,6 +233,21 @@ describe('Admin pages', () => {
     ).toBeInTheDocument();
   });
 
+  it('solo permite numeros en el celular del administrador al registrar universidad', async () => {
+    const user = userEvent.setup();
+
+    renderAdminApp([ROUTES.adminRegisterUniversity]);
+
+    const phoneInput = screen.getByLabelText(/celular \(opcional\)/i);
+
+    expect(phoneInput).toHaveAttribute('inputmode', 'numeric');
+    expect(phoneInput).toHaveAttribute('pattern', '[0-9]*');
+
+    await user.type(phoneInput, 'abc300-777 8899x');
+
+    expect(phoneInput).toHaveValue('3007778899');
+  });
+
   it('solo permite escoger una localidad despues de seleccionar ciudad', async () => {
     const user = userEvent.setup();
 
