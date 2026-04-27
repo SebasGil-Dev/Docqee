@@ -121,6 +121,21 @@ function getStatusLabel(status: StudentRequestStatus) {
   }
 }
 
+function getRequestStatusPriority(status: StudentRequestStatus) {
+  switch (status) {
+    case 'PENDIENTE':
+      return 0;
+    case 'ACEPTADA':
+      return 2;
+    default:
+      return 1;
+  }
+}
+
+function getRequestResponseTime(request: StudentRequest) {
+  return new Date(request.responseAt ?? request.sentAt).getTime();
+}
+
 function getPatientInitials(name: string) {
   const initials = name
     .trim()
@@ -427,16 +442,40 @@ export function StudentRequestsPage() {
   );
   const filteredRequests = useMemo(
     () =>
-      visibleRequests.filter((request) => {
-        const matchesSearch = request.patientName
-          .toLowerCase()
-          .includes(normalizedSearch);
+      visibleRequests
+        .map((request, index) => ({ index, request }))
+        .filter(({ request }) => {
+          const matchesSearch = request.patientName
+            .toLowerCase()
+            .includes(normalizedSearch);
 
-        return (
-          matchesSearch &&
-          (statusFilter === 'all' || request.status === statusFilter)
-        );
-      }),
+          return (
+            matchesSearch &&
+            (statusFilter === 'all' || request.status === statusFilter)
+          );
+        })
+        .sort((left, right) => {
+          const priorityDifference =
+            getRequestStatusPriority(left.request.status) -
+            getRequestStatusPriority(right.request.status);
+
+          if (priorityDifference !== 0) {
+            return priorityDifference;
+          }
+
+          if (
+            left.request.status === 'ACEPTADA' &&
+            right.request.status === 'ACEPTADA'
+          ) {
+            return (
+              getRequestResponseTime(left.request) -
+              getRequestResponseTime(right.request)
+            );
+          }
+
+          return left.index - right.index;
+        })
+        .map(({ request }) => request),
     [normalizedSearch, statusFilter, visibleRequests],
   );
   const totalPages = Math.max(
@@ -918,7 +957,7 @@ export function StudentRequestsPage() {
                         <div className="flex flex-nowrap items-center justify-center gap-0.5 sm:gap-1.5">
                           <button
                             aria-label={`Ver perfil de ${request.patientName}`}
-                            className="inline-flex shrink-0 items-center gap-[0.1rem] whitespace-nowrap rounded-full bg-slate-100 px-0.5 py-1 text-[0.52rem] font-semibold text-slate-700 transition duration-200 hover:bg-slate-200 sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs"
+                            className="inline-flex shrink-0 items-center gap-[0.08rem] whitespace-nowrap rounded-full bg-slate-100 px-0.5 py-0.5 text-[0.5rem] font-semibold text-slate-700 transition duration-200 hover:bg-slate-200 sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs"
                             type="button"
                             onClick={() => setSelectedRequestId(request.id)}
                           >
@@ -934,7 +973,7 @@ export function StudentRequestsPage() {
                             </span>
                           </button>
                           <button
-                            className="inline-flex shrink-0 items-center gap-[0.1rem] whitespace-nowrap rounded-full bg-emerald-50 px-0.5 py-1 text-[0.52rem] font-semibold text-emerald-700 transition duration-200 hover:bg-emerald-100 sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs"
+                            className="inline-flex shrink-0 items-center gap-[0.08rem] whitespace-nowrap rounded-full bg-emerald-50 px-0.5 py-0.5 text-[0.5rem] font-semibold text-emerald-700 transition duration-200 hover:bg-emerald-100 sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs"
                             type="button"
                             onClick={() =>
                               handleResponsiveRequestAction(
@@ -953,7 +992,7 @@ export function StudentRequestsPage() {
                             </span>
                           </button>
                           <button
-                            className="inline-flex shrink-0 items-center gap-[0.1rem] whitespace-nowrap rounded-full bg-rose-50 px-0.5 py-1 text-[0.52rem] font-semibold text-rose-700 transition duration-200 hover:bg-rose-100 sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs"
+                            className="inline-flex shrink-0 items-center gap-[0.08rem] whitespace-nowrap rounded-full bg-rose-50 px-0.5 py-0.5 text-[0.5rem] font-semibold text-rose-700 transition duration-200 hover:bg-rose-100 sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs"
                             type="button"
                             onClick={() =>
                               handleResponsiveRequestAction(
@@ -973,16 +1012,16 @@ export function StudentRequestsPage() {
                           </button>
                         </div>
                       ) : request.status === 'ACEPTADA' ? (
-                        <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-1.5 xl:flex-nowrap">
+                        <div className="flex flex-wrap items-center justify-center gap-0.5 sm:gap-1.5 xl:flex-nowrap">
                           <button
                             aria-label={`Ver perfil de ${request.patientName}`}
-                            className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-slate-100 px-1.5 py-1 text-[0.66rem] font-semibold text-slate-700 transition duration-200 hover:bg-slate-200 sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs"
+                            className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full bg-slate-100 px-1 py-0.5 text-[0.56rem] font-semibold text-slate-700 transition duration-200 hover:bg-slate-200 sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs"
                             type="button"
                             onClick={() => setSelectedRequestId(request.id)}
                           >
                             <Eye
                               aria-hidden="true"
-                              className="h-3 w-3 sm:h-3.5 sm:w-3.5"
+                              className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5"
                             />
                             <span>
                               {
@@ -992,13 +1031,13 @@ export function StudentRequestsPage() {
                             </span>
                           </button>
                           <button
-                            className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-slate-100 px-1.5 py-1 text-[0.66rem] font-semibold text-slate-700 transition duration-200 hover:bg-slate-200 sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs"
+                            className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full bg-slate-100 px-1 py-0.5 text-[0.56rem] font-semibold text-slate-700 transition duration-200 hover:bg-slate-200 sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs"
                             type="button"
                             onClick={() => setRequestToClose(request)}
                           >
                             <ShieldX
                               aria-hidden="true"
-                              className="h-3 w-3 sm:h-3.5 sm:w-3.5"
+                              className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5"
                             />
                             <span>
                               {studentContent.requestsPage.actionLabels.close}
@@ -1006,16 +1045,16 @@ export function StudentRequestsPage() {
                           </button>
                         </div>
                       ) : (
-                        <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-1.5 xl:flex-nowrap">
+                        <div className="flex flex-wrap items-center justify-center gap-0.5 sm:gap-1.5 xl:flex-nowrap">
                           <button
                             aria-label={`Ver perfil de ${request.patientName}`}
-                            className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-slate-100 px-1.5 py-1 text-[0.66rem] font-semibold text-slate-700 transition duration-200 hover:bg-slate-200 sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs"
+                            className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full bg-slate-100 px-1 py-0.5 text-[0.56rem] font-semibold text-slate-700 transition duration-200 hover:bg-slate-200 sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs"
                             type="button"
                             onClick={() => setSelectedRequestId(request.id)}
                           >
                             <Eye
                               aria-hidden="true"
-                              className="h-3 w-3 sm:h-3.5 sm:w-3.5"
+                              className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5"
                             />
                             <span>
                               {
@@ -1024,7 +1063,7 @@ export function StudentRequestsPage() {
                               }
                             </span>
                           </button>
-                          <span className="text-[0.66rem] font-medium text-ink-muted sm:text-xs">
+                          <span className="text-[0.56rem] font-medium text-ink-muted sm:text-xs">
                             Sin acciones
                           </span>
                         </div>

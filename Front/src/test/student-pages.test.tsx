@@ -575,6 +575,12 @@ describe('Student pages', () => {
     expect(
       screen.queryByRole('columnheader', { name: /^Seguimiento$/i }),
     ).not.toBeInTheDocument();
+    const initialRequestRows = screen
+      .getAllByRole('row')
+      .slice(1)
+      .map((row) => row.textContent ?? '');
+    expect(initialRequestRows[0]).toMatch(/ana maria perez/i);
+    expect(initialRequestRows.at(-1)).toMatch(/julian torres/i);
     expect(
       within(
         screen.getByTestId('student-request-row-student-request-1'),
@@ -637,6 +643,11 @@ describe('Student pages', () => {
         name: /conversaci[o\u00f3]n/i,
       }),
     ).not.toBeInTheDocument();
+    const acceptedRequestRows = screen
+      .getAllByRole('row')
+      .slice(1)
+      .map((row) => row.textContent ?? '');
+    expect(acceptedRequestRows.at(-1)).toMatch(/ana maria perez/i);
   });
 
   it('pide confirmacion en movil antes de aceptar una solicitud', async () => {
