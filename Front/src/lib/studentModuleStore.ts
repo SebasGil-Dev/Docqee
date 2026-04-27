@@ -22,7 +22,7 @@ import type {
   StudentTreatmentType,
 } from '@/content/types';
 import { ApiError, IS_TEST_MODE } from '@/lib/apiClient';
-import { readAuthSession } from '@/lib/authSession';
+import { AUTH_SESSION_SYNC_EVENT, readAuthSession } from '@/lib/authSession';
 import {
   createStudentPortalAppointment,
   createStudentPortalScheduleBlock,
@@ -692,6 +692,12 @@ function readSessionStorage() {
   }
 }
 
+function getCurrentStudentSessionUserId() {
+  const session = readAuthSession();
+
+  return session?.user.role === 'STUDENT' ? session.user.id : null;
+}
+
 function isStudentLinkType(value: unknown) {
   return (
     value === 'RED_PROFESIONAL' ||
@@ -1189,6 +1195,9 @@ let treatmentTypesCache: {
   expiresAt: number;
 } | null = null;
 let treatmentTypesLoadPromise: Promise<StudentTreatmentType[]> | null = null;
+let runtimeStateOwnerUserId: number | null = !IS_TEST_MODE
+  ? getCurrentStudentSessionUserId()
+  : null;
 
 function syncStudentRuntimeSequences(moduleState: StudentModuleState) {
   nextLinkSequence = moduleState.profile.links.length + 1;
@@ -1202,8 +1211,44 @@ function syncStudentRuntimeSequences(moduleState: StudentModuleState) {
     ) + 1;
 }
 
+function resetRuntimeStateForSession(nextUserId: number | null) {
+  if (!IS_TEST_MODE) {
+    clearPersistedStudentModuleCache();
+  }
+
+  state = createEmptyRuntimeState();
+  runtimeStateOwnerUserId = nextUserId;
+  syncStudentRuntimeSequences(createEmptyRuntimeModuleState());
+  runtimeLoadPromise = null;
+  conversationRefreshPromises.clear();
+  universitySitesCache = null;
+  universitySitesLoadPromise = null;
+  treatmentTypesCache = null;
+  treatmentTypesLoadPromise = null;
+  emitChange();
+}
+
+function ensureRuntimeStateMatchesCurrentStudentSession() {
+  const currentUserId = getCurrentStudentSessionUserId();
+
+  if (runtimeStateOwnerUserId !== currentUserId) {
+    resetRuntimeStateForSession(currentUserId);
+  }
+
+  return currentUserId;
+}
+
 if (!IS_TEST_MODE && state.isReady) {
   syncStudentRuntimeSequences(state);
+}
+
+if (!IS_TEST_MODE && typeof window !== 'undefined') {
+  const handleAuthSessionChange = () => {
+    ensureRuntimeStateMatchesCurrentStudentSession();
+  };
+
+  window.addEventListener(AUTH_SESSION_SYNC_EVENT, handleAuthSessionChange);
+  window.addEventListener('storage', handleAuthSessionChange);
 }
 
 function emitChange() {
@@ -2091,6 +2136,12 @@ async function loadRuntimeState(forceRefresh = false) {
     return state;
   }
 
+  const requestUserId = ensureRuntimeStateMatchesCurrentStudentSession();
+
+  if (!requestUserId) {
+    return state;
+  }
+
   if (state.isReady && !state.shouldRefresh && !forceRefresh) {
     return state;
   }
@@ -2106,8 +2157,13 @@ async function loadRuntimeState(forceRefresh = false) {
 
   runtimeLoadPromise = getStudentPortalDashboard()
     .then((payload) => {
+      if (getCurrentStudentSessionUserId() !== requestUserId) {
+        return state;
+      }
+
       const nextDashboard = normalizeStudentModuleData(payload);
       syncStudentRuntimeSequences(nextDashboard);
+      runtimeStateOwnerUserId = requestUserId;
 
       updateState({
         ...nextDashboard,
@@ -2120,6 +2176,10 @@ async function loadRuntimeState(forceRefresh = false) {
       return state;
     })
     .catch((error) => {
+      if (getCurrentStudentSessionUserId() !== requestUserId) {
+        return state;
+      }
+
       patchState({
         errorMessage: getErrorMessage(
           error,
@@ -2824,6 +2884,9 @@ export function resetStudentModuleState() {
   }
 
   state = IS_TEST_MODE ? createMockState() : createEmptyRuntimeState();
+  runtimeStateOwnerUserId = IS_TEST_MODE
+    ? null
+    : getCurrentStudentSessionUserId();
   syncStudentRuntimeSequences(
     IS_TEST_MODE ? initialMockState : createEmptyRuntimeModuleState(),
   );
