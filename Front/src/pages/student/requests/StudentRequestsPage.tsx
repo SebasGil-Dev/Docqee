@@ -25,6 +25,13 @@ import { useStudentModuleStore } from '@/lib/studentModuleStore';
 
 type RequestStatusFilter = StudentRequestStatus | 'all';
 
+type PendingRequestConfirmation = {
+  message: string;
+  nextStatus: StudentRequestStatus;
+  onSuccess?: () => void;
+  request: StudentRequest;
+};
+
 type StudentRequestProfileDialogProps = {
   onAccept: () => void;
   onClose: () => void;
@@ -34,10 +41,10 @@ type StudentRequestProfileDialogProps = {
 
 const preloadedPatientAvatarUrls = new Set<string>();
 
-const requestStatusOptions: Array<{
+const requestStatusOptions: {
   label: string;
   value: RequestStatusFilter;
-}> = [
+}[] = [
   { label: 'Todas', value: 'all' },
   { label: 'Pendiente', value: 'PENDIENTE' },
   { label: 'Aceptada', value: 'ACEPTADA' },
@@ -332,7 +339,7 @@ function StudentRequestProfileDialog({
                     </div>
                   ) : (
                     <div className="rounded-[1.2rem] border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-ink-muted">
-                      Este paciente aun no tiene comentarios escritos por otros
+                      Este paciente aún no tiene comentarios escritos por otros
                       estudiantes.
                     </div>
                   )}
@@ -395,6 +402,15 @@ export function StudentRequestsPage() {
   const [requestToClose, setRequestToClose] = useState<StudentRequest | null>(
     null,
   );
+  const [pendingRequestConfirmation, setPendingRequestConfirmation] =
+    useState<PendingRequestConfirmation | null>(null);
+  const [isMobileViewport, setIsMobileViewport] = useState(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) {
+      return false;
+    }
+
+    return window.matchMedia('(max-width: 639px)').matches;
+  });
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const tableViewportRef = useRef<HTMLDivElement | null>(null);
   const tableBodyRef = useRef<HTMLTableSectionElement | null>(null);
@@ -444,6 +460,36 @@ export function StudentRequestsPage() {
       null,
     [visibleRequests, selectedRequestId],
   );
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) {
+      return undefined;
+    }
+
+    const mobileViewportMedia = window.matchMedia('(max-width: 639px)');
+
+    function updateMobileViewport() {
+      setIsMobileViewport(mobileViewportMedia.matches);
+    }
+
+    updateMobileViewport();
+    if (mobileViewportMedia.addEventListener) {
+      mobileViewportMedia.addEventListener('change', updateMobileViewport);
+
+      return () => {
+        mobileViewportMedia.removeEventListener(
+          'change',
+          updateMobileViewport,
+        );
+      };
+    }
+
+    mobileViewportMedia.addListener(updateMobileViewport);
+
+    return () => {
+      mobileViewportMedia.removeListener(updateMobileViewport);
+    };
+  }, []);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -598,6 +644,46 @@ export function StudentRequestsPage() {
       onSuccess?.();
     })();
   };
+
+  const handleResponsiveRequestAction = (
+    request: StudentRequest,
+    nextStatus: StudentRequestStatus,
+    message: string,
+    onSuccess?: () => void,
+  ) => {
+    if (
+      isMobileViewport &&
+      (nextStatus === 'ACEPTADA' || nextStatus === 'RECHAZADA')
+    ) {
+      setPendingRequestConfirmation({
+        message,
+        nextStatus,
+        request,
+        ...(onSuccess ? { onSuccess } : {}),
+      });
+      return;
+    }
+
+    handleRequestAction(request.id, nextStatus, message, onSuccess);
+  };
+
+  const pendingRequestConfirmationCopy = pendingRequestConfirmation
+    ? pendingRequestConfirmation.nextStatus === 'ACEPTADA'
+      ? {
+          confirmLabel: 'Sí, aceptar',
+          description: `¿Estás seguro de que deseas aceptar la solicitud de ${pendingRequestConfirmation.request.patientName}? Al confirmar, la conversación quedará habilitada.`,
+          icon: Check,
+          title: 'Aceptar solicitud',
+          tone: 'primary' as const,
+        }
+      : {
+          confirmLabel: 'Sí, rechazar',
+          description: `¿Estás seguro de que deseas rechazar la solicitud de ${pendingRequestConfirmation.request.patientName}? Esta acción no habilitará la conversación.`,
+          icon: XCircle,
+          title: 'Rechazar solicitud',
+          tone: 'danger' as const,
+        }
+    : null;
 
   return (
     <div className="student-page-compact flex h-full w-full min-h-0 flex-col gap-3 overflow-hidden">
@@ -771,17 +857,17 @@ export function StudentRequestsPage() {
           >
             <table className="w-full table-fixed">
               <thead className="sticky top-0 z-10 bg-slate-100 text-left">
-                <tr className="text-[0.58rem] font-bold uppercase leading-3 tracking-[0.14em] text-ink-muted sm:text-[0.68rem] sm:leading-none sm:tracking-[0.18em]">
-                  <th className="w-[38%] px-2 py-1.5 sm:px-4 sm:py-2.5 md:w-[27%]">
+                <tr className="text-[0.52rem] font-bold uppercase leading-[0.7rem] tracking-[0.1em] text-ink-muted sm:text-[0.68rem] sm:leading-none sm:tracking-[0.18em]">
+                  <th className="w-[36%] px-1.5 py-1 sm:px-4 sm:py-2.5 md:w-[27%]">
                     Paciente
                   </th>
                   <th className="hidden px-2 py-1.5 sm:px-4 sm:py-2.5 md:table-cell md:w-[28%]">
                     Motivo
                   </th>
-                  <th className="w-[22%] px-2 py-1.5 text-left sm:px-4 sm:py-2.5 md:w-[15%]">
+                  <th className="w-[19%] px-1 py-1 text-left sm:px-4 sm:py-2.5 md:w-[15%]">
                     Estado
                   </th>
-                  <th className="w-[40%] px-2 py-1.5 text-center sm:px-4 sm:py-2.5 md:w-[30%]">
+                  <th className="w-[45%] px-1 py-1 text-center sm:px-4 sm:py-2.5 md:w-[30%]">
                     Acciones
                   </th>
                 </tr>
@@ -796,15 +882,15 @@ export function StudentRequestsPage() {
                     className="align-top"
                     data-testid={`student-request-row-${request.id}`}
                   >
-                    <td className="px-2 py-2 sm:px-4 sm:py-3">
+                    <td className="px-1.5 py-1.5 sm:px-4 sm:py-3">
                       <div className="min-w-0 space-y-0.5 sm:space-y-1">
-                        <p className="break-words text-[0.78rem] font-semibold leading-4 text-ink sm:text-sm sm:leading-5">
+                        <p className="break-words text-[0.72rem] font-semibold leading-[0.95rem] text-ink sm:text-sm sm:leading-5">
                           {request.patientName}
                         </p>
-                        <p className="break-words text-[0.68rem] leading-4 text-ink-muted sm:text-xs sm:leading-5">
+                        <p className="break-words text-[0.62rem] leading-[0.85rem] text-ink-muted sm:text-xs sm:leading-5">
                           {getPatientLocationLabel(request)}
                         </p>
-                        <p className="text-[0.68rem] leading-4 text-ink-muted sm:text-xs">
+                        <p className="text-[0.62rem] leading-[0.85rem] text-ink-muted sm:text-xs">
                           Envió:{' '}
                           <span className="font-medium text-ink">
                             {formatRequestDate(request.sentAt)}
@@ -817,28 +903,28 @@ export function StudentRequestsPage() {
                         {request.reason ?? 'Sin motivo registrado.'}
                       </p>
                     </td>
-                    <td className="px-2 py-2 sm:px-4 sm:py-3">
+                    <td className="px-1 py-1.5 sm:px-4 sm:py-3">
                       <span
                         className={classNames(
-                          'inline-flex max-w-full rounded-full px-1.5 py-0.5 text-[0.62rem] font-semibold leading-4 ring-1 ring-inset sm:px-2.5 sm:py-1 sm:text-xs',
+                          'inline-flex max-w-full rounded-full px-1 py-0.5 text-[0.56rem] font-semibold leading-3 ring-1 ring-inset sm:px-2.5 sm:py-1 sm:text-xs sm:leading-4',
                           getStatusBadgeClasses(request.status),
                         )}
                       >
                         {getStatusLabel(request.status)}
                       </span>
                     </td>
-                    <td className="px-1.5 py-2 text-center sm:px-4 sm:py-3">
+                    <td className="px-0.5 py-1.5 text-center sm:px-4 sm:py-3">
                       {request.status === 'PENDIENTE' ? (
                         <div className="flex flex-nowrap items-center justify-center gap-0.5 sm:gap-1.5">
                           <button
                             aria-label={`Ver perfil de ${request.patientName}`}
-                            className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full bg-slate-100 px-1 py-1 text-[0.6rem] font-semibold text-slate-700 transition duration-200 hover:bg-slate-200 sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs"
+                            className="inline-flex shrink-0 items-center gap-[0.1rem] whitespace-nowrap rounded-full bg-slate-100 px-0.5 py-1 text-[0.52rem] font-semibold text-slate-700 transition duration-200 hover:bg-slate-200 sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs"
                             type="button"
                             onClick={() => setSelectedRequestId(request.id)}
                           >
                             <Eye
                               aria-hidden="true"
-                              className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5"
+                              className="h-2 w-2 sm:h-3.5 sm:w-3.5"
                             />
                             <span>
                               {
@@ -848,38 +934,38 @@ export function StudentRequestsPage() {
                             </span>
                           </button>
                           <button
-                            className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full bg-emerald-50 px-1 py-1 text-[0.6rem] font-semibold text-emerald-700 transition duration-200 hover:bg-emerald-100 sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs"
+                            className="inline-flex shrink-0 items-center gap-[0.1rem] whitespace-nowrap rounded-full bg-emerald-50 px-0.5 py-1 text-[0.52rem] font-semibold text-emerald-700 transition duration-200 hover:bg-emerald-100 sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs"
                             type="button"
                             onClick={() =>
-                              handleRequestAction(
-                                request.id,
+                              handleResponsiveRequestAction(
+                                request,
                                 'ACEPTADA',
-                                'La solicitud fue aceptada y la conversacion quedo habilitada.',
+                                'La solicitud fue aceptada y la conversación quedó habilitada.',
                               )
                             }
                           >
                             <Check
                               aria-hidden="true"
-                              className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5"
+                              className="h-2 w-2 sm:h-3.5 sm:w-3.5"
                             />
                             <span>
                               {studentContent.requestsPage.actionLabels.accept}
                             </span>
                           </button>
                           <button
-                            className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full bg-rose-50 px-1 py-1 text-[0.6rem] font-semibold text-rose-700 transition duration-200 hover:bg-rose-100 sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs"
+                            className="inline-flex shrink-0 items-center gap-[0.1rem] whitespace-nowrap rounded-full bg-rose-50 px-0.5 py-1 text-[0.52rem] font-semibold text-rose-700 transition duration-200 hover:bg-rose-100 sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs"
                             type="button"
                             onClick={() =>
-                              handleRequestAction(
-                                request.id,
+                              handleResponsiveRequestAction(
+                                request,
                                 'RECHAZADA',
-                                'La solicitud fue rechazada desde el modulo del estudiante.',
+                                'La solicitud fue rechazada desde el módulo del estudiante.',
                               )
                             }
                           >
                             <XCircle
                               aria-hidden="true"
-                              className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5"
+                              className="h-2 w-2 sm:h-3.5 sm:w-3.5"
                             />
                             <span>
                               {studentContent.requestsPage.actionLabels.reject}
@@ -979,22 +1065,50 @@ export function StudentRequestsPage() {
         <StudentRequestProfileDialog
           request={selectedRequest}
           onAccept={() =>
-            handleRequestAction(
-              selectedRequest.id,
+            handleResponsiveRequestAction(
+              selectedRequest,
               'ACEPTADA',
-              'La solicitud fue aceptada y la conversacion quedo habilitada.',
+              'La solicitud fue aceptada y la conversación quedó habilitada.',
               () => setSelectedRequestId(null),
             )
           }
           onClose={() => setSelectedRequestId(null)}
           onReject={() =>
-            handleRequestAction(
-              selectedRequest.id,
+            handleResponsiveRequestAction(
+              selectedRequest,
               'RECHAZADA',
-              'La solicitud fue rechazada desde el modulo del estudiante.',
+              'La solicitud fue rechazada desde el módulo del estudiante.',
               () => setSelectedRequestId(null),
             )
           }
+        />
+      ) : null}
+      {pendingRequestConfirmationCopy ? (
+        <AdminConfirmationDialog
+          cancelLabel="No, volver"
+          confirmLabel={pendingRequestConfirmationCopy.confirmLabel}
+          description={pendingRequestConfirmationCopy.description}
+          icon={pendingRequestConfirmationCopy.icon}
+          isOpen={!!pendingRequestConfirmation}
+          isSubmitting={isLoading}
+          title={pendingRequestConfirmationCopy.title}
+          tone={pendingRequestConfirmationCopy.tone}
+          onCancel={() => setPendingRequestConfirmation(null)}
+          onConfirm={() => {
+            if (!pendingRequestConfirmation) {
+              return;
+            }
+
+            handleRequestAction(
+              pendingRequestConfirmation.request.id,
+              pendingRequestConfirmation.nextStatus,
+              pendingRequestConfirmation.message,
+              () => {
+                pendingRequestConfirmation.onSuccess?.();
+                setPendingRequestConfirmation(null);
+              },
+            );
+          }}
         />
       ) : null}
       <AdminConfirmationDialog

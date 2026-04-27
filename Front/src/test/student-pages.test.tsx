@@ -639,6 +639,40 @@ describe('Student pages', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('pide confirmacion en movil antes de aceptar una solicitud', async () => {
+    mockStudentViewport(true);
+    const user = userEvent.setup();
+
+    renderStudentApp([ROUTES.studentRequests]);
+
+    await user.click(
+      within(
+        screen.getByTestId('student-request-row-student-request-1'),
+      ).getByRole('button', {
+        name: /^Aceptar$/i,
+      }),
+    );
+
+    const confirmDialog = screen.getByRole('dialog', {
+      name: /aceptar solicitud/i,
+    });
+
+    expect(confirmDialog).toHaveTextContent(
+      /est[a\u00e1]s seguro de que deseas aceptar la solicitud/i,
+    );
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+
+    await user.click(
+      within(confirmDialog).getByRole('button', {
+        name: /s[i\u00ed], aceptar/i,
+      }),
+    );
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      /la solicitud fue aceptada/i,
+    );
+  });
+
   it('permite revisar el perfil del paciente antes de responder la solicitud', async () => {
     const user = userEvent.setup();
 

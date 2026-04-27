@@ -35,7 +35,7 @@ export function AdminConfirmationDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
       <button
-        aria-label="Cerrar confirmacion"
+        aria-label="Cerrar confirmación"
         className="absolute inset-0 bg-slate-950/40 backdrop-blur-[2px]"
         type="button"
         onClick={onCancel}
@@ -49,7 +49,7 @@ export function AdminConfirmationDialog({
       >
         <div className="absolute right-4 top-4">
           <button
-            aria-label="Cerrar confirmacion"
+            aria-label="Cerrar confirmación"
             className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200"
             type="button"
             onClick={onCancel}
