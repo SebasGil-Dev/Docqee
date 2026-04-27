@@ -1,13 +1,15 @@
 import {
   Building2,
   Check,
+  ChevronLeft,
+  ChevronRight,
   Plus,
   Power,
   PowerOff,
   Search,
   SlidersHorizontal,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import { AdminConfirmationDialog } from '@/components/admin/AdminConfirmationDialog';
@@ -39,6 +41,11 @@ const universityStatusFilterOptions: Array<{
   { label: 'Inactiva', value: 'inactive' },
 ];
 
+const DEFAULT_ROWS_PER_PAGE = 6;
+const MIN_ROWS_PER_PAGE = 1;
+const TABLE_HEADER_HEIGHT_PX = 38;
+const TABLE_ROW_HEIGHT_PX = 54;
+
 function buildAdministratorLabel(university: AdminUniversity) {
   return formatDisplayName(
     `${university.adminFirstName} ${university.adminLastName}`,
@@ -55,8 +62,14 @@ function buildCompactAdministratorLabel(university: AdminUniversity) {
   );
 }
 
+function formatLocationName(value: string) {
+  return formatDisplayName(value)
+    .replace(/\bBogota\b/gi, 'Bogotá')
+    .replace(/D\.\s*C\.?/gi, 'D.C.');
+}
+
 function buildLocationLabel(university: AdminUniversity) {
-  return `${formatDisplayName(university.mainCity)} \u00B7 ${formatDisplayName(university.mainLocality)}`;
+  return `${formatLocationName(university.mainCity)} \u00B7 ${formatLocationName(university.mainLocality)}`;
 }
 
 function getLocationState(locationState: unknown): UniversitiesLocationState {
@@ -79,8 +92,11 @@ export function AdminUniversitiesPage() {
   const [pendingStatusUniversityIds, setPendingStatusUniversityIds] = useState<
     string[]
   >([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
   const pendingStatusUniversityIdsRef = useRef(new Set<string>());
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
+  const tableViewportRef = useRef<HTMLDivElement | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const successNotice = getLocationState(location.state)?.successNotice ?? null;
@@ -95,6 +111,23 @@ export function AdminUniversitiesPage() {
     : normalizedSearch || statusFilter !== 'all'
       ? 'No encontramos universidades con los filtros seleccionados.'
       : adminContent.universitiesPage.emptyState;
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredUniversities.length / rowsPerPage),
+  );
+  const clampedCurrentPage = Math.min(currentPage, totalPages);
+  const pageStartIndex = (clampedCurrentPage - 1) * rowsPerPage;
+  const paginatedUniversities = useMemo(
+    () =>
+      filteredUniversities.slice(pageStartIndex, pageStartIndex + rowsPerPage),
+    [filteredUniversities, pageStartIndex, rowsPerPage],
+  );
+  const pageStartLabel =
+    filteredUniversities.length > 0 ? pageStartIndex + 1 : 0;
+  const pageEndLabel = Math.min(
+    pageStartIndex + paginatedUniversities.length,
+    filteredUniversities.length,
+  );
   const isStatusConfirmationSubmitting = Boolean(
     statusConfirmationUniversity &&
     pendingStatusUniversityIds.includes(statusConfirmationUniversity.id),
@@ -113,9 +146,7 @@ export function AdminUniversitiesPage() {
       : `La universidad ${formatDisplayName(statusConfirmationUniversity.name)} quedará activa y podrá operar dentro de la plataforma.`
     : '';
   const statusConfirmationConfirmLabel =
-    statusConfirmationAction === 'deactivate'
-      ? 'Sí, inactivar'
-      : 'Sí, activar';
+    statusConfirmationAction === 'deactivate' ? 'Sí, inactivar' : 'Sí, activar';
 
   useEffect(() => {
     if (!successNotice) {
@@ -130,6 +161,62 @@ export function AdminUniversitiesPage() {
       window.clearTimeout(timeoutId);
     };
   }, [location.pathname, navigate, successNotice]);
+
+  useEffect(() => {
+    const tableViewportElement = tableViewportRef.current;
+
+    if (!tableViewportElement) {
+      return undefined;
+    }
+
+    const tableViewport = tableViewportElement;
+
+    function updateRowsPerPage() {
+      const nextAvailableHeight = tableViewport.getBoundingClientRect().height;
+
+      if (nextAvailableHeight <= 0) {
+        return;
+      }
+
+      const nextRowsPerPage = Math.max(
+        MIN_ROWS_PER_PAGE,
+        Math.floor(
+          (nextAvailableHeight - TABLE_HEADER_HEIGHT_PX) / TABLE_ROW_HEIGHT_PX,
+        ),
+      );
+
+      setRowsPerPage((currentRowsPerPage) =>
+        currentRowsPerPage === nextRowsPerPage
+          ? currentRowsPerPage
+          : nextRowsPerPage,
+      );
+    }
+
+    updateRowsPerPage();
+
+    if (typeof ResizeObserver !== 'undefined') {
+      const resizeObserver = new ResizeObserver(updateRowsPerPage);
+      resizeObserver.observe(tableViewport);
+
+      return () => {
+        resizeObserver.disconnect();
+      };
+    }
+
+    window.addEventListener('resize', updateRowsPerPage);
+
+    return () => {
+      window.removeEventListener('resize', updateRowsPerPage);
+    };
+  }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [normalizedSearch, statusFilter]);
+
+  useEffect(() => {
+    setCurrentPage((currentValue) => Math.min(currentValue, totalPages));
+  }, [totalPages]);
 
   useEffect(() => {
     if (!isStatusMenuOpen) {
@@ -257,7 +344,10 @@ export function AdminUniversitiesPage() {
           </span>
         </Link>
       </div>
-      <AdminPanelCard className="min-h-0 flex-1 bg-transparent" panelClassName="bg-white">
+      <AdminPanelCard
+        className="min-h-0 flex-1 bg-transparent"
+        panelClassName="bg-white"
+      >
         <div className="border-b border-slate-200/80 px-3 py-2.5 sm:px-5 sm:py-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <h2 className="whitespace-nowrap text-center font-headline text-[1rem] font-extrabold leading-none tracking-tight text-ink sm:text-left sm:text-[1.45rem]">
@@ -372,183 +462,227 @@ export function AdminUniversitiesPage() {
           </div>
         </div>
         {filteredUniversities.length > 0 ? (
-          <div className="admin-scrollbar min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain scroll-smooth md:overflow-x-auto md:[scrollbar-gutter:stable] [-webkit-overflow-scrolling:touch]">
-            <div className="w-full md:min-w-[52rem]">
-              <table className="w-full table-fixed">
-                <thead className="sticky top-0 z-10 bg-slate-100 text-left">
-                  <tr className="text-[0.54rem] font-bold uppercase tracking-[0.035em] text-ink-muted sm:text-[0.68rem] sm:tracking-[0.18em]">
-                    <th className="w-[40%] px-2 py-2.25 sm:px-5 sm:py-3 md:w-[24%]">
-                      Universidad
-                    </th>
-                    <th className="hidden px-4 py-3 md:table-cell md:w-[21%]">
-                      Localidad
-                    </th>
-                    <th className="w-[32%] px-1.5 py-2.25 sm:px-4 sm:py-3 md:w-[24%]">
-                      Administrador
-                    </th>
-                    <th className="w-[15%] px-0.5 py-2.25 text-center sm:px-4 sm:py-3 md:w-[15.5%] md:text-left">
-                      Estado
-                    </th>
-                    <th className="w-[13%] px-0.5 py-2.25 text-center sm:px-5 sm:py-3 md:w-[15.5%] md:text-right">
-                      <span className="sm:hidden">Acción</span>
-                      <span className="hidden sm:inline">Acciones</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200/80">
-                  {filteredUniversities.map((university, index) => {
-                    const isPending = university.status === 'pending';
-                    const isLast = index === filteredUniversities.length - 1;
-                    const isUpdatingStatus =
-                      pendingStatusUniversityIds.includes(university.id);
-                    const locationLabel = buildLocationLabel(university);
+          <>
+            <div
+              ref={tableViewportRef}
+              className="min-h-0 flex-1 overflow-x-hidden overflow-y-hidden md:overflow-x-auto [-webkit-overflow-scrolling:touch]"
+            >
+              <div className="w-full md:min-w-[52rem]">
+                <table className="w-full table-fixed">
+                  <thead className="bg-slate-100 text-left">
+                    <tr className="text-[0.52rem] font-bold uppercase tracking-[0.035em] text-ink-muted sm:text-[0.62rem] sm:tracking-[0.16em]">
+                      <th className="w-[40%] px-2 py-2 sm:px-4 sm:py-2.5 md:w-[24%]">
+                        Universidad
+                      </th>
+                      <th className="hidden px-3 py-2.5 md:table-cell md:w-[21%]">
+                        Localidad
+                      </th>
+                      <th className="w-[32%] px-1.5 py-2 sm:px-3 sm:py-2.5 md:w-[24%]">
+                        Administrador
+                      </th>
+                      <th className="w-[15%] px-0.5 py-2 text-center sm:px-3 sm:py-2.5 md:w-[15.5%] md:text-left">
+                        Estado
+                      </th>
+                      <th className="w-[13%] px-0.5 py-2 text-center sm:px-4 sm:py-2.5 md:w-[15.5%] md:text-right">
+                        <span className="sm:hidden">Acción</span>
+                        <span className="hidden sm:inline">Acciones</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200/80">
+                    {paginatedUniversities.map((university, index) => {
+                      const isPending = university.status === 'pending';
+                      const isLast = index === paginatedUniversities.length - 1;
+                      const isUpdatingStatus =
+                        pendingStatusUniversityIds.includes(university.id);
+                      const locationLabel = buildLocationLabel(university);
 
-                    return (
-                      <tr key={university.id} className="align-top">
-                        <td
-                          className={classNames(
-                            'overflow-hidden px-2 pt-2.5 sm:px-5 sm:pt-3.5',
-                            isLast ? 'pb-3 sm:pb-4' : 'pb-2.5 sm:pb-3.5',
-                          )}
-                        >
-                          <div className="min-w-0 space-y-1">
-                            <p className="break-words text-[0.72rem] font-semibold leading-tight text-ink sm:text-sm">
-                              {formatDisplayName(university.name)}
-                            </p>
-                            <p className="text-[0.6rem] font-medium leading-tight text-ink-muted sm:text-xs md:hidden">
-                              {university.mainCity} · {university.mainLocality}
-                            </p>
-                            <p className="hidden text-xs text-ink-muted sm:text-[0.82rem] md:block">
-                              Registrada{' '}
-                              {new Date(
-                                university.createdAt,
-                              ).toLocaleDateString('es-CO')}
-                            </p>
-                          </div>
-                        </td>
-                        <td
-                          className={classNames(
-                            'hidden px-4 pt-3.5 md:table-cell',
-                            isLast ? 'pb-3 sm:pb-4' : 'pb-2.5 sm:pb-3.5',
-                          )}
-                        >
-                          <div className="min-w-0">
-                            <p
-                              className="truncate text-sm font-semibold text-ink"
-                              title={locationLabel}
-                            >
-                              {locationLabel}
-                            </p>
-                          </div>
-                        </td>
-                        <td
-                          className={classNames(
-                            'overflow-hidden px-1.5 pt-2.5 sm:px-4 sm:pt-3.5',
-                            isLast ? 'pb-3 sm:pb-4' : 'pb-2.5 sm:pb-3.5',
-                          )}
-                        >
-                          <div className="min-w-0 space-y-1">
-                            <p className="break-words text-[0.7rem] font-semibold leading-tight text-ink sm:text-sm">
-                              <span className="md:hidden">
-                                {buildCompactAdministratorLabel(university)}
-                              </span>
-                              <span className="hidden md:inline">
-                                {buildAdministratorLabel(university)}
-                              </span>
-                            </p>
-                            <p
-                              className="block max-w-full truncate text-[0.58rem] leading-tight text-ink-muted sm:text-xs md:text-[0.82rem]"
-                              title={university.adminEmail}
-                            >
-                              {university.adminEmail}
-                            </p>
-                          </div>
-                        </td>
-                        <td
-                          className={classNames(
-                            'overflow-hidden px-1 pt-2.5 text-center sm:px-4 sm:pt-3.5 md:text-left',
-                            isLast ? 'pb-3 sm:pb-4' : 'pb-2.5 sm:pb-3.5',
-                          )}
-                        >
-                          <div className="flex h-7 items-center justify-center sm:h-auto md:justify-start">
-                            <AdminStatusBadge
-                              entity="university"
-                              size="micro-mobile"
-                              status={university.status}
-                            />
-                          </div>
-                        </td>
-                        <td
-                          className={classNames(
-                            'overflow-hidden px-1 pt-2.5 text-center sm:px-5 sm:pt-3.5 md:text-right',
-                            isLast ? 'pb-3 sm:pb-4' : 'pb-2.5 sm:pb-3.5',
-                          )}
-                        >
-                          <div className="flex h-7 items-center justify-center sm:h-auto md:justify-end">
-                            {isPending ? (
-                              <span className="inline-flex rounded-full bg-amber-50 px-1 py-[0.12rem] text-[0.5rem] font-semibold leading-none tracking-[-0.01em] text-amber-700 ring-1 ring-inset ring-amber-200 sm:px-2.5 sm:py-1.5 sm:text-[0.72rem] sm:leading-normal sm:tracking-normal">
-                                {
-                                  adminContent.universitiesPage
-                                    .pendingActionLabel
-                                }
-                              </span>
-                            ) : (
-                              <button
-                                aria-label={
-                                  university.status === 'active'
-                                    ? adminContent.universitiesPage.actionLabels
-                                        .deactivate
-                                    : adminContent.universitiesPage.actionLabels
-                                        .activate
-                                }
-                                title={
-                                  university.status === 'active'
-                                    ? adminContent.universitiesPage.actionLabels
-                                        .deactivate
-                                    : adminContent.universitiesPage.actionLabels
-                                        .activate
-                                }
-                                className={classNames(
-                                  'inline-flex h-7 w-7 items-center justify-center rounded-full text-[0.72rem] font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-65 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-2.5 sm:py-1.5',
-                                  university.status === 'active'
-                                    ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
-                                    : 'bg-primary/10 text-primary hover:bg-primary/15',
-                                )}
-                                disabled={isUpdatingStatus}
-                                type="button"
-                                onClick={() => {
-                                  setStatusConfirmationUniversity(university);
-                                }}
-                              >
-                                {university.status === 'active' ? (
-                                  <PowerOff
-                                    aria-hidden="true"
-                                    className="h-3 w-3 sm:h-3.5 sm:w-3.5"
-                                  />
-                                ) : (
-                                  <Power
-                                    aria-hidden="true"
-                                    className="h-3 w-3 sm:h-3.5 sm:w-3.5"
-                                  />
-                                )}
-                                <span className="hidden sm:inline">
-                                  {university.status === 'active'
-                                    ? adminContent.universitiesPage.actionLabels
-                                        .deactivate
-                                    : adminContent.universitiesPage.actionLabels
-                                        .activate}
-                                </span>
-                              </button>
+                      return (
+                        <tr key={university.id} className="align-top">
+                          <td
+                            className={classNames(
+                              'overflow-hidden px-2 pt-2 sm:px-4 sm:pt-2.75',
+                              isLast ? 'pb-2.5 sm:pb-3' : 'pb-2 sm:pb-2.75',
                             )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                          >
+                            <div className="min-w-0 space-y-1">
+                              <p className="break-words text-[0.68rem] font-semibold leading-tight text-ink sm:text-[0.82rem]">
+                                {formatDisplayName(university.name)}
+                              </p>
+                              <p className="text-[0.58rem] font-medium leading-tight text-ink-muted sm:text-[0.72rem] md:hidden">
+                                {formatLocationName(university.mainCity)} ·{' '}
+                                {formatLocationName(university.mainLocality)}
+                              </p>
+                              <p className="hidden text-[0.72rem] text-ink-muted md:block">
+                                Registrada{' '}
+                                {new Date(
+                                  university.createdAt,
+                                ).toLocaleDateString('es-CO')}
+                              </p>
+                            </div>
+                          </td>
+                          <td
+                            className={classNames(
+                              'hidden px-3 pt-2.75 md:table-cell',
+                              isLast ? 'pb-2.5 sm:pb-3' : 'pb-2 sm:pb-2.75',
+                            )}
+                          >
+                            <div className="min-w-0">
+                              <p
+                                className="truncate text-[0.82rem] font-semibold text-ink"
+                                title={locationLabel}
+                              >
+                                {locationLabel}
+                              </p>
+                            </div>
+                          </td>
+                          <td
+                            className={classNames(
+                              'overflow-hidden px-1.5 pt-2 sm:px-3 sm:pt-2.75',
+                              isLast ? 'pb-2.5 sm:pb-3' : 'pb-2 sm:pb-2.75',
+                            )}
+                          >
+                            <div className="min-w-0 space-y-1">
+                              <p className="break-words text-[0.66rem] font-semibold leading-tight text-ink sm:text-[0.82rem]">
+                                <span className="md:hidden">
+                                  {buildCompactAdministratorLabel(university)}
+                                </span>
+                                <span className="hidden md:inline">
+                                  {buildAdministratorLabel(university)}
+                                </span>
+                              </p>
+                              <p
+                                className="block max-w-full truncate text-[0.55rem] leading-tight text-ink-muted sm:text-[0.72rem]"
+                                title={university.adminEmail}
+                              >
+                                {university.adminEmail}
+                              </p>
+                            </div>
+                          </td>
+                          <td
+                            className={classNames(
+                              'overflow-hidden px-1 pt-2 text-center sm:px-3 sm:pt-2.75 md:text-left',
+                              isLast ? 'pb-2.5 sm:pb-3' : 'pb-2 sm:pb-2.75',
+                            )}
+                          >
+                            <div className="flex h-7 items-center justify-center sm:h-auto md:justify-start">
+                              <AdminStatusBadge
+                                entity="university"
+                                size="micro-mobile"
+                                status={university.status}
+                              />
+                            </div>
+                          </td>
+                          <td
+                            className={classNames(
+                              'overflow-hidden px-1 pt-2 text-center sm:px-4 sm:pt-2.75 md:text-right',
+                              isLast ? 'pb-2.5 sm:pb-3' : 'pb-2 sm:pb-2.75',
+                            )}
+                          >
+                            <div className="flex h-7 items-center justify-center sm:h-auto md:justify-end">
+                              {isPending ? (
+                                <span className="inline-flex rounded-full bg-amber-50 px-1 py-[0.12rem] text-[0.5rem] font-semibold leading-none tracking-[-0.01em] text-amber-700 ring-1 ring-inset ring-amber-200 sm:px-2.5 sm:py-1.5 sm:text-[0.72rem] sm:leading-normal sm:tracking-normal">
+                                  {
+                                    adminContent.universitiesPage
+                                      .pendingActionLabel
+                                  }
+                                </span>
+                              ) : (
+                                <button
+                                  aria-label={
+                                    university.status === 'active'
+                                      ? adminContent.universitiesPage
+                                          .actionLabels.deactivate
+                                      : adminContent.universitiesPage
+                                          .actionLabels.activate
+                                  }
+                                  title={
+                                    university.status === 'active'
+                                      ? adminContent.universitiesPage
+                                          .actionLabels.deactivate
+                                      : adminContent.universitiesPage
+                                          .actionLabels.activate
+                                  }
+                                  className={classNames(
+                                    'inline-flex h-7 w-7 items-center justify-center rounded-full text-[0.72rem] font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-65 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-2.5 sm:py-1.5',
+                                    university.status === 'active'
+                                      ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
+                                      : 'bg-primary/10 text-primary hover:bg-primary/15',
+                                  )}
+                                  disabled={isUpdatingStatus}
+                                  type="button"
+                                  onClick={() => {
+                                    setStatusConfirmationUniversity(university);
+                                  }}
+                                >
+                                  {university.status === 'active' ? (
+                                    <PowerOff
+                                      aria-hidden="true"
+                                      className="h-3 w-3 sm:h-3.5 sm:w-3.5"
+                                    />
+                                  ) : (
+                                    <Power
+                                      aria-hidden="true"
+                                      className="h-3 w-3 sm:h-3.5 sm:w-3.5"
+                                    />
+                                  )}
+                                  <span className="hidden sm:inline">
+                                    {university.status === 'active'
+                                      ? adminContent.universitiesPage
+                                          .actionLabels.deactivate
+                                      : adminContent.universitiesPage
+                                          .actionLabels.activate}
+                                  </span>
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+            <div className="flex shrink-0 flex-col gap-2 border-t border-slate-200/80 bg-white px-3 py-2.5 text-[0.72rem] font-semibold text-ink-muted sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:text-[0.8rem]">
+              <p className="text-center sm:text-left">
+                Mostrando {pageStartLabel}-{pageEndLabel} de{' '}
+                {filteredUniversities.length} · Página {clampedCurrentPage} de{' '}
+                {totalPages}
+              </p>
+              <div className="flex items-center justify-center gap-2">
+                <button
+                  aria-label="Pagina anterior"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-ink transition duration-200 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-45"
+                  disabled={clampedCurrentPage === 1}
+                  type="button"
+                  onClick={() =>
+                    setCurrentPage((currentValue) =>
+                      Math.max(1, currentValue - 1),
+                    )
+                  }
+                >
+                  <ChevronLeft aria-hidden="true" className="h-4 w-4" />
+                </button>
+                <span className="min-w-[4.25rem] text-center text-[0.72rem] text-ink">
+                  {clampedCurrentPage}/{totalPages}
+                </span>
+                <button
+                  aria-label="Pagina siguiente"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-ink transition duration-200 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-45"
+                  disabled={clampedCurrentPage === totalPages}
+                  type="button"
+                  onClick={() =>
+                    setCurrentPage((currentValue) =>
+                      Math.min(totalPages, currentValue + 1),
+                    )
+                  }
+                >
+                  <ChevronRight aria-hidden="true" className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </>
         ) : (
           <div className="flex flex-1 items-center justify-center px-4 py-8 text-center sm:px-5">
             <p className="text-sm font-medium text-ink-muted">
