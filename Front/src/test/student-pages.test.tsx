@@ -279,6 +279,9 @@ describe('Student pages', () => {
     expect(screen.getByText(/4.7 de 5 en 3 valoraciones/i)).toBeInTheDocument();
     expect(screen.getByText(/comentarios de tus citas/i)).toBeInTheDocument();
     expect(
+      screen.getByRole('columnheader', { name: /^Valoración$/i }),
+    ).toBeInTheDocument();
+    expect(
       screen.queryByText(/experiencia del paciente/i),
     ).not.toBeInTheDocument();
     expect(
@@ -289,6 +292,11 @@ describe('Student pages', () => {
     expect(
       screen.getByTestId('student-review-row-student-review-1'),
     ).toHaveTextContent(/me senti muy bien acompanado durante la cita/i);
+    expect(
+      within(
+        screen.getByTestId('student-review-row-student-review-1'),
+      ).queryByText(/^5\.0$/i),
+    ).not.toBeInTheDocument();
 
     await user.click(
       screen.getByRole('button', {

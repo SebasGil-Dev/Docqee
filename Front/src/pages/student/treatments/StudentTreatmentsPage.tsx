@@ -36,8 +36,8 @@ const reviewDateFormatter = new Intl.DateTimeFormat('es-CO', {
 
 const DEFAULT_REVIEW_ROWS_PER_PAGE = 5;
 const MIN_REVIEW_ROWS_PER_PAGE = 1;
-const REVIEW_TABLE_HEADER_HEIGHT_PX = 34;
-const REVIEW_TABLE_ROW_HEIGHT_FALLBACK_PX = 58;
+const REVIEW_TABLE_HEADER_HEIGHT_PX = 30;
+const REVIEW_TABLE_ROW_HEIGHT_FALLBACK_PX = 48;
 const REVIEW_TABLE_HEIGHT_PADDING_PX = 4;
 
 function renderStars(
@@ -445,25 +445,28 @@ export function StudentTreatmentsPage() {
         </div>
       </SurfaceCard>
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
-        <div className="border-b border-slate-200/80 px-3 py-2.5 sm:px-4">
-          <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
-            <div className="min-w-0">
-              <h2 className="font-headline text-[1.12rem] font-extrabold tracking-tight text-ink sm:text-[1.18rem]">
+        <div className="border-b border-slate-200/80 px-2.5 py-2 sm:px-4">
+          <div className="flex min-w-0 items-center justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <h2 className="truncate font-headline text-[0.98rem] font-extrabold tracking-tight text-ink sm:text-[1.14rem]">
                 Comentarios de tus citas
               </h2>
             </div>
-            <div className="flex flex-wrap items-center gap-2 self-start">
+            <div className="flex shrink-0 items-center gap-1.5">
               <div
-                className="inline-flex items-center gap-2 rounded-[0.95rem] border border-sky-200/80 bg-sky-50 px-2.5 py-1.5 text-sky-950 shadow-[0_14px_28px_-24px_rgba(14,116,144,0.38)]"
+                className="inline-flex items-center gap-1.5 rounded-[0.8rem] border border-sky-200/80 bg-sky-50 px-1.5 py-1 text-sky-950 shadow-[0_14px_28px_-24px_rgba(14,116,144,0.38)] sm:gap-2 sm:rounded-[0.95rem] sm:px-2.5 sm:py-1.5"
                 data-testid="student-review-comments-dashboard"
               >
-                <span className="inline-flex h-7 w-7 items-center justify-center rounded-[0.7rem] bg-white text-primary shadow-[0_12px_22px_-20px_rgba(14,116,144,0.55)]">
-                  <MessageSquareMore aria-hidden="true" className="h-4 w-4" />
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-[0.62rem] bg-white text-primary shadow-[0_12px_22px_-20px_rgba(14,116,144,0.55)] sm:h-7 sm:w-7 sm:rounded-[0.7rem]">
+                  <MessageSquareMore
+                    aria-hidden="true"
+                    className="h-3.5 w-3.5 sm:h-4 sm:w-4"
+                  />
                 </span>
-                <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-sky-700/80">
+                <p className="hidden text-[0.58rem] font-bold uppercase tracking-[0.16em] text-sky-700/80 sm:block">
                   Comentarios
                 </p>
-                <p className="font-headline text-[1rem] font-extrabold tracking-tight text-sky-950">
+                <p className="font-headline text-[0.9rem] font-extrabold tracking-tight text-sky-950 sm:text-[1rem]">
                   {commentsCount}
                 </p>
               </div>
@@ -474,7 +477,7 @@ export function StudentTreatmentsPage() {
                   aria-haspopup="menu"
                   aria-label="Filtrar comentarios por estrellas"
                   className={classNames(
-                    'relative inline-flex h-9 w-9 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                    'relative inline-flex h-8 w-8 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-9 sm:w-9',
                     reviewRatingFilter === 'all'
                       ? 'border-slate-200/90 hover:border-primary/30 hover:bg-white'
                       : 'border-primary/30 bg-primary/10 text-primary',
@@ -485,7 +488,10 @@ export function StudentTreatmentsPage() {
                     setIsReviewRatingMenuOpen((current) => !current);
                   }}
                 >
-                  <SlidersHorizontal aria-hidden="true" className="h-4 w-4" />
+                  <SlidersHorizontal
+                    aria-hidden="true"
+                    className="h-3.5 w-3.5 sm:h-4 sm:w-4"
+                  />
                   {reviewRatingFilter !== 'all' ? (
                     <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary" />
                   ) : null}
@@ -560,81 +566,80 @@ export function StudentTreatmentsPage() {
         </div>
         <div
           ref={reviewTableViewportRef}
-          className="min-h-0 flex-1 overflow-hidden px-3 py-2.5 sm:px-4 sm:py-3"
+          className="min-h-0 flex-1 overflow-hidden px-2 py-1.5 sm:px-3 sm:py-2.5"
         >
           {filteredReviews.length > 0 ? (
-            <div className="h-full overflow-hidden rounded-[1rem] border border-slate-200/80 bg-white">
+            <div className="h-full overflow-hidden">
               <table className="w-full table-fixed text-left">
-                <thead className="bg-slate-50">
-                  <tr className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-ink-muted">
-                    <th className="w-[32%] px-3 py-2 font-bold sm:w-[24%]">
+                <thead className="border-b border-slate-200/80">
+                  <tr className="text-[0.54rem] font-bold uppercase tracking-[0.12em] text-ink-muted sm:text-[0.6rem] sm:tracking-[0.16em]">
+                    <th className="w-[31%] px-2 py-1.5 font-bold sm:w-[24%] sm:px-3 sm:py-2">
                       Paciente
                     </th>
                     <th className="hidden w-[18%] px-3 py-2 font-bold md:table-cell">
                       Cita
                     </th>
-                    <th className="w-[24%] px-3 py-2 font-bold sm:w-[18%]">
-                      Valoracion
+                    <th className="w-[25%] px-1.5 py-1.5 font-bold sm:w-[18%] sm:px-3 sm:py-2">
+                      Valoración
                     </th>
                     <th className="hidden w-[14%] px-3 py-2 font-bold lg:table-cell">
                       Sede
                     </th>
-                    <th className="w-[44%] px-3 py-2 font-bold sm:w-[40%]">
+                    <th className="w-[44%] px-2 py-1.5 font-bold sm:w-[40%] sm:px-3 sm:py-2">
                       Comentario
                     </th>
                   </tr>
                 </thead>
                 <tbody
                   ref={reviewTableBodyRef}
-                  className="divide-y divide-slate-200/80 bg-white"
+                  className="divide-y divide-slate-200/70"
                 >
                   {paginatedReviews.map((review) => (
                     <tr
                       key={review.id}
-                      className="align-top transition duration-200 hover:bg-slate-50/80"
+                      className="align-top transition duration-200 hover:bg-white/55"
                       data-testid={`student-review-row-${review.id}`}
                     >
-                      <td className="px-3 py-2 align-top">
-                        <p className="break-words text-[0.82rem] font-semibold leading-5 text-ink">
+                      <td className="px-2 py-1.5 align-top sm:px-3 sm:py-2">
+                        <p className="break-words text-[0.74rem] font-semibold leading-4 text-ink sm:text-[0.8rem] sm:leading-5">
                           {review.patientName}
                         </p>
-                        <p className="mt-0.5 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-ink-muted">
+                        <p className="mt-0.5 text-[0.56rem] font-semibold uppercase tracking-[0.1em] text-ink-muted sm:text-[0.64rem]">
                           {reviewDateFormatter.format(
                             new Date(review.createdAt),
                           )}
                         </p>
-                        <p className="mt-1 text-[0.72rem] leading-4 text-ink-muted md:hidden">
+                        <p className="mt-0.5 text-[0.64rem] leading-4 text-ink-muted md:hidden">
                           {review.appointmentLabel}
                         </p>
                       </td>
-                      <td className="hidden px-3 py-2 align-top text-[0.8rem] leading-5 text-ink-muted md:table-cell">
+                      <td className="hidden px-3 py-2 align-top text-[0.74rem] leading-5 text-ink-muted md:table-cell">
                         {review.appointmentLabel}
                       </td>
-                      <td className="px-3 py-2 align-top">
-                        <div className="flex flex-col gap-1">
-                          <div className="flex flex-wrap items-center gap-0.5">
-                            {renderStars(review.rating, 'h-3.5 w-3.5', 'dark')}
-                          </div>
-                          <span className="text-[0.8rem] font-semibold text-ink">
-                            {review.rating.toFixed(1)}
-                          </span>
+                      <td className="px-1.5 py-1.5 align-top sm:px-3 sm:py-2">
+                        <div className="flex flex-wrap items-center gap-0.5 pt-0.5">
+                          {renderStars(
+                            review.rating,
+                            'h-3 w-3 sm:h-3.5 sm:w-3.5',
+                            'dark',
+                          )}
                         </div>
                       </td>
                       <td className="hidden px-3 py-2 align-top lg:table-cell">
-                        <span className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-[0.72rem] font-semibold text-ink-muted">
+                        <span className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-white/70 px-2 py-0.5 text-[0.68rem] font-semibold text-ink-muted">
                           <MapPin
                             aria-hidden="true"
-                            className="h-3.5 w-3.5 shrink-0"
+                            className="h-3 w-3 shrink-0"
                           />
                           <span className="truncate">{review.siteName}</span>
                         </span>
                       </td>
-                      <td className="px-3 py-2 align-top">
-                        <p className="max-h-10 overflow-hidden text-[0.8rem] leading-5 text-ink">
+                      <td className="px-2 py-1.5 align-top sm:px-3 sm:py-2">
+                        <p className="max-h-8 overflow-hidden text-[0.72rem] leading-4 text-ink sm:max-h-10 sm:text-[0.78rem] sm:leading-5">
                           {review.comment ??
                             'El paciente no dejo un comentario escrito para esta cita.'}
                         </p>
-                        <span className="mt-1 inline-flex max-w-full items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-[0.68rem] font-semibold text-ink-muted lg:hidden">
+                        <span className="mt-0.5 inline-flex max-w-full items-center gap-1 rounded-full bg-white/70 px-2 py-0.5 text-[0.6rem] font-semibold text-ink-muted lg:hidden">
                           <MapPin
                             aria-hidden="true"
                             className="h-3 w-3 shrink-0"
