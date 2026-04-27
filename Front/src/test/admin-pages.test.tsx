@@ -165,6 +165,19 @@ describe('Admin pages', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('muestra el encabezado de correo y paginacion en credenciales', () => {
+    renderAdminApp([ROUTES.adminCredentials]);
+
+    expect(screen.getByText(/Correo electr\u00f3nico/i)).toBeInTheDocument();
+    expect(screen.getByText(/P\u00e1gina 1 de 1/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /pagina anterior/i }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: /pagina siguiente/i }),
+    ).toBeDisabled();
+  });
+
   it('valida campos requeridos y el formato de correo al registrar una universidad', async () => {
     const user = userEvent.setup();
 
@@ -417,7 +430,7 @@ describe('Admin pages', () => {
     );
 
     const emailInput = within(credentialRow!).getByLabelText(
-      /correo electronico de Sofia Rojas/i,
+      /correo electr[o\u00f3]nico de Sofia Rojas/i,
     );
     await user.clear(emailInput);
     await user.type(emailInput, 'nuevo.correo@universidadpacifico.edu.co');
