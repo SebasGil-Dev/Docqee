@@ -1,5 +1,7 @@
 import {
   Check,
+  ChevronLeft,
+  ChevronRight,
   GraduationCap,
   Plus,
   Power,
@@ -7,7 +9,7 @@ import {
   Search,
   SlidersHorizontal,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import { AdminConfirmationDialog } from '@/components/admin/AdminConfirmationDialog';
@@ -18,7 +20,10 @@ import { Seo } from '@/components/ui/Seo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { ROUTES } from '@/constants/routes';
 import { universityAdminContent } from '@/content/universityAdminContent';
-import type { PersonOperationalStatus, UniversityStudent } from '@/content/types';
+import type {
+  PersonOperationalStatus,
+  UniversityStudent,
+} from '@/content/types';
 import { classNames } from '@/lib/classNames';
 import { formatDisplayName } from '@/lib/formatDisplayName';
 import { useUniversityAdminStudentRecordsStore } from '@/lib/universityAdminStudentRecordsStore';
@@ -29,6 +34,12 @@ type StudentsLocationState = {
 
 type StudentStatusFilter = PersonOperationalStatus | 'all' | 'pending';
 type StudentStatusConfirmationAction = 'activate' | 'deactivate';
+
+const DEFAULT_ROWS_PER_PAGE = 5;
+const MIN_ROWS_PER_PAGE = 1;
+const TABLE_HEADER_HEIGHT_PX = 38;
+const TABLE_ROW_HEIGHT_FALLBACK_PX = 72;
+const TABLE_HEIGHT_PADDING_PX = 0;
 
 function getLocationState(locationState: unknown): StudentsLocationState {
   if (!locationState || typeof locationState !== 'object') {
@@ -58,8 +69,12 @@ export function UniversityStudentsPage() {
   const [pendingStatusStudentIds, setPendingStatusStudentIds] = useState<
     string[]
   >([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
   const pendingStatusStudentIdsRef = useRef(new Set<string>());
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
+  const tableViewportRef = useRef<HTMLDivElement | null>(null);
+  const tableBodyRef = useRef<HTMLTableSectionElement | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const successNotice = getLocationState(location.state)?.successNotice ?? null;
@@ -93,6 +108,26 @@ export function UniversityStudentsPage() {
       (statusFilter === 'all' || derivedStatus === statusFilter)
     );
   });
+  const emptyStateMessage = isLoading
+    ? 'Cargando estudiantes...'
+    : normalizedSearch || statusFilter !== 'all'
+      ? 'No encontramos estudiantes con los filtros seleccionados.'
+      : universityAdminContent.studentsPage.emptyState;
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredStudents.length / rowsPerPage),
+  );
+  const clampedCurrentPage = Math.min(currentPage, totalPages);
+  const pageStartIndex = (clampedCurrentPage - 1) * rowsPerPage;
+  const paginatedStudents = useMemo(
+    () => filteredStudents.slice(pageStartIndex, pageStartIndex + rowsPerPage),
+    [filteredStudents, pageStartIndex, rowsPerPage],
+  );
+  const pageStartLabel = filteredStudents.length > 0 ? pageStartIndex + 1 : 0;
+  const pageEndLabel = Math.min(
+    pageStartIndex + paginatedStudents.length,
+    filteredStudents.length,
+  );
   const isStatusConfirmationSubmitting = Boolean(
     statusConfirmationStudent &&
     pendingStatusStudentIds.includes(statusConfirmationStudent.id),
@@ -109,9 +144,7 @@ export function UniversityStudentsPage() {
       : `El estudiante ${formatDisplayName(`${statusConfirmationStudent.firstName} ${statusConfirmationStudent.lastName}`)} quedará activo y podrá operar dentro de la plataforma.`
     : '';
   const statusConfirmationConfirmLabel =
-    statusConfirmationAction === 'deactivate'
-      ? 'Sí, inactivar'
-      : 'Sí, activar';
+    statusConfirmationAction === 'deactivate' ? 'Sí, inactivar' : 'Sí, activar';
 
   useEffect(() => {
     if (!successNotice) {
@@ -126,6 +159,75 @@ export function UniversityStudentsPage() {
       window.clearTimeout(timeoutId);
     };
   }, [location.pathname, navigate, successNotice]);
+
+  useEffect(() => {
+    const tableViewportElement = tableViewportRef.current;
+
+    if (!tableViewportElement) {
+      return undefined;
+    }
+
+    const tableViewport = tableViewportElement;
+
+    function updateRowsPerPage() {
+      const nextAvailableHeight = tableViewport.getBoundingClientRect().height;
+
+      if (nextAvailableHeight <= 0) {
+        return;
+      }
+
+      const tableHeaderHeight =
+        tableViewport.querySelector('thead')?.getBoundingClientRect().height ??
+        TABLE_HEADER_HEIGHT_PX;
+      const rowHeights = Array.from(
+        tableBodyRef.current?.querySelectorAll('tr') ?? [],
+        (row) => row.getBoundingClientRect().height,
+      ).filter((height) => height > 0);
+      const estimatedRowHeight =
+        rowHeights.length > 0
+          ? rowHeights.reduce((total, height) => total + height, 0) /
+            rowHeights.length
+          : TABLE_ROW_HEIGHT_FALLBACK_PX;
+      const nextRowsPerPage = Math.max(
+        MIN_ROWS_PER_PAGE,
+        Math.floor(
+          (nextAvailableHeight - tableHeaderHeight - TABLE_HEIGHT_PADDING_PX) /
+            estimatedRowHeight,
+        ),
+      );
+
+      setRowsPerPage((currentRowsPerPage) =>
+        currentRowsPerPage === nextRowsPerPage
+          ? currentRowsPerPage
+          : nextRowsPerPage,
+      );
+    }
+
+    updateRowsPerPage();
+
+    if (typeof ResizeObserver !== 'undefined') {
+      const resizeObserver = new ResizeObserver(updateRowsPerPage);
+      resizeObserver.observe(tableViewport);
+
+      return () => {
+        resizeObserver.disconnect();
+      };
+    }
+
+    window.addEventListener('resize', updateRowsPerPage);
+
+    return () => {
+      window.removeEventListener('resize', updateRowsPerPage);
+    };
+  }, [filteredStudents.length, pageStartIndex, paginatedStudents.length]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [normalizedSearch, statusFilter]);
+
+  useEffect(() => {
+    setCurrentPage((currentValue) => Math.min(currentValue, totalPages));
+  }, [totalPages]);
 
   useEffect(() => {
     if (!isStatusMenuOpen) {
@@ -255,7 +357,7 @@ export function UniversityStudentsPage() {
           </span>
         </Link>
       </div>
-      <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
+      <AdminPanelCard className="min-h-0 flex-1" panelClassName="bg-[#f4f8ff]">
         <div className="border-b border-slate-200/80 px-3 py-2 sm:px-5 sm:py-3.5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
             <h2 className="hidden font-headline text-[1rem] font-extrabold tracking-tight text-ink sm:block sm:text-[1.25rem]">
@@ -372,226 +474,268 @@ export function UniversityStudentsPage() {
           </div>
         </div>
         {filteredStudents.length > 0 ? (
-          <div className="admin-scrollbar min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
-            <div className="w-full min-w-0">
-              <table className="w-full table-fixed">
-              <colgroup>
-                <col className="w-[56%] sm:w-[21%]" />
-                <col className="hidden sm:table-column sm:w-[17%]" />
-                <col className="hidden sm:table-column sm:w-[22%]" />
-                <col className="hidden sm:table-column sm:w-[9%]" />
-                <col className="w-[18%] sm:w-[13%]" />
-                <col className="w-[26%] sm:w-[18%]" />
-              </colgroup>
-              <thead className="sticky top-0 z-10 bg-slate-100 text-left">
-                <tr className="text-[0.6rem] font-bold uppercase tracking-[0.14em] text-ink-muted sm:text-[0.64rem] sm:tracking-[0.16em]">
-                  <th className="px-2.5 py-2 sm:px-4 sm:py-2.5">
-                    Estudiante
-                  </th>
-                  <th className="hidden px-2.5 py-2 sm:table-cell sm:px-3 sm:py-2.5">
-                    Documento
-                  </th>
-                  <th className="hidden px-2.5 py-2 sm:table-cell sm:px-3.5 sm:py-2.5">
-                    Correo
-                  </th>
-                  <th className="hidden px-2 py-2 text-center sm:table-cell sm:px-3 sm:py-2.5">
-                    Semestre
-                  </th>
-                  <th className="px-2 py-2 text-center sm:px-3 sm:py-2.5">
-                    Estado
-                  </th>
-                  <th className="px-2.5 py-2 text-center sm:px-4 sm:py-2.5">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200/80">
-                {filteredStudents.map((student, index) => {
-                  const credential = credentialByStudentId.get(student.id);
-                  const displayStatus: PersonOperationalStatus | 'pending' =
-                    credential?.deliveryStatus === 'generated'
-                      ? 'pending'
-                      : student.status;
-                  const isLast = index === filteredStudents.length - 1;
-                  const isUpdatingStatus = pendingStatusStudentIds.includes(
-                    student.id,
-                  );
-
-                  return (
-                    <tr key={student.id} className="align-top">
-                      <td
-                        className={classNames(
-                          'overflow-hidden px-2.5 pt-2.5 sm:px-4 sm:pt-3',
-                          isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
-                        )}
-                      >
-                        <div
-                          className="min-w-0 space-y-1 sm:space-y-1"
-                          data-testid={`university-student-mobile-summary-${student.id}`}
-                        >
-                          <div className="flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
-                            <p className="break-words text-[0.78rem] font-semibold leading-tight text-ink sm:text-[0.83rem]">
-                              {formatDisplayName(
-                                `${student.firstName} ${student.lastName}`,
-                              )}
-                            </p>
-                            <span className="text-[0.68rem] font-semibold text-ink-muted sm:hidden">
-                              ·
-                            </span>
-                            <p className="text-[0.68rem] font-semibold leading-tight text-ink-muted sm:hidden">
-                              Semestre {student.semester}
-                            </p>
-                          </div>
-                          <p className="text-[0.68rem] font-semibold leading-tight text-ink-muted sm:hidden">
-                            {formatDocumentLabel(
-                              student.documentTypeCode,
-                              student.documentNumber,
-                            )}
-                          </p>
-                          <p
-                            className="break-all text-[0.68rem] leading-tight text-ink-muted sm:hidden"
-                            title={student.email}
-                          >
-                            {student.email}
-                          </p>
-                          <p className="text-[0.68rem] leading-tight text-ink-muted sm:text-[0.76rem]">
-                            <span className="sm:hidden">
-                              Registro del estudiante{' '}
-                            </span>
-                            <span className="hidden sm:inline">
-                              Registrado{' '}
-                            </span>
-                            {new Date(student.createdAt).toLocaleDateString(
-                              'es-CO',
-                            )}
-                          </p>
-                        </div>
-                      </td>
-                      <td
-                        className={classNames(
-                          'hidden px-2.5 pt-2.5 sm:table-cell sm:px-3 sm:pt-3',
-                          isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
-                        )}
-                      >
-                        <p className="break-words text-left text-[0.78rem] font-medium text-ink sm:text-[0.83rem]">
-                          {formatDocumentLabel(
-                            student.documentTypeCode,
-                            student.documentNumber,
-                          )}
-                        </p>
-                      </td>
-                      <td
-                        className={classNames(
-                          'hidden overflow-hidden px-2.5 pt-2.5 sm:table-cell sm:px-3.5 sm:pt-3',
-                          isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
-                        )}
-                      >
-                        <p
-                          className="block truncate text-[0.76rem] text-ink-muted sm:text-sm"
-                          title={student.email}
-                        >
-                          {student.email}
-                        </p>
-                      </td>
-                      <td
-                        className={classNames(
-                          'hidden px-2 pt-2.5 text-center sm:table-cell sm:px-3 sm:pt-3.5',
-                          isLast ? 'pb-3 sm:pb-4' : 'pb-2.5 sm:pb-3.5',
-                        )}
-                      >
-                        <div className="flex items-center justify-center">
-                          <span className="text-[0.78rem] font-normal text-ink sm:text-[0.83rem]">
-                            {student.semester}
-                          </span>
-                        </div>
-                      </td>
-                      <td
-                        className={classNames(
-                          'px-2 pt-2.5 text-center sm:px-3 sm:pt-3',
-                          isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
-                        )}
-                      >
-                        <div className="flex items-center justify-center">
-                          <AdminStatusBadge
-                            entity="student"
-                            size="compact-mobile"
-                            status={displayStatus}
-                          />
-                        </div>
-                      </td>
-                      <td
-                        className={classNames(
-                          'overflow-hidden px-1.5 text-center sm:px-4',
-                          displayStatus === 'pending'
-                            ? 'pt-2.5 sm:pt-3'
-                            : 'pt-2.5 sm:pt-3.5',
-                          isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
-                        )}
-                      >
-                        <div
-                          className={classNames(
-                            'flex items-center justify-center',
-                            displayStatus === 'pending' ? '' : 'mt-0.5',
-                          )}
-                        >
-                          {displayStatus === 'pending' ? (
-                            <span
-                              className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-[0.7rem] font-semibold text-amber-700 ring-1 ring-inset ring-amber-200 sm:px-3 sm:py-1 sm:text-xs"
-                              title="Envia la credencial primero"
-                            >
-                              Pendiente
-                            </span>
-                          ) : (
-                            <button
-                              className={classNames(
-                                'inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[0.62rem] font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-65 sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs',
-                                student.status === 'active'
-                                  ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
-                                  : 'bg-primary/10 text-primary hover:bg-primary/15',
-                              )}
-                              disabled={isUpdatingStatus}
-                              type="button"
-                              onClick={() => {
-                                setStatusConfirmationStudent(student);
-                              }}
-                            >
-                              {student.status === 'active' ? (
-                                <PowerOff
-                                  aria-hidden="true"
-                                  className="h-3 w-3 sm:h-3.5 sm:w-3.5"
-                                />
-                              ) : (
-                                <Power
-                                  aria-hidden="true"
-                                  className="h-3 w-3 sm:h-3.5 sm:w-3.5"
-                                />
-                              )}
-                              <span>
-                                {student.status === 'active'
-                                  ? universityAdminContent.studentsPage
-                                      .actionLabels.deactivate
-                                  : universityAdminContent.studentsPage
-                                      .actionLabels.activate}
-                              </span>
-                            </button>
-                          )}
-                        </div>
-                      </td>
+          <>
+            <div
+              ref={tableViewportRef}
+              className="min-h-0 flex-1 overflow-x-hidden overflow-y-hidden md:overflow-x-auto [-webkit-overflow-scrolling:touch]"
+            >
+              <div className="w-full min-w-0">
+                <table className="w-full table-fixed">
+                  <colgroup>
+                    <col className="w-[56%] sm:w-[21%]" />
+                    <col className="hidden sm:table-column sm:w-[17%]" />
+                    <col className="hidden sm:table-column sm:w-[22%]" />
+                    <col className="hidden sm:table-column sm:w-[9%]" />
+                    <col className="w-[18%] sm:w-[13%]" />
+                    <col className="w-[26%] sm:w-[18%]" />
+                  </colgroup>
+                  <thead className="sticky top-0 z-10 bg-slate-100 text-left">
+                    <tr className="text-[0.6rem] font-bold uppercase tracking-[0.14em] text-ink-muted sm:text-[0.64rem] sm:tracking-[0.16em]">
+                      <th className="px-2.5 py-2 sm:px-4 sm:py-2.5">
+                        Estudiante
+                      </th>
+                      <th className="hidden px-2.5 py-2 sm:table-cell sm:px-3 sm:py-2.5">
+                        Documento
+                      </th>
+                      <th className="hidden px-2.5 py-2 sm:table-cell sm:px-3.5 sm:py-2.5">
+                        Correo
+                      </th>
+                      <th className="hidden px-2 py-2 text-center sm:table-cell sm:px-3 sm:py-2.5">
+                        Semestre
+                      </th>
+                      <th className="px-2 py-2 text-center sm:px-3 sm:py-2.5">
+                        Estado
+                      </th>
+                      <th className="px-2.5 py-2 text-center sm:px-4 sm:py-2.5">
+                        Acciones
+                      </th>
                     </tr>
-                  );
-                })}
-              </tbody>
-              </table>
+                  </thead>
+                  <tbody
+                    ref={tableBodyRef}
+                    className="divide-y divide-slate-200/80"
+                  >
+                    {paginatedStudents.map((student, index) => {
+                      const credential = credentialByStudentId.get(student.id);
+                      const displayStatus: PersonOperationalStatus | 'pending' =
+                        credential?.deliveryStatus === 'generated'
+                          ? 'pending'
+                          : student.status;
+                      const isLast = index === paginatedStudents.length - 1;
+                      const isUpdatingStatus = pendingStatusStudentIds.includes(
+                        student.id,
+                      );
+
+                      return (
+                        <tr key={student.id} className="align-top">
+                          <td
+                            className={classNames(
+                              'overflow-hidden px-2.5 pt-2.5 sm:px-4 sm:pt-3',
+                              isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
+                            )}
+                          >
+                            <div
+                              className="min-w-0 space-y-1 sm:space-y-1"
+                              data-testid={`university-student-mobile-summary-${student.id}`}
+                            >
+                              <div className="flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+                                <p className="break-words text-[0.78rem] font-semibold leading-tight text-ink sm:text-[0.83rem]">
+                                  {formatDisplayName(
+                                    `${student.firstName} ${student.lastName}`,
+                                  )}
+                                </p>
+                                <span className="text-[0.68rem] font-semibold text-ink-muted sm:hidden">
+                                  ·
+                                </span>
+                                <p className="text-[0.68rem] font-semibold leading-tight text-ink-muted sm:hidden">
+                                  Semestre {student.semester}
+                                </p>
+                              </div>
+                              <p className="text-[0.68rem] font-semibold leading-tight text-ink-muted sm:hidden">
+                                {formatDocumentLabel(
+                                  student.documentTypeCode,
+                                  student.documentNumber,
+                                )}
+                              </p>
+                              <p
+                                className="break-all text-[0.68rem] leading-tight text-ink-muted sm:hidden"
+                                title={student.email}
+                              >
+                                {student.email}
+                              </p>
+                              <p className="text-[0.68rem] leading-tight text-ink-muted sm:text-[0.76rem]">
+                                <span className="sm:hidden">
+                                  Registro del estudiante{' '}
+                                </span>
+                                <span className="hidden sm:inline">
+                                  Registrado{' '}
+                                </span>
+                                {new Date(student.createdAt).toLocaleDateString(
+                                  'es-CO',
+                                )}
+                              </p>
+                            </div>
+                          </td>
+                          <td
+                            className={classNames(
+                              'hidden px-2.5 pt-2.5 sm:table-cell sm:px-3 sm:pt-3',
+                              isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
+                            )}
+                          >
+                            <p className="break-words text-left text-[0.78rem] font-medium text-ink sm:text-[0.83rem]">
+                              {formatDocumentLabel(
+                                student.documentTypeCode,
+                                student.documentNumber,
+                              )}
+                            </p>
+                          </td>
+                          <td
+                            className={classNames(
+                              'hidden overflow-hidden px-2.5 pt-2.5 sm:table-cell sm:px-3.5 sm:pt-3',
+                              isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
+                            )}
+                          >
+                            <p
+                              className="block truncate text-[0.76rem] text-ink-muted sm:text-sm"
+                              title={student.email}
+                            >
+                              {student.email}
+                            </p>
+                          </td>
+                          <td
+                            className={classNames(
+                              'hidden px-2 pt-2.5 text-center sm:table-cell sm:px-3 sm:pt-3.5',
+                              isLast ? 'pb-3 sm:pb-4' : 'pb-2.5 sm:pb-3.5',
+                            )}
+                          >
+                            <div className="flex items-center justify-center">
+                              <span className="text-[0.78rem] font-normal text-ink sm:text-[0.83rem]">
+                                {student.semester}
+                              </span>
+                            </div>
+                          </td>
+                          <td
+                            className={classNames(
+                              'px-2 pt-2.5 text-center sm:px-3 sm:pt-3',
+                              isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
+                            )}
+                          >
+                            <div className="flex items-center justify-center">
+                              <AdminStatusBadge
+                                entity="student"
+                                size="compact-mobile"
+                                status={displayStatus}
+                              />
+                            </div>
+                          </td>
+                          <td
+                            className={classNames(
+                              'overflow-hidden px-1.5 text-center sm:px-4',
+                              displayStatus === 'pending'
+                                ? 'pt-2.5 sm:pt-3'
+                                : 'pt-2.5 sm:pt-3.5',
+                              isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
+                            )}
+                          >
+                            <div
+                              className={classNames(
+                                'flex items-center justify-center',
+                                displayStatus === 'pending' ? '' : 'mt-0.5',
+                              )}
+                            >
+                              {displayStatus === 'pending' ? (
+                                <span
+                                  className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-[0.7rem] font-semibold text-amber-700 ring-1 ring-inset ring-amber-200 sm:px-3 sm:py-1 sm:text-xs"
+                                  title="Envia la credencial primero"
+                                >
+                                  Pendiente
+                                </span>
+                              ) : (
+                                <button
+                                  className={classNames(
+                                    'inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[0.62rem] font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-65 sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs',
+                                    student.status === 'active'
+                                      ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
+                                      : 'bg-primary/10 text-primary hover:bg-primary/15',
+                                  )}
+                                  disabled={isUpdatingStatus}
+                                  type="button"
+                                  onClick={() => {
+                                    setStatusConfirmationStudent(student);
+                                  }}
+                                >
+                                  {student.status === 'active' ? (
+                                    <PowerOff
+                                      aria-hidden="true"
+                                      className="h-3 w-3 sm:h-3.5 sm:w-3.5"
+                                    />
+                                  ) : (
+                                    <Power
+                                      aria-hidden="true"
+                                      className="h-3 w-3 sm:h-3.5 sm:w-3.5"
+                                    />
+                                  )}
+                                  <span>
+                                    {student.status === 'active'
+                                      ? universityAdminContent.studentsPage
+                                          .actionLabels.deactivate
+                                      : universityAdminContent.studentsPage
+                                          .actionLabels.activate}
+                                  </span>
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+            <div className="flex shrink-0 flex-col gap-2 border-t border-slate-200/80 bg-[#f4f8ff] px-3 py-2.5 text-[0.72rem] font-semibold text-ink-muted sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:text-[0.8rem]">
+              <p className="text-center sm:text-left">
+                Mostrando {pageStartLabel}-{pageEndLabel} de{' '}
+                {filteredStudents.length} · Página {clampedCurrentPage} de{' '}
+                {totalPages}
+              </p>
+              <div className="flex items-center justify-center gap-2">
+                <button
+                  aria-label="Pagina anterior"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-ink transition duration-200 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-45"
+                  disabled={clampedCurrentPage === 1}
+                  type="button"
+                  onClick={() =>
+                    setCurrentPage((currentValue) =>
+                      Math.max(1, currentValue - 1),
+                    )
+                  }
+                >
+                  <ChevronLeft aria-hidden="true" className="h-4 w-4" />
+                </button>
+                <span className="min-w-[4.25rem] text-center text-[0.72rem] text-ink">
+                  {clampedCurrentPage}/{totalPages}
+                </span>
+                <button
+                  aria-label="Pagina siguiente"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-ink transition duration-200 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-45"
+                  disabled={clampedCurrentPage === totalPages}
+                  type="button"
+                  onClick={() =>
+                    setCurrentPage((currentValue) =>
+                      Math.min(totalPages, currentValue + 1),
+                    )
+                  }
+                >
+                  <ChevronRight aria-hidden="true" className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </>
         ) : (
           <div className="flex flex-1 items-center justify-center px-4 py-8 text-center sm:px-5">
             <p className="text-sm font-medium text-ink-muted">
-              {isLoading
-                ? 'Cargando estudiantes...'
-                : normalizedSearch || statusFilter !== 'all'
-                  ? 'No encontramos estudiantes con los filtros seleccionados.'
-                  : universityAdminContent.studentsPage.emptyState}
+              {emptyStateMessage}
             </p>
           </div>
         )}

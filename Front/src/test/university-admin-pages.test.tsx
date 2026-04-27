@@ -154,11 +154,15 @@ describe('University admin pages', () => {
     mockUniversityAdminViewport(true);
     renderUniversityApp([ROUTES.universityHome]);
 
-    await user.click(screen.getByRole('button', { name: /abrir menú de cuenta/i }));
+    await user.click(
+      screen.getByRole('button', { name: /abrir menú de cuenta/i }),
+    );
 
     const menu = screen.getByRole('menu');
     expect(
-      within(menu).getByRole('menuitem', { name: /información institucional/i }),
+      within(menu).getByRole('menuitem', {
+        name: /información institucional/i,
+      }),
     ).toHaveAttribute('href', ROUTES.universityInstitution);
     expect(
       within(menu).getByRole('menuitem', { name: /carga masiva/i }),
@@ -308,9 +312,7 @@ describe('University admin pages', () => {
     renderUniversityApp([ROUTES.universityRegisterStudent]);
 
     await fillStudentForm(user);
-    await user.click(
-      screen.getByRole('button', { name: /^registrar$/i }),
-    );
+    await user.click(screen.getByRole('button', { name: /^registrar$/i }));
 
     expect(await screen.findByText(/Juliana Marin/i)).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent(
@@ -405,6 +407,19 @@ describe('University admin pages', () => {
     expect(studentSummary).toHaveTextContent(/Registro del estudiante/i);
   });
 
+  it('muestra controles de paginacion en la tabla de estudiantes', () => {
+    renderUniversityApp([ROUTES.universityStudents]);
+
+    expect(screen.getByText(/Mostrando 1-4 de 4/i)).toBeInTheDocument();
+    expect(screen.getByText(/P[a\u00e1]gina 1 de 1/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /pagina anterior/i }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: /pagina siguiente/i }),
+    ).toBeDisabled();
+  });
+
   it('solicita confirmacion antes de cambiar el estado del estudiante', async () => {
     const user = userEvent.setup();
 
@@ -497,9 +512,7 @@ describe('University admin pages', () => {
     expect(documentInput).toHaveValue('1032');
     await user.clear(documentInput);
 
-await user.click(
-      screen.getByRole('button', { name: /^registrar$/i }),
-    );
+    await user.click(screen.getByRole('button', { name: /^registrar$/i }));
 
     expect(document.querySelector('.admin-scrollbar')).toBeInTheDocument();
     expect(
@@ -516,9 +529,7 @@ await user.click(
     renderUniversityApp([ROUTES.universityRegisterTeacher]);
 
     await fillTeacherForm(user);
-    await user.click(
-      screen.getByRole('button', { name: /^registrar$/i }),
-    );
+    await user.click(screen.getByRole('button', { name: /^registrar$/i }));
 
     expect(await screen.findByText(/Patricia Mendoza/i)).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent(
@@ -617,9 +628,9 @@ await user.click(
     expect(credentialSummary).toHaveTextContent(
       /valentina\.rios@clinicadelnorte\.edu\.co/i,
     );
-    expect(screen.getByText(/correo electr[oó]nico/i).closest('th')).toHaveClass(
-      'hidden',
-    );
+    expect(
+      screen.getByText(/correo electr[oó]nico/i).closest('th'),
+    ).toHaveClass('hidden');
   });
 
   it('no cambia el estado del docente hasta confirmar la advertencia', async () => {
@@ -670,9 +681,7 @@ await user.click(
     expect(screen.getByRole('button', { name: /^registrar$/i })).toHaveClass(
       'bg-brand-gradient',
     );
-    expect(
-      document.querySelector('.admin-scrollbar'),
-    ).not.toBeInTheDocument();
+    expect(document.querySelector('.admin-scrollbar')).not.toBeInTheDocument();
     expect(
       screen.queryByText(
         /completa el formulario para registrar un nuevo docente dentro de la universidad/i,
@@ -688,9 +697,7 @@ await user.click(
     expect(documentInput).toHaveValue('8011222');
     await user.clear(documentInput);
 
-    await user.click(
-      screen.getByRole('button', { name: /^registrar$/i }),
-    );
+    await user.click(screen.getByRole('button', { name: /^registrar$/i }));
 
     expect(
       await screen.findByText(/el número de documento es obligatorio/i),
@@ -922,7 +929,9 @@ await user.click(
       within(removableRow!).getByRole('button', { name: /eliminar/i }),
     );
     expect(
-      screen.getByRole('heading', { name: /quieres eliminar esta credencial/i }),
+      screen.getByRole('heading', {
+        name: /quieres eliminar esta credencial/i,
+      }),
     ).toBeInTheDocument();
     await user.click(
       screen.getByRole('button', { name: /s[i\u00ed], eliminar/i }),
