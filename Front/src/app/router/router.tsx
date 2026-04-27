@@ -2,9 +2,13 @@ import { createBrowserRouter } from 'react-router-dom';
 import { Navigate } from 'react-router-dom';
 
 import { ROUTES } from '@/constants/routes';
+import { RouterErrorPage } from '@/app/router/RouterErrorPage';
 import { HomePage } from '@/pages/home/HomePage';
 
 export const router = createBrowserRouter([
+  {
+    errorElement: <RouterErrorPage />,
+    children: [
   {
     path: ROUTES.home,
     Component: HomePage,
@@ -343,5 +347,7 @@ export const router = createBrowserRouter([
       const { NotFoundPage } = await import('@/pages/home/NotFoundPage');
       return { Component: NotFoundPage };
     },
+  },
+    ],
   },
 ]);
