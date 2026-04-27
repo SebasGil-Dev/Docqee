@@ -61,6 +61,8 @@ export type AdminShellNotification = PortalNotification;
 
 const SIDEBAR_STATE_STORAGE_KEY = 'docqee-admin-sidebar-collapsed';
 const MOBILE_ADMIN_MEDIA_QUERY = '(max-width: 1023px)';
+const MOBILE_ADMIN_LANDSCAPE_MEDIA_QUERY =
+  '(max-width: 1023px) and (orientation: landscape) and (max-height: 540px)';
 
 const navigationIcons: Record<AdminShellNavigationIcon, typeof Building2> = {
   badge: Badge,
@@ -111,6 +113,17 @@ function getInitialMobileViewportState() {
   return window.matchMedia(MOBILE_ADMIN_MEDIA_QUERY).matches;
 }
 
+function getInitialMobileLandscapeViewportState() {
+  if (
+    typeof window === 'undefined' ||
+    typeof window.matchMedia !== 'function'
+  ) {
+    return false;
+  }
+
+  return window.matchMedia(MOBILE_ADMIN_LANDSCAPE_MEDIA_QUERY).matches;
+}
+
 function useIsMobileViewport() {
   const [isMobileViewport, setIsMobileViewport] = useState(
     getInitialMobileViewportState,
@@ -139,6 +152,38 @@ function useIsMobileViewport() {
   }, []);
 
   return isMobileViewport;
+}
+
+function useIsMobileLandscapeViewport() {
+  const [isMobileLandscapeViewport, setIsMobileLandscapeViewport] = useState(
+    getInitialMobileLandscapeViewportState,
+  );
+
+  useEffect(() => {
+    if (
+      typeof window === 'undefined' ||
+      typeof window.matchMedia !== 'function'
+    ) {
+      return undefined;
+    }
+
+    const mediaQueryList = window.matchMedia(
+      MOBILE_ADMIN_LANDSCAPE_MEDIA_QUERY,
+    );
+    const handleChange = (event: MediaQueryListEvent) => {
+      setIsMobileLandscapeViewport(event.matches);
+    };
+
+    setIsMobileLandscapeViewport(mediaQueryList.matches);
+
+    mediaQueryList.addEventListener('change', handleChange);
+
+    return () => {
+      mediaQueryList.removeEventListener('change', handleChange);
+    };
+  }, []);
+
+  return isMobileLandscapeViewport;
 }
 
 function getNotificationToneClasses(
@@ -197,6 +242,7 @@ export function AdminShell({
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const isMobileViewport = useIsMobileViewport();
+  const isMobileLandscapeViewport = useIsMobileLandscapeViewport();
   const notificationsRef = useRef<HTMLDivElement | null>(null);
   const accountMenuRef = useRef<HTMLDivElement | null>(null);
   const adminFirstName =
@@ -227,7 +273,9 @@ export function AdminShell({
     mainScrollMode === 'section' && showMobileBottomNavigation;
   const surfaceInsetClassName = shouldConstrainMainScroll
     ? 'px-0 py-0 lg:px-4 lg:py-3 xl:px-5'
-    : 'px-4 py-4 sm:px-6 lg:px-4 lg:py-3 xl:px-5';
+    : isMobileLandscapeViewport
+      ? 'px-2 py-1.5 sm:px-3 sm:py-2 lg:px-4 lg:py-3 xl:px-5'
+      : 'px-4 py-4 sm:px-6 lg:px-4 lg:py-3 xl:px-5';
   const outerPaddingClassName =
     surfacePaddingMode === 'outer' ? surfaceInsetClassName : 'p-0';
   const innerPaddingClassName =
@@ -251,7 +299,9 @@ export function AdminShell({
     (Array.isArray(headerNotifications) || Boolean(notificationsPageTo)) &&
     !(isMobileViewport && hideHeaderNotificationsOnMobile);
   const showAccountMenuNotificationBadge =
-    isMobileViewport && hideHeaderNotificationsOnMobile && hasUnreadNotifications;
+    isMobileViewport &&
+    hideHeaderNotificationsOnMobile &&
+    hasUnreadNotifications;
   const notificationButtonLabel = unreadNotificationCount
     ? `Notificaciones (${unreadNotificationCount})`
     : 'Notificaciones';
@@ -312,6 +362,7 @@ export function AdminShell({
     <div
       className={classNames(
         'admin-shell-density fixed inset-0 h-[100dvh] w-full overflow-hidden overscroll-none lg:h-screen',
+        isMobileLandscapeViewport && 'admin-shell-mobile-landscape',
         shellBackgroundClassName,
       )}
     >
@@ -330,19 +381,31 @@ export function AdminShell({
             contentBackgroundClassName,
             innerPaddingClassName,
             shouldConstrainMainScroll
-              ? 'gap-2 rounded-none lg:gap-3'
-              : 'gap-4 rounded-none lg:gap-3',
+              ? isMobileLandscapeViewport
+                ? 'gap-1 rounded-none lg:gap-3'
+                : 'gap-2 rounded-none lg:gap-3'
+              : isMobileLandscapeViewport
+                ? 'gap-2 rounded-none lg:gap-3'
+                : 'gap-4 rounded-none lg:gap-3',
           )}
         >
           <header
             className={classNames(
-              'relative z-40 overflow-visible bg-[#ffffff] px-4 py-2 backdrop-blur-sm sm:px-5 sm:py-2.5 lg:px-5 lg:py-2',
+              'admin-shell-header relative z-40 overflow-visible bg-[#ffffff] backdrop-blur-sm lg:px-5 lg:py-2',
+              isMobileLandscapeViewport
+                ? 'px-3 py-1'
+                : 'px-4 py-2 sm:px-5 sm:py-2.5',
               shouldConstrainMainScroll
                 ? 'rounded-none shadow-none lg:rounded-[1.5rem] lg:shadow-ambient'
                 : 'rounded-[1.5rem] shadow-ambient',
             )}
           >
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            <div
+              className={classNames(
+                'flex flex-wrap items-center justify-between',
+                isMobileLandscapeViewport ? 'gap-1.5' : 'gap-3',
+              )}
+            >
               <div className="-translate-y-0.5 min-w-0">
                 <Link
                   aria-label="Volver al inicio"
@@ -354,7 +417,12 @@ export function AdminShell({
                     <p className="truncate font-headline text-[0.96rem] font-extrabold leading-none tracking-tight text-ink sm:text-[1rem]">
                       Docqee
                     </p>
-                    <p className="mt-[0.2rem] truncate whitespace-nowrap text-[0.58rem] font-extrabold uppercase leading-none tracking-[0.16em] text-primary sm:text-[0.62rem] sm:tracking-[0.18em]">
+                    <p
+                      className={classNames(
+                        'mt-[0.2rem] truncate whitespace-nowrap text-[0.58rem] font-extrabold uppercase leading-none tracking-[0.16em] text-primary sm:text-[0.62rem] sm:tracking-[0.18em]',
+                        isMobileLandscapeViewport && 'hidden',
+                      )}
+                    >
                       <span className="sm:hidden">
                         {content.mobileTitle ?? content.title}
                       </span>
@@ -374,13 +442,16 @@ export function AdminShell({
                       aria-expanded={isNotificationsOpen}
                       aria-haspopup="dialog"
                       aria-label={notificationButtonLabel}
-                      className="relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-ink-muted transition-colors duration-200 hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/12 sm:h-7 sm:w-7"
+                      className={classNames(
+                        'relative inline-flex shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-ink-muted transition-colors duration-200 hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/12',
+                        isMobileLandscapeViewport
+                          ? 'h-7 w-7'
+                          : 'h-8 w-8 sm:h-7 sm:w-7',
+                      )}
                       type="button"
                       onClick={() => {
                         setIsAccountMenuOpen(false);
-                        setIsNotificationsOpen(
-                          (currentValue) => !currentValue,
-                        );
+                        setIsNotificationsOpen((currentValue) => !currentValue);
                       }}
                     >
                       <Bell
@@ -509,7 +580,10 @@ export function AdminShell({
                   <img
                     alt={adminFullName}
                     className={classNames(
-                      'h-9 w-9 shrink-0 ring-2 ring-primary/20 sm:h-8 sm:w-8',
+                      'shrink-0 ring-2 ring-primary/20',
+                      isMobileLandscapeViewport
+                        ? 'h-7 w-7'
+                        : 'h-9 w-9 sm:h-8 sm:w-8',
                       avatarKind === 'logo'
                         ? 'rounded-xl bg-white object-contain'
                         : 'rounded-full object-cover',
@@ -518,7 +592,14 @@ export function AdminShell({
                     src={optimizedAvatarSrc}
                   />
                 ) : (
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-[0.8rem] font-extrabold uppercase tracking-[0.12em] text-white sm:h-8 sm:w-8 sm:text-[0.72rem]">
+                  <span
+                    className={classNames(
+                      'flex shrink-0 items-center justify-center rounded-full bg-primary font-extrabold uppercase tracking-[0.12em] text-white',
+                      isMobileLandscapeViewport
+                        ? 'h-7 w-7 text-[0.68rem]'
+                        : 'h-9 w-9 text-[0.8rem] sm:h-8 sm:w-8 sm:text-[0.72rem]',
+                    )}
+                  >
                     {adminInitials}
                   </span>
                 )}
@@ -528,7 +609,10 @@ export function AdminShell({
                     aria-expanded={isAccountMenuOpen}
                     aria-haspopup="menu"
                     aria-label={accountMenuButtonLabel}
-                    className="relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-ink-muted transition-colors duration-200 hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/12"
+                    className={classNames(
+                      'relative inline-flex shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-ink-muted transition-colors duration-200 hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/12',
+                      isMobileLandscapeViewport ? 'h-7 w-7' : 'h-8 w-8',
+                    )}
                     type="button"
                     onClick={() => {
                       setIsNotificationsOpen(false);
@@ -588,7 +672,12 @@ export function AdminShell({
                     </div>
                   ) : null}
                 </div>
-                <p className="hidden truncate text-[0.78rem] font-semibold text-ink sm:block sm:text-[0.82rem]">
+                <p
+                  className={classNames(
+                    'hidden truncate text-[0.78rem] font-semibold text-ink sm:text-[0.82rem]',
+                    isMobileLandscapeViewport ? 'sm:hidden' : 'sm:block',
+                  )}
+                >
                   {adminFullName}
                 </p>
               </div>
@@ -763,9 +852,11 @@ export function AdminShell({
                     ? 'overflow-hidden overscroll-none'
                     : 'overflow-y-auto',
                   showMobileBottomNavigation &&
-                    (isCompactMobileNavigation
-                      ? 'pb-[4.75rem]'
-                      : 'pb-[5.75rem]'),
+                    (isMobileLandscapeViewport
+                      ? 'pb-[2.85rem]'
+                      : isCompactMobileNavigation
+                        ? 'pb-[4.75rem]'
+                        : 'pb-[5.75rem]'),
                 )}
                 id="admin-main-content"
                 tabIndex={-1}
@@ -781,6 +872,7 @@ export function AdminShell({
           activePathname={location.pathname}
           density={mobileNavigationDensity}
           items={mobileBottomNavigationItems}
+          landscapeCompact={isMobileLandscapeViewport}
         />
       ) : null}
     </div>

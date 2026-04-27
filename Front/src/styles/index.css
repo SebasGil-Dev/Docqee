@@ -434,6 +434,66 @@
       padding-right: 0.9rem;
     }
   }
+
+  @media (max-width: 1023px) and (orientation: landscape) and (max-height: 540px) {
+    .admin-shell-mobile-landscape .admin-page-header {
+      gap: 0.35rem;
+    }
+
+    .admin-shell-mobile-landscape
+      .section-heading
+      > :not([hidden])
+      ~ :not([hidden]) {
+      margin-top: 0.25rem;
+    }
+
+    .admin-shell-mobile-landscape .section-heading__eyebrow,
+    .admin-shell-mobile-landscape .section-heading__description {
+      display: none;
+    }
+
+    .admin-shell-mobile-landscape .section-heading__title {
+      font-size: clamp(1.05rem, 3.9vw, 1.35rem);
+      line-height: 1;
+    }
+
+    .admin-shell-mobile-landscape .admin-panel-card-shell {
+      padding: 0.08rem;
+    }
+
+    .admin-shell-mobile-landscape .admin-panel-card-body {
+      border-radius: 1rem;
+    }
+
+    .admin-shell-mobile-landscape .admin-panel-card-body > .border-b {
+      padding-top: 0.45rem;
+      padding-bottom: 0.45rem;
+    }
+
+    .admin-shell-mobile-landscape .admin-panel-card-body > .admin-scrollbar,
+    .admin-shell-mobile-landscape
+      .admin-panel-card-body
+      > form.admin-scrollbar {
+      padding-top: 0.45rem;
+      padding-bottom: 0.45rem;
+    }
+
+    .admin-shell-mobile-landscape .admin-scrollbar table thead th {
+      padding-top: 0.32rem;
+      padding-bottom: 0.32rem;
+      font-size: 0.52rem;
+      letter-spacing: 0.1em;
+    }
+
+    .admin-shell-mobile-landscape .admin-scrollbar table tbody td {
+      padding-top: 0.38rem;
+      padding-bottom: 0.38rem;
+    }
+
+    .admin-shell-mobile-landscape .admin-scrollbar table tbody p {
+      line-height: 1.18;
+    }
+  }
 }
 
 @media (min-width: 1024px) and (max-width: 1535px),
