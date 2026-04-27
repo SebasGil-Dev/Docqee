@@ -1,5 +1,7 @@
 import {
   Check,
+  ChevronLeft,
+  ChevronRight,
   Mail,
   PencilLine,
   RotateCcw,
@@ -87,6 +89,11 @@ const credentialFilterOptions: Array<{
 ];
 
 const AUTO_REFRESH_MIN_INTERVAL_MS = 5000;
+const DEFAULT_ROWS_PER_PAGE = 5;
+const MIN_ROWS_PER_PAGE = 1;
+const TABLE_HEADER_HEIGHT_PX = 38;
+const TABLE_ROW_HEIGHT_FALLBACK_PX = 72;
+const TABLE_HEIGHT_PADDING_PX = 0;
 
 export function UniversityCredentialsPage() {
   const {
@@ -119,7 +126,11 @@ export function UniversityCredentialsPage() {
     useState<UniversityCredentialConfirmation | null>(null);
   const [isConfirmationSubmitting, setIsConfirmationSubmitting] =
     useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
   const filterMenuRef = useRef<HTMLDivElement | null>(null);
+  const tableViewportRef = useRef<HTMLDivElement | null>(null);
+  const tableBodyRef = useRef<HTMLTableSectionElement | null>(null);
   const lastAutoRefreshAtRef = useRef(0);
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const filteredCredentialRows = credentialRows.filter((credential) => {
@@ -142,6 +153,26 @@ export function UniversityCredentialsPage() {
     normalizedSearch || statusFilter !== 'all'
       ? 'No encontramos credenciales con los filtros seleccionados.'
       : universityAdminContent.credentialsPage.emptyState;
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredCredentialRows.length / rowsPerPage),
+  );
+  const clampedCurrentPage = Math.min(currentPage, totalPages);
+  const pageStartIndex = (clampedCurrentPage - 1) * rowsPerPage;
+  const paginatedCredentialRows = useMemo(
+    () =>
+      filteredCredentialRows.slice(
+        pageStartIndex,
+        pageStartIndex + rowsPerPage,
+      ),
+    [filteredCredentialRows, pageStartIndex, rowsPerPage],
+  );
+  const pageStartLabel =
+    filteredCredentialRows.length > 0 ? pageStartIndex + 1 : 0;
+  const pageEndLabel = Math.min(
+    pageStartIndex + paginatedCredentialRows.length,
+    filteredCredentialRows.length,
+  );
   const handleStartEmailEdit = (row: CredentialRow) => {
     setEditingCredentialId(row.id);
     setEmailDraft(row.studentEmail);
@@ -291,6 +322,81 @@ export function UniversityCredentialsPage() {
   }, [feedbackMessage]);
 
   useEffect(() => {
+    const tableViewportElement = tableViewportRef.current;
+
+    if (!tableViewportElement) {
+      return undefined;
+    }
+
+    const tableViewport = tableViewportElement;
+
+    function updateRowsPerPage() {
+      const nextAvailableHeight = tableViewport.getBoundingClientRect().height;
+
+      if (nextAvailableHeight <= 0) {
+        return;
+      }
+
+      const tableHeaderHeight =
+        tableViewport.querySelector('thead')?.getBoundingClientRect().height ??
+        TABLE_HEADER_HEIGHT_PX;
+      const rowHeights = Array.from(
+        tableBodyRef.current?.querySelectorAll('tr') ?? [],
+        (row) => row.getBoundingClientRect().height,
+      ).filter((height) => height > 0);
+      const estimatedRowHeight =
+        rowHeights.length > 0
+          ? rowHeights.reduce((total, height) => total + height, 0) /
+            rowHeights.length
+          : TABLE_ROW_HEIGHT_FALLBACK_PX;
+      const nextRowsPerPage = Math.max(
+        MIN_ROWS_PER_PAGE,
+        Math.floor(
+          (nextAvailableHeight - tableHeaderHeight - TABLE_HEIGHT_PADDING_PX) /
+            estimatedRowHeight,
+        ),
+      );
+
+      setRowsPerPage((currentRowsPerPage) =>
+        currentRowsPerPage === nextRowsPerPage
+          ? currentRowsPerPage
+          : nextRowsPerPage,
+      );
+    }
+
+    updateRowsPerPage();
+
+    if (typeof ResizeObserver !== 'undefined') {
+      const resizeObserver = new ResizeObserver(updateRowsPerPage);
+      resizeObserver.observe(tableViewport);
+
+      return () => {
+        resizeObserver.disconnect();
+      };
+    }
+
+    window.addEventListener('resize', updateRowsPerPage);
+
+    return () => {
+      window.removeEventListener('resize', updateRowsPerPage);
+    };
+  }, [
+    editingCredentialId,
+    emailError,
+    filteredCredentialRows.length,
+    pageStartIndex,
+    paginatedCredentialRows.length,
+  ]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [normalizedSearch, statusFilter]);
+
+  useEffect(() => {
+    setCurrentPage((currentValue) => Math.min(currentValue, totalPages));
+  }, [totalPages]);
+
+  useEffect(() => {
     if (!isFilterMenuOpen) {
       return undefined;
     }
@@ -383,7 +489,7 @@ export function UniversityCredentialsPage() {
           <p role="alert">{errorMessage}</p>
         </SurfaceCard>
       ) : null}
-      <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
+      <AdminPanelCard className="min-h-0 flex-1" panelClassName="bg-[#f4f8ff]">
         <div className="flex flex-col gap-2 border-b border-slate-200/80 px-3 py-2 sm:gap-3 sm:px-5 sm:py-3.5">
           <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
             <div className="min-w-0 space-y-0.5 sm:space-y-1">
@@ -522,325 +628,379 @@ export function UniversityCredentialsPage() {
           ) : null}
         </div>
         {filteredCredentialRows.length > 0 ? (
-          <div className="admin-scrollbar min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
-            <div className="w-full min-w-0">
-              <table className="w-full table-fixed">
-              <colgroup>
-                <col className="w-[50%] sm:w-[27%]" />
-                <col className="hidden sm:table-column sm:w-[29%]" />
-                <col className="w-[20%] sm:w-[14%]" />
-                <col className="w-[30%] sm:w-[30%]" />
-              </colgroup>
-              <thead className="sticky top-0 z-10 bg-slate-100 text-left">
-                <tr className="text-[0.6rem] font-bold uppercase tracking-[0.14em] text-ink-muted sm:text-[0.64rem] sm:tracking-[0.16em]">
-                  <th className="px-2.5 py-2 sm:px-4 sm:py-2.5">
-                    Estudiante
-                  </th>
-                  <th className="hidden px-2.5 py-2 sm:table-cell sm:px-3 sm:py-2.5">
-                    Correo electrónico
-                  </th>
-                  <th className="py-2 pl-1 pr-3 text-center sm:px-3 sm:py-2.5">
-                    Estado
-                  </th>
-                  <th className="py-2 pl-3 pr-1.5 text-center sm:px-3.5 sm:py-2.5">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200/80">
-                {filteredCredentialRows.map((credential, index) => {
-                  const isGenerated = credential.deliveryStatus === 'generated';
-                  const isEditing = editingCredentialId === credential.id;
-                  const isLast = index === filteredCredentialRows.length - 1;
+          <>
+            <div
+              ref={tableViewportRef}
+              className="admin-scrollbar min-h-0 flex-1 overflow-x-hidden overflow-y-hidden md:overflow-x-auto [-webkit-overflow-scrolling:touch]"
+            >
+              <div className="w-full min-w-0">
+                <table className="w-full table-fixed">
+                  <colgroup>
+                    <col className="w-[50%] sm:w-[27%]" />
+                    <col className="hidden sm:table-column sm:w-[29%]" />
+                    <col className="w-[20%] sm:w-[14%]" />
+                    <col className="w-[30%] sm:w-[30%]" />
+                  </colgroup>
+                  <thead className="sticky top-0 z-10 bg-slate-100 text-left">
+                    <tr className="text-[0.6rem] font-bold uppercase tracking-[0.14em] text-ink-muted sm:text-[0.64rem] sm:tracking-[0.16em]">
+                      <th className="px-2.5 py-2 sm:px-4 sm:py-2.5">
+                        Estudiante
+                      </th>
+                      <th className="hidden px-2.5 py-2 sm:table-cell sm:px-3 sm:py-2.5">
+                        Correo electrónico
+                      </th>
+                      <th className="py-2 pl-1 pr-3 text-center sm:px-3 sm:py-2.5">
+                        Estado
+                      </th>
+                      <th className="py-2 pl-3 pr-1.5 text-center sm:px-3.5 sm:py-2.5">
+                        Acciones
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody
+                    ref={tableBodyRef}
+                    className="divide-y divide-slate-200/80"
+                  >
+                    {paginatedCredentialRows.map((credential, index) => {
+                      const isGenerated =
+                        credential.deliveryStatus === 'generated';
+                      const isEditing = editingCredentialId === credential.id;
+                      const isLast =
+                        index === paginatedCredentialRows.length - 1;
 
-                  return (
-                    <tr key={credential.id} className="align-top">
-                      <td
-                        className={classNames(
-                          'overflow-hidden px-2.5 pt-2.5 sm:px-4 sm:pt-3',
-                          isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
-                        )}
-                      >
-                        <div
-                          className="min-w-0 space-y-1 sm:space-y-1"
-                          data-testid={`university-credential-mobile-summary-${credential.id}`}
-                        >
-                          <p className="break-words text-[0.78rem] font-semibold leading-tight text-ink sm:text-[0.83rem]">
-                            {credential.studentName}
-                          </p>
-                          <p className="text-[0.68rem] text-ink-muted sm:text-[0.76rem]">
-                            {credential.studentDocument}
-                          </p>
-                          {isEditing ? (
-                            <div className="max-w-full space-y-1.5 sm:hidden">
-                              <label
-                                className="sr-only"
-                                htmlFor={`credential-email-mobile-${credential.id}`}
-                              >
-                                Correo electrÃ³nico de {credential.studentName}
-                              </label>
-                              <div className="relative">
+                      return (
+                        <tr key={credential.id} className="align-top">
+                          <td
+                            className={classNames(
+                              'overflow-hidden px-2.5 pt-2.5 sm:px-4 sm:pt-3',
+                              isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
+                            )}
+                          >
+                            <div
+                              className="min-w-0 space-y-1 sm:space-y-1"
+                              data-testid={`university-credential-mobile-summary-${credential.id}`}
+                            >
+                              <p className="break-words text-[0.78rem] font-semibold leading-tight text-ink sm:text-[0.83rem]">
+                                {credential.studentName}
+                              </p>
+                              <p className="text-[0.68rem] text-ink-muted sm:text-[0.76rem]">
+                                {credential.studentDocument}
+                              </p>
+                              {isEditing ? (
+                                <div className="max-w-full space-y-1.5 sm:hidden">
+                                  <label
+                                    className="sr-only"
+                                    htmlFor={`credential-email-mobile-${credential.id}`}
+                                  >
+                                    Correo electrÃ³nico de{' '}
+                                    {credential.studentName}
+                                  </label>
+                                  <div className="relative">
+                                    <Mail
+                                      aria-hidden="true"
+                                      className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ghost"
+                                    />
+                                    <input
+                                      className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-8.5 pr-3 text-[0.78rem] text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:border-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                                      id={`credential-email-mobile-${credential.id}`}
+                                      type="email"
+                                      value={emailDraft}
+                                      onChange={(event) => {
+                                        setEmailDraft(event.target.value);
+                                        setEmailError(null);
+                                      }}
+                                    />
+                                  </div>
+                                  {emailError ? (
+                                    <p className="text-xs font-medium text-rose-700">
+                                      {emailError}
+                                    </p>
+                                  ) : null}
+                                </div>
+                              ) : (
+                                <p
+                                  className="break-all text-[0.68rem] leading-tight text-ink-muted sm:hidden"
+                                  title={credential.studentEmail}
+                                >
+                                  {credential.studentEmail}
+                                </p>
+                              )}
+                              <p className="text-[0.68rem] text-ink-muted sm:text-[0.76rem]">
+                                {formatLastSentAt(credential.lastSentAt)}
+                              </p>
+                            </div>
+                          </td>
+                          <td
+                            className={classNames(
+                              'hidden overflow-hidden px-2.5 pt-2.5 sm:table-cell sm:px-3 sm:pt-3',
+                              isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
+                            )}
+                          >
+                            {isEditing ? (
+                              <div className="max-w-full space-y-1.5">
+                                <label
+                                  className="sr-only"
+                                  htmlFor={`credential-email-${credential.id}`}
+                                >
+                                  Correo electrónico de {credential.studentName}
+                                </label>
+                                <div className="relative">
+                                  <Mail
+                                    aria-hidden="true"
+                                    className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ghost sm:left-3.5 sm:h-4 sm:w-4"
+                                  />
+                                  <input
+                                    className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-8.5 pr-3 text-[0.78rem] text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:border-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:pl-10 sm:pr-4 sm:text-[0.82rem]"
+                                    id={`credential-email-${credential.id}`}
+                                    type="email"
+                                    value={emailDraft}
+                                    onChange={(event) => {
+                                      setEmailDraft(event.target.value);
+                                      setEmailError(null);
+                                    }}
+                                  />
+                                </div>
+                                {emailError ? (
+                                  <p className="text-xs font-medium text-rose-700">
+                                    {emailError}
+                                  </p>
+                                ) : null}
+                              </div>
+                            ) : (
+                              <div className="flex min-w-0 items-center gap-1.5 text-[0.76rem] text-ink-muted sm:gap-1.5 sm:text-[0.82rem]">
                                 <Mail
                                   aria-hidden="true"
-                                  className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ghost"
+                                  className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4"
                                 />
-                                <input
-                                  className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-8.5 pr-3 text-[0.78rem] text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:border-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
-                                  id={`credential-email-mobile-${credential.id}`}
-                                  type="email"
-                                  value={emailDraft}
-                                  onChange={(event) => {
-                                    setEmailDraft(event.target.value);
-                                    setEmailError(null);
-                                  }}
-                                />
+                                <span
+                                  className="min-w-0 truncate"
+                                  title={credential.studentEmail}
+                                >
+                                  {credential.studentEmail}
+                                </span>
                               </div>
-                              {emailError ? (
-                                <p className="text-xs font-medium text-rose-700">
-                                  {emailError}
-                                </p>
-                              ) : null}
-                            </div>
-                          ) : (
-                            <p
-                              className="break-all text-[0.68rem] leading-tight text-ink-muted sm:hidden"
-                              title={credential.studentEmail}
-                            >
-                              {credential.studentEmail}
-                            </p>
-                          )}
-                          <p className="text-[0.68rem] text-ink-muted sm:text-[0.76rem]">
-                            {formatLastSentAt(credential.lastSentAt)}
-                          </p>
-                        </div>
-                      </td>
-                      <td
-                        className={classNames(
-                          'hidden overflow-hidden px-2.5 pt-2.5 sm:table-cell sm:px-3 sm:pt-3',
-                          isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
-                        )}
-                      >
-                        {isEditing ? (
-                          <div className="max-w-full space-y-1.5">
-                            <label
-                              className="sr-only"
-                              htmlFor={`credential-email-${credential.id}`}
-                            >
-                              Correo electrónico de {credential.studentName}
-                            </label>
-                            <div className="relative">
-                              <Mail
-                                aria-hidden="true"
-                                className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ghost sm:left-3.5 sm:h-4 sm:w-4"
-                              />
-                              <input
-                                className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-8.5 pr-3 text-[0.78rem] text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:border-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:pl-10 sm:pr-4 sm:text-[0.82rem]"
-                                id={`credential-email-${credential.id}`}
-                                type="email"
-                                value={emailDraft}
-                                onChange={(event) => {
-                                  setEmailDraft(event.target.value);
-                                  setEmailError(null);
-                                }}
+                            )}
+                          </td>
+                          <td
+                            className={classNames(
+                              'pt-2.5 pl-1 pr-3 text-center sm:px-3 sm:pt-3',
+                              isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
+                            )}
+                          >
+                            <div className="flex items-center justify-center">
+                              <AdminStatusBadge
+                                entity="credential"
+                                size="compact-mobile"
+                                status={credential.deliveryStatus}
                               />
                             </div>
-                            {emailError ? (
-                              <p className="text-xs font-medium text-rose-700">
-                                {emailError}
-                              </p>
-                            ) : null}
-                          </div>
-                        ) : (
-                          <div className="flex min-w-0 items-center gap-1.5 text-[0.76rem] text-ink-muted sm:gap-1.5 sm:text-[0.82rem]">
-                            <Mail
-                              aria-hidden="true"
-                              className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4"
-                            />
-                            <span
-                              className="min-w-0 truncate"
-                              title={credential.studentEmail}
-                            >
-                              {credential.studentEmail}
-                            </span>
-                          </div>
-                        )}
-                      </td>
-                      <td
-                        className={classNames(
-                          'pt-2.5 pl-1 pr-3 text-center sm:px-3 sm:pt-3',
-                          isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
-                        )}
-                      >
-                        <div className="flex items-center justify-center">
-                          <AdminStatusBadge
-                            entity="credential"
-                            size="compact-mobile"
-                            status={credential.deliveryStatus}
-                          />
-                        </div>
-                      </td>
-                      <td
-                        className={classNames(
-                          'pt-2.5 pl-3 pr-1.5 text-center sm:px-3.5 sm:pt-3',
-                          isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
-                        )}
-                      >
-                        <div className="mt-0.5 flex flex-wrap items-center justify-center gap-1 sm:gap-1.5">
-                          {isEditing ? (
-                            <>
-                              <button
-                                aria-label={
-                                  universityAdminContent.credentialsPage
-                                    .actionLabels.saveEmail
-                                }
-                                className="inline-flex h-[1.875rem] w-[1.875rem] shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition duration-200 hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-auto sm:w-auto sm:gap-1 sm:px-2.5 sm:py-1 sm:text-xs sm:font-semibold"
-                                disabled={isLoading}
-                                type="button"
-                                onClick={() =>
-                                  handleSaveEmail(
-                                    credential.id,
-                                    credential.studentName,
-                                  )
-                                }
-                              >
-                                <Check aria-hidden="true" className="h-4 w-4" />
-                                <span className="hidden sm:inline">
-                                  {
-                                    universityAdminContent.credentialsPage
-                                      .actionLabels.saveEmail
-                                  }
-                                </span>
-                              </button>
-                              <button
-                                aria-label="Cancelar"
-                                className="inline-flex h-[1.875rem] w-[1.875rem] shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 sm:h-auto sm:w-auto sm:gap-1 sm:px-2.5 sm:py-1 sm:text-xs sm:font-semibold"
-                                disabled={isLoading}
-                                type="button"
-                                onClick={handleCancelEmailEdit}
-                              >
-                                <X aria-hidden="true" className="h-4 w-4" />
-                                <span className="hidden sm:inline">
-                                  Cancelar
-                                </span>
-                              </button>
-                            </>
-                          ) : (
-                            <>
-                              <button
-                                aria-label={
-                                  isGenerated
-                                    ? universityAdminContent.credentialsPage
-                                        .actionLabels.send
-                                    : universityAdminContent.credentialsPage
-                                        .actionLabels.resend
-                                }
-                                title={
-                                  isGenerated
-                                    ? universityAdminContent.credentialsPage
-                                        .actionLabels.send
-                                    : universityAdminContent.credentialsPage
-                                        .actionLabels.resend
-                                }
-                                className={classNames(
-                                  'inline-flex h-[1.875rem] w-[1.875rem] shrink-0 items-center justify-center rounded-full transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-auto sm:w-auto sm:gap-1 sm:px-2.5 sm:py-1 sm:text-xs sm:font-semibold',
-                                  isGenerated
-                                    ? 'bg-primary/10 text-primary hover:bg-primary/15'
-                                    : 'bg-sky-50 text-sky-700 hover:bg-sky-100',
-                                )}
-                                disabled={isLoading}
-                                type="button"
-                                onClick={() => {
-                                  setPendingConfirmation({
-                                    action: isGenerated ? 'send' : 'resend',
-                                    credential,
-                                  });
-                                }}
-                              >
-                                {isGenerated ? (
-                                  <Send
-                                    aria-hidden="true"
-                                    className="h-4 w-4"
-                                  />
-                                ) : (
-                                  <RotateCcw
-                                    aria-hidden="true"
-                                    className="h-4 w-4"
-                                  />
-                                )}
-                                <span className="hidden sm:inline">
-                                  {isGenerated
-                                    ? universityAdminContent.credentialsPage
-                                        .actionLabels.send
-                                    : universityAdminContent.credentialsPage
-                                        .actionLabels.resend}
-                                </span>
-                              </button>
-                              <button
-                                aria-label={
-                                  universityAdminContent.credentialsPage
-                                    .actionLabels.editEmail
-                                }
-                                title={
-                                  universityAdminContent.credentialsPage
-                                    .actionLabels.editEmail
-                                }
-                                className="inline-flex h-[1.875rem] w-[1.875rem] shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 sm:h-auto sm:w-auto sm:gap-1 sm:px-2.5 sm:py-1 sm:text-xs sm:font-semibold"
-                                disabled={isLoading}
-                                type="button"
-                                onClick={() => handleStartEmailEdit(credential)}
-                              >
-                                <PencilLine
-                                  aria-hidden="true"
-                                  className="h-4 w-4"
-                                />
-                                <span className="hidden sm:inline">
-                                  {
-                                    universityAdminContent.credentialsPage
-                                      .actionLabels.editEmail
-                                  }
-                                </span>
-                              </button>
-                              <button
-                                aria-label={
-                                  universityAdminContent.credentialsPage
-                                    .actionLabels.delete
-                                }
-                                title={
-                                  universityAdminContent.credentialsPage
-                                    .actionLabels.delete
-                                }
-                                className="inline-flex h-[1.875rem] w-[1.875rem] shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-700 transition duration-200 hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200/70 sm:h-auto sm:w-auto sm:gap-1 sm:px-2.5 sm:py-1 sm:text-xs sm:font-semibold"
-                                disabled={isLoading}
-                                type="button"
-                                onClick={() => {
-                                  setPendingConfirmation({
-                                    action: 'delete',
-                                    credential,
-                                  });
-                                }}
-                              >
-                                <Trash2
-                                  aria-hidden="true"
-                                  className="h-4 w-4"
-                                />
-                                <span className="hidden sm:inline">
-                                  {
-                                    universityAdminContent.credentialsPage
-                                      .actionLabels.delete
-                                  }
-                                </span>
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-              </table>
+                          </td>
+                          <td
+                            className={classNames(
+                              'pt-2.5 pl-3 pr-1.5 text-center sm:px-3.5 sm:pt-3',
+                              isLast ? 'pb-3 sm:pb-3.5' : 'pb-2.5 sm:pb-3',
+                            )}
+                          >
+                            <div className="mt-0.5 flex flex-wrap items-center justify-center gap-1 sm:gap-1.5">
+                              {isEditing ? (
+                                <>
+                                  <button
+                                    aria-label={
+                                      universityAdminContent.credentialsPage
+                                        .actionLabels.saveEmail
+                                    }
+                                    className="inline-flex h-[1.875rem] w-[1.875rem] shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition duration-200 hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-auto sm:w-auto sm:gap-1 sm:px-2.5 sm:py-1 sm:text-xs sm:font-semibold"
+                                    disabled={isLoading}
+                                    type="button"
+                                    onClick={() =>
+                                      handleSaveEmail(
+                                        credential.id,
+                                        credential.studentName,
+                                      )
+                                    }
+                                  >
+                                    <Check
+                                      aria-hidden="true"
+                                      className="h-4 w-4"
+                                    />
+                                    <span className="hidden sm:inline">
+                                      {
+                                        universityAdminContent.credentialsPage
+                                          .actionLabels.saveEmail
+                                      }
+                                    </span>
+                                  </button>
+                                  <button
+                                    aria-label="Cancelar"
+                                    className="inline-flex h-[1.875rem] w-[1.875rem] shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 sm:h-auto sm:w-auto sm:gap-1 sm:px-2.5 sm:py-1 sm:text-xs sm:font-semibold"
+                                    disabled={isLoading}
+                                    type="button"
+                                    onClick={handleCancelEmailEdit}
+                                  >
+                                    <X aria-hidden="true" className="h-4 w-4" />
+                                    <span className="hidden sm:inline">
+                                      Cancelar
+                                    </span>
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    aria-label={
+                                      isGenerated
+                                        ? universityAdminContent.credentialsPage
+                                            .actionLabels.send
+                                        : universityAdminContent.credentialsPage
+                                            .actionLabels.resend
+                                    }
+                                    title={
+                                      isGenerated
+                                        ? universityAdminContent.credentialsPage
+                                            .actionLabels.send
+                                        : universityAdminContent.credentialsPage
+                                            .actionLabels.resend
+                                    }
+                                    className={classNames(
+                                      'inline-flex h-[1.875rem] w-[1.875rem] shrink-0 items-center justify-center rounded-full transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-auto sm:w-auto sm:gap-1 sm:px-2.5 sm:py-1 sm:text-xs sm:font-semibold',
+                                      isGenerated
+                                        ? 'bg-primary/10 text-primary hover:bg-primary/15'
+                                        : 'bg-sky-50 text-sky-700 hover:bg-sky-100',
+                                    )}
+                                    disabled={isLoading}
+                                    type="button"
+                                    onClick={() => {
+                                      setPendingConfirmation({
+                                        action: isGenerated ? 'send' : 'resend',
+                                        credential,
+                                      });
+                                    }}
+                                  >
+                                    {isGenerated ? (
+                                      <Send
+                                        aria-hidden="true"
+                                        className="h-4 w-4"
+                                      />
+                                    ) : (
+                                      <RotateCcw
+                                        aria-hidden="true"
+                                        className="h-4 w-4"
+                                      />
+                                    )}
+                                    <span className="hidden sm:inline">
+                                      {isGenerated
+                                        ? universityAdminContent.credentialsPage
+                                            .actionLabels.send
+                                        : universityAdminContent.credentialsPage
+                                            .actionLabels.resend}
+                                    </span>
+                                  </button>
+                                  <button
+                                    aria-label={
+                                      universityAdminContent.credentialsPage
+                                        .actionLabels.editEmail
+                                    }
+                                    title={
+                                      universityAdminContent.credentialsPage
+                                        .actionLabels.editEmail
+                                    }
+                                    className="inline-flex h-[1.875rem] w-[1.875rem] shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 sm:h-auto sm:w-auto sm:gap-1 sm:px-2.5 sm:py-1 sm:text-xs sm:font-semibold"
+                                    disabled={isLoading}
+                                    type="button"
+                                    onClick={() =>
+                                      handleStartEmailEdit(credential)
+                                    }
+                                  >
+                                    <PencilLine
+                                      aria-hidden="true"
+                                      className="h-4 w-4"
+                                    />
+                                    <span className="hidden sm:inline">
+                                      {
+                                        universityAdminContent.credentialsPage
+                                          .actionLabels.editEmail
+                                      }
+                                    </span>
+                                  </button>
+                                  <button
+                                    aria-label={
+                                      universityAdminContent.credentialsPage
+                                        .actionLabels.delete
+                                    }
+                                    title={
+                                      universityAdminContent.credentialsPage
+                                        .actionLabels.delete
+                                    }
+                                    className="inline-flex h-[1.875rem] w-[1.875rem] shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-700 transition duration-200 hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200/70 sm:h-auto sm:w-auto sm:gap-1 sm:px-2.5 sm:py-1 sm:text-xs sm:font-semibold"
+                                    disabled={isLoading}
+                                    type="button"
+                                    onClick={() => {
+                                      setPendingConfirmation({
+                                        action: 'delete',
+                                        credential,
+                                      });
+                                    }}
+                                  >
+                                    <Trash2
+                                      aria-hidden="true"
+                                      className="h-4 w-4"
+                                    />
+                                    <span className="hidden sm:inline">
+                                      {
+                                        universityAdminContent.credentialsPage
+                                          .actionLabels.delete
+                                      }
+                                    </span>
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+            <div className="flex shrink-0 flex-col gap-2 border-t border-slate-200/80 bg-white px-3 py-2.5 text-[0.72rem] font-semibold text-ink-muted sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:text-[0.8rem]">
+              <p className="text-center sm:text-left">
+                Mostrando {pageStartLabel}-{pageEndLabel} de{' '}
+                {filteredCredentialRows.length} · Página {clampedCurrentPage} de{' '}
+                {totalPages}
+              </p>
+              <div className="flex items-center justify-center gap-2">
+                <button
+                  aria-label="Pagina anterior"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-ink transition duration-200 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-45"
+                  disabled={clampedCurrentPage === 1}
+                  type="button"
+                  onClick={() =>
+                    setCurrentPage((currentValue) =>
+                      Math.max(1, currentValue - 1),
+                    )
+                  }
+                >
+                  <ChevronLeft aria-hidden="true" className="h-4 w-4" />
+                </button>
+                <span className="min-w-[4.25rem] text-center text-[0.72rem] text-ink">
+                  {clampedCurrentPage}/{totalPages}
+                </span>
+                <button
+                  aria-label="Pagina siguiente"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-ink transition duration-200 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-45"
+                  disabled={clampedCurrentPage === totalPages}
+                  type="button"
+                  onClick={() =>
+                    setCurrentPage((currentValue) =>
+                      Math.min(totalPages, currentValue + 1),
+                    )
+                  }
+                >
+                  <ChevronRight aria-hidden="true" className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </>
         ) : (
           <div className="flex flex-1 items-center justify-center px-4 py-8 text-center sm:px-5">
             <p className="text-sm font-medium text-ink-muted">

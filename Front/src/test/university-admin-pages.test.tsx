@@ -616,6 +616,19 @@ describe('University admin pages', () => {
     ).toHaveClass('text-[0.62rem]');
   });
 
+  it('muestra controles de paginacion en la tabla de docentes', () => {
+    renderUniversityApp([ROUTES.universityTeachers]);
+
+    expect(screen.getByText(/Mostrando 1-\d+ de \d+/i)).toBeInTheDocument();
+    expect(screen.getByText(/P[a\u00e1]gina 1 de 1/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /pagina anterior/i }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: /pagina siguiente/i }),
+    ).toBeDisabled();
+  });
+
   it('compacta la informacion de credenciales para la vista movil', () => {
     renderUniversityApp([ROUTES.universityCredentials]);
 
@@ -631,6 +644,19 @@ describe('University admin pages', () => {
     expect(
       screen.getByText(/correo electr[oó]nico/i).closest('th'),
     ).toHaveClass('hidden');
+  });
+
+  it('muestra controles de paginacion en la tabla de credenciales', () => {
+    renderUniversityApp([ROUTES.universityCredentials]);
+
+    expect(screen.getByText(/Mostrando 1-\d+ de \d+/i)).toBeInTheDocument();
+    expect(screen.getByText(/P[a\u00e1]gina 1 de 1/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /pagina anterior/i }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: /pagina siguiente/i }),
+    ).toBeDisabled();
   });
 
   it('no cambia el estado del docente hasta confirmar la advertencia', async () => {

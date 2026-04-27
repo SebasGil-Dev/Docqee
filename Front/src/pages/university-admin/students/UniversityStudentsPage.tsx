@@ -693,7 +693,7 @@ export function UniversityStudentsPage() {
                 </table>
               </div>
             </div>
-            <div className="flex shrink-0 flex-col gap-2 border-t border-slate-200/80 bg-[#f4f8ff] px-3 py-2.5 text-[0.72rem] font-semibold text-ink-muted sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:text-[0.8rem]">
+            <div className="flex shrink-0 flex-col gap-2 border-t border-slate-200/80 bg-white px-3 py-2.5 text-[0.72rem] font-semibold text-ink-muted sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:text-[0.8rem]">
               <p className="text-center sm:text-left">
                 Mostrando {pageStartLabel}-{pageEndLabel} de{' '}
                 {filteredStudents.length} · Página {clampedCurrentPage} de{' '}
