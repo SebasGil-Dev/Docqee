@@ -12,7 +12,6 @@ import {
   TermsAndConditionsPage,
 } from '@/pages/home/LegalPlaceholderPage';
 import { NotFoundPage } from '@/pages/home/NotFoundPage';
-import { RoutePlaceholderPage } from '@/pages/home/RoutePlaceholderPage';
 
 function renderApp(initialEntries: string[] = [ROUTES.home]) {
   const router = createMemoryRouter(
@@ -26,7 +25,7 @@ function renderApp(initialEntries: string[] = [ROUTES.home]) {
         path: ROUTES.login,
       },
       {
-        element: <RoutePlaceholderPage kind="register" />,
+        element: <div>Registro</div>,
         path: ROUTES.register,
       },
       {
