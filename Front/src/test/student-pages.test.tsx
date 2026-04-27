@@ -279,12 +279,15 @@ describe('Student pages', () => {
     expect(screen.getByText(/4.7 de 5 en 3 valoraciones/i)).toBeInTheDocument();
     expect(screen.getByText(/comentarios de tus citas/i)).toBeInTheDocument();
     expect(
+      screen.queryByText(/experiencia del paciente/i),
+    ).not.toBeInTheDocument();
+    expect(
       within(screen.getByTestId('student-review-comments-dashboard')).getByText(
-        /^3$/i,
+        /^2$/i,
       ),
     ).toBeInTheDocument();
     expect(
-      screen.getByTestId('student-review-card-student-review-1'),
+      screen.getByTestId('student-review-row-student-review-1'),
     ).toHaveTextContent(/me senti muy bien acompanado durante la cita/i);
 
     await user.click(
@@ -297,10 +300,10 @@ describe('Student pages', () => {
     );
 
     expect(
-      screen.queryByTestId('student-review-card-student-review-1'),
+      screen.queryByTestId('student-review-row-student-review-1'),
     ).not.toBeInTheDocument();
     expect(
-      screen.getByTestId('student-review-card-student-review-2'),
+      screen.getByTestId('student-review-row-student-review-2'),
     ).toBeInTheDocument();
   });
 

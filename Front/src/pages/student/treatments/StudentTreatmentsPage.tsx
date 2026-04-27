@@ -16,6 +16,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
+import { AdminTablePagination } from '@/components/admin/AdminTablePagination';
 import { Seo } from '@/components/ui/Seo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { studentContent } from '@/content/studentContent';
@@ -32,6 +33,12 @@ const reviewDateFormatter = new Intl.DateTimeFormat('es-CO', {
   month: 'long',
   year: 'numeric',
 });
+
+const DEFAULT_REVIEW_ROWS_PER_PAGE = 5;
+const MIN_REVIEW_ROWS_PER_PAGE = 1;
+const REVIEW_TABLE_HEADER_HEIGHT_PX = 34;
+const REVIEW_TABLE_ROW_HEIGHT_FALLBACK_PX = 58;
+const REVIEW_TABLE_HEIGHT_PADDING_PX = 4;
 
 function renderStars(
   value: number,
@@ -66,10 +73,7 @@ function getFirstNamePart(value: string) {
 
 export function getStudentDisplayName(firstName: string, lastName: string) {
   const fullName = `${firstName} ${lastName}`.replace(/\s+/g, ' ').trim();
-  const compactName = [
-    getFirstNamePart(firstName),
-    getFirstNamePart(lastName),
-  ]
+  const compactName = [getFirstNamePart(firstName), getFirstNamePart(lastName)]
     .filter(Boolean)
     .join(' ');
 
@@ -92,19 +96,33 @@ export function StudentTreatmentsPage() {
     treatments,
   } = useStudentModuleStore();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<StudentAvailabilityFilter>('all');
+  const [statusFilter, setStatusFilter] =
+    useState<StudentAvailabilityFilter>('all');
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
-  const [reviewRatingFilter, setReviewRatingFilter] = useState<StudentReviewRatingFilter>('all');
+  const [reviewRatingFilter, setReviewRatingFilter] =
+    useState<StudentReviewRatingFilter>('all');
   const [isReviewRatingMenuOpen, setIsReviewRatingMenuOpen] = useState(false);
+  const [reviewCurrentPage, setReviewCurrentPage] = useState(1);
+  const [reviewRowsPerPage, setReviewRowsPerPage] = useState(
+    DEFAULT_REVIEW_ROWS_PER_PAGE,
+  );
   const reviewRatingMenuRef = useRef<HTMLDivElement | null>(null);
+  const reviewTableViewportRef = useRef<HTMLDivElement | null>(null);
+  const reviewTableBodyRef = useRef<HTMLTableSectionElement | null>(null);
   const normalizedSearch = searchTerm.trim().toLowerCase();
-  const filterOptions: Array<{ label: string; value: StudentAvailabilityFilter }> = [
+  const filterOptions: Array<{
+    label: string;
+    value: StudentAvailabilityFilter;
+  }> = [
     { label: 'Todos', value: 'all' },
     { label: 'Activo', value: 'active' },
     { label: 'Inactivo', value: 'inactive' },
   ];
-  const reviewRatingOptions: Array<{ label: string; value: StudentReviewRatingFilter }> = [
+  const reviewRatingOptions: Array<{
+    label: string;
+    value: StudentReviewRatingFilter;
+  }> = [
     { label: 'Todas las estrellas', value: 'all' },
     { label: '5 estrellas', value: 5 },
     { label: '4 estrellas', value: 4 },
@@ -113,23 +131,24 @@ export function StudentTreatmentsPage() {
     { label: '1 estrella', value: 1 },
   ];
   const activeTreatmentsCount = useMemo(
-    () => treatments.filter((treatment) => treatment.status === 'active').length,
+    () =>
+      treatments.filter((treatment) => treatment.status === 'active').length,
     [treatments],
   );
   const activePracticeSitesCount = useMemo(
-    () => practiceSites.filter((practiceSite) => practiceSite.status === 'active').length,
+    () =>
+      practiceSites.filter((practiceSite) => practiceSite.status === 'active')
+        .length,
     [practiceSites],
   );
   const totalAppointmentsCount = useMemo(
     () =>
-      requests.reduce(
-        (total, request) => total + request.appointmentsCount,
-        0,
-      ),
+      requests.reduce((total, request) => total + request.appointmentsCount, 0),
     [requests],
   );
   const studentInitials = useMemo(
-    () => `${profile.firstName.charAt(0)}${profile.lastName.charAt(0)}`.toUpperCase(),
+    () =>
+      `${profile.firstName.charAt(0)}${profile.lastName.charAt(0)}`.toUpperCase(),
     [profile.firstName, profile.lastName],
   );
   const studentDisplayName = useMemo(
@@ -150,7 +169,10 @@ export function StudentTreatmentsPage() {
       return 0;
     }
 
-    const totalRating = reviews.reduce((total, review) => total + review.rating, 0);
+    const totalRating = reviews.reduce(
+      (total, review) => total + review.rating,
+      0,
+    );
     return totalRating / reviews.length;
   }, [reviews]);
   const commentsCount = useMemo(
@@ -162,14 +184,43 @@ export function StudentTreatmentsPage() {
       return reviews;
     }
 
-    return reviews.filter((review) => Math.round(review.rating) === reviewRatingFilter);
+    return reviews.filter(
+      (review) => Math.round(review.rating) === reviewRatingFilter,
+    );
   }, [reviewRatingFilter, reviews]);
+  const reviewTotalPages = Math.max(
+    1,
+    Math.ceil(filteredReviews.length / reviewRowsPerPage),
+  );
+  const clampedReviewCurrentPage = Math.min(
+    reviewCurrentPage,
+    reviewTotalPages,
+  );
+  const reviewPageStartIndex =
+    (clampedReviewCurrentPage - 1) * reviewRowsPerPage;
+  const paginatedReviews = useMemo(
+    () =>
+      filteredReviews.slice(
+        reviewPageStartIndex,
+        reviewPageStartIndex + reviewRowsPerPage,
+      ),
+    [filteredReviews, reviewPageStartIndex, reviewRowsPerPage],
+  );
+  const reviewPageStartLabel =
+    filteredReviews.length > 0 ? reviewPageStartIndex + 1 : 0;
+  const reviewPageEndLabel = Math.min(
+    reviewPageStartIndex + paginatedReviews.length,
+    filteredReviews.length,
+  );
   const filteredTreatments = treatments.filter((treatment) => {
     const matchesSearch =
       treatment.name.toLowerCase().includes(normalizedSearch) ||
       treatment.description.toLowerCase().includes(normalizedSearch);
 
-    return matchesSearch && (statusFilter === 'all' || treatment.status === statusFilter);
+    return (
+      matchesSearch &&
+      (statusFilter === 'all' || treatment.status === statusFilter)
+    );
   });
   const filteredPracticeSites = practiceSites.filter((practiceSite) => {
     const matchesSearch =
@@ -177,8 +228,87 @@ export function StudentTreatmentsPage() {
       practiceSite.city.toLowerCase().includes(normalizedSearch) ||
       practiceSite.locality.toLowerCase().includes(normalizedSearch);
 
-    return matchesSearch && (statusFilter === 'all' || practiceSite.status === statusFilter);
+    return (
+      matchesSearch &&
+      (statusFilter === 'all' || practiceSite.status === statusFilter)
+    );
   });
+
+  useEffect(() => {
+    setReviewCurrentPage(1);
+  }, [reviewRatingFilter]);
+
+  useEffect(() => {
+    setReviewCurrentPage((currentValue) =>
+      Math.min(currentValue, reviewTotalPages),
+    );
+  }, [reviewTotalPages]);
+
+  useEffect(() => {
+    const tableViewportElement = reviewTableViewportRef.current;
+
+    if (!tableViewportElement) {
+      return undefined;
+    }
+
+    const tableViewport = tableViewportElement;
+
+    function updateReviewRowsPerPage() {
+      const nextAvailableHeight = tableViewport.getBoundingClientRect().height;
+
+      if (nextAvailableHeight <= 0) {
+        return;
+      }
+
+      const firstHeaderCell = tableViewport.querySelector('thead th');
+      const tableHeaderHeight =
+        firstHeaderCell?.getBoundingClientRect().height ??
+        REVIEW_TABLE_HEADER_HEIGHT_PX;
+      const rowElements = Array.from(
+        reviewTableBodyRef.current?.children ?? [],
+      );
+      const rowHeights = rowElements
+        .map((rowElement) => rowElement.getBoundingClientRect().height)
+        .filter((rowHeight) => rowHeight > 0);
+      const estimatedRowHeight =
+        rowHeights.length > 0
+          ? rowHeights.reduce((sum, rowHeight) => sum + rowHeight, 0) /
+            rowHeights.length
+          : REVIEW_TABLE_ROW_HEIGHT_FALLBACK_PX;
+      const nextRowsPerPage = Math.max(
+        MIN_REVIEW_ROWS_PER_PAGE,
+        Math.floor(
+          (nextAvailableHeight -
+            tableHeaderHeight -
+            REVIEW_TABLE_HEIGHT_PADDING_PX) /
+            estimatedRowHeight,
+        ),
+      );
+
+      setReviewRowsPerPage((currentRowsPerPage) =>
+        currentRowsPerPage === nextRowsPerPage
+          ? currentRowsPerPage
+          : nextRowsPerPage,
+      );
+    }
+
+    updateReviewRowsPerPage();
+
+    if (typeof ResizeObserver !== 'undefined') {
+      const resizeObserver = new ResizeObserver(updateReviewRowsPerPage);
+      resizeObserver.observe(tableViewport);
+
+      return () => {
+        resizeObserver.disconnect();
+      };
+    }
+
+    window.addEventListener('resize', updateReviewRowsPerPage);
+
+    return () => {
+      window.removeEventListener('resize', updateReviewRowsPerPage);
+    };
+  }, [filteredReviews.length, reviewPageStartIndex, paginatedReviews.length]);
 
   useEffect(() => {
     if (!isStatusMenuOpen) {
@@ -247,7 +377,10 @@ export function StudentTreatmentsPage() {
           <p role="alert">{dashboardErrorMessage}</p>
         </SurfaceCard>
       ) : null}
-      <SurfaceCard className="overflow-hidden bg-brand-gradient text-white" paddingClassName="p-0">
+      <SurfaceCard
+        className="overflow-hidden bg-brand-gradient text-white"
+        paddingClassName="p-0"
+      >
         <div className="flex flex-col gap-3 px-4 py-3.5 sm:px-5 sm:py-4 lg:flex-row lg:items-center lg:justify-between lg:gap-3 2xl:px-6">
           <div className="flex min-w-0 flex-1 items-start gap-3 sm:items-center">
             <div className="order-2 shrink-0 lg:order-1">
@@ -267,7 +400,8 @@ export function StudentTreatmentsPage() {
             <div className="order-1 flex min-w-0 flex-1 flex-col gap-1.5 lg:order-2">
               <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-2.5">
                 <h2 className="max-w-[14rem] truncate font-headline text-[1.05rem] font-extrabold tracking-tight text-white sm:max-w-[16rem] sm:text-[1.18rem] lg:max-w-none lg:whitespace-normal lg:overflow-visible xl:max-w-none">
-                  {studentDisplayName.compactName === studentDisplayName.fullName ? (
+                  {studentDisplayName.compactName ===
+                  studentDisplayName.fullName ? (
                     <>Bienvenido, {studentDisplayName.fullName}</>
                   ) : (
                     <>
@@ -283,7 +417,10 @@ export function StudentTreatmentsPage() {
               </div>
               <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-[0.75rem] font-semibold text-white/88">
-                  <Building2 aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+                  <Building2
+                    aria-hidden="true"
+                    className="h-3.5 w-3.5 shrink-0"
+                  />
                   <span className="max-w-[10rem] truncate sm:max-w-[12rem] xl:max-w-[14rem]">
                     {profile.universityName}
                   </span>
@@ -308,28 +445,25 @@ export function StudentTreatmentsPage() {
         </div>
       </SurfaceCard>
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
-        <div className="border-b border-slate-200/80 px-4 py-3.5 sm:px-5 sm:py-3.5">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-            <div className="space-y-1">
-              <p className="text-[0.72rem] font-bold uppercase tracking-[0.24em] text-primary/75">
-                Experiencia del paciente
-              </p>
-              <h2 className="font-headline text-[1.45rem] font-extrabold tracking-tight text-ink">
+        <div className="border-b border-slate-200/80 px-3 py-2.5 sm:px-4">
+          <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
+            <div className="min-w-0">
+              <h2 className="font-headline text-[1.12rem] font-extrabold tracking-tight text-ink sm:text-[1.18rem]">
                 Comentarios de tus citas
               </h2>
             </div>
-            <div className="flex flex-wrap items-center gap-2.5 self-start">
+            <div className="flex flex-wrap items-center gap-2 self-start">
               <div
-                className="inline-flex items-center gap-2 rounded-[1.2rem] border border-sky-200/80 bg-sky-50 px-3.5 py-2.5 text-sky-950 shadow-[0_16px_34px_-24px_rgba(14,116,144,0.38)]"
+                className="inline-flex items-center gap-2 rounded-[0.95rem] border border-sky-200/80 bg-sky-50 px-2.5 py-1.5 text-sky-950 shadow-[0_14px_28px_-24px_rgba(14,116,144,0.38)]"
                 data-testid="student-review-comments-dashboard"
               >
-                <span className="inline-flex h-9 w-9 items-center justify-center rounded-[0.95rem] bg-white text-primary shadow-[0_14px_24px_-20px_rgba(14,116,144,0.55)]">
-                  <MessageSquareMore aria-hidden="true" className="h-4.5 w-4.5" />
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-[0.7rem] bg-white text-primary shadow-[0_12px_22px_-20px_rgba(14,116,144,0.55)]">
+                  <MessageSquareMore aria-hidden="true" className="h-4 w-4" />
                 </span>
-                <p className="text-[0.64rem] font-bold uppercase tracking-[0.18em] text-sky-700/80">
+                <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-sky-700/80">
                   Comentarios
                 </p>
-                <p className="font-headline text-[1.28rem] font-extrabold tracking-tight text-sky-950">
+                <p className="font-headline text-[1rem] font-extrabold tracking-tight text-sky-950">
                   {commentsCount}
                 </p>
               </div>
@@ -340,7 +474,7 @@ export function StudentTreatmentsPage() {
                   aria-haspopup="menu"
                   aria-label="Filtrar comentarios por estrellas"
                   className={classNames(
-                    'relative inline-flex h-11 w-11 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                    'relative inline-flex h-9 w-9 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
                     reviewRatingFilter === 'all'
                       ? 'border-slate-200/90 hover:border-primary/30 hover:bg-white'
                       : 'border-primary/30 bg-primary/10 text-primary',
@@ -351,9 +485,9 @@ export function StudentTreatmentsPage() {
                     setIsReviewRatingMenuOpen((current) => !current);
                   }}
                 >
-                  <SlidersHorizontal aria-hidden="true" className="h-[1.02rem] w-[1.02rem]" />
+                  <SlidersHorizontal aria-hidden="true" className="h-4 w-4" />
                   {reviewRatingFilter !== 'all' ? (
-                    <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary" />
+                    <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary" />
                   ) : null}
                 </button>
                 {isReviewRatingMenuOpen ? (
@@ -394,7 +528,11 @@ export function StudentTreatmentsPage() {
                               ) : (
                                 <>
                                   <div className="flex items-center gap-0.5">
-                    {renderStars(option.value, 'h-3.5 w-3.5', 'dark')}
+                                    {renderStars(
+                                      option.value,
+                                      'h-3.5 w-3.5',
+                                      'dark',
+                                    )}
                                   </div>
                                   <span>{option.label}</span>
                                 </>
@@ -403,7 +541,9 @@ export function StudentTreatmentsPage() {
                             <span
                               className={classNames(
                                 'inline-flex h-4.5 w-4.5 items-center justify-center rounded-full',
-                                isSelected ? 'bg-white/18 text-white' : 'bg-white text-slate-300',
+                                isSelected
+                                  ? 'bg-white/18 text-white'
+                                  : 'bg-white text-slate-300',
                               )}
                             >
                               <Check aria-hidden="true" className="h-3 w-3" />
@@ -418,68 +558,129 @@ export function StudentTreatmentsPage() {
             </div>
           </div>
         </div>
-        <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-4 py-3.5 sm:px-5 sm:py-4">
+        <div
+          ref={reviewTableViewportRef}
+          className="min-h-0 flex-1 overflow-hidden px-3 py-2.5 sm:px-4 sm:py-3"
+        >
           {filteredReviews.length > 0 ? (
-            <div className="grid gap-3 lg:grid-cols-2 2xl:grid-cols-3 2xl:gap-4">
-              {filteredReviews.map((review) => (
-                <SurfaceCard
-                  key={review.id}
-                  className="border border-slate-200/80 bg-white shadow-none"
-                  paddingClassName="p-4"
+            <div className="h-full overflow-hidden rounded-[1rem] border border-slate-200/80 bg-white">
+              <table className="w-full table-fixed text-left">
+                <thead className="bg-slate-50">
+                  <tr className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-ink-muted">
+                    <th className="w-[32%] px-3 py-2 font-bold sm:w-[24%]">
+                      Paciente
+                    </th>
+                    <th className="hidden w-[18%] px-3 py-2 font-bold md:table-cell">
+                      Cita
+                    </th>
+                    <th className="w-[24%] px-3 py-2 font-bold sm:w-[18%]">
+                      Valoracion
+                    </th>
+                    <th className="hidden w-[14%] px-3 py-2 font-bold lg:table-cell">
+                      Sede
+                    </th>
+                    <th className="w-[44%] px-3 py-2 font-bold sm:w-[40%]">
+                      Comentario
+                    </th>
+                  </tr>
+                </thead>
+                <tbody
+                  ref={reviewTableBodyRef}
+                  className="divide-y divide-slate-200/80 bg-white"
                 >
-                  <div className="space-y-3" data-testid={`student-review-card-${review.id}`}>
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="space-y-1">
-                        <p className="text-base font-semibold text-ink">{review.patientName}</p>
-                        <p className="text-sm text-ink-muted">{review.appointmentLabel}</p>
-                      </div>
-                      <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                        {reviewDateFormatter.format(new Date(review.createdAt))}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1">
-                        {renderStars(review.rating, 'h-4 w-4', 'dark')}
-                      </div>
-                      <span className="text-sm font-semibold text-ink">{review.rating.toFixed(1)}</span>
-                    </div>
-                    <p className="rounded-[1.2rem] bg-slate-50 px-3.5 py-3 text-sm leading-6 text-ink">
-                      {review.comment ?? 'El paciente no dejo un comentario escrito para esta cita.'}
-                    </p>
-                    <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-muted">
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5">
-                        <MapPin aria-hidden="true" className="h-3.5 w-3.5" />
-                        {review.siteName}
-                      </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5">
-                        <MessageSquareMore aria-hidden="true" className="h-3.5 w-3.5" />
-                        Comentario recibido
-                      </span>
-                    </div>
-                  </div>
-                </SurfaceCard>
-              ))}
+                  {paginatedReviews.map((review) => (
+                    <tr
+                      key={review.id}
+                      className="align-top transition duration-200 hover:bg-slate-50/80"
+                      data-testid={`student-review-row-${review.id}`}
+                    >
+                      <td className="px-3 py-2 align-top">
+                        <p className="break-words text-[0.82rem] font-semibold leading-5 text-ink">
+                          {review.patientName}
+                        </p>
+                        <p className="mt-0.5 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-ink-muted">
+                          {reviewDateFormatter.format(
+                            new Date(review.createdAt),
+                          )}
+                        </p>
+                        <p className="mt-1 text-[0.72rem] leading-4 text-ink-muted md:hidden">
+                          {review.appointmentLabel}
+                        </p>
+                      </td>
+                      <td className="hidden px-3 py-2 align-top text-[0.8rem] leading-5 text-ink-muted md:table-cell">
+                        {review.appointmentLabel}
+                      </td>
+                      <td className="px-3 py-2 align-top">
+                        <div className="flex flex-col gap-1">
+                          <div className="flex flex-wrap items-center gap-0.5">
+                            {renderStars(review.rating, 'h-3.5 w-3.5', 'dark')}
+                          </div>
+                          <span className="text-[0.8rem] font-semibold text-ink">
+                            {review.rating.toFixed(1)}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="hidden px-3 py-2 align-top lg:table-cell">
+                        <span className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-[0.72rem] font-semibold text-ink-muted">
+                          <MapPin
+                            aria-hidden="true"
+                            className="h-3.5 w-3.5 shrink-0"
+                          />
+                          <span className="truncate">{review.siteName}</span>
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 align-top">
+                        <p className="max-h-10 overflow-hidden text-[0.8rem] leading-5 text-ink">
+                          {review.comment ??
+                            'El paciente no dejo un comentario escrito para esta cita.'}
+                        </p>
+                        <span className="mt-1 inline-flex max-w-full items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-[0.68rem] font-semibold text-ink-muted lg:hidden">
+                          <MapPin
+                            aria-hidden="true"
+                            className="h-3 w-3 shrink-0"
+                          />
+                          <span className="truncate">{review.siteName}</span>
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           ) : (
-            <SurfaceCard
-              className="border border-dashed border-slate-200 bg-white shadow-none"
-              paddingClassName="px-5 py-8"
-            >
+            <div className="flex h-full items-center justify-center rounded-[1rem] border border-dashed border-slate-200 bg-white px-4 py-6">
               <div className="space-y-2 text-center">
-                <p className="font-headline text-xl font-extrabold tracking-tight text-ink">
+                <p className="font-headline text-[1.05rem] font-extrabold tracking-tight text-ink">
                   {reviews.length === 0
                     ? 'Aun no tienes comentarios registrados'
                     : 'No hay comentarios para este filtro'}
                 </p>
-                <p className="mx-auto max-w-xl text-sm leading-6 text-ink-muted">
+                <p className="mx-auto max-w-xl text-[0.82rem] leading-5 text-ink-muted">
                   {reviews.length === 0
                     ? 'Cuando se finalicen citas con valoracion del paciente, aqui podras revisar sus estrellas y comentarios.'
                     : 'Prueba con otra cantidad de estrellas para ver mas valoraciones en esta seccion.'}
                 </p>
               </div>
-            </SurfaceCard>
+            </div>
           )}
         </div>
+        <AdminTablePagination
+          currentPage={clampedReviewCurrentPage}
+          pageEndLabel={reviewPageEndLabel}
+          pageStartLabel={reviewPageStartLabel}
+          totalItems={filteredReviews.length}
+          totalPages={reviewTotalPages}
+          onNext={() =>
+            setReviewCurrentPage((currentValue) =>
+              Math.min(reviewTotalPages, currentValue + 1),
+            )
+          }
+          onPrevious={() =>
+            setReviewCurrentPage((currentValue) =>
+              Math.max(1, currentValue - 1),
+            )
+          }
+        />
       </AdminPanelCard>
     </div>
   );
@@ -499,7 +700,10 @@ export function StudentTreatmentsPage() {
           <p role="alert">{dashboardErrorMessage}</p>
         </SurfaceCard>
       ) : null}
-      <SurfaceCard className="overflow-hidden bg-brand-gradient text-white" paddingClassName="p-0">
+      <SurfaceCard
+        className="overflow-hidden bg-brand-gradient text-white"
+        paddingClassName="p-0"
+      >
         <div className="flex flex-col gap-5 px-5 py-5 sm:px-6 sm:py-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex min-w-0 items-center gap-4">
             {profile.avatarSrc ? (
@@ -526,7 +730,11 @@ export function StudentTreatmentsPage() {
                         alt={profile.universityLogoAlt}
                         className="h-full w-full object-contain"
                         decoding="async"
-                        src={getOptimizedLogoUrl(profile.universityLogoSrc, 240, 240)}
+                        src={getOptimizedLogoUrl(
+                          profile.universityLogoSrc,
+                          240,
+                          240,
+                        )}
                       />
                     ) : (
                       <span className="text-[0.65rem] font-extrabold uppercase">
@@ -546,7 +754,9 @@ export function StudentTreatmentsPage() {
                 </span>
               </div>
               <div className="flex flex-wrap items-center gap-3 text-white/92">
-                <div className="flex items-center gap-1">{renderStars(averageRating)}</div>
+                <div className="flex items-center gap-1">
+                  {renderStars(averageRating)}
+                </div>
                 <p className="text-sm font-semibold">
                   {reviews.length > 0
                     ? `${averageRating.toFixed(1)} de 5 en ${reviews.length} valoraciones`
@@ -558,7 +768,10 @@ export function StudentTreatmentsPage() {
           <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[32rem]">
             <div className="rounded-[1.4rem] bg-white/12 px-4 py-4 ring-1 ring-white/15 backdrop-blur-sm">
               <div className="flex items-center gap-2">
-                <Stethoscope aria-hidden="true" className="h-4.5 w-4.5 text-white" />
+                <Stethoscope
+                  aria-hidden="true"
+                  className="h-4.5 w-4.5 text-white"
+                />
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/75">
                   Tratamientos activos
                 </p>
@@ -580,7 +793,10 @@ export function StudentTreatmentsPage() {
             </div>
             <div className="rounded-[1.4rem] bg-white/12 px-4 py-4 ring-1 ring-white/15 backdrop-blur-sm">
               <div className="flex items-center gap-2">
-                <CalendarDays aria-hidden="true" className="h-4.5 w-4.5 text-white" />
+                <CalendarDays
+                  aria-hidden="true"
+                  className="h-4.5 w-4.5 text-white"
+                />
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/75">
                   Citas registradas
                 </p>
@@ -596,14 +812,12 @@ export function StudentTreatmentsPage() {
         <div className="border-b border-slate-200/80 px-4 py-4 sm:px-5 sm:py-4">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-1">
-              <p className="text-[0.72rem] font-bold uppercase tracking-[0.24em] text-primary/75">
-                Experiencia del paciente
-              </p>
               <h2 className="font-headline text-[1.45rem] font-extrabold tracking-tight text-ink">
                 Comentarios de tus citas
               </h2>
               <p className="max-w-2xl text-sm leading-6 text-ink-muted">
-                Consulta lo que los pacientes han compartido despues de atenderse contigo en la plataforma.
+                Consulta lo que los pacientes han compartido despues de
+                atenderse contigo en la plataforma.
               </p>
             </div>
             <div className="inline-flex items-center gap-3 self-start rounded-[1.25rem] border border-amber-200/80 bg-amber-50 px-4 py-3 text-amber-900 shadow-[0_16px_34px_-24px_rgba(180,83,9,0.45)]">
@@ -615,7 +829,9 @@ export function StudentTreatmentsPage() {
                   Promedio actual
                 </p>
                 <p className="text-sm font-semibold">
-                  {reviews.length > 0 ? `${averageRating.toFixed(1)} / 5` : 'Sin valoraciones'}
+                  {reviews.length > 0
+                    ? `${averageRating.toFixed(1)} / 5`
+                    : 'Sin valoraciones'}
                 </p>
               </div>
             </div>
@@ -623,7 +839,10 @@ export function StudentTreatmentsPage() {
         </div>
         <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5 sm:py-5">
           <div className="grid gap-4 xl:grid-cols-2">
-            <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-5">
+            <SurfaceCard
+              className="border border-slate-200/80 bg-white shadow-none"
+              paddingClassName="p-5"
+            >
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <span className="inline-flex h-10 w-10 items-center justify-center rounded-[1rem] bg-primary/10 text-primary">
@@ -634,7 +853,8 @@ export function StudentTreatmentsPage() {
                       Tratamientos
                     </h2>
                     <p className="text-sm text-ink-muted">
-                      Controla que tratamientos quieres mantener visibles y disponibles.
+                      Controla que tratamientos quieres mantener visibles y
+                      disponibles.
                     </p>
                   </div>
                 </div>
@@ -648,12 +868,17 @@ export function StudentTreatmentsPage() {
                       >
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div className="space-y-1">
-                            <p className="text-sm font-semibold text-ink">{treatment.name}</p>
+                            <p className="text-sm font-semibold text-ink">
+                              {treatment.name}
+                            </p>
                             <p className="text-sm leading-6 text-ink-muted">
                               {treatment.description}
                             </p>
                           </div>
-                          <AdminStatusBadge entity="teacher" status={treatment.status} />
+                          <AdminStatusBadge
+                            entity="teacher"
+                            status={treatment.status}
+                          />
                         </div>
                         <div className="flex justify-end">
                           <button
@@ -669,14 +894,22 @@ export function StudentTreatmentsPage() {
                             }}
                           >
                             {treatment.status === 'active' ? (
-                              <PowerOff aria-hidden="true" className="h-3.5 w-3.5" />
+                              <PowerOff
+                                aria-hidden="true"
+                                className="h-3.5 w-3.5"
+                              />
                             ) : (
-                              <Power aria-hidden="true" className="h-3.5 w-3.5" />
+                              <Power
+                                aria-hidden="true"
+                                className="h-3.5 w-3.5"
+                              />
                             )}
                             <span>
                               {treatment.status === 'active'
-                                ? studentContent.treatmentsPage.actionLabels.deactivate
-                                : studentContent.treatmentsPage.actionLabels.activate}
+                                ? studentContent.treatmentsPage.actionLabels
+                                    .deactivate
+                                : studentContent.treatmentsPage.actionLabels
+                                    .activate}
                             </span>
                           </button>
                         </div>
@@ -692,7 +925,10 @@ export function StudentTreatmentsPage() {
                 )}
               </div>
             </SurfaceCard>
-            <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-5">
+            <SurfaceCard
+              className="border border-slate-200/80 bg-white shadow-none"
+              paddingClassName="p-5"
+            >
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <span className="inline-flex h-10 w-10 items-center justify-center rounded-[1rem] bg-primary/10 text-primary">
@@ -703,7 +939,8 @@ export function StudentTreatmentsPage() {
                       Sedes de practica
                     </h2>
                     <p className="text-sm text-ink-muted">
-                      Gestiona en que sedes de tu universidad quieres mantener tu oferta operativa.
+                      Gestiona en que sedes de tu universidad quieres mantener
+                      tu oferta operativa.
                     </p>
                   </div>
                 </div>
@@ -717,13 +954,20 @@ export function StudentTreatmentsPage() {
                       >
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div className="space-y-1">
-                            <p className="text-sm font-semibold text-ink">{practiceSite.name}</p>
-                            <p className="text-sm text-ink-muted">{practiceSite.address}</p>
+                            <p className="text-sm font-semibold text-ink">
+                              {practiceSite.name}
+                            </p>
+                            <p className="text-sm text-ink-muted">
+                              {practiceSite.address}
+                            </p>
                             <p className="text-xs font-medium uppercase tracking-[0.18em] text-ink-muted">
                               {practiceSite.city} · {practiceSite.locality}
                             </p>
                           </div>
-                          <AdminStatusBadge entity="teacher" status={practiceSite.status} />
+                          <AdminStatusBadge
+                            entity="teacher"
+                            status={practiceSite.status}
+                          />
                         </div>
                         <div className="flex justify-end">
                           <button
@@ -739,14 +983,22 @@ export function StudentTreatmentsPage() {
                             }}
                           >
                             {practiceSite.status === 'active' ? (
-                              <PowerOff aria-hidden="true" className="h-3.5 w-3.5" />
+                              <PowerOff
+                                aria-hidden="true"
+                                className="h-3.5 w-3.5"
+                              />
                             ) : (
-                              <Power aria-hidden="true" className="h-3.5 w-3.5" />
+                              <Power
+                                aria-hidden="true"
+                                className="h-3.5 w-3.5"
+                              />
                             )}
                             <span>
                               {practiceSite.status === 'active'
-                                ? studentContent.treatmentsPage.actionLabels.deactivate
-                                : studentContent.treatmentsPage.actionLabels.activate}
+                                ? studentContent.treatmentsPage.actionLabels
+                                    .deactivate
+                                : studentContent.treatmentsPage.actionLabels
+                                    .activate}
                             </span>
                           </button>
                         </div>
