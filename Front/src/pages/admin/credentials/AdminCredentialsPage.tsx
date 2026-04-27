@@ -53,7 +53,7 @@ const AUTO_REFRESH_MIN_INTERVAL_MS = 5000;
 const DEFAULT_ROWS_PER_PAGE = 6;
 const MIN_ROWS_PER_PAGE = 1;
 const TABLE_HEADER_HEIGHT_PX = 38;
-const TABLE_ROW_HEIGHT_PX = 68;
+const TABLE_ROW_HEIGHT_PX = 86;
 
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -537,7 +537,7 @@ export function AdminCredentialsPage() {
                 </button>
                 {isFilterMenuOpen ? (
                   <div
-                    className="absolute right-0 top-[calc(100%+0.6rem)] z-20 w-[13.5rem] overflow-hidden rounded-[1.4rem] border border-slate-200/80 bg-white/95 p-2 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.45)] backdrop-blur sm:w-[14.5rem]"
+                    className="absolute right-0 top-[calc(100%+0.6rem)] z-20 w-[13.5rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-[1.4rem] border border-slate-200/80 bg-white/95 p-2 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.45)] backdrop-blur sm:w-[14.5rem]"
                     id="admin-credential-filter-menu"
                     role="menu"
                   >
@@ -609,9 +609,9 @@ export function AdminCredentialsPage() {
           <>
             <div
               ref={tableViewportRef}
-              className="min-h-0 flex-1 overflow-x-hidden overflow-y-hidden lg:overflow-x-auto [-webkit-overflow-scrolling:touch]"
+              className="min-h-0 flex-1 overflow-hidden"
             >
-              <div className="w-full lg:min-w-[60rem]">
+              <div className="w-full">
                 <table className="w-full table-fixed">
                   <thead className="bg-slate-100 text-left">
                     <tr className="text-[0.52rem] font-bold uppercase tracking-[0.035em] text-ink-muted sm:text-[0.62rem] sm:tracking-[0.16em] lg:text-[0.68rem]">
@@ -716,7 +716,7 @@ export function AdminCredentialsPage() {
                                 </div>
                               ) : (
                                 <p
-                                  className="block max-w-full truncate text-[0.54rem] leading-tight text-ink-muted sm:text-[0.72rem] lg:hidden"
+                                  className="block max-w-full break-all text-[0.54rem] leading-tight text-ink-muted sm:text-[0.72rem] lg:hidden"
                                   title={credential.administratorEmail}
                                 >
                                   {credential.administratorEmail}
@@ -731,7 +731,7 @@ export function AdminCredentialsPage() {
                             )}
                           >
                             {isEditing ? (
-                              <div className="max-w-[20rem] space-y-2">
+                              <div className="max-w-full space-y-2">
                                 <label
                                   className="sr-only"
                                   htmlFor={`credential-email-${credential.id}`}
@@ -764,13 +764,13 @@ export function AdminCredentialsPage() {
                                 ) : null}
                               </div>
                             ) : (
-                              <div className="inline-flex max-w-full items-center gap-2 text-[0.82rem] text-ink-muted">
+                              <div className="flex max-w-full min-w-0 items-start gap-1.5 text-[0.76rem] leading-tight text-ink-muted">
                                 <Mail
                                   aria-hidden="true"
-                                  className="h-4 w-4 shrink-0"
+                                  className="mt-0.5 h-3.5 w-3.5 shrink-0"
                                 />
                                 <span
-                                  className="block max-w-full overflow-hidden text-ellipsis whitespace-nowrap"
+                                  className="block min-w-0 break-all"
                                   title={credential.administratorEmail}
                                 >
                                   {credential.administratorEmail}
