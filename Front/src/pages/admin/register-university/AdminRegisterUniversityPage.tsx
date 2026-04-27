@@ -6,7 +6,11 @@ import {
   Phone,
   UserRound,
 } from 'lucide-react';
-import type { FormEvent, KeyboardEvent as ReactKeyboardEvent, Ref } from 'react';
+import type {
+  FormEvent,
+  KeyboardEvent as ReactKeyboardEvent,
+  Ref,
+} from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -83,7 +87,9 @@ function SelectField({
   id: string;
   label: string;
   name: string;
-  onKeyDown?: ((event: ReactKeyboardEvent<HTMLSelectElement>) => void) | undefined;
+  onKeyDown?:
+    | ((event: ReactKeyboardEvent<HTMLSelectElement>) => void)
+    | undefined;
   onBlur: () => void;
   onChange: (value: string) => void;
   options: { id: string; label: string }[];
@@ -99,10 +105,7 @@ function SelectField({
         {label}
       </label>
       <div className="relative">
-        <Icon
-          aria-hidden="true"
-          className={formFieldIconClassName}
-        />
+        <Icon aria-hidden="true" className={formFieldIconClassName} />
         <select
           aria-describedby={
             error ? `${id}-error` : helpText ? `${id}-help` : undefined
@@ -149,6 +152,17 @@ function SelectField({
 
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function getNormalizedFieldValue(
+  field: RegisterUniversityFormField,
+  value: string,
+) {
+  if (field === 'adminPhone') {
+    return value.replace(/\D/g, '');
+  }
+
+  return value;
 }
 
 function resolveCatalogResult<T>(result: Promise<T[]> | T[]) {
@@ -410,20 +424,22 @@ export function AdminRegisterUniversityPage({
     field: RegisterUniversityFormField,
     nextValue: string,
   ) => {
+    const normalizedValue = getNormalizedFieldValue(field, nextValue);
+
     if (field === 'cityId') {
-      setShouldFocusLocality(Boolean(nextValue));
+      setShouldFocusLocality(Boolean(normalizedValue));
     }
 
     setValues((currentValues) =>
       field === 'cityId'
         ? {
             ...currentValues,
-            cityId: nextValue,
+            cityId: normalizedValue,
             mainLocalityId: '',
           }
         : {
             ...currentValues,
-            [field]: nextValue,
+            [field]: normalizedValue,
           },
     );
 
@@ -432,12 +448,12 @@ export function AdminRegisterUniversityPage({
         field === 'cityId'
           ? {
               ...values,
-              cityId: nextValue,
+              cityId: normalizedValue,
               mainLocalityId: '',
             }
           : {
               ...values,
-              [field]: nextValue,
+              [field]: normalizedValue,
             };
       const nextErrors = { ...currentErrors };
       const nextFieldError = validateField(field, nextValues[field]);
@@ -915,7 +931,8 @@ export function AdminRegisterUniversityPage({
                       />
                       <input
                         autoComplete="tel"
-                        inputMode="tel"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         ref={adminPhoneRef}
                         aria-invalid={Boolean(errors.adminPhone)}
                         className={classNames(
