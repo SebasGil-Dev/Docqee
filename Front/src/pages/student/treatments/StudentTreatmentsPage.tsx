@@ -404,8 +404,8 @@ export function StudentTreatmentsPage() {
               )}
             </div>
             <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-              <div className="flex min-w-0 flex-wrap items-center gap-1.5 sm:gap-2.5">
-                <h2 className="max-w-[8rem] truncate font-headline text-[1.02rem] font-extrabold tracking-tight text-white sm:max-w-[16rem] sm:text-[1.18rem] lg:max-w-none lg:whitespace-normal lg:overflow-visible xl:max-w-none">
+              <div className="flex min-w-0 items-center gap-1.5 sm:gap-2.5">
+                <h2 className="min-w-0 flex-1 truncate font-headline text-[1.02rem] font-extrabold tracking-tight text-white sm:text-[1.18rem] lg:flex-none lg:whitespace-normal lg:overflow-visible xl:max-w-none">
                   {studentDisplayName.compactName ===
                   studentDisplayName.fullName ? (
                     <>Bienvenido, {studentDisplayName.fullName}</>
@@ -421,20 +421,14 @@ export function StudentTreatmentsPage() {
                   )}
                 </h2>
                 {reviews.length > 0 ? (
-                  <span className="inline-flex min-w-0 shrink-0 items-center gap-1 rounded-full bg-white/12 px-2 py-1 text-white/92 sm:gap-2 sm:px-2.5">
+                  <span className="ml-auto inline-flex shrink-0 items-center rounded-full bg-white/12 px-2 py-1 text-white/92 lg:hidden">
                     <span className="flex shrink-0 items-center gap-0.5">
-                      {renderStars(
-                        averageRating,
-                        'h-2.5 w-2.5 sm:h-3.5 sm:w-3.5',
-                      )}
-                    </span>
-                    <span className="max-w-[5.7rem] truncate text-[0.68rem] font-semibold sm:max-w-[12rem] sm:text-[0.75rem] xl:max-w-[14rem]">
-                      {formatReviewSummary(averageRating, reviews.length)}
+                      {renderStars(averageRating, 'h-2.5 w-2.5 sm:h-3 w-3')}
                     </span>
                   </span>
                 ) : null}
               </div>
-              <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <div className="flex min-w-0 flex-wrap items-center gap-2 lg:flex-nowrap">
                 <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-[0.75rem] font-semibold text-white/88">
                   <Building2
                     aria-hidden="true"
@@ -448,6 +442,16 @@ export function StudentTreatmentsPage() {
                   <GraduationCap aria-hidden="true" className="h-3.5 w-3.5" />
                   <span>Semestre {profile.semester}</span>
                 </span>
+                {reviews.length > 0 ? (
+                  <span className="hidden min-w-0 items-center gap-2 rounded-full bg-white/12 px-2.5 py-1 text-white/92 lg:inline-flex">
+                    <span className="flex shrink-0 items-center gap-0.5">
+                      {renderStars(averageRating, 'h-3.5 w-3.5')}
+                    </span>
+                    <span className="max-w-[12rem] truncate text-[0.75rem] font-semibold xl:max-w-[14rem]">
+                      {formatReviewSummary(averageRating, reviews.length)}
+                    </span>
+                  </span>
+                ) : null}
               </div>
             </div>
           </div>
