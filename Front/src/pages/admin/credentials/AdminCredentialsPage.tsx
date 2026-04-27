@@ -53,7 +53,8 @@ const AUTO_REFRESH_MIN_INTERVAL_MS = 5000;
 const DEFAULT_ROWS_PER_PAGE = 6;
 const MIN_ROWS_PER_PAGE = 1;
 const TABLE_HEADER_HEIGHT_PX = 38;
-const TABLE_ROW_HEIGHT_PX = 86;
+const TABLE_ROW_HEIGHT_FALLBACK_PX = 64;
+const TABLE_HEIGHT_PADDING_PX = 6;
 
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -127,6 +128,7 @@ export function AdminCredentialsPage() {
   const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
   const filterMenuRef = useRef<HTMLDivElement | null>(null);
   const tableViewportRef = useRef<HTMLDivElement | null>(null);
+  const tableBodyRef = useRef<HTMLTableSectionElement | null>(null);
   const lastAutoRefreshAtRef = useRef(0);
   const credentialRows = useMemo<CredentialRow[]>(
     () => credentials,
@@ -358,10 +360,22 @@ export function AdminCredentialsPage() {
         return;
       }
 
+      const tableHeaderHeight =
+        tableViewport.querySelector('thead')?.getBoundingClientRect().height ??
+        TABLE_HEADER_HEIGHT_PX;
+      const rowHeights = Array.from(
+        tableBodyRef.current?.querySelectorAll('tr') ?? [],
+        (row) => row.getBoundingClientRect().height,
+      ).filter((height) => height > 0);
+      const estimatedRowHeight =
+        rowHeights.length > 0
+          ? Math.max(...rowHeights)
+          : TABLE_ROW_HEIGHT_FALLBACK_PX;
       const nextRowsPerPage = Math.max(
         MIN_ROWS_PER_PAGE,
         Math.floor(
-          (nextAvailableHeight - TABLE_HEADER_HEIGHT_PX) / TABLE_ROW_HEIGHT_PX,
+          (nextAvailableHeight - tableHeaderHeight - TABLE_HEIGHT_PADDING_PX) /
+            estimatedRowHeight,
         ),
       );
 
@@ -388,7 +402,11 @@ export function AdminCredentialsPage() {
     return () => {
       window.removeEventListener('resize', updateRowsPerPage);
     };
-  }, [filteredCredentialRows.length]);
+  }, [
+    editingCredentialId,
+    filteredCredentialRows.length,
+    paginatedCredentialRows.length,
+  ]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -633,7 +651,10 @@ export function AdminCredentialsPage() {
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-200/80">
+                  <tbody
+                    ref={tableBodyRef}
+                    className="divide-y divide-slate-200/80"
+                  >
                     {paginatedCredentialRows.map((credential, index) => {
                       const isGenerated =
                         credential.deliveryStatus === 'generated';
