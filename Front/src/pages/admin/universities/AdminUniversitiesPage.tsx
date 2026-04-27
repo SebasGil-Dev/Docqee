@@ -44,7 +44,8 @@ const universityStatusFilterOptions: Array<{
 const DEFAULT_ROWS_PER_PAGE = 6;
 const MIN_ROWS_PER_PAGE = 1;
 const TABLE_HEADER_HEIGHT_PX = 38;
-const TABLE_ROW_HEIGHT_PX = 54;
+const TABLE_ROW_HEIGHT_FALLBACK_PX = 54;
+const TABLE_HEIGHT_PADDING_PX = 0;
 
 function buildAdministratorLabel(university: AdminUniversity) {
   return formatDisplayName(
@@ -97,6 +98,7 @@ export function AdminUniversitiesPage() {
   const pendingStatusUniversityIdsRef = useRef(new Set<string>());
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const tableViewportRef = useRef<HTMLDivElement | null>(null);
+  const tableBodyRef = useRef<HTMLTableSectionElement | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const successNotice = getLocationState(location.state)?.successNotice ?? null;
@@ -178,10 +180,23 @@ export function AdminUniversitiesPage() {
         return;
       }
 
+      const tableHeaderHeight =
+        tableViewport.querySelector('thead')?.getBoundingClientRect().height ??
+        TABLE_HEADER_HEIGHT_PX;
+      const rowHeights = Array.from(
+        tableBodyRef.current?.querySelectorAll('tr') ?? [],
+        (row) => row.getBoundingClientRect().height,
+      ).filter((height) => height > 0);
+      const estimatedRowHeight =
+        rowHeights.length > 0
+          ? rowHeights.reduce((total, height) => total + height, 0) /
+            rowHeights.length
+          : TABLE_ROW_HEIGHT_FALLBACK_PX;
       const nextRowsPerPage = Math.max(
         MIN_ROWS_PER_PAGE,
         Math.floor(
-          (nextAvailableHeight - TABLE_HEADER_HEIGHT_PX) / TABLE_ROW_HEIGHT_PX,
+          (nextAvailableHeight - tableHeaderHeight - TABLE_HEIGHT_PADDING_PX) /
+            estimatedRowHeight,
         ),
       );
 
@@ -208,7 +223,11 @@ export function AdminUniversitiesPage() {
     return () => {
       window.removeEventListener('resize', updateRowsPerPage);
     };
-  }, []);
+  }, [
+    filteredUniversities.length,
+    pageStartIndex,
+    paginatedUniversities.length,
+  ]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -489,7 +508,10 @@ export function AdminUniversitiesPage() {
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-200/80">
+                  <tbody
+                    ref={tableBodyRef}
+                    className="divide-y divide-slate-200/80"
+                  >
                     {paginatedUniversities.map((university, index) => {
                       const isPending = university.status === 'pending';
                       const isLast = index === paginatedUniversities.length - 1;

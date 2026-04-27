@@ -54,8 +54,7 @@ const DEFAULT_ROWS_PER_PAGE = 6;
 const MIN_ROWS_PER_PAGE = 1;
 const TABLE_HEADER_HEIGHT_PX = 38;
 const TABLE_ROW_HEIGHT_FALLBACK_PX = 64;
-const TABLE_HEIGHT_PADDING_PX = 2;
-const TABLE_ROW_HEIGHT_SAFETY_PX = 3;
+const TABLE_HEIGHT_PADDING_PX = 0;
 
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -370,10 +369,8 @@ export function AdminCredentialsPage() {
       ).filter((height) => height > 0);
       const estimatedRowHeight =
         rowHeights.length > 0
-          ? Math.ceil(
-              rowHeights.reduce((total, height) => total + height, 0) /
-                rowHeights.length,
-            ) + TABLE_ROW_HEIGHT_SAFETY_PX
+          ? rowHeights.reduce((total, height) => total + height, 0) /
+            rowHeights.length
           : TABLE_ROW_HEIGHT_FALLBACK_PX;
       const nextRowsPerPage = Math.max(
         MIN_ROWS_PER_PAGE,
@@ -409,6 +406,7 @@ export function AdminCredentialsPage() {
   }, [
     editingCredentialId,
     filteredCredentialRows.length,
+    pageStartIndex,
     paginatedCredentialRows.length,
   ]);
 
