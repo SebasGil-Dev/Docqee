@@ -405,7 +405,7 @@ export function StudentTreatmentsPage() {
             </div>
             <div className="flex min-w-0 flex-1 flex-col gap-1.5">
               <div className="flex min-w-0 items-center gap-1.5 sm:gap-2.5">
-                <h2 className="min-w-0 flex-1 truncate font-headline text-[1.02rem] font-extrabold tracking-tight text-white sm:text-[1.18rem] lg:flex-none lg:whitespace-normal lg:overflow-visible xl:max-w-none">
+                <h2 className="min-w-0 max-w-[calc(100%-4.25rem)] truncate font-headline text-[1.02rem] font-extrabold tracking-tight text-white sm:max-w-[calc(100%-4.75rem)] sm:text-[1.18rem] lg:max-w-none lg:flex-none lg:whitespace-normal lg:overflow-visible xl:max-w-none">
                   {studentDisplayName.compactName ===
                   studentDisplayName.fullName ? (
                     <>Bienvenido, {studentDisplayName.fullName}</>
@@ -421,7 +421,7 @@ export function StudentTreatmentsPage() {
                   )}
                 </h2>
                 {reviews.length > 0 ? (
-                  <span className="ml-auto inline-flex shrink-0 items-center rounded-full bg-white/12 px-2 py-1 text-white/92 lg:hidden">
+                  <span className="inline-flex shrink-0 items-center rounded-full bg-white/12 px-2 py-1 text-white/92 lg:hidden">
                     <span className="flex shrink-0 items-center gap-0.5">
                       {renderStars(averageRating, 'h-2.5 w-2.5 sm:h-3 w-3')}
                     </span>

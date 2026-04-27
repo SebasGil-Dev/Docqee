@@ -554,7 +554,7 @@ describe('Student pages', () => {
     expect(
       within(
         screen.getByTestId('student-request-row-student-request-1'),
-      ).getByText(/envio:/i),
+      ).getByText(/envi[o\u00f3]:/i),
     ).toBeInTheDocument();
     expect(
       within(
@@ -597,11 +597,17 @@ describe('Student pages', () => {
     await user.click(screen.getByRole('menuitemradio', { name: /aceptada/i }));
 
     expect(screen.getByText(/ana maria perez/i)).toBeInTheDocument();
+    const acceptedRequestRow = screen.getByTestId(
+      'student-request-row-student-request-1',
+    );
     expect(
-      within(
-        screen.getByTestId('student-request-row-student-request-1'),
-      ).getByText(/^Aceptada$/i),
+      within(acceptedRequestRow).getByText(/^Aceptada$/i),
     ).toBeInTheDocument();
+    expect(
+      within(acceptedRequestRow).queryByRole('link', {
+        name: /conversaci[o\u00f3]n/i,
+      }),
+    ).not.toBeInTheDocument();
   });
 
   it('permite revisar el perfil del paciente antes de responder la solicitud', async () => {
