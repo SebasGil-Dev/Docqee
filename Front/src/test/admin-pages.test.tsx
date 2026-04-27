@@ -78,7 +78,7 @@ async function fillRegisterUniversityForm(
     screen.getByLabelText(/correo del administrador universitario/i),
     'camila.mora@universidadsur.edu.co',
   );
-  await user.type(screen.getByLabelText(/celular opcional/i), '3007778899');
+  await user.type(screen.getByLabelText(/celular \(opcional\)/i), '3007778899');
 }
 
 describe('Admin pages', () => {

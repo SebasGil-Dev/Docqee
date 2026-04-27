@@ -46,7 +46,7 @@ export const adminContent = {
         requiredMessage: 'Los apellidos del administrador universitario son obligatorios',
       },
       adminPhone: {
-        label: 'Celular opcional',
+        label: 'Celular (opcional)',
         placeholder: '3001234567',
       },
       city: {
@@ -72,7 +72,7 @@ export const adminContent = {
         requiredMessage: 'El nombre de la universidad es obligatorio',
       },
     },
-    institutionSectionTitle: 'Datos de la institucion',
+    institutionSectionTitle: 'Datos de la institución',
     meta: {
       description:
         'Registra nuevas universidades dentro del modulo administrativo de Docqee.',
