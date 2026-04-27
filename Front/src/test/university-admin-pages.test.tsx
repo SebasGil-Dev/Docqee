@@ -249,6 +249,10 @@ describe('University admin pages', () => {
     await user.type(screen.getByLabelText(/^Nombres$/i), 'Jonathan');
     await user.clear(screen.getByLabelText(/^Apellidos$/i));
     await user.type(screen.getByLabelText(/^Apellidos$/i), 'Acevedo');
+    const adminPhone = screen.getByLabelText(/^Celular$/i);
+    await user.clear(adminPhone);
+    await user.type(adminPhone, '300abc-123 45x67');
+    expect(adminPhone).toHaveValue('3001234567');
     await user.type(screen.getByLabelText(/nombre de la sede/i), 'Sede Centro');
     await user.type(screen.getByLabelText(/dirección/i), 'Cra. 45 # 10-22');
     await user.selectOptions(screen.getByLabelText(/^Ciudad$/i), 'city-cali');

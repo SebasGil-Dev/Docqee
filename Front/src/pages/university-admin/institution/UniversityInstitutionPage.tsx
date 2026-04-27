@@ -635,22 +635,30 @@ export function UniversityInstitutionPage({
     field: UniversityInstitutionFormField,
     nextValue: string | null,
   ) => {
+    const normalizedNextValue =
+      field === 'adminPhone' && typeof nextValue === 'string'
+        ? nextValue.replace(/\D/g, '')
+        : nextValue;
+
     setValues((currentValues) =>
       field === 'cityId'
         ? {
             ...currentValues,
-            cityId: nextValue ?? '',
+            cityId: normalizedNextValue ?? '',
             mainLocalityId: '',
           }
         : {
             ...currentValues,
-            [field]: nextValue,
+            [field]: normalizedNextValue,
           },
     );
 
     setErrors((currentErrors) => {
       const nextErrors = { ...currentErrors };
-      const nextFieldError = validateInstitutionField(field, nextValue);
+      const nextFieldError = validateInstitutionField(
+        field,
+        normalizedNextValue,
+      );
 
       if (nextFieldError) {
         nextErrors[field] = nextFieldError;
@@ -1787,6 +1795,7 @@ export function UniversityInstitutionPage({
                           labelClassName={compactFieldLabelClassName}
                           name="adminPhone"
                           placeholder="3001234567"
+                          inputMode="numeric"
                           type="tel"
                           value={values.adminPhone}
                           onBlur={() =>
