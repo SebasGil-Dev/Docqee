@@ -771,17 +771,17 @@ export function StudentRequestsPage() {
           >
             <table className="w-full table-fixed">
               <thead className="sticky top-0 z-10 bg-slate-100 text-left">
-                <tr className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-ink-muted">
-                  <th className="w-[38%] px-3 py-2.5 sm:px-4 md:w-[27%]">
+                <tr className="text-[0.58rem] font-bold uppercase leading-3 tracking-[0.14em] text-ink-muted sm:text-[0.68rem] sm:leading-none sm:tracking-[0.18em]">
+                  <th className="w-[38%] px-2 py-1.5 sm:px-4 sm:py-2.5 md:w-[27%]">
                     Paciente
                   </th>
-                  <th className="hidden px-3 py-2.5 sm:px-4 md:table-cell md:w-[28%]">
+                  <th className="hidden px-2 py-1.5 sm:px-4 sm:py-2.5 md:table-cell md:w-[28%]">
                     Motivo
                   </th>
-                  <th className="w-[22%] px-3 py-2.5 text-left sm:px-4 md:w-[15%]">
+                  <th className="w-[22%] px-2 py-1.5 text-left sm:px-4 sm:py-2.5 md:w-[15%]">
                     Estado
                   </th>
-                  <th className="w-[40%] px-3 py-2.5 text-center sm:px-4 md:w-[30%]">
+                  <th className="w-[40%] px-2 py-1.5 text-center sm:px-4 sm:py-2.5 md:w-[30%]">
                     Acciones
                   </th>
                 </tr>
@@ -796,15 +796,15 @@ export function StudentRequestsPage() {
                     className="align-top"
                     data-testid={`student-request-row-${request.id}`}
                   >
-                    <td className="px-3 py-3 sm:px-4">
-                      <div className="min-w-0 space-y-1">
-                        <p className="break-words text-sm font-semibold leading-5 text-ink">
+                    <td className="px-2 py-2 sm:px-4 sm:py-3">
+                      <div className="min-w-0 space-y-0.5 sm:space-y-1">
+                        <p className="break-words text-[0.78rem] font-semibold leading-4 text-ink sm:text-sm sm:leading-5">
                           {request.patientName}
                         </p>
-                        <p className="break-words text-xs leading-5 text-ink-muted">
+                        <p className="break-words text-[0.68rem] leading-4 text-ink-muted sm:text-xs sm:leading-5">
                           {getPatientLocationLabel(request)}
                         </p>
-                        <p className="text-xs text-ink-muted">
+                        <p className="text-[0.68rem] leading-4 text-ink-muted sm:text-xs">
                           Envió:{' '}
                           <span className="font-medium text-ink">
                             {formatRequestDate(request.sentAt)}
@@ -812,31 +812,34 @@ export function StudentRequestsPage() {
                         </p>
                       </div>
                     </td>
-                    <td className="hidden px-3 py-3 sm:px-4 md:table-cell">
+                    <td className="hidden px-2 py-2 sm:px-4 sm:py-3 md:table-cell">
                       <p className="line-clamp-3 break-words text-sm leading-5 text-ink-muted">
                         {request.reason ?? 'Sin motivo registrado.'}
                       </p>
                     </td>
-                    <td className="px-3 py-3 sm:px-4">
+                    <td className="px-2 py-2 sm:px-4 sm:py-3">
                       <span
                         className={classNames(
-                          'inline-flex max-w-full rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset',
+                          'inline-flex max-w-full rounded-full px-1.5 py-0.5 text-[0.62rem] font-semibold leading-4 ring-1 ring-inset sm:px-2.5 sm:py-1 sm:text-xs',
                           getStatusBadgeClasses(request.status),
                         )}
                       >
                         {getStatusLabel(request.status)}
                       </span>
                     </td>
-                    <td className="px-3 py-3 text-center sm:px-4">
+                    <td className="px-1.5 py-2 text-center sm:px-4 sm:py-3">
                       {request.status === 'PENDIENTE' ? (
-                        <div className="flex flex-wrap items-center justify-center gap-1.5 xl:flex-nowrap">
+                        <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-1.5 xl:flex-nowrap">
                           <button
                             aria-label={`Ver perfil de ${request.patientName}`}
-                            className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-slate-100 px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
+                            className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-slate-100 px-1.5 py-1 text-[0.66rem] font-semibold text-slate-700 transition duration-200 hover:bg-slate-200 sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs"
                             type="button"
                             onClick={() => setSelectedRequestId(request.id)}
                           >
-                            <Eye aria-hidden="true" className="h-3.5 w-3.5" />
+                            <Eye
+                              aria-hidden="true"
+                              className="h-3 w-3 sm:h-3.5 sm:w-3.5"
+                            />
                             <span>
                               {
                                 studentContent.requestsPage.actionLabels
@@ -845,7 +848,7 @@ export function StudentRequestsPage() {
                             </span>
                           </button>
                           <button
-                            className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 transition duration-200 hover:bg-emerald-100"
+                            className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-emerald-50 px-1.5 py-1 text-[0.66rem] font-semibold text-emerald-700 transition duration-200 hover:bg-emerald-100 sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs"
                             type="button"
                             onClick={() =>
                               handleRequestAction(
@@ -855,13 +858,16 @@ export function StudentRequestsPage() {
                               )
                             }
                           >
-                            <Check aria-hidden="true" className="h-3.5 w-3.5" />
+                            <Check
+                              aria-hidden="true"
+                              className="h-3 w-3 sm:h-3.5 sm:w-3.5"
+                            />
                             <span>
                               {studentContent.requestsPage.actionLabels.accept}
                             </span>
                           </button>
                           <button
-                            className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-rose-50 px-2.5 py-1.5 text-xs font-semibold text-rose-700 transition duration-200 hover:bg-rose-100"
+                            className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-rose-50 px-1.5 py-1 text-[0.66rem] font-semibold text-rose-700 transition duration-200 hover:bg-rose-100 sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs"
                             type="button"
                             onClick={() =>
                               handleRequestAction(
@@ -873,7 +879,7 @@ export function StudentRequestsPage() {
                           >
                             <XCircle
                               aria-hidden="true"
-                              className="h-3.5 w-3.5"
+                              className="h-3 w-3 sm:h-3.5 sm:w-3.5"
                             />
                             <span>
                               {studentContent.requestsPage.actionLabels.reject}
@@ -881,14 +887,17 @@ export function StudentRequestsPage() {
                           </button>
                         </div>
                       ) : request.status === 'ACEPTADA' ? (
-                        <div className="flex flex-wrap items-center justify-center gap-1.5 xl:flex-nowrap">
+                        <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-1.5 xl:flex-nowrap">
                           <button
                             aria-label={`Ver perfil de ${request.patientName}`}
-                            className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-slate-100 px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
+                            className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-slate-100 px-1.5 py-1 text-[0.66rem] font-semibold text-slate-700 transition duration-200 hover:bg-slate-200 sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs"
                             type="button"
                             onClick={() => setSelectedRequestId(request.id)}
                           >
-                            <Eye aria-hidden="true" className="h-3.5 w-3.5" />
+                            <Eye
+                              aria-hidden="true"
+                              className="h-3 w-3 sm:h-3.5 sm:w-3.5"
+                            />
                             <span>
                               {
                                 studentContent.requestsPage.actionLabels
@@ -897,13 +906,13 @@ export function StudentRequestsPage() {
                             </span>
                           </button>
                           <button
-                            className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-slate-100 px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
+                            className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-slate-100 px-1.5 py-1 text-[0.66rem] font-semibold text-slate-700 transition duration-200 hover:bg-slate-200 sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs"
                             type="button"
                             onClick={() => setRequestToClose(request)}
                           >
                             <ShieldX
                               aria-hidden="true"
-                              className="h-3.5 w-3.5"
+                              className="h-3 w-3 sm:h-3.5 sm:w-3.5"
                             />
                             <span>
                               {studentContent.requestsPage.actionLabels.close}
@@ -911,14 +920,17 @@ export function StudentRequestsPage() {
                           </button>
                         </div>
                       ) : (
-                        <div className="flex flex-wrap items-center justify-center gap-1.5 xl:flex-nowrap">
+                        <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-1.5 xl:flex-nowrap">
                           <button
                             aria-label={`Ver perfil de ${request.patientName}`}
-                            className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-slate-100 px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
+                            className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-slate-100 px-1.5 py-1 text-[0.66rem] font-semibold text-slate-700 transition duration-200 hover:bg-slate-200 sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs"
                             type="button"
                             onClick={() => setSelectedRequestId(request.id)}
                           >
-                            <Eye aria-hidden="true" className="h-3.5 w-3.5" />
+                            <Eye
+                              aria-hidden="true"
+                              className="h-3 w-3 sm:h-3.5 sm:w-3.5"
+                            />
                             <span>
                               {
                                 studentContent.requestsPage.actionLabels
@@ -926,7 +938,7 @@ export function StudentRequestsPage() {
                               }
                             </span>
                           </button>
-                          <span className="text-xs font-medium text-ink-muted">
+                          <span className="text-[0.66rem] font-medium text-ink-muted sm:text-xs">
                             Sin acciones
                           </span>
                         </div>

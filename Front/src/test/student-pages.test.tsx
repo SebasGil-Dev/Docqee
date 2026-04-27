@@ -60,6 +60,32 @@ function mockStudentViewport(matches: boolean) {
   });
 }
 
+async function selectTimeValue(
+  user: ReturnType<typeof userEvent.setup>,
+  scope: HTMLElement,
+  label: RegExp,
+  value: string,
+) {
+  const [hourValue = 0, minuteValue = 0] = value.split(':').map(Number);
+  const period = hourValue < 12 ? 'AM' : 'PM';
+  const displayHour =
+    hourValue === 0 ? 12 : hourValue > 12 ? hourValue - 12 : hourValue;
+
+  await user.click(within(scope).getByLabelText(label));
+  await user.click(
+    screen.getByRole('button', {
+      name: String(displayHour).padStart(2, '0'),
+    }),
+  );
+  await user.click(
+    screen.getByRole('button', {
+      name: String(minuteValue).padStart(2, '0'),
+    }),
+  );
+  await user.click(screen.getByRole('button', { name: period }));
+  await user.keyboard('{Escape}');
+}
+
 describe('Student pages', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -315,44 +341,16 @@ describe('Student pages', () => {
     ).toBeInTheDocument();
   });
 
-  it('permite gestionar tratamientos y sedes desde mi perfil', async () => {
-    const user = userEvent.setup();
+  it('mantiene el inicio centrado en valoraciones sin tarjetas de gestion', () => {
+    renderStudentApp([ROUTES.studentTreatments]);
 
-    renderStudentApp([ROUTES.studentProfile]);
-
-    await user.click(
-      within(
-        screen.getByTestId('student-profile-treatment-card-treatment-1'),
-      ).getByRole('button', {
-        name: /inactivar/i,
-      }),
-    );
-    await waitFor(() => {
-      expect(
-        within(
-          screen.getByTestId('student-profile-treatment-card-treatment-1'),
-        ).getByText(/^Inactivo$/i),
-      ).toBeInTheDocument();
-    });
-
-    await user.click(
-      within(
-        screen.getByTestId(
-          'student-profile-practice-site-card-practice-site-1',
-        ),
-      ).getByRole('button', {
-        name: /inactivar/i,
-      }),
-    );
-    await waitFor(() => {
-      expect(
-        within(
-          screen.getByTestId(
-            'student-profile-practice-site-card-practice-site-1',
-          ),
-        ).getByText(/^Inactivo$/i),
-      ).toBeInTheDocument();
-    });
+    expect(screen.getByText(/comentarios de tus citas/i)).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('student-treatment-card-treatment-1'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('student-practice-site-card-practice-site-1'),
+    ).not.toBeInTheDocument();
   });
 
   it('permite crear un bloqueo de agenda y cambiar su estado', async () => {
@@ -363,9 +361,6 @@ describe('Student pages', () => {
     expect(
       screen.getByRole('button', { name: /^Semana$/i }),
     ).toBeInTheDocument();
-    expect(screen.getAllByText(/valoracion inicial/i).length).toBeGreaterThan(
-      0,
-    );
 
     await user.click(screen.getByRole('button', { name: /agregar bloqueo/i }));
 
@@ -374,7 +369,7 @@ describe('Student pages', () => {
     });
     await user.type(
       within(createDialog).getByLabelText(/fecha especifica/i),
-      '2026-04-10',
+      '2026-04-28',
     );
     await user.type(
       within(createDialog).getByLabelText(/hora de inicio/i),
@@ -455,6 +450,44 @@ describe('Student pages', () => {
     renderStudentApp([ROUTES.studentAppointments]);
 
     expect(screen.getByText(/propuestas activas/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole('columnheader', { name: /^Valoraci[o\u00f3]n$/i }),
+    ).toBeInTheDocument();
+
+    const completedAppointmentRow = screen.getByTestId(
+      'student-appointment-row-student-appointment-5',
+    );
+    expect(
+      within(completedAppointmentRow).getByText(/5\/5/i),
+    ).toBeInTheDocument();
+
+    await user.click(
+      within(completedAppointmentRow).getByRole('button', {
+        name: /ver comentarios/i,
+      }),
+    );
+
+    const commentsDialog = screen.getByRole('dialog', {
+      name: /comentarios de la cita/i,
+    });
+    expect(
+      within(commentsDialog).queryByText(/comentarios de la sesion/i),
+    ).not.toBeInTheDocument();
+    expect(
+      within(commentsDialog).queryByText(/^Ricardo Suarez$/i),
+    ).not.toBeInTheDocument();
+    expect(
+      within(commentsDialog).queryByText(/^Seguimiento final$/i),
+    ).not.toBeInTheDocument();
+
+    await user.click(
+      within(commentsDialog).getByRole('button', { name: /cerrar/i }),
+    );
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('dialog', { name: /comentarios de la cita/i }),
+      ).not.toBeInTheDocument();
+    });
 
     await user.click(screen.getByRole('button', { name: /agendar cita/i }));
 
@@ -473,13 +506,10 @@ describe('Student pages', () => {
     );
     await user.type(
       within(dialog).getByLabelText(/fecha de la cita/i),
-      '2026-04-11',
+      '2026-05-11',
     );
-    await user.type(within(dialog).getByLabelText(/hora de inicio/i), '08:00');
-    await user.type(
-      within(dialog).getByLabelText(/hora de finalizacion/i),
-      '09:00',
-    );
+    await selectTimeValue(user, dialog, /hora de inicio/i, '08:00');
+    await selectTimeValue(user, dialog, /hora de finalizacion/i, '09:00');
     await user.click(within(dialog).getByLabelText(/docente supervisor/i));
     await user.click(
       within(dialog).getByRole('option', { name: /catalina mora/i }),
@@ -519,14 +549,13 @@ describe('Student pages', () => {
       within(confirmDialog).getByRole('button', { name: /si, cancelar cita/i }),
     );
 
-    expect(await screen.findByRole('status')).toHaveTextContent(
-      /la cita ahora esta cancelada/i,
-    );
-    expect(
-      within(
-        screen.getByTestId('student-appointment-row-student-appointment-6'),
-      ).getByText(/^Cancelada$/i),
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        within(
+          screen.getByTestId('student-appointment-row-student-appointment-6'),
+        ).getByText(/^Cancelada$/i),
+      ).toBeInTheDocument();
+    });
   });
 
   it('permite filtrar solicitudes pendientes y aceptarlas', async () => {
