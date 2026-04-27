@@ -86,8 +86,27 @@ const studentDirectorySelect =
     },
   });
 
+const patientRequestStudentSelect =
+  Prisma.validator<Prisma.cuenta_estudianteSelect>()({
+    persona: {
+      select: {
+        apellidos: true,
+        nombres: true,
+      },
+    },
+    universidad: {
+      select: {
+        nombre: true,
+      },
+    },
+  });
+
 type StudentDirectoryRecord = Prisma.cuenta_estudianteGetPayload<{
   select: typeof studentDirectorySelect;
+}>;
+
+type PatientRequestStudentRecord = Prisma.cuenta_estudianteGetPayload<{
+  select: typeof patientRequestStudentSelect;
 }>;
 
 type PatientDirectoryLocationPreference = {
@@ -358,10 +377,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     estado: "PENDIENTE" | "ACEPTADA" | "RECHAZADA" | "CERRADA" | "CANCELADA";
     conversacion?: { estado?: string; id_conversacion: number } | null;
     cita?: { id_cita: number }[];
-    cuenta_estudiante: {
-      persona: { nombres: string; apellidos: string };
-      universidad: { nombre: string };
-    };
+    cuenta_estudiante: PatientRequestStudentRecord;
   }): PatientRequestDto {
     const requestStatus =
       request.estado === "ACEPTADA" && request.conversacion?.estado === "CERRADA"
@@ -1113,10 +1129,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         select: { estado: true, id_conversacion: true },
       },
       cuenta_estudiante: {
-        include: {
-          persona: true,
-          universidad: true,
-        },
+        select: patientRequestStudentSelect,
       },
     } as const;
     const reuseClosedRequest = async () => {
@@ -1157,10 +1170,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
           id_cuenta: studentAccountId,
           cuenta_acceso: { estado: "ACTIVO" },
         },
-        include: {
-          persona: true,
-          universidad: true,
-        },
+        select: patientRequestStudentSelect,
       }),
       this.prisma.solicitud.findFirst({
         where: {
@@ -1208,10 +1218,22 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
           id_cuenta_paciente: patientAccountId,
           motivo_consulta: normalizedReason,
         },
-        include: requestInclude,
+        select: {
+          estado: true,
+          fecha_envio: true,
+          fecha_respuesta: true,
+          id_cuenta_estudiante: true,
+          id_solicitud: true,
+          motivo_consulta: true,
+        },
       });
 
-      return this.toRequestDto(request);
+      return this.toRequestDto({
+        ...request,
+        cita: [],
+        conversacion: null,
+        cuenta_estudiante: student,
+      });
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&

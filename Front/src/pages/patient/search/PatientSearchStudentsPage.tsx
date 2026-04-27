@@ -292,6 +292,20 @@ export function PatientSearchStudentsPage() {
   }, [isReady, prefetchStudentDirectory]);
 
   useEffect(() => {
+    if (!successMessage) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setSuccessMessage(null);
+    }, 2000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [successMessage]);
+
+  useEffect(() => {
     if (
       selectedStudentId &&
       !students.some((student) => student.id === selectedStudentId)
@@ -373,32 +387,27 @@ export function PatientSearchStudentsPage() {
     }
 
     const normalizedReason = reason.trim();
+    const selectedStudentName = getStudentFullName(selectedStudent);
 
     if (!normalizedReason) {
       setReasonError('Describe brevemente el motivo de tu solicitud.');
       return;
     }
 
-    void (async () => {
-      const createdRequest = await createRequest(
-        selectedStudent.id,
-        normalizedReason,
-      );
+    setReason('');
+    setReasonError(null);
+    setSuccessMessage(
+      `Tu solicitud fue enviada a ${selectedStudentName} y quedo en estado pendiente.`,
+    );
+    setSelectedStudentId(null);
 
-      if (!createdRequest) {
-        setReasonError(
-          'Ya tienes una solicitud activa con este estudiante o la informacion no es valida.',
-        );
-        return;
-      }
-
-      setReason('');
-      setReasonError(null);
-      setSuccessMessage(
-        `Tu solicitud fue enviada a ${getStudentFullName(selectedStudent)} y quedo en estado pendiente.`,
-      );
-      setSelectedStudentId(null);
-    })();
+    void createRequest(selectedStudent.id, normalizedReason).then(
+      (createdRequest) => {
+        if (!createdRequest) {
+          setSuccessMessage(null);
+        }
+      },
+    );
   };
 
   const runImmediateSearchInTest = (filters: {

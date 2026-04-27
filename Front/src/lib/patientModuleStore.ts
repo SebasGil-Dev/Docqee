@@ -609,6 +609,13 @@ function upsertPatientRequest(
     : [request, ...requests];
 }
 
+function removePatientRequestById(
+  requests: PatientRequest[],
+  requestId: string,
+) {
+  return requests.filter((request) => request.id !== requestId);
+}
+
 function readSessionStorage() {
   if (typeof window === 'undefined') {
     return null;
@@ -1185,6 +1192,40 @@ function createRequestMock(studentId: string, reason: string) {
   return nextRequest;
 }
 
+function buildOptimisticPatientRequest(studentId: string, reason: string) {
+  const normalizedReason = normalizeText(reason);
+  const selectedStudent = state.students.find(
+    (student) => student.id === studentId,
+  );
+
+  if (!selectedStudent || !normalizedReason) {
+    return null;
+  }
+
+  const hasActiveRequest = state.requests.some(
+    (request) =>
+      request.studentId === studentId &&
+      (request.status === 'PENDIENTE' || request.status === 'ACEPTADA'),
+  );
+
+  if (hasActiveRequest) {
+    return null;
+  }
+
+  return {
+    appointmentsCount: 0,
+    conversationId: null,
+    id: `optimistic-patient-request-${Date.now()}`,
+    reason: normalizedReason,
+    responseAt: null,
+    sentAt: new Date().toISOString(),
+    status: 'PENDIENTE',
+    studentId: selectedStudent.id,
+    studentName: `${selectedStudent.firstName} ${selectedStudent.lastName}`,
+    universityName: selectedStudent.universityName,
+  } satisfies PatientRequest;
+}
+
 function updateRequestStatusMock(
   requestId: string,
   status: PatientRequestStatus,
@@ -1426,10 +1467,32 @@ async function createRequest(studentId: string, reason: string) {
     return createRequestMock(studentId, reason);
   }
 
-  patchState({
-    errorMessage: null,
-    isLoading: true,
-  });
+  const optimisticRequest = buildOptimisticPatientRequest(studentId, reason);
+
+  if (!optimisticRequest) {
+    patchState({
+      errorMessage:
+        'Ya tienes una solicitud activa con este estudiante o la informacion no es valida.',
+      isLoading: false,
+    });
+    return null;
+  }
+
+  const requestsSnapshot = state.requests;
+
+  setRuntimeState(
+    {
+      ...state,
+      errorMessage: null,
+      isLoading: true,
+      isReady: true,
+      requests: upsertPatientRequest(state.requests, optimisticRequest),
+      shouldRefresh: false,
+    },
+    {
+      persistCache: false,
+    },
+  );
 
   try {
     const request = await createPatientPortalRequest(studentId, reason);
@@ -1440,7 +1503,10 @@ async function createRequest(studentId: string, reason: string) {
         errorMessage: null,
         isLoading: false,
         isReady: true,
-        requests: upsertPatientRequest(state.requests, request),
+        requests: upsertPatientRequest(
+          removePatientRequestById(state.requests, optimisticRequest.id),
+          request,
+        ),
         shouldRefresh: false,
       },
       {
@@ -1450,10 +1516,17 @@ async function createRequest(studentId: string, reason: string) {
 
     return request;
   } catch (error) {
-    patchState({
-      errorMessage: getErrorMessage(error, 'No pudimos enviar la solicitud.'),
-      isLoading: false,
-    });
+    setRuntimeState(
+      {
+        ...state,
+        errorMessage: getErrorMessage(error, 'No pudimos enviar la solicitud.'),
+        isLoading: false,
+        requests: requestsSnapshot,
+      },
+      {
+        persistCache: false,
+      },
+    );
     return null;
   }
 }
