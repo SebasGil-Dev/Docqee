@@ -56,7 +56,7 @@ export function AuthShell({
           footerClassName,
         )}
       >
-        {`\u00A9 ${new Date().getFullYear()} Docqee. Atenci\u00F3n odontol\u00F3gica universitaria con tono institucional.`}
+        {`\u00A9 ${new Date().getFullYear()} Docqee. Atenci\u00F3n odontol\u00F3gica universitaria en un entorno institucional.`}
       </footer>
     </div>
   );

@@ -40,6 +40,61 @@ export const landingContent: LandingContent = {
     imagePath: '/og-image.svg',
     title: 'Docqee | Atención odontológica universitaria',
   },
+  howItWorks: {
+    description: 'Sigue estos pasos para comenzar tu proceso en Docqee',
+    roles: {
+      patient: {
+        label: 'Paciente',
+        steps: [
+          {
+            ctaLabel: 'Empezar',
+            description:
+              'Accede fácilmente a la plataforma para iniciar tu proceso de registro y vinculación.',
+            icon: 'account',
+            title: 'Crea tu cuenta o inicia sesión',
+          },
+          {
+            ctaLabel: 'Ver perfiles',
+            description:
+              'Encuentra un estudiante de odontología según tus necesidades, dentro de un entorno académico supervisado.',
+            icon: 'search',
+            title: 'Busca y conéctate con un estudiante',
+          },
+          {
+            ctaLabel: 'Agendar cita',
+            description:
+              'Recibe atención acompañada por docentes profesionales durante cada paso de tu tratamiento.',
+            icon: 'clipboard',
+            title: 'Recibe atención con acompañamiento',
+          },
+        ],
+      },
+      student: {
+        label: 'Estudiante',
+        steps: [
+          {
+            ctaLabel: 'Completar perfil',
+            description: 'Agrega información, tratamientos y disponibilidad.',
+            icon: 'account',
+            title: 'Completa tu perfil profesional',
+          },
+          {
+            ctaLabel: 'Gestionar solicitudes',
+            description: 'Acepta o rechaza según tu criterio.',
+            icon: 'search',
+            title: 'Recibe solicitudes de pacientes',
+          },
+          {
+            ctaLabel: 'Coordinar agenda',
+            description: 'Coordina tu agenda y realiza el seguimiento clínico.',
+            icon: 'clipboard',
+            title: 'Gestiona citas y tratamientos',
+          },
+        ],
+      },
+    },
+    title: '¿Cómo funciona Docqee?',
+  },
   institutionalAlliance: {
     benefits: [
       'Permite que tus estudiantes de odontología sean encontrados por pacientes voluntarios para prácticas clínicas supervisadas por docentes.',
@@ -91,30 +146,13 @@ export const landingContent: LandingContent = {
       label: 'Crear cuenta',
       to: ROUTES.register,
     },
+    youtube: {
+      href: 'https://www.youtube.com/playlist?list=PLNiE_Z3RqyitU1iWudrgYaAvob1Okd68k',
+      kind: 'external',
+      label: 'YouTube',
+      newTab: true,
+    },
   },
-  steps: [
-    {
-      ctaLabel: 'Empezar',
-      description:
-        'Accede fácilmente a la plataforma para iniciar tu proceso de registro y vinculación.',
-      icon: 'account',
-      title: 'Crea tu cuenta o inicia sesión',
-    },
-    {
-      ctaLabel: 'Ver perfiles',
-      description:
-        'Encuentra un estudiante de odontología según tus necesidades, dentro de un entorno académico supervisado.',
-      icon: 'search',
-      title: 'Busca y conéctate con un estudiante',
-    },
-    {
-      ctaLabel: 'Agendar cita',
-      description:
-        'Recibe atención acompañada por docentes profesionales durante cada paso de tu tratamiento.',
-      icon: 'clipboard',
-      title: 'Recibe atención con acompañamiento',
-    },
-  ],
   universities: [
     {
       icon: 'landmark',
@@ -129,12 +167,14 @@ export const landingContent: LandingContent = {
     {
       icon: 'book',
       label: 'Universidad San Ignacio de los Andes',
-      supportText: 'Conexión entre práctica, docencia y experiencia del paciente.',
+      supportText:
+        'Conexión entre práctica, docencia y experiencia del paciente.',
     },
     {
       icon: 'shield',
       label: 'Universidad Nueva Colombia',
-      supportText: 'Relación cercana entre formación clínica y seguimiento responsable.',
+      supportText:
+        'Relación cercana entre formación clínica y seguimiento responsable.',
     },
   ],
 };

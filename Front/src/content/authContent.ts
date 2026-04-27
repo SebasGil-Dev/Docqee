@@ -123,8 +123,9 @@ export const authContent: AuthContent = {
     patientFields: {
       birthDate: {
         futureDateMessage: 'La fecha de nacimiento no puede ser futura',
+        invalidMessage: 'Ingresa una fecha válida en formato dd/mm/aaaa',
         label: 'Fecha de nacimiento',
-        placeholder: '',
+        placeholder: 'dd/mm/aaaa',
         requiredMessage: 'La fecha de nacimiento es obligatoria',
       },
       city: {
@@ -191,14 +192,14 @@ export const authContent: AuthContent = {
     },
     privacyConsent: {
       label:
-        'Autorizo el tratamiento de mis datos personales para la gesti\u00F3n del servicio odontol\u00F3gico universitario.',
+        'Autorizo el tratamiento de mis datos personales conforme a la Pol\u00EDtica de Privacidad de Docqee, para la gesti\u00F3n de mi vinculaci\u00F3n con estudiantes de odontolog\u00EDa y el uso de los servicios de la plataforma.',
       requiredMessage: 'Debes autorizar el tratamiento de datos personales',
     },
     submitLabel: 'Crear cuenta',
     subtitle:
       'Registra tus datos para comenzar tu vinculaci\u00F3n con estudiantes de odontolog\u00EDa.',
     termsConsent: {
-      label: 'Acepto los t\u00E9rminos y condiciones de uso de Docqee.',
+      label: 'Acepto los T\u00E9rminos y Condiciones de uso de Docqee.',
       requiredMessage: 'Debes aceptar los t\u00E9rminos y condiciones',
     },
     title: 'Crear cuenta',

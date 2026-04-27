@@ -28,10 +28,25 @@ export type HeroImage = {
   width: number;
 };
 
+export type StepIcon = 'account' | 'clipboard' | 'search';
+
+export type HowItWorksRole = 'patient' | 'student';
+
 export type StepItem = {
   ctaLabel: string;
   description: string;
-  icon: 'account' | 'clipboard' | 'search';
+  icon: StepIcon;
+  title: string;
+};
+
+export type HowItWorksRoleContent = {
+  label: string;
+  steps: StepItem[];
+};
+
+export type HowItWorksContent = {
+  description: string;
+  roles: Record<HowItWorksRole, HowItWorksRoleContent>;
   title: string;
 };
 
@@ -85,13 +100,14 @@ export type LandingContent = {
     imagePath: string;
     title: string;
   };
+  howItWorks: HowItWorksContent;
   institutionalAlliance: InstitutionalAllianceContent;
   navigation: {
     items: NavigationItem[];
     login: CtaTarget;
     register: CtaTarget;
+    youtube: CtaTarget;
   };
-  steps: StepItem[];
   universities: UniversityItem[];
 };
 
@@ -122,7 +138,9 @@ export type LocalityOption = {
 export type PatientRegisterCatalogDataSource = {
   getCities: () => Promise<CityOption[]> | CityOption[];
   getDocumentTypes: () => Promise<DocumentTypeOption[]> | DocumentTypeOption[];
-  getLocalitiesByCity: (cityId: string) => Promise<LocalityOption[]> | LocalityOption[];
+  getLocalitiesByCity: (
+    cityId: string,
+  ) => Promise<LocalityOption[]> | LocalityOption[];
   loadCities?: () => Promise<CityOption[]>;
   loadDocumentTypes?: () => Promise<DocumentTypeOption[]>;
   loadLocalitiesByCity?: (cityId: string) => Promise<LocalityOption[]>;
@@ -153,6 +171,7 @@ export type RegisterEmailFieldCopy = RegisterFieldCopy & {
 
 export type RegisterDateFieldCopy = RegisterFieldCopy & {
   futureDateMessage: string;
+  invalidMessage: string;
 };
 
 export type RegisterSelectFieldCopy = {
@@ -272,7 +291,9 @@ export type AuthActionStatus = 'error' | 'idle' | 'submitting' | 'success';
 
 export type ForgotPasswordFlowStep = 'code' | 'email' | 'password';
 
-export type ForgotPasswordRequestCodeFailureReason = 'rate_limited' | 'unexpected';
+export type ForgotPasswordRequestCodeFailureReason =
+  | 'rate_limited'
+  | 'unexpected';
 
 export type ForgotPasswordVerifyCodeFailureReason =
   | 'attempts_exceeded'
@@ -336,18 +357,24 @@ export type ForgotPasswordResetPasswordResult =
     };
 
 export type ForgotPasswordService = {
-  requestResetCode:
-    (input: ForgotPasswordRequestCodeInput) =>
-      Promise<ForgotPasswordRequestCodeResult> | ForgotPasswordRequestCodeResult;
-  resendResetCode:
-    (input: ForgotPasswordRequestCodeInput) =>
-      Promise<ForgotPasswordRequestCodeResult> | ForgotPasswordRequestCodeResult;
-  resetPassword:
-    (input: ForgotPasswordResetPasswordInput) =>
-      Promise<ForgotPasswordResetPasswordResult> | ForgotPasswordResetPasswordResult;
-  verifyResetCode:
-    (input: ForgotPasswordVerifyCodeInput) =>
-      Promise<ForgotPasswordVerifyCodeResult> | ForgotPasswordVerifyCodeResult;
+  requestResetCode: (
+    input: ForgotPasswordRequestCodeInput,
+  ) =>
+    | Promise<ForgotPasswordRequestCodeResult>
+    | ForgotPasswordRequestCodeResult;
+  resendResetCode: (
+    input: ForgotPasswordRequestCodeInput,
+  ) =>
+    | Promise<ForgotPasswordRequestCodeResult>
+    | ForgotPasswordRequestCodeResult;
+  resetPassword: (
+    input: ForgotPasswordResetPasswordInput,
+  ) =>
+    | Promise<ForgotPasswordResetPasswordResult>
+    | ForgotPasswordResetPasswordResult;
+  verifyResetCode: (
+    input: ForgotPasswordVerifyCodeInput,
+  ) => Promise<ForgotPasswordVerifyCodeResult> | ForgotPasswordVerifyCodeResult;
 };
 
 export type ForgotPasswordContent = {
@@ -389,7 +416,12 @@ export type VerifyEmailCodeFieldCopy = {
   requiredMessage: string;
 };
 
-export type VerifyEmailResultStatus = 'error' | 'idle' | 'resending' | 'submitting' | 'success';
+export type VerifyEmailResultStatus =
+  | 'error'
+  | 'idle'
+  | 'resending'
+  | 'submitting'
+  | 'success';
 
 export type VerifyEmailVerificationFailureReason =
   | 'expired'
@@ -418,7 +450,10 @@ export type VerifyEmailResendResult =
       cooldownSeconds?: number;
       message: string;
       ok: false;
-      reason: Exclude<VerifyEmailVerificationFailureReason, 'invalid' | 'invalid_format' | 'expired'>;
+      reason: Exclude<
+        VerifyEmailVerificationFailureReason,
+        'invalid' | 'invalid_format' | 'expired'
+      >;
     };
 
 export type VerifyEmailServiceInput = {
@@ -431,11 +466,12 @@ export type VerifyEmailResendInput = {
 };
 
 export type VerifyEmailService = {
-  resendCode:
-    (input: VerifyEmailResendInput) => Promise<VerifyEmailResendResult> | VerifyEmailResendResult;
-  verifyCode:
-    (input: VerifyEmailServiceInput) =>
-      Promise<VerifyEmailVerificationResult> | VerifyEmailVerificationResult;
+  resendCode: (
+    input: VerifyEmailResendInput,
+  ) => Promise<VerifyEmailResendResult> | VerifyEmailResendResult;
+  verifyCode: (
+    input: VerifyEmailServiceInput,
+  ) => Promise<VerifyEmailVerificationResult> | VerifyEmailVerificationResult;
 };
 
 export type VerifyEmailContent = {
@@ -457,7 +493,8 @@ export type VerifyEmailContent = {
 };
 
 export type AuthContent = {
-  forgotPassword: Partial<AuthPlaceholderContent> & Partial<ForgotPasswordContent>;
+  forgotPassword: Partial<AuthPlaceholderContent> &
+    Partial<ForgotPasswordContent>;
   login: LoginContent;
   register: RegisterContent;
   verifyEmail: VerifyEmailContent;
@@ -526,16 +563,14 @@ export type NormalizedPatientRegisterPayload = {
     phone: string;
     sex: PatientSex;
   };
-  tutor:
-    | {
-        documentNumber: string;
-        documentTypeId: string;
-        email: string;
-        firstName: string;
-        lastName: string;
-        phone: string;
-      }
-    | null;
+  tutor: {
+    documentNumber: string;
+    documentTypeId: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    phone: string;
+  } | null;
 };
 
 export type VerifyEmailFormValues = {
@@ -559,7 +594,10 @@ export type ForgotPasswordFormValues = {
 };
 
 export type ForgotPasswordFormErrors = Partial<
-  Record<'code' | 'confirmPassword' | 'draftEmail' | 'password', string | undefined>
+  Record<
+    'code' | 'confirmPassword' | 'draftEmail' | 'password',
+    string | undefined
+  >
 >;
 
 export type ForgotPasswordFormState = {
@@ -626,7 +664,9 @@ export type RegisterUniversityFormValues = {
 
 export type RegisterUniversityFormField = keyof RegisterUniversityFormValues;
 
-export type RegisterUniversityFormErrors = Partial<Record<RegisterUniversityFormField, string>>;
+export type RegisterUniversityFormErrors = Partial<
+  Record<RegisterUniversityFormField, string>
+>;
 
 export type AdminShellNavigationIcon =
   | 'badge'
@@ -769,7 +809,13 @@ export type UniversityTeacher = {
 
 export type UniversityHomeTeacher = Pick<
   UniversityTeacher,
-  'createdAt' | 'documentNumber' | 'documentTypeCode' | 'firstName' | 'id' | 'lastName' | 'status'
+  | 'createdAt'
+  | 'documentNumber'
+  | 'documentTypeCode'
+  | 'firstName'
+  | 'id'
+  | 'lastName'
+  | 'status'
 >;
 
 export type UniversityStudentCredential = {
@@ -862,7 +908,8 @@ export type UniversityInstitutionFormValues = {
   name: string;
 };
 
-export type UniversityInstitutionFormField = keyof UniversityInstitutionFormValues;
+export type UniversityInstitutionFormField =
+  keyof UniversityInstitutionFormValues;
 
 export type UniversityInstitutionFormErrors = Partial<
   Record<UniversityInstitutionFormField, string>
@@ -876,7 +923,9 @@ export type UniversityPasswordFormValues = {
 
 export type UniversityPasswordFormField = keyof UniversityPasswordFormValues;
 
-export type UniversityPasswordFormErrors = Partial<Record<UniversityPasswordFormField, string>>;
+export type UniversityPasswordFormErrors = Partial<
+  Record<UniversityPasswordFormField, string>
+>;
 
 export type RegisterStudentFormValues = {
   documentNumber: string;
@@ -890,7 +939,9 @@ export type RegisterStudentFormValues = {
 
 export type RegisterStudentFormField = keyof RegisterStudentFormValues;
 
-export type RegisterStudentFormErrors = Partial<Record<RegisterStudentFormField, string>>;
+export type RegisterStudentFormErrors = Partial<
+  Record<RegisterStudentFormField, string>
+>;
 
 export type RegisterTeacherFormValues = {
   documentNumber: string;
@@ -901,7 +952,9 @@ export type RegisterTeacherFormValues = {
 
 export type RegisterTeacherFormField = keyof RegisterTeacherFormValues;
 
-export type RegisterTeacherFormErrors = Partial<Record<RegisterTeacherFormField, string>>;
+export type RegisterTeacherFormErrors = Partial<
+  Record<RegisterTeacherFormField, string>
+>;
 
 export type StudentProfessionalLinkType =
   | 'RED_PROFESIONAL'
@@ -1110,7 +1163,9 @@ export type StudentProfileFormValues = {
 
 export type StudentProfileFormField = keyof StudentProfileFormValues;
 
-export type StudentProfileFormErrors = Partial<Record<StudentProfileFormField, string>>;
+export type StudentProfileFormErrors = Partial<
+  Record<StudentProfileFormField, string>
+>;
 
 export type StudentScheduleBlockFormValues = {
   dayOfWeek: string;
@@ -1123,7 +1178,8 @@ export type StudentScheduleBlockFormValues = {
   type: StudentScheduleBlockType;
 };
 
-export type StudentScheduleBlockFormField = keyof StudentScheduleBlockFormValues;
+export type StudentScheduleBlockFormField =
+  keyof StudentScheduleBlockFormValues;
 
 export type StudentScheduleBlockFormErrors = Partial<
   Record<StudentScheduleBlockFormField, string>
@@ -1223,9 +1279,10 @@ export type PatientStudentDirectoryFilterOption = {
   value: string;
 };
 
-export type PatientStudentDirectoryLocalityFilter = PatientStudentDirectoryFilterOption & {
-  cityValue: string;
-};
+export type PatientStudentDirectoryLocalityFilter =
+  PatientStudentDirectoryFilterOption & {
+    cityValue: string;
+  };
 
 export type PatientStudentDirectoryFilters = {
   cities: PatientStudentDirectoryFilterOption[];
@@ -1315,4 +1372,6 @@ export type PatientProfileFormValues = {
 
 export type PatientProfileFormField = keyof PatientProfileFormValues;
 
-export type PatientProfileFormErrors = Partial<Record<PatientProfileFormField, string>>;
+export type PatientProfileFormErrors = Partial<
+  Record<PatientProfileFormField, string>
+>;

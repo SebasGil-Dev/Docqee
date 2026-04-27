@@ -494,8 +494,30 @@ describe('Auth pages', () => {
     expect(screen.getByLabelText(/^apellidos$/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^tipo de documento$/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^localidad$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^sexo$/i)).toHaveDisplayValue('Selecciona una opción');
+    expect(screen.getByLabelText(/fecha de nacimiento/i)).toHaveAttribute(
+      'placeholder',
+      'dd/mm/aaaa',
+    );
     expect(screen.getByLabelText(/confirmar contrase.a/i)).toBeInTheDocument();
     await waitForRegisterCatalogs();
+  });
+
+  it('expone los enlaces legales desde los consentimientos del registro', () => {
+    renderAuthApp({ initialEntries: [ROUTES.register] });
+
+    expect(
+      screen.getByRole('link', { name: /t.rminos y condiciones/i }),
+    ).toHaveAttribute('href', ROUTES.termsAndConditions);
+    expect(
+      screen.getByRole('link', { name: /t.rminos y condiciones/i }),
+    ).toHaveAttribute('target', '_blank');
+    expect(
+      screen.getByRole('link', { name: /pol.tica de privacidad/i }),
+    ).toHaveAttribute('href', ROUTES.privacyPolicy);
+    expect(
+      screen.getByRole('link', { name: /pol.tica de privacidad/i }),
+    ).toHaveAttribute('target', '_blank');
   });
 
   it('mantiene localidad deshabilitada hasta seleccionar una ciudad y muestra el placeholder esperado', async () => {
@@ -536,9 +558,9 @@ describe('Auth pages', () => {
     renderAuthApp({ initialEntries: [ROUTES.register] });
 
     expect(screen.getByLabelText(/^sexo$/i)).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'FEMENINO' })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'MASCULINO' })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'OTRO' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Femenino' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Masculino' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Otro' })).toBeInTheDocument();
   });
 
   it('muestra y oculta el bloque de tutor segun la edad del paciente', async () => {

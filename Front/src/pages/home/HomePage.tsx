@@ -41,9 +41,11 @@ export function HomePage() {
       <SiteHeader navigation={landingContent.navigation} />
       <main id="main-content" tabIndex={-1}>
         <HeroSection hero={landingContent.hero} />
-        <HowItWorksSection steps={landingContent.steps} />
+        <HowItWorksSection content={landingContent.howItWorks} />
         <UniversityPartnersSection universities={landingContent.universities} />
-        <InstitutionalAllianceSection content={landingContent.institutionalAlliance} />
+        <InstitutionalAllianceSection
+          content={landingContent.institutionalAlliance}
+        />
       </main>
       <SiteFooter footer={landingContent.footer} />
     </div>

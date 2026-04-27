@@ -39,8 +39,8 @@ export function SiteFooter({ footer }: SiteFooterProps) {
             </nav>
           ) : null}
           <p className="text-sm text-ink-muted">
-            © {new Date().getFullYear()} Docqee. Atención odontológica universitaria con
-            tono institucional.
+            © {new Date().getFullYear()} Docqee. Atención odontológica universitaria en
+            un entorno institucional.
           </p>
         </div>
       </div>

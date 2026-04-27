@@ -1,5 +1,5 @@
 import { ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, Circle } from 'lucide-react';
-import type { FormEvent } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -316,7 +316,9 @@ function SelectField({
               key={option.id}
               value={option.id}
             >
-              {option.label}
+              {name === 'sex'
+                ? formatPatientSexLabel(option.id as PatientSex)
+                : option.label}
             </option>
           ))}
         </select>
@@ -358,7 +360,7 @@ function CheckboxField({
   compact?: boolean | undefined;
   error?: string | undefined;
   id: string;
-  label: string;
+  label: ReactNode;
   onBlur?: (() => void) | undefined;
   onChange: (value: boolean) => void;
 }) {
@@ -401,6 +403,49 @@ function CheckboxField({
       ) : null}
     </div>
   );
+}
+
+const consentLinkClassName =
+  'font-semibold text-primary transition-colors duration-300 hover:text-primary-strong hover:underline';
+
+function TermsConsentLabel() {
+  return (
+    <>
+      Acepto los{' '}
+      <a
+        className={consentLinkClassName}
+        href={ROUTES.termsAndConditions}
+        rel="noreferrer noopener"
+        target="_blank"
+      >
+        Términos y Condiciones
+      </a>{' '}
+      de uso de Docqee.
+    </>
+  );
+}
+
+function PrivacyConsentLabel() {
+  return (
+    <>
+      Autorizo el tratamiento de mis datos personales conforme a la{' '}
+      <a
+        className={consentLinkClassName}
+        href={ROUTES.privacyPolicy}
+        rel="noreferrer noopener"
+        target="_blank"
+      >
+        Política de Privacidad
+      </a>{' '}
+      de Docqee, para la gestión de mi vinculación con estudiantes de odontología y
+      el uso de los servicios de la plataforma.
+    </>
+  );
+}
+
+function formatPatientSexLabel(value: PatientSex) {
+  const normalizedValue = value.toLocaleLowerCase('es-CO');
+  return `${normalizedValue.charAt(0).toUpperCase()}${normalizedValue.slice(1)}`;
 }
 
 function SectionHeader({
@@ -468,7 +513,26 @@ function resolveCatalogResult<T>(result: Promise<T[]> | T[]) {
 }
 
 function parseDateParts(value: string) {
-  const [yearString, monthString, dayString] = value.split('-');
+  let yearString = '';
+  let monthString = '';
+  let dayString = '';
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    [yearString, monthString, dayString] = value.split('-') as [
+      string,
+      string,
+      string,
+    ];
+  } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(value)) {
+    [dayString, monthString, yearString] = value.split('/') as [
+      string,
+      string,
+      string,
+    ];
+  } else {
+    return null;
+  }
+
   const year = Number(yearString);
   const month = Number(monthString);
   const day = Number(dayString);
@@ -481,7 +545,52 @@ function parseDateParts(value: string) {
     return null;
   }
 
+  const parsedDate = new Date(year, month - 1, day);
+
+  if (
+    parsedDate.getFullYear() !== year ||
+    parsedDate.getMonth() !== month - 1 ||
+    parsedDate.getDate() !== day
+  ) {
+    return null;
+  }
+
   return { day, month, year };
+}
+
+function normalizeBirthDateInput(value: string) {
+  const trimmedValue = value.trim();
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmedValue)) {
+    const [year, month, day] = trimmedValue.split('-') as [string, string, string];
+    return `${day}/${month}/${year}`;
+  }
+
+  const digitsOnly = trimmedValue.replace(/\D/g, '').slice(0, 8);
+
+  if (digitsOnly.length <= 2) {
+    return digitsOnly;
+  }
+
+  if (digitsOnly.length <= 4) {
+    return `${digitsOnly.slice(0, 2)}/${digitsOnly.slice(2)}`;
+  }
+
+  return `${digitsOnly.slice(0, 2)}/${digitsOnly.slice(2, 4)}/${digitsOnly.slice(4)}`;
+}
+
+function normalizeBirthDateForPayload(value: string) {
+  const parts = parseDateParts(value);
+
+  if (!parts) {
+    return value;
+  }
+
+  const day = String(parts.day).padStart(2, '0');
+  const month = String(parts.month).padStart(2, '0');
+  const year = String(parts.year).padStart(4, '0');
+
+  return `${year}-${month}-${day}`;
 }
 
 function isFutureBirthDate(value: string, today: Date) {
@@ -618,6 +727,10 @@ function validateRegisterForm(values: RegisterFormValues, today: Date): Register
   const birthDateError = (() => {
     if (values.birthDate.length === 0) {
       return content.patientFields.birthDate.requiredMessage;
+    }
+
+    if (!parseDateParts(values.birthDate)) {
+      return content.patientFields.birthDate.invalidMessage;
     }
 
     if (isFutureBirthDate(values.birthDate, today)) {
@@ -771,7 +884,7 @@ function normalizeRegisterPayload(
       acceptTerms: values.acceptTerms,
     },
     patient: {
-      birthDate: values.birthDate,
+      birthDate: normalizeBirthDateForPayload(values.birthDate),
       cityId: values.cityId,
       documentNumber: values.documentNumber.trim(),
       documentTypeId: values.documentTypeId,
@@ -1297,13 +1410,13 @@ export function RegisterPage({
       <TextField
         error={formState.errors.birthDate}
         id={fieldIds.birthDate}
+        inputMode="numeric"
         label={content.patientFields.birthDate.label}
         name="birthDate"
         placeholder={content.patientFields.birthDate.placeholder}
-        type="date"
         value={formState.values.birthDate}
         onBlur={() => handleFieldBlur('birthDate')}
-        onChange={(value) => updateFieldValue('birthDate', value)}
+        onChange={(value) => updateFieldValue('birthDate', normalizeBirthDateInput(value))}
       />
     </div>
   );
@@ -1496,7 +1609,7 @@ export function RegisterPage({
         compact={isMobileView}
         error={getVisibleFieldError('acceptTerms')}
         id={fieldIds.acceptTerms}
-        label={content.termsConsent.label}
+        label={<TermsConsentLabel />}
         onBlur={() => handleFieldBlur('acceptTerms')}
         onChange={(value) => updateFieldValue('acceptTerms', value)}
       />
@@ -1505,7 +1618,7 @@ export function RegisterPage({
         compact={isMobileView}
         error={getVisibleFieldError('acceptPrivacyPolicy')}
         id={fieldIds.acceptPrivacyPolicy}
-        label={content.privacyConsent.label}
+        label={<PrivacyConsentLabel />}
         onBlur={() => handleFieldBlur('acceptPrivacyPolicy')}
         onChange={(value) => updateFieldValue('acceptPrivacyPolicy', value)}
       />
@@ -1854,26 +1967,26 @@ export function RegisterPage({
                   id={fieldIds.sex}
                   label={content.patientFields.sex.label}
                   name="sex"
-                  options={content.patientFields.sex.options.map((option) => ({
-                    id: option,
-                    label: option,
-                  }))}
-                  placeholder="Selecciona una opciÃ³n"
-                  value={formState.values.sex}
-                  onBlur={() => handleFieldBlur('sex')}
-                  onChange={(value) => updateFieldValue('sex', value as PatientSex)}
-                />
-                <TextField
-                  error={formState.errors.birthDate}
-                  id={fieldIds.birthDate}
-                  label={content.patientFields.birthDate.label}
-                  name="birthDate"
-                  placeholder={content.patientFields.birthDate.placeholder}
-                  type="date"
-                  value={formState.values.birthDate}
-                  onBlur={() => handleFieldBlur('birthDate')}
-                  onChange={(value) => updateFieldValue('birthDate', value)}
-                />
+        options={content.patientFields.sex.options.map((option) => ({
+          id: option,
+          label: option,
+        }))}
+        placeholder="Selecciona una opción"
+        value={formState.values.sex}
+        onBlur={() => handleFieldBlur('sex')}
+        onChange={(value) => updateFieldValue('sex', value as PatientSex)}
+      />
+      <TextField
+        error={formState.errors.birthDate}
+        id={fieldIds.birthDate}
+        inputMode="numeric"
+        label={content.patientFields.birthDate.label}
+        name="birthDate"
+        placeholder={content.patientFields.birthDate.placeholder}
+        value={formState.values.birthDate}
+        onBlur={() => handleFieldBlur('birthDate')}
+        onChange={(value) => updateFieldValue('birthDate', normalizeBirthDateInput(value))}
+      />
               </div>
             </section>
 
@@ -2081,7 +2194,7 @@ export function RegisterPage({
                   checked={formState.values.acceptTerms}
                   error={formState.errors.acceptTerms}
                   id={fieldIds.acceptTerms}
-                  label={content.termsConsent.label}
+                  label={<TermsConsentLabel />}
                   onBlur={() => handleFieldBlur('acceptTerms')}
                   onChange={(value) => updateFieldValue('acceptTerms', value)}
                 />
@@ -2089,7 +2202,7 @@ export function RegisterPage({
                   checked={formState.values.acceptPrivacyPolicy}
                   error={formState.errors.acceptPrivacyPolicy}
                   id={fieldIds.acceptPrivacyPolicy}
-                  label={content.privacyConsent.label}
+                  label={<PrivacyConsentLabel />}
                   onBlur={() => handleFieldBlur('acceptPrivacyPolicy')}
                   onChange={(value) => updateFieldValue('acceptPrivacyPolicy', value)}
                 />

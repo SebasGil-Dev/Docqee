@@ -40,6 +40,22 @@ export const router = createBrowserRouter([
     },
   },
   {
+    path: ROUTES.privacyPolicy,
+    lazy: async () => {
+      const { PrivacyPolicyPage } = await import('@/pages/home/LegalPlaceholderPage');
+      return { Component: PrivacyPolicyPage };
+    },
+  },
+  {
+    path: ROUTES.termsAndConditions,
+    lazy: async () => {
+      const { TermsAndConditionsPage } = await import(
+        '@/pages/home/LegalPlaceholderPage'
+      );
+      return { Component: TermsAndConditionsPage };
+    },
+  },
+  {
     path: ROUTES.adminRoot,
     lazy: async () => {
       const { AdminLayout } = await import('@/pages/admin/AdminLayout');

@@ -11,6 +11,22 @@ type SiteHeaderProps = {
   navigation: LandingContent['navigation'];
 };
 
+function YouTubeIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-6 w-6"
+      viewBox="0 0 24 24"
+    >
+      <path
+        d="M23.5 6.2a2.97 2.97 0 0 0-2.1-2.1C19.6 3.6 12 3.6 12 3.6s-7.6 0-9.4.5a2.97 2.97 0 0 0-2.1 2.1A31.3 31.3 0 0 0 0 12a31.3 31.3 0 0 0 .5 5.8 2.97 2.97 0 0 0 2.1 2.1c1.8.5 9.4.5 9.4.5s7.6 0 9.4-.5a2.97 2.97 0 0 0 2.1-2.1A31.3 31.3 0 0 0 24 12a31.3 31.3 0 0 0-.5-5.8Z"
+        fill="#FF0000"
+      />
+      <path d="M9.6 15.6V8.4l6.2 3.6-6.2 3.6Z" fill="#FFFFFF" />
+    </svg>
+  );
+}
+
 export function SiteHeader({ navigation }: SiteHeaderProps) {
   const sectionLinks = useMemo(
     () => navigation.items.filter((item) => item.href.startsWith('#')),
@@ -18,6 +34,8 @@ export function SiteHeader({ navigation }: SiteHeaderProps) {
   );
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeHref, setActiveHref] = useState(sectionLinks[0]?.href ?? '#top');
+  const youtubeLink =
+    navigation.youtube.kind === 'external' ? navigation.youtube : null;
 
   useEffect(() => {
     if (sectionLinks.length === 0) {
@@ -54,6 +72,9 @@ export function SiteHeader({ navigation }: SiteHeaderProps) {
     };
   }, [sectionLinks]);
 
+  const youtubeLinkClassName =
+    'inline-flex h-12 w-12 items-center justify-center transition-transform duration-300 hover:scale-105 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15';
+
   return (
     <header className="sticky top-0 z-50">
       <div className="landing-shell mx-auto px-4 pt-2 sm:px-6 sm:pt-3 lg:px-8 xl:px-10">
@@ -69,7 +90,9 @@ export function SiteHeader({ navigation }: SiteHeaderProps) {
               {navigation.items.map((item) => (
                 <a
                   key={item.href}
-                  aria-current={activeHref === item.href ? 'location' : undefined}
+                  aria-current={
+                    activeHref === item.href ? 'location' : undefined
+                  }
                   className={classNames(
                     'relative transition-colors duration-300 hover:text-primary',
                     activeHref === item.href
@@ -83,6 +106,17 @@ export function SiteHeader({ navigation }: SiteHeaderProps) {
               ))}
             </nav>
             <div className="hidden items-center gap-3 md:flex">
+              {youtubeLink ? (
+                <a
+                  aria-label={youtubeLink.label}
+                  className={youtubeLinkClassName}
+                  href={youtubeLink.href}
+                  rel={youtubeLink.newTab ? 'noreferrer noopener' : undefined}
+                  target={youtubeLink.newTab ? '_blank' : undefined}
+                >
+                  <YouTubeIcon />
+                </a>
+              ) : null}
               <ButtonLink cta={navigation.login} variant="ghost" />
               <ButtonLink cta={navigation.register} variant="primary" />
             </div>
@@ -94,7 +128,11 @@ export function SiteHeader({ navigation }: SiteHeaderProps) {
               type="button"
               onClick={() => setIsMenuOpen((current) => !current)}
             >
-              {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {isMenuOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
             </button>
           </div>
         </div>
@@ -107,7 +145,9 @@ export function SiteHeader({ navigation }: SiteHeaderProps) {
               {navigation.items.map((item) => (
                 <a
                   key={item.href}
-                  aria-current={activeHref === item.href ? 'location' : undefined}
+                  aria-current={
+                    activeHref === item.href ? 'location' : undefined
+                  }
                   className={classNames(
                     'rounded-2xl px-4 py-3 font-medium transition-colors duration-300 hover:bg-surface-low hover:text-primary',
                     activeHref === item.href
@@ -120,9 +160,29 @@ export function SiteHeader({ navigation }: SiteHeaderProps) {
                   {item.label}
                 </a>
               ))}
-              <div className="mt-2 grid gap-3">
-                <ButtonLink className="w-full" cta={navigation.login} variant="secondary" />
-                <ButtonLink className="w-full" cta={navigation.register} variant="primary" />
+              {youtubeLink ? (
+                <a
+                  aria-label={youtubeLink.label}
+                  className="mt-2 inline-flex w-full items-center gap-3 rounded-2xl px-4 py-3 font-medium text-ink-muted transition-colors duration-300 hover:bg-surface-low hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+                  href={youtubeLink.href}
+                  rel={youtubeLink.newTab ? 'noreferrer noopener' : undefined}
+                  target={youtubeLink.newTab ? '_blank' : undefined}
+                >
+                  <YouTubeIcon />
+                  <span>{youtubeLink.label}</span>
+                </a>
+              ) : null}
+              <div className="mt-2 flex items-center gap-3">
+                <ButtonLink
+                  className="flex-1"
+                  cta={navigation.login}
+                  variant="secondary"
+                />
+                <ButtonLink
+                  className="flex-1"
+                  cta={navigation.register}
+                  variant="primary"
+                />
               </div>
             </nav>
           </div>

@@ -1,6 +1,7 @@
 import { CheckCircle2, Mail, Phone, Send } from 'lucide-react';
 import { useState } from 'react';
 
+import { ROUTES } from '@/constants/routes';
 import type {
   InstitutionalAllianceContent,
   InstitutionalAllianceInterestValue,
@@ -62,6 +63,8 @@ const textareaClassName =
   'min-h-[8.25rem] w-full rounded-[1.45rem] border border-slate-200/85 bg-white px-4 py-3 text-sm text-ink shadow-[0_18px_40px_-28px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10';
 const labelClassName = 'text-sm font-semibold text-ink';
 const errorClassName = 'text-xs font-medium text-rose-700';
+const legalLinkClassName =
+  'font-semibold text-primary underline decoration-primary/35 underline-offset-4 transition-colors duration-300 hover:text-primary-strong';
 
 function validateForm(values: InstitutionalAllianceFormValues) {
   const errors: InstitutionalAllianceFormErrors = {};
@@ -412,8 +415,25 @@ export function InstitutionalAllianceSection({
                       }
                     />
                     <span>
-                      Autorizo el tratamiento de mis datos personales para ser contactado
-                      por el equipo de Docqee.
+                      Autorizo el tratamiento de mis datos personales conforme a la{' '}
+                      <a
+                        className={legalLinkClassName}
+                        href={ROUTES.privacyPolicy}
+                        rel="noreferrer noopener"
+                        target="_blank"
+                      >
+                        Política de Privacidad
+                      </a>{' '}
+                      de Docqee y acepto sus{' '}
+                      <a
+                        className={legalLinkClassName}
+                        href={ROUTES.termsAndConditions}
+                        rel="noreferrer noopener"
+                        target="_blank"
+                      >
+                        Términos y Condiciones
+                      </a>
+                      .
                     </span>
                   </label>
                   {errors.authorizeDataProcessing ? (
