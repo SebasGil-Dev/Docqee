@@ -413,6 +413,7 @@
       padding-right: 0.12rem;
       text-overflow: clip;
       font-size: 0.54rem;
+      width: calc(100% - 0.18rem);
     }
 
     .student-page-compact
