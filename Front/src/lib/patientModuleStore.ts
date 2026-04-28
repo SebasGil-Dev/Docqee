@@ -209,7 +209,9 @@ function matchesStudentSearch(
 }
 
 function hasSearchablePracticeSite(student: PatientStudentDirectoryItem) {
-  return Boolean(student.practiceSites?.length || student.practiceSite?.trim());
+  const hasPracticeSites = (student.practiceSites?.length ?? 0) > 0;
+
+  return hasPracticeSites || Boolean(student.practiceSite?.trim());
 }
 
 function isSearchableStudent(student: PatientStudentDirectoryItem) {
@@ -482,12 +484,12 @@ function createMockState(): PatientStoreState {
       appointmentType: 'Valoracion inicial',
       city: 'Bogota',
       createdAt: '2026-04-08T10:00:00.000Z',
-      endAt: '2026-04-09T11:30:00.000Z',
+      endAt: '2026-05-09T11:30:00.000Z',
       id: 'patient-appointment-1',
       myRating: null,
       respondedAt: null,
       siteName: 'Sede Escuela Clinica',
-      startAt: '2026-04-09T10:30:00.000Z',
+      startAt: '2026-05-09T10:30:00.000Z',
       status: 'PROPUESTA',
       studentName: 'Valentina Rios',
       teacherName: 'Dr. Sebastian Mora',
@@ -538,6 +540,23 @@ function createMockState(): PatientStoreState {
       respondedAt: null,
       siteName: 'Sede Escuela Clinica',
       startAt: '2026-04-28T16:00:00.000Z',
+      status: 'PROPUESTA',
+      studentName: 'Valentina Rios',
+      teacherName: 'Dr. Sebastian Mora',
+      universityName: 'Universidad Clinica del Norte',
+    },
+    {
+      additionalInfo:
+        'Propuesta vencida sin respuesta del paciente.',
+      appointmentType: 'Valoracion inicial',
+      city: 'Bogota',
+      createdAt: '2026-04-02T10:00:00.000Z',
+      endAt: '2026-04-03T11:30:00.000Z',
+      id: 'patient-appointment-5',
+      myRating: null,
+      respondedAt: null,
+      siteName: 'Sede Escuela Clinica',
+      startAt: '2026-04-03T10:30:00.000Z',
       status: 'PROPUESTA',
       studentName: 'Valentina Rios',
       teacherName: 'Dr. Sebastian Mora',
@@ -652,7 +671,7 @@ function persistPatientModuleCache(moduleState: PatientModuleState) {
   const storage = readSessionStorage();
   const session = readAuthSession();
 
-  if (!storage || !session || session.user.role !== 'PATIENT') {
+  if (!storage || session?.user.role !== 'PATIENT') {
     return;
   }
 
@@ -681,7 +700,7 @@ function readPersistedPatientModuleCache(): PersistedPatientModuleCache | null {
   const storage = readSessionStorage();
   const session = readAuthSession();
 
-  if (!storage || !session || session.user.role !== 'PATIENT') {
+  if (!storage || session?.user.role !== 'PATIENT') {
     return null;
   }
 
@@ -904,9 +923,7 @@ function cacheStudentSearch(
     return;
   }
 
-  const oldestKey = studentSearchCache.keys().next().value as
-    | string
-    | undefined;
+  const oldestKey = studentSearchCache.keys().next().value;
 
   if (oldestKey) {
     studentSearchCache.delete(oldestKey);
@@ -946,7 +963,7 @@ function persistStudentDirectoryIndex(students: PatientStudentDirectoryItem[]) {
   const storage = readSessionStorage();
   const session = readAuthSession();
 
-  if (!storage || !session || session.user.role !== 'PATIENT') {
+  if (!storage || session?.user.role !== 'PATIENT') {
     return;
   }
 
@@ -967,7 +984,7 @@ function readPersistedStudentDirectoryIndex() {
   const storage = readSessionStorage();
   const session = readAuthSession();
 
-  if (!storage || !session || session.user.role !== 'PATIENT') {
+  if (!storage || session?.user.role !== 'PATIENT') {
     return null;
   }
 
@@ -1282,8 +1299,7 @@ function sendConversationMessageMock(conversationId: string, content: string) {
   );
 
   if (
-    !currentConversation ||
-    currentConversation.status !== 'ACTIVA' ||
+    currentConversation?.status !== 'ACTIVA' ||
     !normalizedContent
   ) {
     return false;

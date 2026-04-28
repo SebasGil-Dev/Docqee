@@ -79,6 +79,7 @@ function getTone(status: StudentAgendaAppointmentStatus): AgendaTone {
   switch (status) {
     case 'ACEPTADA':
       return 'accepted';
+    case 'RECHAZADA':
     case 'CANCELADA':
       return 'cancelled';
     case 'FINALIZADA':
@@ -111,6 +112,8 @@ function getStatusLabel(status: StudentAgendaAppointmentStatus) {
   switch (status) {
     case 'ACEPTADA':
       return 'Aceptada';
+    case 'RECHAZADA':
+      return 'Rechazada';
     case 'CANCELADA':
       return 'Cancelada';
     case 'FINALIZADA':

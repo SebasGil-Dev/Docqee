@@ -199,6 +199,22 @@ describe('Patient pages', () => {
     });
   });
 
+  it('marca como rechazada una cita propuesta cuando ya vencio', () => {
+    renderPatientApp([ROUTES.patientAppointments]);
+
+    const expiredRow = screen.getByTestId(
+      'patient-appointment-row-patient-appointment-5',
+    );
+
+    expect(within(expiredRow).getByText(/^Rechazada$/i)).toBeInTheDocument();
+    expect(
+      within(expiredRow).queryByRole('button', { name: /aceptar/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(expiredRow).queryByRole('button', { name: /rechazar/i }),
+    ).not.toBeInTheDocument();
+  });
+
   it('permite rechazar una reprogramacion propuesta', async () => {
     const user = userEvent.setup();
 

@@ -274,10 +274,24 @@ function hasAppointmentEnded(
   return new Date(appointment.endAt).getTime() <= currentTimestamp;
 }
 
+function shouldAutoRejectOverdueAppointment(
+  appointment: StudentAgendaAppointment,
+  currentTimestamp: number,
+) {
+  return (
+    appointment.status === 'PROPUESTA' &&
+    hasAppointmentEnded(appointment, currentTimestamp)
+  );
+}
+
 function getAppointmentDisplayStatus(
   appointment: StudentAgendaAppointment,
   currentTimestamp: number,
 ): StudentAgendaAppointmentStatus {
+  if (shouldAutoRejectOverdueAppointment(appointment, currentTimestamp)) {
+    return 'RECHAZADA';
+  }
+
   if (
     appointment.status === 'ACEPTADA' &&
     hasAppointmentEnded(appointment, currentTimestamp)
@@ -404,6 +418,11 @@ export function StudentAppointmentsPage() {
   const [appointmentApiError, setAppointmentApiError] = useState<string | null>(
     null,
   );
+  const [appointmentSaveNotice, setAppointmentSaveNotice] = useState<
+    string | null
+  >(null);
+  const [isAppointmentSavePending, setIsAppointmentSavePending] =
+    useState(false);
   const [appointmentToCancel, setAppointmentToCancel] =
     useState<StudentAgendaAppointment | null>(null);
   const [commentsAppointment, setCommentsAppointment] =
@@ -417,6 +436,7 @@ export function StudentAppointmentsPage() {
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const tableViewportRef = useRef<HTMLDivElement | null>(null);
   const tableBodyRef = useRef<HTMLTableSectionElement | null>(null);
+  const autoRejectedAppointmentIdsRef = useRef<Set<string>>(new Set());
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const now = new Date();
   const minAppointmentDate = formatDateInputValue(now);
@@ -426,9 +446,12 @@ export function StudentAppointmentsPage() {
       : undefined;
   const pendingCount = useMemo(
     () =>
-      appointments.filter((appointment) => appointment.status === 'PROPUESTA')
-        .length,
-    [appointments],
+      appointments.filter(
+        (appointment) =>
+          getAppointmentDisplayStatus(appointment, currentTimestamp) ===
+          'PROPUESTA',
+      ).length,
+    [appointments, currentTimestamp],
   );
   const acceptedCount = useMemo(
     () =>
@@ -656,6 +679,20 @@ export function StudentAppointmentsPage() {
     return () => window.clearInterval(intervalId);
   }, []);
   useEffect(() => {
+    appointments
+      .filter(
+        (appointment) =>
+          shouldAutoRejectOverdueAppointment(
+            appointment,
+            currentTimestamp,
+          ) && !autoRejectedAppointmentIdsRef.current.has(appointment.id),
+      )
+      .forEach((appointment) => {
+        autoRejectedAppointmentIdsRef.current.add(appointment.id);
+        void updateAppointmentStatus(appointment.id, 'RECHAZADA');
+      });
+  }, [appointments, currentTimestamp, updateAppointmentStatus]);
+  useEffect(() => {
     if (!isStatusMenuOpen) {
       return undefined;
     }
@@ -680,6 +717,17 @@ export function StudentAppointmentsPage() {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isStatusMenuOpen]);
+  useEffect(() => {
+    if (!appointmentSaveNotice || isAppointmentSavePending) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setAppointmentSaveNotice(null);
+    }, 4_000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [appointmentSaveNotice, isAppointmentSavePending]);
 
   const resetAppointmentForm = () => {
     setEditingAppointmentId(null);
@@ -690,6 +738,7 @@ export function StudentAppointmentsPage() {
   };
 
   const openCreateDialog = () => {
+    setAppointmentSaveNotice(null);
     resetAppointmentForm();
     setIsAppointmentDialogOpen(true);
   };
@@ -774,6 +823,7 @@ export function StudentAppointmentsPage() {
     setAppointmentValues(getInitialAppointmentFormValues(appointment));
     setAppointmentErrors({});
     setAppointmentApiError(null);
+    setAppointmentSaveNotice(null);
     setIsAppointmentDialogOpen(true);
   };
 
@@ -853,26 +903,46 @@ export function StudentAppointmentsPage() {
       return;
     }
 
+    const submitMode = appointmentDialogMode;
+    const submitValues = appointmentValues;
+    const submitAppointmentId = editingAppointmentId ?? undefined;
+    const pendingNotice =
+      submitMode === 'reschedule'
+        ? 'Reprogramacion enviada. Actualizando la cita...'
+        : submitMode === 'edit'
+          ? 'Cambios enviados. Actualizando la cita...'
+          : 'Cita enviada. Actualizando el listado...';
+    const successNotice =
+      submitMode === 'reschedule'
+        ? 'Reprogramacion enviada correctamente.'
+        : submitMode === 'edit'
+          ? 'Cita actualizada correctamente.'
+          : 'Cita agregada correctamente.';
+    closeAppointmentDialog();
+    setAppointmentSaveNotice(pendingNotice);
+    setIsAppointmentSavePending(true);
+
     void (async () => {
       const appointment =
-        appointmentDialogMode === 'reschedule' && editingAppointmentId
-          ? await rescheduleAppointment(editingAppointmentId, appointmentValues)
-          : await upsertAppointment(
-              appointmentValues,
-              editingAppointmentId ?? undefined,
-            );
+        submitMode === 'reschedule' && submitAppointmentId
+          ? await rescheduleAppointment(submitAppointmentId, submitValues)
+          : await upsertAppointment(submitValues, submitAppointmentId);
+
+      setIsAppointmentSavePending(false);
 
       if (!appointment) {
+        setAppointmentSaveNotice(null);
         setAppointmentApiError(
           getStudentModuleErrorMessage() ??
-            (appointmentDialogMode === 'reschedule'
+            (submitMode === 'reschedule'
               ? 'No se puede reprogramar esta cita porque la fecha u hora propuesta no cumple las reglas de agenda. Revisa que no se cruce con otra cita, un bloqueo o una cita demasiado próxima.'
               : 'No pudimos guardar la cita.'),
         );
         return;
       }
 
-      closeAppointmentDialog();
+      setAppointmentApiError(null);
+      setAppointmentSaveNotice(successNotice);
     })();
   };
 
@@ -912,6 +982,27 @@ export function StudentAppointmentsPage() {
           paddingClassName="p-3.5"
         >
           <p role="alert">{errorMessage}</p>
+        </SurfaceCard>
+      ) : null}
+      {appointmentApiError && !isAppointmentDialogOpen ? (
+        <SurfaceCard
+          className="border border-amber-200 bg-amber-50/90 text-sm font-medium text-amber-800"
+          paddingClassName="p-3.5"
+        >
+          <p role="alert">{appointmentApiError}</p>
+        </SurfaceCard>
+      ) : null}
+      {appointmentSaveNotice && !isAppointmentDialogOpen ? (
+        <SurfaceCard
+          className={classNames(
+            'border text-sm font-medium',
+            isAppointmentSavePending
+              ? 'border-sky-200 bg-sky-50/90 text-sky-800'
+              : 'border-emerald-200 bg-emerald-50/90 text-emerald-800',
+          )}
+          paddingClassName="p-3.5"
+        >
+          <p role="status">{appointmentSaveNotice}</p>
         </SurfaceCard>
       ) : null}
       <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
@@ -1002,7 +1093,8 @@ export function StudentAppointmentsPage() {
             </label>
             <div className="flex shrink-0 items-center justify-end gap-1.5 sm:gap-2">
               <button
-                className="inline-flex h-9 shrink-0 items-center justify-center gap-1 rounded-full bg-brand-gradient px-2 text-[0.72rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 sm:h-10 sm:gap-1.5 sm:px-3.5 sm:text-[0.82rem]"
+                className="inline-flex h-9 shrink-0 items-center justify-center gap-1 rounded-full bg-brand-gradient px-2 text-[0.72rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-70 sm:h-10 sm:gap-1.5 sm:px-3.5 sm:text-[0.82rem]"
+                disabled={isAppointmentSavePending}
                 type="button"
                 onClick={openCreateDialog}
               >

@@ -24,7 +24,7 @@ import { usePatientModuleStore } from '@/lib/patientModuleStore';
 type AppointmentStatusFilter = PatientAppointmentStatus | 'all';
 type AppointmentSortOrder = 'arrival' | 'proximity';
 
-const appointmentStatusOptions: Array<{ label: string; value: AppointmentStatusFilter }> = [
+const appointmentStatusOptions: { label: string; value: AppointmentStatusFilter }[] = [
   { label: 'Todas', value: 'all' },
   { label: 'Propuesta', value: 'PROPUESTA' },
   { label: 'Aceptada', value: 'ACEPTADA' },
@@ -80,6 +80,35 @@ function formatDateTimeRange(startAt: string, endAt: string) {
   return `${formatter.format(startDate)} - ${timeFormatter.format(endDate)}`;
 }
 
+function hasAppointmentEnded(
+  appointment: PatientAppointment,
+  currentTimestamp: number,
+) {
+  return new Date(appointment.endAt).getTime() <= currentTimestamp;
+}
+
+function shouldAutoRejectOverdueAppointment(
+  appointment: PatientAppointment,
+  currentTimestamp: number,
+) {
+  return (
+    appointment.status === 'PROPUESTA' &&
+    appointment.isRescheduleProposal !== true &&
+    hasAppointmentEnded(appointment, currentTimestamp)
+  );
+}
+
+function getAppointmentDisplayStatus(
+  appointment: PatientAppointment,
+  currentTimestamp: number,
+): PatientAppointmentStatus {
+  if (shouldAutoRejectOverdueAppointment(appointment, currentTimestamp)) {
+    return 'RECHAZADA';
+  }
+
+  return appointment.status;
+}
+
 function getAppointmentUpdateMessage(
   appointment: PatientAppointment,
   status: PatientAppointmentStatus,
@@ -116,11 +145,18 @@ export function PatientAppointmentsPage() {
   const [ratingTarget, setRatingTarget] = useState<RatingTarget | null>(null);
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
+  const autoRejectedAppointmentIdsRef = useRef<Set<string>>(new Set());
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const proposalCount = useMemo(
-    () => appointments.filter((appointment) => appointment.status === 'PROPUESTA').length,
-    [appointments],
+    () =>
+      appointments.filter(
+        (appointment) =>
+          getAppointmentDisplayStatus(appointment, currentTimestamp) ===
+          'PROPUESTA',
+      ).length,
+    [appointments, currentTimestamp],
   );
   const confirmedCount = useMemo(
     () => appointments.filter((appointment) => appointment.status === 'ACEPTADA').length,
@@ -134,7 +170,12 @@ export function PatientAppointmentsPage() {
         appointment.siteName.toLowerCase().includes(normalizedSearch) ||
         appointment.appointmentType.toLowerCase().includes(normalizedSearch);
 
-      return matchesSearch && (statusFilter === 'all' || appointment.status === statusFilter);
+      return (
+        matchesSearch &&
+        (statusFilter === 'all' ||
+          getAppointmentDisplayStatus(appointment, currentTimestamp) ===
+            statusFilter)
+      );
     });
 
     if (sortOrder === 'proximity') {
@@ -153,7 +194,29 @@ export function PatientAppointmentsPage() {
     return [...filtered].sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     );
-  }, [appointments, normalizedSearch, sortOrder, statusFilter]);
+  }, [appointments, currentTimestamp, normalizedSearch, sortOrder, statusFilter]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setCurrentTimestamp(Date.now());
+    }, 30_000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
+  useEffect(() => {
+    appointments
+      .filter(
+        (appointment) =>
+          shouldAutoRejectOverdueAppointment(
+            appointment,
+            currentTimestamp,
+          ) && !autoRejectedAppointmentIdsRef.current.has(appointment.id),
+      )
+      .forEach((appointment) => {
+        autoRejectedAppointmentIdsRef.current.add(appointment.id);
+        void updateAppointmentStatus(appointment.id, 'RECHAZADA');
+      });
+  }, [appointments, currentTimestamp, updateAppointmentStatus]);
 
   useEffect(() => {
     if (!isStatusMenuOpen) {
@@ -422,12 +485,18 @@ export function PatientAppointmentsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200/80 bg-white">
-                {filteredAppointments.map((appointment) => (
-                  <tr
-                    key={appointment.id}
-                    className="align-top"
-                    data-testid={`patient-appointment-row-${appointment.id}`}
-                  >
+                {filteredAppointments.map((appointment) => {
+                  const displayStatus = getAppointmentDisplayStatus(
+                    appointment,
+                    currentTimestamp,
+                  );
+
+                  return (
+                    <tr
+                      key={appointment.id}
+                      className="align-top"
+                      data-testid={`patient-appointment-row-${appointment.id}`}
+                    >
                     <td className="px-4 py-3.5 sm:px-5">
                       <div className="space-y-1">
                         <p className="text-sm font-semibold text-ink">{appointment.studentName}</p>
@@ -459,16 +528,17 @@ export function PatientAppointmentsPage() {
                       <span
                         className={classNames(
                           'inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset',
-                          getStatusBadgeClasses(appointment.status),
+                          getStatusBadgeClasses(displayStatus),
                         )}
                       >
-                        {appointment.isRescheduleProposal
+                        {appointment.isRescheduleProposal &&
+                        displayStatus === 'PROPUESTA'
                           ? 'Reprogramacion propuesta'
-                          : getStatusLabel(appointment.status)}
+                          : getStatusLabel(displayStatus)}
                       </span>
                     </td>
                     <td className="px-4 py-3.5 text-right sm:px-5">
-                      {appointment.status === 'PROPUESTA' ? (
+                      {displayStatus === 'PROPUESTA' ? (
                         <div className="flex justify-end gap-2">
                           <button
                             className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition duration-200 hover:bg-emerald-100"
@@ -491,7 +561,7 @@ export function PatientAppointmentsPage() {
                             <span>{patientContent.appointmentsPage.actionLabels.reject}</span>
                           </button>
                         </div>
-                      ) : appointment.status === 'ACEPTADA' ? (
+                      ) : displayStatus === 'ACEPTADA' ? (
                         <div className="flex justify-end">
                           <button
                             className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
@@ -504,7 +574,7 @@ export function PatientAppointmentsPage() {
                             <span>{patientContent.appointmentsPage.actionLabels.cancel}</span>
                           </button>
                         </div>
-                      ) : appointment.status === 'FINALIZADA' ? (
+                      ) : displayStatus === 'FINALIZADA' ? (
                         <div className="flex justify-end">
                           {appointment.myRating !== null ? (
                             <div className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1.5 ring-1 ring-amber-200">
@@ -542,7 +612,8 @@ export function PatientAppointmentsPage() {
                       )}
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
