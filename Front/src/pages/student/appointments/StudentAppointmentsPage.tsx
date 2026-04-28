@@ -1650,7 +1650,7 @@ export function StudentAppointmentsPage() {
               }
             />
             <div
-              className="student-appointment-datetime-row grid w-full grid-cols-3 items-start gap-1 sm:gap-2"
+              className="student-appointment-datetime-row grid w-full grid-cols-[minmax(0,1.18fr)_minmax(0,0.91fr)_minmax(0,0.91fr)] items-start gap-1 sm:grid-cols-3 sm:gap-2"
             >
               <AdminTextField
                 containerClassName="student-appointment-dialog-field"

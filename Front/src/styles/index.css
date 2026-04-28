@@ -479,6 +479,17 @@
     font-size: 0.6rem;
   }
 
+  @media (max-width: 639px) {
+    .student-page-compact
+      .student-profile-link-field
+      .admin-dropdown-field__trigger,
+    .student-page-compact
+      .student-profile-link-field
+      .admin-text-field__input {
+      padding-left: 2.65rem;
+    }
+  }
+
   .student-page-compact :is(button, a, label).rounded-2xl {
     min-height: 2.1rem;
     height: auto;

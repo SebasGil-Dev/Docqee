@@ -814,8 +814,9 @@ export function StudentProfilePage() {
                       Agrega recursos que complementen tu perfil, como redes, portafolio o hoja de vida.
                     </p>
                   </div>
-                  <div className="grid gap-3 xl:grid-cols-[minmax(0,13rem)_minmax(0,1fr)_auto] 2xl:grid-cols-[minmax(0,14rem)_minmax(0,1fr)_auto]">
+                  <div className="grid gap-3 lg:grid-cols-[minmax(0,13rem)_minmax(0,1fr)_auto] lg:items-end 2xl:grid-cols-[minmax(0,14rem)_minmax(0,1fr)_auto]">
                     <AdminDropdownField
+                      containerClassName="student-profile-link-field"
                       icon={Building2}
                       id="student-profile-link-type"
                       label="Tipo de enlace"
@@ -835,7 +836,7 @@ export function StudentProfilePage() {
                       }}
                     />
                     <AdminTextField
-                      containerClassName="lg:col-span-1"
+                      containerClassName="student-profile-link-field lg:col-span-1"
                       error={linkError ?? undefined}
                       icon={Link2}
                       id="student-profile-link-url"
@@ -851,7 +852,7 @@ export function StudentProfilePage() {
                         setLinkError(null);
                       }}
                     />
-                    <div className="flex items-end">
+                    <div className="flex items-end lg:justify-end">
                       <button
                         className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 lg:w-auto"
                         disabled={isLoading || isSavingProfile}

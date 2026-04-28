@@ -1,4 +1,5 @@
 import {
+  ChevronLeft,
   Check,
   LockKeyhole,
   MessageSquareMore,
@@ -27,7 +28,6 @@ const conversationStatusOptions: Array<{
 }> = [
   { label: 'Todas', value: 'all' },
   { label: 'Activa', value: 'ACTIVA' },
-  { label: 'Solo lectura', value: 'SOLO_LECTURA' },
   { label: 'Cerrada', value: 'CERRADA' },
 ];
 
@@ -73,6 +73,7 @@ export function StudentConversationsPage() {
   const [composerValue, setComposerValue] = useState('');
   const [composerError, setComposerError] = useState<string | null>(null);
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
+  const [isMobileThreadOpen, setIsMobileThreadOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -311,6 +312,7 @@ export function StudentConversationsPage() {
                               onClick={() => {
                                 setStatusFilter(option.value);
                                 setIsStatusMenuOpen(false);
+                                setIsMobileThreadOpen(false);
                               }}
                             >
                               <span>{option.label}</span>
@@ -340,7 +342,10 @@ export function StudentConversationsPage() {
         </div>
         <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto px-1.5 py-1.5 sm:px-2 lg:grid lg:grid-cols-[minmax(13.5rem,16rem)_minmax(0,1fr)] lg:overflow-hidden xl:grid-cols-[minmax(15rem,17.5rem)_minmax(0,1fr)]">
           <SurfaceCard
-            className="min-h-[14rem] shrink-0 border border-slate-200/80 bg-white shadow-none lg:h-full lg:min-h-0 lg:shrink"
+            className={classNames(
+              'min-h-[14rem] shrink-0 border border-slate-200/80 bg-white shadow-none lg:h-full lg:min-h-0 lg:shrink',
+              isMobileThreadOpen && 'hidden lg:block',
+            )}
             paddingClassName="p-0"
           >
             <div className="flex h-full min-h-[14rem] max-h-[18rem] flex-col lg:min-h-0 lg:max-h-none">
@@ -383,12 +388,13 @@ export function StudentConversationsPage() {
                           )}
                           data-testid={`student-conversation-card-${conversation.id}`}
                           type="button"
-                          onClick={() =>
+                          onClick={() => {
                             setSearchParams(
                               { conversation: conversation.id },
                               { replace: true },
-                            )
-                          }
+                            );
+                            setIsMobileThreadOpen(true);
+                          }}
                         >
                           <div className="flex items-start gap-2">
                             <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-[0.68rem] font-extrabold text-primary ring-1 ring-primary/10">
@@ -440,18 +446,31 @@ export function StudentConversationsPage() {
             </div>
           </SurfaceCard>
           <SurfaceCard
-            className="min-h-[26rem] border border-slate-200/80 bg-white shadow-none lg:h-full lg:min-h-0"
+            className={classNames(
+              'min-h-[26rem] border border-slate-200/80 bg-white shadow-none lg:h-full lg:min-h-0',
+              !isMobileThreadOpen && 'hidden lg:block',
+            )}
             paddingClassName="p-0"
           >
             {selectedConversation ? (
               <div className="flex h-full min-h-[26rem] flex-col lg:min-h-0">
                 <div className="shrink-0 border-b border-slate-200/80 px-2.5 py-1.5 sm:px-3">
-                  <div className="flex flex-wrap items-start justify-between gap-1.5">
-                    <div className="min-w-0">
-                      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                        <h2 className="truncate font-headline text-[0.84rem] font-extrabold tracking-tight text-ink sm:text-[0.9rem]">
-                          {selectedConversation.patientName}
-                        </h2>
+                  <div className="flex flex-wrap items-center justify-between gap-1.5">
+                    <div className="flex min-w-0 items-center gap-1.5">
+                      <button
+                        aria-label="Volver a la lista de chats"
+                        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-ink transition duration-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 lg:hidden"
+                        type="button"
+                        onClick={() => setIsMobileThreadOpen(false)}
+                      >
+                        <ChevronLeft aria-hidden="true" className="h-4 w-4" />
+                      </button>
+                      <div className="min-w-0">
+                        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                          <h2 className="truncate font-headline text-[0.84rem] font-extrabold tracking-tight text-ink sm:text-[0.9rem]">
+                            {selectedConversation.patientName}
+                          </h2>
+                        </div>
                       </div>
                     </div>
                   </div>
