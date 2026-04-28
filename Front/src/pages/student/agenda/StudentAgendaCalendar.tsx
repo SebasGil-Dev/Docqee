@@ -22,9 +22,16 @@ const detailDateFormatter = new Intl.DateTimeFormat('es-CO', { day: 'numeric', m
 const monthFormatter = new Intl.DateTimeFormat('es-CO', { month: 'long', year: 'numeric' });
 const mediumDateFormatter = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short' });
 const timeFormatter = new Intl.DateTimeFormat('es-CO', { hour: 'numeric', minute: '2-digit' });
+const mobileWeekEventLimit = 2;
+const desktopWeekEventLimit = 5;
 
 type CalendarViewMode = 'day' | 'week' | 'month';
 type AgendaTone = 'accepted' | 'block' | 'cancelled' | 'completed' | 'proposal' | 'reschedule';
+type WeekDetailsRange = {
+  endKey: string;
+  label: string;
+  startKey: string;
+};
 type AgendaEvent =
   | {
       dateKey: string;
@@ -228,12 +235,12 @@ export function StudentAgendaCalendar({
   const handleViewModeChange = (mode: CalendarViewMode) => {
     localStorage.setItem('agenda-view-mode', mode);
     setSelectedDayDetailsKey(null);
-    setSelectedWeekDetailsOpen(false);
+    setSelectedWeekDetailsRange(null);
     setViewMode(mode);
   };
   const [selectedDateKey, setSelectedDateKey] = useState(() => getTodayDateKey());
   const [selectedDayDetailsKey, setSelectedDayDetailsKey] = useState<string | null>(null);
-  const [selectedWeekDetailsOpen, setSelectedWeekDetailsOpen] = useState(false);
+  const [selectedWeekDetailsRange, setSelectedWeekDetailsRange] = useState<WeekDetailsRange | null>(null);
   const selectedDate = useMemo(() => fromDateKey(selectedDateKey), [selectedDateKey]);
   const visibleDays = useMemo(() => {
     if (viewMode === 'day') {
@@ -275,6 +282,13 @@ export function StudentAgendaCalendar({
   const selectedDayDetailsDate = selectedDayDetailsKey
     ? fromDateKey(selectedDayDetailsKey)
     : null;
+  const selectedWeekDetailsEvents = useMemo(
+    () =>
+      selectedWeekDetailsRange
+        ? buildEvents(appointments, scheduleBlocks, selectedWeekDetailsRange.startKey, selectedWeekDetailsRange.endKey)
+        : [],
+    [appointments, scheduleBlocks, selectedWeekDetailsRange],
+  );
   const rangeLabel = useMemo(() => {
     if (viewMode === 'day') {
       return new Intl.DateTimeFormat('es-CO', {
@@ -291,19 +305,19 @@ export function StudentAgendaCalendar({
     }
     return monthFormatter.format(selectedDate);
   }, [selectedDate, viewMode, visibleDays]);
-  const selectedAgendaDetailsEvents = selectedWeekDetailsOpen ? events : selectedDayDetailsEvents;
-  const selectedAgendaDetailsTitle = selectedWeekDetailsOpen
-    ? `Semana ${rangeLabel}`
+  const selectedAgendaDetailsEvents = selectedWeekDetailsRange ? selectedWeekDetailsEvents : selectedDayDetailsEvents;
+  const selectedAgendaDetailsTitle = selectedWeekDetailsRange
+    ? `Semana ${selectedWeekDetailsRange.label}`
     : selectedDayDetailsDate
       ? detailDateFormatter.format(selectedDayDetailsDate)
       : '';
   const shouldShowAgendaDetails =
-    (selectedWeekDetailsOpen || selectedDayDetailsDate !== null) && selectedAgendaDetailsEvents.length > 0;
+    (selectedWeekDetailsRange !== null || selectedDayDetailsDate !== null) && selectedAgendaDetailsEvents.length > 0;
 
   const stepCalendar = (direction: 'next' | 'previous') => {
     const factor = direction === 'next' ? 1 : -1;
     setSelectedDayDetailsKey(null);
-    setSelectedWeekDetailsOpen(false);
+    setSelectedWeekDetailsRange(null);
     setSelectedDateKey(
       toDateKey(viewMode === 'month' ? addMonths(selectedDate, factor) : addDays(selectedDate, viewMode === 'week' ? factor * 7 : factor)),
     );
@@ -311,19 +325,33 @@ export function StudentAgendaCalendar({
 
   const closeDetailsPanel = () => {
     setSelectedDayDetailsKey(null);
-    setSelectedWeekDetailsOpen(false);
+    setSelectedWeekDetailsRange(null);
   };
 
   const handleMonthDaySelect = (dateKey: string, dayEvents: AgendaEvent[]) => {
     setSelectedDateKey(dateKey);
-    setSelectedWeekDetailsOpen(false);
+    setSelectedWeekDetailsRange(null);
     setSelectedDayDetailsKey(dayEvents.length > 0 ? dateKey : null);
   };
 
   const handleWeekSelect = (dateKey: string) => {
+    const weekStart = startOfWeek(fromDateKey(dateKey));
+    const weekEnd = addDays(weekStart, 6);
+    const weekStartKey = toDateKey(weekStart);
+    const weekEndKey = toDateKey(weekEnd);
+    const weekEvents = buildEvents(appointments, scheduleBlocks, weekStartKey, weekEndKey);
+
     setSelectedDateKey(dateKey);
     setSelectedDayDetailsKey(null);
-    setSelectedWeekDetailsOpen(events.length > 0);
+    setSelectedWeekDetailsRange(
+      weekEvents.length > 0
+        ? {
+            endKey: weekEndKey,
+            label: `${mediumDateFormatter.format(weekStart)} - ${mediumDateFormatter.format(weekEnd)}`,
+            startKey: weekStartKey,
+          }
+        : null,
+    );
   };
 
   const handleBlockClick = (
@@ -500,6 +528,8 @@ export function StudentAgendaCalendar({
             }
 
             if (viewMode === 'week') {
+              const weekPreviewEvents = dayEvents.slice(0, desktopWeekEventLimit);
+
               return (
                 <div
                   key={dayKey}
@@ -529,11 +559,12 @@ export function StudentAgendaCalendar({
                       {day.getDate()}
                     </p>
                   </div>
-                  <div className="min-h-0 flex-1 space-y-0.5 overflow-hidden sm:space-y-1">
+                  <div className="min-h-0 flex-1 space-y-0.5 overflow-hidden">
                     {dayEvents.length > 0 ? (
                       <>
-                        {dayEvents.slice(0, 2).map((event) => {
+                        {weekPreviewEvents.map((event, eventIndex) => {
                           const tone = getToneClasses(event.tone);
+                          const responsiveVisibility = eventIndex >= mobileWeekEventLimit ? 'hidden sm:block' : '';
                           const content = (
                             <>
                               <p className="truncate text-[0.52rem] font-semibold sm:text-[0.62rem]">{event.title}</p>
@@ -550,9 +581,10 @@ export function StudentAgendaCalendar({
                               key={event.id}
                               aria-label={`Gestionar bloqueo ${event.timeLabel}`}
                               className={classNames(
-                                'w-full rounded-[0.58rem] border px-1.5 py-0.5 text-left transition duration-200 hover:border-primary/30 hover:shadow-[0_14px_30px_-28px_rgba(15,23,42,0.42)] sm:rounded-[0.68rem] sm:py-1',
+                                'w-full rounded-[0.58rem] border px-1.5 py-0.5 text-left transition duration-200 hover:border-primary/30 hover:shadow-[0_14px_30px_-28px_rgba(15,23,42,0.42)] sm:rounded-[0.6rem] sm:py-0.5',
                                 tone.card,
                                 isInactiveBlockEvent(event) && 'opacity-70',
+                                responsiveVisibility,
                               )}
                               data-testid={`student-agenda-block-event-${event.blockId}`}
                               type="button"
@@ -563,15 +595,24 @@ export function StudentAgendaCalendar({
                           ) : (
                             <div
                               key={event.id}
-                              className={classNames('rounded-[0.58rem] border px-1.5 py-0.5 sm:rounded-[0.68rem] sm:py-1', tone.card)}
+                              className={classNames(
+                                'rounded-[0.58rem] border px-1.5 py-0.5 sm:rounded-[0.6rem] sm:py-0.5',
+                                tone.card,
+                                responsiveVisibility,
+                              )}
                             >
                               {content}
                             </div>
                           );
                         })}
-                        {dayEvents.length > 2 ? (
-                          <p className="truncate text-[0.5rem] font-semibold text-ink-muted sm:text-[0.54rem]">
-                            +{dayEvents.length - 2} mas
+                        {dayEvents.length > mobileWeekEventLimit ? (
+                          <p className="truncate text-[0.5rem] font-semibold text-ink-muted sm:hidden">
+                            +{dayEvents.length - mobileWeekEventLimit} mas
+                          </p>
+                        ) : null}
+                        {dayEvents.length > desktopWeekEventLimit ? (
+                          <p className="hidden truncate text-[0.54rem] font-semibold text-ink-muted sm:block">
+                            +{dayEvents.length - desktopWeekEventLimit} mas
                           </p>
                         ) : null}
                       </>
@@ -698,7 +739,7 @@ export function StudentAgendaCalendar({
             <div className="admin-scrollbar max-h-[18rem] space-y-2 overflow-y-auto px-3 py-2.5">
               {selectedAgendaDetailsEvents.map((event) => {
                 const tone = getToneClasses(event.tone);
-                const eventTimeLabel = selectedWeekDetailsOpen
+                const eventTimeLabel = selectedWeekDetailsRange
                   ? `${mediumDateFormatter.format(fromDateKey(event.dateKey))} · ${event.timeLabel}`
                   : event.timeLabel;
 
