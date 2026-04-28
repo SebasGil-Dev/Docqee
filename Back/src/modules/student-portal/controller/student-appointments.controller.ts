@@ -18,8 +18,8 @@ import { StudentPortalService } from '../student-portal.service';
 class UpdateAppointmentStatusDto {
   @IsString()
   @IsNotEmpty()
-  @IsIn(['PROPUESTA', 'ACEPTADA', 'CANCELADA', 'FINALIZADA'])
-  status!: string;
+  @IsIn(['PROPUESTA', 'ACEPTADA', 'RECHAZADA', 'CANCELADA', 'FINALIZADA'])
+  status!: 'PROPUESTA' | 'ACEPTADA' | 'RECHAZADA' | 'CANCELADA' | 'FINALIZADA';
 }
 
 @Controller('student-portal/appointments')

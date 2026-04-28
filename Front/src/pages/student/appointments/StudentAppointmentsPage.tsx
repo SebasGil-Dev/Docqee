@@ -1954,17 +1954,17 @@ function AppointmentCommentsModal({
         onClick={onClose}
       />
       <div className="relative z-10 w-full max-w-md overflow-hidden rounded-[1.4rem] border border-slate-200/80 bg-white shadow-[0_32px_80px_-24px_rgba(15,23,42,0.38)]">
-        <div className="flex justify-end border-b border-slate-100 px-4 py-3">
+        <div className="flex justify-end border-b border-slate-100 px-3.5 py-1.5">
           <button
             aria-label="Cerrar"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-ghost transition duration-150 hover:bg-slate-100 hover:text-ink"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-full text-ghost transition duration-150 hover:bg-slate-100 hover:text-ink"
             type="button"
             onClick={onClose}
           >
-            <X aria-hidden="true" className="h-4 w-4" />
+            <X aria-hidden="true" className="h-3.5 w-3.5" />
           </button>
         </div>
-        <div className="admin-scrollbar max-h-[28rem] overflow-y-auto px-5 py-4">
+        <div className="admin-scrollbar max-h-[28rem] overflow-y-auto px-5 pb-4 pt-3">
           {reviews.length === 0 ? (
             <p className="py-4 text-center text-sm text-ink-muted">
               El paciente aun no ha dejado comentarios para esta cita.
