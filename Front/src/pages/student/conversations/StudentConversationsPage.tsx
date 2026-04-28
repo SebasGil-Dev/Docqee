@@ -53,11 +53,18 @@ function getLastMessage(conversation: StudentConversation) {
   return conversation.messages[conversation.messages.length - 1] ?? null;
 }
 
+function getPatientInitials(patientName: string) {
+  const [firstName = '', ...rest] = patientName.trim().split(/\s+/);
+  const firstLastName = rest[rest.length - 1] ?? '';
+  return `${firstName.charAt(0)}${firstLastName.charAt(0)}`.toUpperCase();
+}
+
 export function StudentConversationsPage() {
   const {
     conversations,
     errorMessage,
     isLoading,
+    requests,
     sendConversationMessage,
     refreshConversation,
   } = useStudentModuleStore();
@@ -82,6 +89,11 @@ export function StudentConversationsPage() {
           return bTime < aTime ? -1 : bTime > aTime ? 1 : 0;
         }),
     [conversations, statusFilter],
+  );
+  const requestById = useMemo(
+    () =>
+      new Map(requests.map((request) => [request.id, request])),
+    [requests],
   );
   const selectedConversation = useMemo(
     () =>
@@ -349,6 +361,15 @@ export function StudentConversationsPage() {
                       const lastMessage = getLastMessage(conversation);
                       const isSelected =
                         selectedConversation?.id === conversation.id;
+                      const request = requestById.get(conversation.requestId);
+                      const patientAvatarSrc =
+                        request?.patientProfile?.avatarSrc ?? null;
+                      const patientAvatarAlt =
+                        request?.patientProfile?.avatarAlt ??
+                        `Foto de perfil de ${conversation.patientName}`;
+                      const patientInitials = getPatientInitials(
+                        conversation.patientName,
+                      );
 
                       return (
                         <button
@@ -369,29 +390,40 @@ export function StudentConversationsPage() {
                             )
                           }
                         >
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0">
-                              <p className="truncate text-[0.72rem] font-semibold leading-tight text-ink">
-                                {conversation.patientName}
-                              </p>
-                            </div>
-                            {conversation.unreadCount > 0 ? (
-                              <span className="inline-flex min-w-[1.1rem] items-center justify-center rounded-full bg-primary px-1 py-0.5 text-[0.52rem] font-bold leading-none text-white">
-                                {conversation.unreadCount}
-                              </span>
-                            ) : null}
-                          </div>
-                          <p className="mt-1 line-clamp-1 break-words text-[0.64rem] leading-4 text-ink-muted">
-                            {lastMessage?.content ??
-                              conversation.reason ??
-                              'Sin mensajes todavia.'}
-                          </p>
-                          <div className="mt-1 flex items-center justify-end gap-1.5">
-                            <span className="text-[0.56rem] font-medium leading-none text-ink-muted">
-                              {lastMessage
-                                ? formatTime(lastMessage.sentAt)
-                                : 'Sin hora'}
+                          <div className="flex items-start gap-2">
+                            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-[0.68rem] font-extrabold text-primary ring-1 ring-primary/10">
+                              {patientAvatarSrc ? (
+                                <img
+                                  alt={patientAvatarAlt}
+                                  className="h-full w-full object-cover"
+                                  src={patientAvatarSrc}
+                                />
+                              ) : (
+                                patientInitials
+                              )}
                             </span>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-start justify-between gap-2">
+                                <p className="truncate text-[0.72rem] font-semibold leading-tight text-ink">
+                                  {conversation.patientName}
+                                </p>
+                                {conversation.unreadCount > 0 ? (
+                                  <span className="inline-flex min-w-[1.1rem] shrink-0 items-center justify-center rounded-full bg-primary px-1 py-0.5 text-[0.52rem] font-bold leading-none text-white">
+                                    {conversation.unreadCount}
+                                  </span>
+                                ) : null}
+                              </div>
+                              <p className="mt-1 line-clamp-1 break-words text-[0.64rem] leading-4 text-ink-muted">
+                                {lastMessage?.content ?? 'Sin mensajes todavia.'}
+                              </p>
+                              <div className="mt-1 flex items-center justify-end gap-1.5">
+                                <span className="text-[0.56rem] font-medium leading-none text-ink-muted">
+                                  {lastMessage
+                                    ? formatTime(lastMessage.sentAt)
+                                    : 'Sin hora'}
+                                </span>
+                              </div>
+                            </div>
                           </div>
                         </button>
                       );

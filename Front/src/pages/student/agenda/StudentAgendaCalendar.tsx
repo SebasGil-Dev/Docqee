@@ -305,14 +305,20 @@ export function StudentAgendaCalendar({
     }
     return monthFormatter.format(selectedDate);
   }, [selectedDate, viewMode, visibleDays]);
-  const selectedAgendaDetailsEvents = selectedWeekDetailsRange ? selectedWeekDetailsEvents : selectedDayDetailsEvents;
-  const selectedAgendaDetailsTitle = selectedWeekDetailsRange
+  const isSelectedWeekDetailsCurrent =
+    selectedWeekDetailsRange !== null &&
+    selectedDateKey >= selectedWeekDetailsRange.startKey &&
+    selectedDateKey <= selectedWeekDetailsRange.endKey;
+  const selectedAgendaDetailsEvents =
+    isSelectedWeekDetailsCurrent ? selectedWeekDetailsEvents : selectedDayDetailsEvents;
+  const selectedAgendaDetailsTitle = isSelectedWeekDetailsCurrent
     ? `Semana ${selectedWeekDetailsRange.label}`
     : selectedDayDetailsDate
       ? detailDateFormatter.format(selectedDayDetailsDate)
       : '';
   const shouldShowAgendaDetails =
-    (selectedWeekDetailsRange !== null || selectedDayDetailsDate !== null) && selectedAgendaDetailsEvents.length > 0;
+    (isSelectedWeekDetailsCurrent || selectedDayDetailsDate !== null) &&
+    selectedAgendaDetailsEvents.length > 0;
 
   const stepCalendar = (direction: 'next' | 'previous') => {
     const factor = direction === 'next' ? 1 : -1;
