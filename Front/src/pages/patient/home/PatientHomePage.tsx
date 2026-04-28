@@ -65,6 +65,12 @@ function renderStars(
   });
 }
 
+function formatReviewSummary(averageRatingValue: number, reviewCount: number) {
+  const reviewLabel = reviewCount === 1 ? 'reseña' : 'reseñas';
+
+  return `${averageRatingValue.toFixed(1)} · (${reviewCount} ${reviewLabel})`;
+}
+
 type PatientReviewRatingFilter = 'all' | 1 | 2 | 3 | 4 | 5;
 
 export function PatientHomePage() {
@@ -99,10 +105,6 @@ export function PatientHomePage() {
 
     return calculateAverageRating(reviews.map((review) => review.rating));
   }, [reviews]);
-  const commentsCount = useMemo(
-    () => reviews.filter((review) => Boolean(review.comment?.trim())).length,
-    [reviews],
-  );
   const filteredReviews = useMemo(() => {
     if (reviewRatingFilter === 'all') {
       return reviews;
@@ -318,7 +320,7 @@ export function PatientHomePage() {
                       {renderStars(averageRating, 'h-3.5 w-3.5')}
                     </span>
                     <span className="max-w-[12rem] truncate text-[0.75rem] font-semibold xl:max-w-[14rem]">
-                      {`${averageRating.toFixed(1)} de 5 en ${reviews.length} valoraciones`}
+                      {formatReviewSummary(averageRating, reviews.length)}
                     </span>
                   </span>
                 ) : null}
@@ -350,7 +352,7 @@ export function PatientHomePage() {
                   Comentarios
                 </p>
                 <p className="font-headline text-[0.9rem] font-extrabold tracking-tight text-sky-950 sm:text-[1rem]">
-                  {commentsCount}
+                  {filteredReviews.length}
                 </p>
               </div>
               <div className="relative" ref={reviewRatingMenuRef}>

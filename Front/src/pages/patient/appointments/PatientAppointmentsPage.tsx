@@ -1,18 +1,23 @@
 import {
   Ban,
+  BriefcaseMedical,
   CalendarCheck2,
   Check,
   CheckCircle2,
+  Clock3,
+  GraduationCap,
   MapPin,
   Search,
   SlidersHorizontal,
   Star,
+  Stethoscope,
   XCircle,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
+import { AdminTablePagination } from '@/components/admin/AdminTablePagination';
 import { PatientRatingModal } from '@/components/patient/PatientRatingModal';
 import { Seo } from '@/components/ui/Seo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
@@ -33,6 +38,12 @@ const appointmentStatusOptions: { label: string; value: AppointmentStatusFilter 
   { label: 'Cancelada', value: 'CANCELADA' },
   { label: 'Finalizada', value: 'FINALIZADA' },
 ];
+
+const DEFAULT_ROWS_PER_PAGE = 6;
+const MIN_ROWS_PER_PAGE = 1;
+const TABLE_HEADER_HEIGHT_PX = 38;
+const TABLE_ROW_HEIGHT_FALLBACK_PX = 84;
+const TABLE_HEIGHT_PADDING_PX = 0;
 
 function getStatusLabel(status: PatientAppointmentStatus) {
   switch (status) {
@@ -58,7 +69,7 @@ function getStatusBadgeClasses(status: PatientAppointmentStatus) {
     case 'CANCELADA':
       return 'bg-slate-100 text-slate-700 ring-slate-200';
     case 'FINALIZADA':
-      return 'bg-primary/10 text-primary ring-primary/15';
+      return 'bg-sky-50 text-sky-700 ring-sky-200';
     default:
       return 'bg-amber-50 text-amber-700 ring-amber-200';
   }
@@ -78,20 +89,14 @@ function formatDateTimeRange(startAt: string, endAt: string) {
     minute: '2-digit',
   });
 
-  return `${formatter.format(startDate)} - ${timeFormatter.format(endDate)}`;
+  return `${formatter.format(startDate)} a ${timeFormatter.format(endDate)}`;
 }
 
-function hasAppointmentEnded(
-  appointment: PatientAppointment,
-  currentTimestamp: number,
-) {
+function hasAppointmentEnded(appointment: PatientAppointment, currentTimestamp: number) {
   return new Date(appointment.endAt).getTime() <= currentTimestamp;
 }
 
-function shouldAutoRejectOverdueAppointment(
-  appointment: PatientAppointment,
-  currentTimestamp: number,
-) {
+function shouldAutoRejectOverdueAppointment(appointment: PatientAppointment, currentTimestamp: number) {
   return (
     appointment.status === 'PROPUESTA' &&
     appointment.isRescheduleProposal !== true &&
@@ -110,10 +115,7 @@ function getAppointmentDisplayStatus(
   return appointment.status;
 }
 
-function getAppointmentUpdateMessage(
-  appointment: PatientAppointment,
-  status: PatientAppointmentStatus,
-) {
+function getAppointmentUpdateMessage(appointment: PatientAppointment, status: PatientAppointmentStatus) {
   if (appointment.isRescheduleProposal && status === 'ACEPTADA') {
     return 'La reprogramacion fue aceptada y la cita quedo actualizada.';
   }
@@ -147,7 +149,11 @@ export function PatientAppointmentsPage() {
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
+  const tableViewportRef = useRef<HTMLDivElement | null>(null);
+  const tableBodyRef = useRef<HTMLTableSectionElement | null>(null);
   const autoRejectedAppointmentIdsRef = useRef<Set<string>>(new Set());
   const normalizedSearch = searchTerm.trim().toLowerCase();
 
@@ -158,14 +164,16 @@ export function PatientAppointmentsPage() {
   const proposalCount = useMemo(
     () =>
       appointments.filter(
-        (appointment) =>
-          getAppointmentDisplayStatus(appointment, currentTimestamp) ===
-          'PROPUESTA',
+        (appointment) => getAppointmentDisplayStatus(appointment, currentTimestamp) === 'PROPUESTA',
       ).length,
     [appointments, currentTimestamp],
   );
-  const confirmedCount = useMemo(
+  const acceptedCount = useMemo(
     () => appointments.filter((appointment) => appointment.status === 'ACEPTADA').length,
+    [appointments],
+  );
+  const completedCount = useMemo(
+    () => appointments.filter((appointment) => appointment.status === 'FINALIZADA').length,
     [appointments],
   );
   const filteredAppointments = useMemo(() => {
@@ -174,13 +182,12 @@ export function PatientAppointmentsPage() {
         appointment.studentName.toLowerCase().includes(normalizedSearch) ||
         appointment.universityName.toLowerCase().includes(normalizedSearch) ||
         appointment.siteName.toLowerCase().includes(normalizedSearch) ||
-        appointment.appointmentType.toLowerCase().includes(normalizedSearch);
+        appointment.appointmentType.toLowerCase().includes(normalizedSearch) ||
+        appointment.teacherName.toLowerCase().includes(normalizedSearch);
 
       return (
         matchesSearch &&
-        (statusFilter === 'all' ||
-          getAppointmentDisplayStatus(appointment, currentTimestamp) ===
-            statusFilter)
+        (statusFilter === 'all' || getAppointmentDisplayStatus(appointment, currentTimestamp) === statusFilter)
       );
     });
 
@@ -197,10 +204,76 @@ export function PatientAppointmentsPage() {
       });
     }
 
-    return [...filtered].sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    );
+    return [...filtered].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [appointments, currentTimestamp, normalizedSearch, sortOrder, statusFilter]);
+  const totalPages = Math.max(1, Math.ceil(filteredAppointments.length / rowsPerPage));
+  const clampedCurrentPage = Math.min(currentPage, totalPages);
+  const pageStartIndex = (clampedCurrentPage - 1) * rowsPerPage;
+  const paginatedAppointments = useMemo(
+    () => filteredAppointments.slice(pageStartIndex, pageStartIndex + rowsPerPage),
+    [filteredAppointments, pageStartIndex, rowsPerPage],
+  );
+  const pageStartLabel = filteredAppointments.length > 0 ? pageStartIndex + 1 : 0;
+  const pageEndLabel = Math.min(pageStartIndex + paginatedAppointments.length, filteredAppointments.length);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [normalizedSearch, sortOrder, statusFilter]);
+
+  useEffect(() => {
+    setCurrentPage((currentValue) => Math.min(currentValue, totalPages));
+  }, [totalPages]);
+
+  useEffect(() => {
+    const tableViewport = tableViewportRef.current;
+
+    if (!tableViewport) {
+      return undefined;
+    }
+
+    const updateRowsPerPage = () => {
+      const availableHeight = tableViewport.getBoundingClientRect().height;
+
+      if (availableHeight <= 0) {
+        setRowsPerPage(DEFAULT_ROWS_PER_PAGE);
+        return;
+      }
+
+      const headerCell = tableViewport.querySelector('thead th');
+      const tableHeaderHeight = headerCell?.getBoundingClientRect().height ?? TABLE_HEADER_HEIGHT_PX;
+      const rowElements = Array.from(tableBodyRef.current?.children ?? []);
+      const rowHeights = rowElements
+        .map((rowElement) => rowElement.getBoundingClientRect().height)
+        .filter((rowHeight) => rowHeight > 0);
+      const estimatedRowHeight =
+        rowHeights.length > 0
+          ? rowHeights.reduce((sum, rowHeight) => sum + rowHeight, 0) / rowHeights.length
+          : TABLE_ROW_HEIGHT_FALLBACK_PX;
+      const nextRowsPerPage = Math.max(
+        MIN_ROWS_PER_PAGE,
+        Math.floor((availableHeight - tableHeaderHeight - TABLE_HEIGHT_PADDING_PX) / estimatedRowHeight),
+      );
+
+      setRowsPerPage(Number.isFinite(nextRowsPerPage) ? nextRowsPerPage : DEFAULT_ROWS_PER_PAGE);
+    };
+
+    updateRowsPerPage();
+
+    if (typeof ResizeObserver !== 'undefined') {
+      const resizeObserver = new ResizeObserver(updateRowsPerPage);
+      resizeObserver.observe(tableViewport);
+
+      return () => {
+        resizeObserver.disconnect();
+      };
+    }
+
+    window.addEventListener('resize', updateRowsPerPage);
+
+    return () => {
+      window.removeEventListener('resize', updateRowsPerPage);
+    };
+  }, [filteredAppointments.length, pageStartIndex, paginatedAppointments.length]);
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -209,14 +282,13 @@ export function PatientAppointmentsPage() {
 
     return () => window.clearInterval(intervalId);
   }, []);
+
   useEffect(() => {
     appointments
       .filter(
         (appointment) =>
-          shouldAutoRejectOverdueAppointment(
-            appointment,
-            currentTimestamp,
-          ) && !autoRejectedAppointmentIdsRef.current.has(appointment.id),
+          shouldAutoRejectOverdueAppointment(appointment, currentTimestamp) &&
+          !autoRejectedAppointmentIdsRef.current.has(appointment.id),
       )
       .forEach((appointment) => {
         autoRejectedAppointmentIdsRef.current.add(appointment.id);
@@ -250,10 +322,7 @@ export function PatientAppointmentsPage() {
     };
   }, [isStatusMenuOpen]);
 
-  const handleAppointmentStatusChange = (
-    appointment: PatientAppointment,
-    status: PatientAppointmentStatus,
-  ) => {
+  const handleAppointmentStatusChange = (appointment: PatientAppointment, status: PatientAppointmentStatus) => {
     void (async () => {
       setSuccessMessage(null);
 
@@ -275,74 +344,92 @@ export function PatientAppointmentsPage() {
   };
 
   return (
-    <div className="flex h-full w-full min-h-0 flex-col gap-4 overflow-hidden">
+    <div className="student-page-compact flex h-full w-full min-h-0 flex-col gap-3 overflow-hidden">
       <Seo
         description={patientContent.appointmentsPage.meta.description}
         noIndex
         title={patientContent.appointmentsPage.meta.title}
       />
       <AdminPageHeader
+        className="gap-3"
         description={patientContent.appointmentsPage.description}
+        descriptionClassName="text-sm leading-6 sm:text-base"
+        headingAlign="center"
         title={patientContent.appointmentsPage.title}
+        titleClassName="text-[2rem] sm:text-[2.35rem]"
       />
-      {successMessage ? (
-        <SurfaceCard
-          className="border border-emerald-200 bg-emerald-50/90 text-sm font-medium text-emerald-800"
-          paddingClassName="p-3.5"
-        >
-          <p role="status">
-            <span className="font-semibold">
-              {patientContent.appointmentsPage.successNoticePrefix}
-            </span>{' '}
-            {successMessage}
-          </p>
-        </SurfaceCard>
-      ) : null}
-      {errorMessage ? (
-        <SurfaceCard
-          className="border border-rose-200 bg-rose-50/90 text-sm font-medium text-rose-800"
-          paddingClassName="p-3.5"
-        >
-          <p role="alert">{errorMessage}</p>
-        </SurfaceCard>
-      ) : null}
-      <div className="grid gap-3 md:grid-cols-2">
-        <SurfaceCard
-          className="min-w-0 overflow-hidden bg-brand-gradient text-white"
-          paddingClassName="p-0"
-        >
-          <div className="flex items-center gap-3 px-4 py-3">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-white/12 text-white ring-1 ring-white/18">
-              <CalendarCheck2 aria-hidden="true" className="h-4.5 w-4.5" />
-            </span>
-            <div>
-              <p className="font-headline text-[1.55rem] font-extrabold tracking-tight text-white">
-                {proposalCount}
-              </p>
-              <p className="text-sm font-semibold text-white/90">Propuestas pendientes</p>
+
+      {(successMessage || errorMessage) && (
+        <div className="grid shrink-0 gap-2">
+          {successMessage && (
+            <div
+              className="rounded-[1rem] border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700"
+              role="status"
+            >
+              <span className="font-semibold">{patientContent.appointmentsPage.successNoticePrefix}</span>{' '}
+              {successMessage}
             </div>
+          )}
+          {errorMessage && (
+            <div
+              className="rounded-[1rem] border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-medium text-rose-700"
+              role="alert"
+            >
+              {errorMessage}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+        <SurfaceCard className="min-w-0 overflow-hidden bg-brand-gradient text-white" paddingClassName="p-0">
+          <div className="flex min-w-0 items-center gap-1.5 px-2 py-1.5 sm:gap-2 sm:px-3 sm:py-1.5">
+            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-[0.7rem] bg-white/12 text-white sm:h-7 sm:w-7 sm:rounded-[0.8rem]">
+              <Clock3 aria-hidden="true" className="h-3.5 w-3.5" />
+            </span>
+            <span className="font-headline text-[0.98rem] font-extrabold tracking-tight text-white sm:text-[1.08rem]">
+              {proposalCount}
+            </span>
+            <p className="min-w-0 text-[0.62rem] font-semibold leading-3 text-white/90 sm:text-[0.74rem] sm:leading-none">
+              Propuestas
+            </p>
           </div>
         </SurfaceCard>
-        <SurfaceCard
-          className="border border-slate-200/80 bg-white shadow-none"
-          paddingClassName="p-0"
-        >
-          <div className="flex items-center gap-3 px-4 py-3">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-primary/10 text-primary ring-1 ring-primary/10">
-              <CheckCircle2 aria-hidden="true" className="h-4.5 w-4.5" />
+        <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-0">
+          <div className="flex min-w-0 items-center gap-1.5 px-2 py-1.5 sm:gap-2 sm:px-3 sm:py-1.5">
+            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-[0.7rem] bg-emerald-50 text-emerald-700 sm:h-7 sm:w-7 sm:rounded-[0.8rem]">
+              <CalendarCheck2 aria-hidden="true" className="h-3.5 w-3.5" />
             </span>
-            <div>
-              <p className="font-headline text-[1.55rem] font-extrabold tracking-tight text-ink">
-                {confirmedCount}
-              </p>
-              <p className="text-sm font-semibold text-ink-muted">Citas confirmadas</p>
-            </div>
+            <span className="font-headline text-[0.98rem] font-extrabold tracking-tight text-ink sm:text-[1.08rem]">
+              {acceptedCount}
+            </span>
+            <p className="min-w-0 text-[0.62rem] font-semibold leading-3 text-ink-muted sm:text-[0.74rem] sm:leading-none">
+              Aceptadas
+            </p>
+          </div>
+        </SurfaceCard>
+        <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-0">
+          <div className="flex min-w-0 items-center gap-1.5 px-2 py-1.5 sm:gap-2 sm:px-3 sm:py-1.5">
+            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-[0.7rem] bg-sky-50 text-sky-700 sm:h-7 sm:w-7 sm:rounded-[0.8rem]">
+              <CheckCircle2 aria-hidden="true" className="h-3.5 w-3.5" />
+            </span>
+            <span className="font-headline text-[0.98rem] font-extrabold tracking-tight text-ink sm:text-[1.08rem]">
+              {completedCount}
+            </span>
+            <p className="min-w-0 text-[0.62rem] font-semibold leading-3 text-ink-muted sm:text-[0.74rem] sm:leading-none">
+              Finalizadas
+            </p>
           </div>
         </SurfaceCard>
       </div>
-      <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
-        <div className="border-b border-slate-200/80 px-4 py-4 sm:px-5 sm:py-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
+      <AdminPanelCard
+        className="flex-1"
+        panelClassName="bg-[#f4f8ff]"
+        shellPaddingClassName="p-0.5 sm:p-1"
+      >
+        <div className="border-b border-slate-200/80 px-3 py-2.5 sm:px-4 sm:py-2.5">
+          <div className="flex items-center gap-2 sm:justify-between sm:gap-2.5">
             <label
               className="relative min-w-0 flex-1 sm:max-w-[32rem] xl:max-w-[36rem]"
               htmlFor="patient-appointment-search"
@@ -350,10 +437,10 @@ export function PatientAppointmentsPage() {
               <span className="sr-only">{patientContent.appointmentsPage.searchLabel}</span>
               <Search
                 aria-hidden="true"
-                className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ghost"
+                className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ghost sm:left-3.5"
               />
               <input
-                className="h-11 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-11 pr-4 text-sm text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                className="h-9 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-9 pr-3 text-[0.78rem] text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-10 sm:pl-10 sm:pr-3.5 sm:text-[0.82rem]"
                 id="patient-appointment-search"
                 placeholder={patientContent.appointmentsPage.searchPlaceholder}
                 type="search"
@@ -370,12 +457,11 @@ export function PatientAppointmentsPage() {
                   statusFilter === 'all'
                     ? 'Filtrar citas por estado'
                     : `Filtrar citas por estado. Actual: ${
-                        appointmentStatusOptions.find((option) => option.value === statusFilter)
-                          ?.label
+                        appointmentStatusOptions.find((option) => option.value === statusFilter)?.label
                       }`
                 }
                 className={classNames(
-                  'relative inline-flex h-11 w-11 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                  'relative inline-flex h-9 w-9 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-10 sm:w-10',
                   statusFilter !== 'all' || sortOrder !== 'arrival'
                     ? 'border-primary/25 bg-primary/[0.08] text-primary hover:bg-primary/[0.12]'
                     : 'border-slate-200/90 hover:border-primary/30 hover:bg-white',
@@ -383,7 +469,7 @@ export function PatientAppointmentsPage() {
                 type="button"
                 onClick={() => setIsStatusMenuOpen((currentValue) => !currentValue)}
               >
-                <SlidersHorizontal aria-hidden="true" className="h-[1.05rem] w-[1.05rem]" />
+                <SlidersHorizontal aria-hidden="true" className="h-4 w-4" />
                 {statusFilter !== 'all' || sortOrder !== 'arrival' ? (
                   <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary ring-2 ring-white" />
                 ) : null}
@@ -439,11 +525,12 @@ export function PatientAppointmentsPage() {
                     </p>
                   </div>
                   <div className="space-y-1">
-                    {([
+                    {[
                       { label: 'Orden de llegada', value: 'arrival' as AppointmentSortOrder },
                       { label: 'Proximas primero', value: 'proximity' as AppointmentSortOrder },
-                    ]).map((option) => {
+                    ].map((option) => {
                       const isSelected = sortOrder === option.value;
+
                       return (
                         <button
                           key={option.value}
@@ -479,23 +566,33 @@ export function PatientAppointmentsPage() {
             </div>
           </div>
         </div>
+
         {filteredAppointments.length > 0 ? (
-          <div className="admin-scrollbar min-h-0 flex-1 overflow-x-auto overflow-y-auto">
-            <table className="min-w-[68rem] lg:min-w-full">
+          <div ref={tableViewportRef} className="min-h-0 flex-1 overflow-hidden">
+            <table className="w-full table-fixed">
               <thead className="sticky top-0 z-10 bg-slate-100 text-left">
-                <tr className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-ink-muted">
-                  <th className="px-4 py-3 sm:px-5">Estudiante</th>
-                  <th className="px-4 py-3">Detalle de la cita</th>
-                  <th className="px-4 py-3">Estado</th>
-                  <th className="px-4 py-3 text-right sm:px-5">Acciones</th>
+                <tr className="text-[0.56rem] font-bold uppercase leading-3 tracking-[0.12em] text-ink-muted sm:text-[0.62rem] sm:leading-none sm:tracking-[0.16em]">
+                  <th className="w-[39%] px-2 py-1.5 sm:w-[20%] sm:px-4 sm:py-2 md:w-[14%]">Estudiante</th>
+                  <th className="hidden py-1.5 pl-0 pr-2 sm:py-2 sm:pr-3 md:table-cell md:w-[20%]">
+                    Atencion clinica
+                  </th>
+                  <th className="hidden w-[27%] py-1.5 pl-0 pr-2 sm:table-cell sm:py-2 sm:pr-3 md:w-[20%]">
+                    Programacion
+                  </th>
+                  <th className="w-[21%] py-1.5 pl-0 pr-2 text-center sm:w-[15%] sm:py-2 sm:pr-3 md:w-[12%]">
+                    Estado
+                  </th>
+                  <th className="w-[17%] py-1.5 pl-0 pr-2 text-center sm:w-[13%] sm:py-2 sm:pr-3 md:w-[12%]">
+                    Valoracion
+                  </th>
+                  <th className="w-[23%] px-1.5 py-1.5 text-center sm:w-[25%] sm:px-4 sm:py-2 md:w-[22%]">
+                    Acciones
+                  </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200/80 bg-white">
-                {filteredAppointments.map((appointment) => {
-                  const displayStatus = getAppointmentDisplayStatus(
-                    appointment,
-                    currentTimestamp,
-                  );
+              <tbody ref={tableBodyRef} className="divide-y divide-slate-200/80 bg-white">
+                {paginatedAppointments.map((appointment) => {
+                  const displayStatus = getAppointmentDisplayStatus(appointment, currentTimestamp);
 
                   return (
                     <tr
@@ -503,103 +600,107 @@ export function PatientAppointmentsPage() {
                       className="align-top"
                       data-testid={`patient-appointment-row-${appointment.id}`}
                     >
-                    <td className="px-4 py-3.5 sm:px-5">
-                      <div className="space-y-1">
-                        <p className="text-sm font-semibold text-ink">{appointment.studentName}</p>
-                        <p className="text-xs text-ink-muted">{appointment.universityName}</p>
-                        <p className="text-xs text-ink-muted">Docente: {appointment.teacherName}</p>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3.5">
-                      <div className="max-w-[28rem] space-y-1.5 text-sm text-ink-muted 2xl:max-w-[34rem]">
-                        <p className="font-semibold text-ink">{appointment.appointmentType}</p>
-                        {appointment.isRescheduleProposal ? (
-                          <p className="text-xs font-semibold text-primary">
-                            Nueva propuesta de cita
+                      <td className="px-2 py-2 sm:px-4 sm:py-2">
+                        <div className="min-w-0">
+                          <p className="break-words text-[0.76rem] font-semibold leading-4 text-ink sm:text-[0.82rem] sm:leading-4">
+                            {appointment.studentName}
                           </p>
-                        ) : null}
-                        <p>{formatDateTimeRange(appointment.startAt, appointment.endAt)}</p>
-                        <p className="inline-flex items-center gap-1.5">
-                          <MapPin aria-hidden="true" className="h-3.5 w-3.5 text-primary" />
-                          <span>
-                            {appointment.siteName} - {appointment.city}
-                          </span>
-                        </p>
-                        {appointment.additionalInfo ? (
-                          <p className="leading-6">{appointment.additionalInfo}</p>
-                        ) : null}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3.5">
-                      <span
-                        className={classNames(
-                          'inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset',
-                          getStatusBadgeClasses(displayStatus),
-                        )}
-                      >
-                        {appointment.isRescheduleProposal &&
-                        displayStatus === 'PROPUESTA'
-                          ? 'Reprogramacion propuesta'
-                          : getStatusLabel(displayStatus)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3.5 text-right sm:px-5">
-                      {displayStatus === 'PROPUESTA' ? (
-                        <div className="flex justify-end gap-2">
-                          <button
-                            className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition duration-200 hover:bg-emerald-100"
-                            type="button"
-                            onClick={() =>
-                              handleAppointmentStatusChange(appointment, 'ACEPTADA')
-                            }
-                          >
-                            <CheckCircle2 aria-hidden="true" className="h-3.5 w-3.5" />
-                            <span>{patientContent.appointmentsPage.actionLabels.accept}</span>
-                          </button>
-                          <button
-                            className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition duration-200 hover:bg-rose-100"
-                            type="button"
-                            onClick={() =>
-                              handleAppointmentStatusChange(appointment, 'RECHAZADA')
-                            }
-                          >
-                            <XCircle aria-hidden="true" className="h-3.5 w-3.5" />
-                            <span>{patientContent.appointmentsPage.actionLabels.reject}</span>
-                          </button>
+                          <p className="mt-0.5 hidden break-words text-[0.66rem] leading-[0.92rem] text-ink-muted sm:block sm:text-xs sm:leading-4">
+                            {appointment.universityName}
+                          </p>
+                          <div className="mt-1.5 space-y-0.5 text-[0.62rem] leading-[0.85rem] text-ink-muted sm:hidden">
+                            <p className="flex items-start gap-1">
+                              <Clock3 aria-hidden="true" className="mt-0.5 h-2.5 w-2.5 shrink-0 text-primary" />
+                              <span className="min-w-0 break-words">
+                                {formatDateTimeRange(appointment.startAt, appointment.endAt)}
+                              </span>
+                            </p>
+                            <p className="flex items-start gap-1">
+                              <MapPin aria-hidden="true" className="mt-0.5 h-2.5 w-2.5 shrink-0 text-primary" />
+                              <span className="min-w-0 break-words">
+                                {appointment.siteName} - {appointment.city}
+                              </span>
+                            </p>
+                          </div>
                         </div>
-                      ) : displayStatus === 'ACEPTADA' ? (
-                        <div className="flex justify-end">
-                          <button
-                            className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition duration-200 hover:bg-slate-200"
-                            type="button"
-                            onClick={() =>
-                              handleAppointmentStatusChange(appointment, 'CANCELADA')
-                            }
-                          >
-                            <Ban aria-hidden="true" className="h-3.5 w-3.5" />
-                            <span>{patientContent.appointmentsPage.actionLabels.cancel}</span>
-                          </button>
+                      </td>
+                      <td className="hidden py-2 pl-0 pr-2 sm:py-2 sm:pr-3 md:table-cell">
+                        <div className="min-w-0 space-y-0.5 text-[0.76rem] leading-4 text-ink-muted sm:text-[0.76rem] sm:leading-4">
+                          <p className="flex items-start gap-1.5 font-semibold text-ink">
+                            <Stethoscope
+                              aria-hidden="true"
+                              className="mt-0.5 h-3 w-3 shrink-0 text-primary sm:h-3 sm:w-3"
+                            />
+                            <span className="min-w-0 break-words">{appointment.appointmentType}</span>
+                          </p>
+                          <p className="flex items-start gap-1.5">
+                            <GraduationCap
+                              aria-hidden="true"
+                              className="mt-0.5 h-3 w-3 shrink-0 text-primary sm:h-3 sm:w-3"
+                            />
+                            <span className="min-w-0 break-words">
+                              <span className="font-semibold text-ink">Docente =</span> {appointment.teacherName}
+                            </span>
+                          </p>
+                          {appointment.additionalInfo ? (
+                            <p className="flex items-start gap-1.5">
+                              <BriefcaseMedical
+                                aria-hidden="true"
+                                className="mt-0.5 h-3 w-3 shrink-0 text-primary sm:h-3 sm:w-3"
+                              />
+                              <span className="line-clamp-2 min-w-0 break-words">{appointment.additionalInfo}</span>
+                            </p>
+                          ) : null}
                         </div>
-                      ) : displayStatus === 'FINALIZADA' ? (
-                        <div className="flex justify-end">
-                          {appointment.myRating !== null ? (
-                            <div className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1.5 ring-1 ring-amber-200">
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <Star
-                                  key={star}
-                                  aria-hidden="true"
-                                  className={classNames(
-                                    'h-3 w-3',
-                                    star <= appointment.myRating!
-                                      ? 'fill-amber-400 text-amber-400'
-                                      : 'fill-amber-100 text-amber-200',
-                                  )}
-                                />
-                              ))}
-                            </div>
+                      </td>
+                      <td className="hidden py-2 pl-0 pr-2 sm:table-cell sm:py-2 sm:pr-3">
+                        <div className="min-w-0 space-y-0.5 text-[0.68rem] leading-4 text-ink-muted sm:text-[0.76rem] sm:leading-4">
+                          <p className="flex items-start gap-1.5 font-semibold text-ink">
+                            <Clock3
+                              aria-hidden="true"
+                              className="mt-0.5 h-3 w-3 shrink-0 text-primary sm:h-3 sm:w-3"
+                            />
+                            <span className="min-w-0 break-words">
+                              {formatDateTimeRange(appointment.startAt, appointment.endAt)}
+                            </span>
+                          </p>
+                          <p className="flex items-start gap-1.5">
+                            <MapPin
+                              aria-hidden="true"
+                              className="mt-0.5 h-3 w-3 shrink-0 text-primary sm:h-3 sm:w-3"
+                            />
+                            <span className="min-w-0 break-words">
+                              {appointment.siteName} - {appointment.city}
+                            </span>
+                          </p>
+                        </div>
+                      </td>
+                      <td className="py-2 pl-0 pr-2 text-center sm:py-2 sm:pr-3">
+                        <span
+                          className={classNames(
+                            'inline-flex rounded-full px-1.5 py-0.5 text-[0.6rem] font-semibold leading-4 ring-1 ring-inset sm:px-2.5 sm:py-0.5 sm:text-[0.68rem]',
+                            getStatusBadgeClasses(displayStatus),
+                          )}
+                        >
+                          {appointment.isRescheduleProposal && displayStatus === 'PROPUESTA'
+                            ? 'Reprogramacion propuesta'
+                            : getStatusLabel(displayStatus)}
+                        </span>
+                      </td>
+                      <td className="py-2 pl-0 pr-2 text-center sm:py-2 sm:pr-3">
+                        {displayStatus === 'FINALIZADA' ? (
+                          appointment.myRating !== null ? (
+                            <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-50 px-1.5 py-0.5 text-[0.62rem] font-semibold leading-4 text-amber-600 sm:gap-1 sm:px-2 sm:py-0.5 sm:text-[0.68rem]">
+                              <Star
+                                aria-hidden="true"
+                                className="h-2.5 w-2.5 fill-amber-400 text-amber-400 sm:h-2.5 sm:w-2.5"
+                              />
+                              {appointment.myRating}/5
+                            </span>
                           ) : (
                             <button
-                              className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 ring-1 ring-amber-200 transition duration-200 hover:bg-amber-100"
+                              aria-label={`Valorar cita con ${appointment.studentName}`}
+                              className="inline-flex max-w-full items-center justify-center gap-0.5 whitespace-nowrap rounded-full bg-amber-50 px-1.5 py-1 text-[0.58rem] font-semibold leading-none text-amber-700 transition duration-200 hover:bg-amber-100 sm:gap-1 sm:px-2 sm:py-1 sm:text-[0.68rem]"
                               type="button"
                               onClick={() =>
                                 setRatingTarget({
@@ -608,16 +709,60 @@ export function PatientAppointmentsPage() {
                                 })
                               }
                             >
-                              <Star aria-hidden="true" className="h-3.5 w-3.5" />
-                              <span>Valorar</span>
+                              <Star aria-hidden="true" className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                              <span className="sr-only sm:not-sr-only">Valorar</span>
                             </button>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-xs font-medium text-ink-muted">Sin acciones</span>
-                      )}
-                    </td>
-                  </tr>
+                          )
+                        ) : (
+                          <span className="inline-flex w-full justify-center text-[0.62rem] font-medium leading-4 text-ink-muted sm:text-[0.72rem]">
+                            -
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-1.5 py-2 text-center sm:px-4 sm:py-2">
+                        {displayStatus === 'PROPUESTA' ? (
+                          <div className="flex max-w-full flex-wrap items-center justify-center gap-1 sm:gap-1">
+                            <button
+                              className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-emerald-50 px-1.5 py-1 text-[0.62rem] font-semibold text-emerald-700 transition duration-200 hover:bg-emerald-100 sm:px-2 sm:py-1 sm:text-[0.72rem]"
+                              type="button"
+                              onClick={() => handleAppointmentStatusChange(appointment, 'ACEPTADA')}
+                            >
+                              <CheckCircle2 aria-hidden="true" className="h-3 w-3 sm:h-3 sm:w-3" />
+                              <span className="sr-only sm:not-sr-only">
+                                {patientContent.appointmentsPage.actionLabels.accept}
+                              </span>
+                            </button>
+                            <button
+                              className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-rose-50 px-1.5 py-1 text-[0.62rem] font-semibold text-rose-700 transition duration-200 hover:bg-rose-100 sm:px-2 sm:py-1 sm:text-[0.72rem]"
+                              type="button"
+                              onClick={() => handleAppointmentStatusChange(appointment, 'RECHAZADA')}
+                            >
+                              <XCircle aria-hidden="true" className="h-3 w-3 sm:h-3 sm:w-3" />
+                              <span className="sr-only sm:not-sr-only">
+                                {patientContent.appointmentsPage.actionLabels.reject}
+                              </span>
+                            </button>
+                          </div>
+                        ) : displayStatus === 'ACEPTADA' ? (
+                          <div className="flex max-w-full flex-wrap items-center justify-center gap-1 sm:gap-1">
+                            <button
+                              className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-rose-50 px-1.5 py-1 text-[0.62rem] font-semibold text-rose-700 transition duration-200 hover:bg-rose-100 sm:px-2 sm:py-1 sm:text-[0.72rem]"
+                              type="button"
+                              onClick={() => handleAppointmentStatusChange(appointment, 'CANCELADA')}
+                            >
+                              <Ban aria-hidden="true" className="h-3 w-3 sm:h-3 sm:w-3" />
+                              <span className="sr-only sm:not-sr-only">
+                                {patientContent.appointmentsPage.actionLabels.cancel}
+                              </span>
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="inline-flex w-full justify-center text-[0.62rem] font-medium text-ink-muted sm:text-xs">
+                            -
+                          </span>
+                        )}
+                      </td>
+                    </tr>
                   );
                 })}
               </tbody>
@@ -630,7 +775,17 @@ export function PatientAppointmentsPage() {
             </p>
           </div>
         )}
+        <AdminTablePagination
+          currentPage={clampedCurrentPage}
+          pageEndLabel={pageEndLabel}
+          pageStartLabel={pageStartLabel}
+          totalItems={filteredAppointments.length}
+          totalPages={totalPages}
+          onNext={() => setCurrentPage((currentValue) => Math.min(totalPages, currentValue + 1))}
+          onPrevious={() => setCurrentPage((currentValue) => Math.max(1, currentValue - 1))}
+        />
       </AdminPanelCard>
+
       {ratingTarget ? (
         <PatientRatingModal
           appointmentId={ratingTarget.appointmentId}

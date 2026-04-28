@@ -2,8 +2,8 @@ import {
   Check,
   MessageSquareMore,
   Search,
-  ShieldX,
   SlidersHorizontal,
+  UserRound,
   XCircle,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -11,11 +11,12 @@ import { Link } from 'react-router-dom';
 
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
+import { AdminTablePagination } from '@/components/admin/AdminTablePagination';
 import { Seo } from '@/components/ui/Seo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { ROUTES } from '@/constants/routes';
 import { patientContent } from '@/content/patientContent';
-import type { PatientRequestStatus } from '@/content/types';
+import type { PatientRequest, PatientRequestStatus } from '@/content/types';
 import { useAutoDismissSystemMessage } from '@/hooks/useAutoDismissSystemMessage';
 import { classNames } from '@/lib/classNames';
 import { usePatientModuleStore } from '@/lib/patientModuleStore';
@@ -31,34 +32,66 @@ const requestStatusOptions: Array<{ label: string; value: RequestStatusFilter }>
   { label: 'Cancelada', value: 'CANCELADA' },
 ];
 
+const DEFAULT_ROWS_PER_PAGE = 6;
+const MIN_ROWS_PER_PAGE = 1;
+const TABLE_HEADER_HEIGHT_PX = 38;
+const TABLE_ROW_HEIGHT_FALLBACK_PX = 82;
+const TABLE_HEIGHT_PADDING_PX = 0;
+
+function formatRequestDate(value: string) {
+  return new Date(value).toLocaleDateString('es-CO');
+}
+
 function getStatusBadgeClasses(status: PatientRequestStatus) {
-  switch (status) {
-    case 'ACEPTADA':
-      return 'bg-emerald-50 text-emerald-700 ring-emerald-200';
-    case 'RECHAZADA':
-      return 'bg-rose-50 text-rose-700 ring-rose-200';
-    case 'CERRADA':
-      return 'bg-slate-100 text-slate-700 ring-slate-200';
-    case 'CANCELADA':
-      return 'bg-slate-100 text-slate-700 ring-slate-200';
-    default:
-      return 'bg-amber-50 text-amber-700 ring-amber-200';
+  if (status === 'ACEPTADA') {
+    return 'bg-emerald-50 text-emerald-700 ring-emerald-200';
   }
+
+  if (status === 'RECHAZADA' || status === 'CANCELADA') {
+    return 'bg-rose-50 text-rose-700 ring-rose-200';
+  }
+
+  if (status === 'CERRADA') {
+    return 'bg-slate-100 text-slate-700 ring-slate-200';
+  }
+
+  return 'bg-amber-50 text-amber-700 ring-amber-200';
 }
 
 function getStatusLabel(status: PatientRequestStatus) {
-  switch (status) {
-    case 'ACEPTADA':
-      return 'Aceptada';
-    case 'RECHAZADA':
-      return 'Rechazada';
-    case 'CERRADA':
-      return 'Cerrada';
-    case 'CANCELADA':
-      return 'Cancelada';
-    default:
-      return 'Pendiente';
+  const labels: Record<PatientRequestStatus, string> = {
+    PENDIENTE: 'Pendiente',
+    ACEPTADA: 'Aceptada',
+    RECHAZADA: 'Rechazada',
+    CERRADA: 'Cerrada',
+    CANCELADA: 'Cancelada',
+  };
+
+  return labels[status];
+}
+
+function getRequestStatusPriority(status: PatientRequestStatus) {
+  if (status === 'PENDIENTE') {
+    return 0;
   }
+
+  if (status === 'ACEPTADA') {
+    return 1;
+  }
+
+  if (status === 'RECHAZADA') {
+    return 2;
+  }
+
+  if (status === 'CERRADA') {
+    return 3;
+  }
+
+  return 4;
+}
+
+function getRequestResponseTime(request: PatientRequest) {
+  return new Date(request.responseAt ?? request.sentAt).getTime();
 }
 
 export function PatientRequestsPage() {
@@ -67,139 +100,199 @@ export function PatientRequestsPage() {
   const [statusFilter, setStatusFilter] = useState<RequestStatusFilter>('all');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
+  const tableViewportRef = useRef<HTMLDivElement | null>(null);
+  const tableBodyRef = useRef<HTMLTableSectionElement | null>(null);
   const normalizedSearch = searchTerm.trim().toLowerCase();
 
-  useAutoDismissSystemMessage(successMessage, () => {
-    setSuccessMessage(null);
-  });
+  useAutoDismissSystemMessage(successMessage, () => setSuccessMessage(null));
 
   const pendingCount = useMemo(
     () => requests.filter((request) => request.status === 'PENDIENTE').length,
     [requests],
   );
-  const activeConversationCount = useMemo(
-    () => requests.filter((request) => request.status === 'ACEPTADA' && request.conversationId).length,
-    [requests],
-  );
-  const filteredRequests = requests.filter((request) => {
-    const matchesSearch =
-      request.studentName.toLowerCase().includes(normalizedSearch) ||
-      request.universityName.toLowerCase().includes(normalizedSearch) ||
-      (request.reason ?? '').toLowerCase().includes(normalizedSearch);
 
-    return matchesSearch && (statusFilter === 'all' || request.status === statusFilter);
-  });
+  const filteredRequests = useMemo(() => {
+    return requests
+      .map((request, index) => ({ request, index }))
+      .filter(({ request }) => {
+        const matchesSearch =
+          normalizedSearch.length === 0 ||
+          [request.studentName, request.universityName, request.reason]
+            .filter((value): value is string => Boolean(value))
+            .some((value) => value.toLowerCase().includes(normalizedSearch));
+        const matchesStatus = statusFilter === 'all' || request.status === statusFilter;
+
+        return matchesSearch && matchesStatus;
+      })
+      .sort((left, right) => {
+        const statusPriority =
+          getRequestStatusPriority(left.request.status) - getRequestStatusPriority(right.request.status);
+
+        if (statusPriority !== 0) {
+          return statusPriority;
+        }
+
+        const leftTime = getRequestResponseTime(left.request);
+        const rightTime = getRequestResponseTime(right.request);
+
+        if (leftTime !== rightTime) {
+          return rightTime - leftTime;
+        }
+
+        return left.index - right.index;
+      })
+      .map(({ request }) => request);
+  }, [normalizedSearch, requests, statusFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredRequests.length / rowsPerPage));
+  const clampedCurrentPage = Math.min(currentPage, totalPages);
+  const paginatedRequests = useMemo(() => {
+    const start = (clampedCurrentPage - 1) * rowsPerPage;
+
+    return filteredRequests.slice(start, start + rowsPerPage);
+  }, [clampedCurrentPage, filteredRequests, rowsPerPage]);
+  const pageStartLabel = filteredRequests.length === 0 ? 0 : (clampedCurrentPage - 1) * rowsPerPage + 1;
+  const pageEndLabel = Math.min(filteredRequests.length, clampedCurrentPage * rowsPerPage);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [normalizedSearch, statusFilter]);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
+
+  useEffect(() => {
+    const viewport = tableViewportRef.current;
+
+    if (!viewport) {
+      return undefined;
+    }
+
+    const updateRowsPerPage = () => {
+      const firstRow = tableBodyRef.current?.querySelector('tr');
+      const measuredRowHeight = firstRow?.getBoundingClientRect().height ?? 0;
+      const rowHeight = Math.max(measuredRowHeight, TABLE_ROW_HEIGHT_FALLBACK_PX);
+      const availableHeight = viewport.getBoundingClientRect().height - TABLE_HEADER_HEIGHT_PX - TABLE_HEIGHT_PADDING_PX;
+
+      if (availableHeight <= 0) {
+        setRowsPerPage(DEFAULT_ROWS_PER_PAGE);
+        return;
+      }
+
+      const nextRowsPerPage = Math.max(MIN_ROWS_PER_PAGE, Math.floor(availableHeight / rowHeight));
+
+      setRowsPerPage(Number.isFinite(nextRowsPerPage) ? nextRowsPerPage : DEFAULT_ROWS_PER_PAGE);
+    };
+
+    updateRowsPerPage();
+
+    if (typeof ResizeObserver !== 'undefined') {
+      const resizeObserver = new ResizeObserver(updateRowsPerPage);
+      resizeObserver.observe(viewport);
+
+      return () => {
+        resizeObserver.disconnect();
+      };
+    }
+
+    window.addEventListener('resize', updateRowsPerPage);
+
+    return () => {
+      window.removeEventListener('resize', updateRowsPerPage);
+    };
+  }, [filteredRequests.length]);
 
   useEffect(() => {
     if (!isStatusMenuOpen) {
       return undefined;
     }
 
-    function handlePointerDown(event: MouseEvent) {
-      if (!statusMenuRef.current?.contains(event.target as Node)) {
-        setIsStatusMenuOpen(false);
-      }
-    }
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        setIsStatusMenuOpen(false);
-      }
-    }
-
-    window.addEventListener('mousedown', handlePointerDown);
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      window.removeEventListener('mousedown', handlePointerDown);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isStatusMenuOpen]);
-
-  const handleCancelRequest = (requestId: string) => {
-    void (async () => {
-      const updated = await updateRequestStatus(requestId, 'CANCELADA');
-
-      if (!updated) {
+    const handlePointerDown = (event: PointerEvent) => {
+      if (statusMenuRef.current?.contains(event.target as Node)) {
         return;
       }
 
-      setSuccessMessage('La solicitud fue cancelada desde el portal del paciente.');
-    })();
+      setIsStatusMenuOpen(false);
+    };
+
+    window.addEventListener('pointerdown', handlePointerDown);
+
+    return () => {
+      window.removeEventListener('pointerdown', handlePointerDown);
+    };
+  }, [isStatusMenuOpen]);
+
+  const handleCancelRequest = async (requestId: string) => {
+    setSuccessMessage(null);
+    await updateRequestStatus(requestId, 'CANCELADA');
+    setSuccessMessage(`${patientContent.requestsPage.successNoticePrefix} cancelada.`);
   };
 
   return (
-    <div className="flex h-full w-full min-h-0 flex-col gap-4 overflow-hidden">
-      <Seo
-        description={patientContent.requestsPage.meta.description}
-        noIndex
-        title={patientContent.requestsPage.meta.title}
-      />
+    <div className="student-page-compact flex h-full w-full min-h-0 flex-col gap-3 overflow-hidden">
+      <Seo title="Solicitudes del paciente" description={patientContent.requestsPage.description} />
       <AdminPageHeader
+        className="gap-3"
         description={patientContent.requestsPage.description}
+        descriptionClassName="text-sm leading-6 sm:text-base"
+        headingAlign="center"
         title={patientContent.requestsPage.title}
+        titleClassName="text-[2rem] sm:text-[2.35rem]"
       />
-      {successMessage ? (
-        <SurfaceCard
-          className="border border-emerald-200 bg-emerald-50/90 text-sm font-medium text-emerald-800"
-          paddingClassName="p-3.5"
-        >
-          <p role="status">
-            <span className="font-semibold">
-              {patientContent.requestsPage.successNoticePrefix}
-            </span>{' '}
-            {successMessage}
-          </p>
-        </SurfaceCard>
-      ) : null}
-      {errorMessage ? (
-        <SurfaceCard
-          className="border border-rose-200 bg-rose-50/90 text-sm font-medium text-rose-800"
-          paddingClassName="p-3.5"
-        >
-          <p role="alert">{errorMessage}</p>
-        </SurfaceCard>
-      ) : null}
-      <div className="grid gap-3 md:grid-cols-2">
+
+      {(successMessage || errorMessage) && (
+        <div className="grid shrink-0 gap-2">
+          {successMessage && (
+            <div
+              className="rounded-[1rem] border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700"
+              role="status"
+            >
+              {successMessage}
+            </div>
+          )}
+          {errorMessage && (
+            <div className="rounded-[1rem] border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-medium text-rose-700">
+              {errorMessage}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="shrink-0">
         <SurfaceCard className="min-w-0 overflow-hidden bg-brand-gradient text-white" paddingClassName="p-0">
-          <div className="flex items-center gap-3 px-4 py-3">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-white/12 text-white ring-1 ring-white/18">
-              <ShieldX aria-hidden="true" className="h-4.5 w-4.5" />
+          <div className="flex items-center gap-2 px-3 py-1.5 sm:gap-2 sm:px-3 sm:py-1.5">
+            <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[0.8rem] bg-white/12 text-white sm:h-7 sm:w-7 sm:rounded-[0.85rem]">
+              <UserRound className="h-3.5 w-3.5 sm:h-3.5 sm:w-3.5" aria-hidden />
             </span>
-            <div>
-              <p className="font-headline text-[1.55rem] font-extrabold tracking-tight text-white">
-                {pendingCount}
-              </p>
-              <p className="text-sm font-semibold text-white/90">Solicitudes pendientes</p>
-            </div>
-          </div>
-        </SurfaceCard>
-        <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-0">
-          <div className="flex items-center gap-3 px-4 py-3">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-primary/10 text-primary ring-1 ring-primary/10">
-              <MessageSquareMore aria-hidden="true" className="h-4.5 w-4.5" />
+            <span className="font-headline text-[1.12rem] font-extrabold tracking-tight text-white sm:text-[1.14rem]">
+              {pendingCount}
             </span>
-            <div>
-              <p className="font-headline text-[1.55rem] font-extrabold tracking-tight text-ink">
-                {activeConversationCount}
-              </p>
-              <p className="text-sm font-semibold text-ink-muted">Chats disponibles</p>
-            </div>
+            <p className="min-w-0 text-[0.76rem] font-semibold text-white/90 sm:text-[0.78rem]">
+              Solicitudes pendientes
+            </p>
           </div>
         </SurfaceCard>
       </div>
-      <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
-        <div className="border-b border-slate-200/80 px-4 py-4 sm:px-5 sm:py-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
+      <AdminPanelCard
+        className="flex-1 bg-[#f4f8ff] shadow-none"
+        panelClassName="bg-[#f4f8ff]"
+        shellPaddingClassName="p-0.5 sm:p-1"
+      >
+        <div className="border-b border-slate-200/80 px-4 py-3.5 sm:px-4 sm:py-2.5">
+          <div className="flex items-center gap-2 sm:justify-between sm:gap-3">
             <label className="relative min-w-0 flex-1 sm:max-w-[30rem] xl:max-w-[34rem]" htmlFor="patient-request-search">
-              <span className="sr-only">{patientContent.requestsPage.searchLabel}</span>
+              <span className="sr-only">Buscar solicitud</span>
               <Search
-                aria-hidden="true"
-                className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ghost"
+                className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ghost sm:left-3.5 sm:h-4 sm:w-4"
+                aria-hidden
               />
               <input
-                className="h-11 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-11 pr-4 text-sm text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                className="h-9 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-9 pr-3 text-[0.8rem] text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-10 sm:pl-10 sm:pr-4 sm:text-[0.86rem]"
                 id="patient-request-search"
                 placeholder={patientContent.requestsPage.searchPlaceholder}
                 type="search"
@@ -212,160 +305,130 @@ export function PatientRequestsPage() {
                 aria-controls="patient-request-status-menu"
                 aria-expanded={isStatusMenuOpen}
                 aria-haspopup="menu"
-                aria-label={
-                  statusFilter === 'all'
-                    ? 'Filtrar solicitudes por estado'
-                    : `Filtrar solicitudes por estado. Actual: ${
-                        requestStatusOptions.find((option) => option.value === statusFilter)?.label
-                      }`
-                }
+                aria-label="Filtrar solicitudes por estado"
                 className={classNames(
-                  'relative inline-flex h-11 w-11 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
-                  statusFilter === 'all'
-                    ? 'border-slate-200/90 hover:border-primary/30 hover:bg-white'
-                    : 'border-primary/25 bg-primary/[0.08] text-primary hover:bg-primary/[0.12]',
+                  'relative inline-flex h-9 w-9 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-10 sm:w-10',
+                  isStatusMenuOpen
+                    ? 'border-primary/35 text-primary'
+                    : 'border-slate-200/90 hover:border-primary/30 hover:bg-white',
                 )}
                 type="button"
-                onClick={() => setIsStatusMenuOpen((currentValue) => !currentValue)}
+                onClick={() => setIsStatusMenuOpen((current) => !current)}
               >
-                <SlidersHorizontal aria-hidden="true" className="h-[1.05rem] w-[1.05rem]" />
-                {statusFilter !== 'all' ? (
-                  <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary ring-2 ring-white" />
-                ) : null}
+                <SlidersHorizontal className="h-4 w-4 sm:h-[1rem] sm:w-[1rem]" aria-hidden />
               </button>
-              {isStatusMenuOpen ? (
+              {statusFilter !== 'all' && (
+                <span className="absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-primary ring-2 ring-white" />
+              )}
+              {isStatusMenuOpen && (
                 <div
-                  className="absolute right-0 top-[calc(100%+0.6rem)] z-20 w-[14rem] overflow-hidden rounded-[1.4rem] border border-slate-200/80 bg-white/95 p-2 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.45)] backdrop-blur"
                   id="patient-request-status-menu"
                   role="menu"
+                  className="absolute right-0 top-[calc(100%+0.5rem)] z-30 w-44 overflow-hidden rounded-[1rem] border border-slate-200/80 bg-white p-1.5 shadow-[0_20px_50px_-22px_rgba(15,23,42,0.35)]"
                 >
-                  <div className="px-2.5 pb-2 pt-1">
-                    <p className="text-[0.7rem] font-bold uppercase tracking-[0.24em] text-primary/75">
-                      Filtrar por estado
-                    </p>
-                  </div>
-                  <div className="space-y-1">
-                    {requestStatusOptions.map((option) => {
-                      const isSelected = statusFilter === option.value;
+                  {requestStatusOptions.map((option) => {
+                    const isSelected = option.value === statusFilter;
 
-                      return (
-                        <button
-                          key={option.value}
-                          aria-checked={isSelected}
-                          className={classNames(
-                            'flex w-full items-center justify-between rounded-[1rem] px-3 py-2.5 text-left text-sm font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
-                            isSelected
-                              ? 'bg-primary text-white shadow-[0_14px_30px_-20px_rgba(22,78,99,0.9)]'
-                              : 'bg-slate-50/70 text-ink hover:bg-slate-100',
-                          )}
-                          role="menuitemradio"
-                          type="button"
-                          onClick={() => {
-                            setStatusFilter(option.value);
-                            setIsStatusMenuOpen(false);
-                          }}
-                        >
-                          <span>{option.label}</span>
-                          <span
-                            className={classNames(
-                              'inline-flex h-5 w-5 items-center justify-center rounded-full',
-                              isSelected ? 'bg-white/18 text-white' : 'bg-white text-slate-300',
-                            )}
-                          >
-                            <Check aria-hidden="true" className="h-3.5 w-3.5" />
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
+                    return (
+                      <button
+                        key={option.value}
+                        className={classNames(
+                          'flex w-full items-center justify-between gap-2 rounded-[0.8rem] px-3 py-2 text-left text-[0.78rem] font-semibold transition duration-200',
+                          isSelected ? 'bg-primary/10 text-primary' : 'text-ink-muted hover:bg-slate-100 hover:text-ink',
+                        )}
+                        role="menuitemradio"
+                        aria-checked={isSelected}
+                        type="button"
+                        onClick={() => {
+                          setStatusFilter(option.value);
+                          setIsStatusMenuOpen(false);
+                        }}
+                      >
+                        <span>{option.label}</span>
+                        {isSelected && <Check className="h-3.5 w-3.5" aria-hidden />}
+                      </button>
+                    );
+                  })}
                 </div>
-              ) : null}
+              )}
             </div>
           </div>
         </div>
+
         {filteredRequests.length > 0 ? (
-          <div className="admin-scrollbar min-h-0 flex-1 overflow-x-auto overflow-y-auto">
-            <table className="min-w-[62rem] lg:min-w-full">
+          <div ref={tableViewportRef} className="min-h-0 flex-1 overflow-hidden">
+            <table className="w-full table-fixed">
               <thead className="sticky top-0 z-10 bg-slate-100 text-left">
-                <tr className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-ink-muted">
-                  <th className="px-4 py-3 sm:px-5">Estudiante</th>
-                  <th className="px-4 py-3">Motivo</th>
-                  <th className="px-4 py-3">Estado</th>
-                  <th className="px-4 py-3">Seguimiento</th>
-                  <th className="px-4 py-3 text-right sm:px-5">Acciones</th>
+                <tr className="text-[0.55rem] font-bold uppercase leading-[0.72rem] tracking-[0.1em] text-ink-muted sm:text-[0.66rem] sm:leading-none sm:tracking-[0.16em]">
+                  <th className="w-[36%] px-1.5 py-1 sm:px-3 sm:py-2 md:w-[27%]">Estudiante</th>
+                  <th className="hidden px-2 py-1.5 sm:px-3 sm:py-2 md:table-cell md:w-[28%]">Motivo</th>
+                  <th className="w-[19%] px-1 py-1 text-left sm:px-3 sm:py-2 md:w-[15%]">Estado</th>
+                  <th className="w-[45%] px-1 py-1 text-center sm:px-3 sm:py-2 md:w-[30%]">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200/80 bg-white">
-                {filteredRequests.map((request) => (
+              <tbody ref={tableBodyRef} className="divide-y divide-slate-200/80 bg-white">
+                {paginatedRequests.map((request) => (
                   <tr key={request.id} className="align-top" data-testid={`patient-request-row-${request.id}`}>
-                    <td className="px-4 py-3.5 sm:px-5">
-                      <div className="space-y-1">
-                        <p className="text-sm font-semibold text-ink">{request.studentName}</p>
-                        <p className="text-xs text-ink-muted">{request.universityName}</p>
+                    <td className="px-1.5 py-1.5 sm:px-3 sm:py-2.5">
+                      <div className="min-w-0 space-y-0.5 sm:space-y-1">
+                        <p className="break-words text-[0.76rem] font-semibold leading-4 text-ink sm:text-sm sm:leading-5">
+                          {request.studentName}
+                        </p>
+                        <p className="break-words text-[0.66rem] leading-[0.92rem] text-ink-muted sm:text-xs sm:leading-5">
+                          {request.universityName}
+                        </p>
+                        <p className="text-[0.66rem] leading-[0.92rem] text-ink-muted sm:text-xs">
+                          Envio: <span className="font-medium text-ink">{formatRequestDate(request.sentAt)}</span>
+                        </p>
+                        {request.responseAt && (
+                          <p className="hidden text-xs leading-5 text-ink-muted sm:block">
+                            Respuesta: <span className="font-medium text-ink">{formatRequestDate(request.responseAt)}</span>
+                          </p>
+                        )}
                       </div>
                     </td>
-                    <td className="px-4 py-3.5">
-                      <p className="max-w-[22rem] text-sm leading-6 text-ink-muted 2xl:max-w-[30rem]">
-                        {request.reason ?? 'Sin motivo registrado.'}
+                    <td className="hidden px-2 py-2 sm:px-3 sm:py-2.5 md:table-cell">
+                      <p className="line-clamp-3 break-words text-sm leading-5 text-ink-muted">
+                        {request.reason || 'Sin motivo registrado.'}
                       </p>
                     </td>
-                    <td className="px-4 py-3.5">
+                    <td className="px-1 py-1.5 sm:px-3 sm:py-2.5">
                       <span
                         className={classNames(
-                          'inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset',
+                          'inline-flex max-w-full rounded-full px-1 py-0.5 text-[0.6rem] font-semibold leading-3 ring-1 ring-inset sm:px-2.5 sm:py-1 sm:text-xs sm:leading-4',
                           getStatusBadgeClasses(request.status),
                         )}
                       >
                         {getStatusLabel(request.status)}
                       </span>
                     </td>
-                    <td className="px-4 py-3.5">
-                      <div className="space-y-1 text-sm text-ink-muted">
-                        <p>
-                          Envio:{' '}
-                          <span className="font-medium text-ink">
-                            {new Date(request.sentAt).toLocaleDateString('es-CO')}
-                          </span>
-                        </p>
-                        <p>
-                          Respuesta:{' '}
-                          <span className="font-medium text-ink">
-                            {request.responseAt
-                              ? new Date(request.responseAt).toLocaleDateString('es-CO')
-                              : 'Sin respuesta'}
-                          </span>
-                        </p>
-                        <p>
-                          Citas asociadas:{' '}
-                          <span className="font-medium text-ink">{request.appointmentsCount}</span>
-                        </p>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3.5 text-right sm:px-5">
-                      {request.status === 'PENDIENTE' ? (
-                        <div className="flex justify-end">
+                    <td className="px-0.5 py-1.5 text-center sm:px-3 sm:py-2.5">
+                      <div className="flex flex-wrap items-center justify-center gap-0.5 sm:gap-1.5 xl:flex-nowrap">
+                        {request.status === 'PENDIENTE' ? (
                           <button
-                            className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition duration-200 hover:bg-rose-100"
+                            aria-label={`Cancelar solicitud de ${request.studentName}`}
+                            className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full bg-rose-50 px-1 py-0.5 text-[0.56rem] font-semibold text-rose-700 transition duration-200 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60 sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs"
+                            disabled={isLoading}
                             type="button"
-                            onClick={() => handleCancelRequest(request.id)}
+                            onClick={() => void handleCancelRequest(request.id)}
                           >
-                            <XCircle aria-hidden="true" className="h-3.5 w-3.5" />
-                            <span>{patientContent.requestsPage.actionLabels.cancel}</span>
+                            <XCircle className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" aria-hidden />
+                            <span className="text-[0.52rem] leading-none sm:text-xs">Cancelar</span>
                           </button>
-                        </div>
-                      ) : request.conversationId ? (
-                        <div className="flex justify-end">
+                        ) : request.conversationId ? (
                           <Link
-                            className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition duration-200 hover:bg-primary/15"
+                            className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full bg-slate-100 px-1 py-0.5 text-[0.56rem] font-semibold text-slate-700 transition duration-200 hover:bg-slate-200 sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs"
                             to={`${ROUTES.patientConversations}?conversation=${request.conversationId}`}
                           >
-                            <MessageSquareMore aria-hidden="true" className="h-3.5 w-3.5" />
-                            <span>{patientContent.requestsPage.actionLabels.viewConversation}</span>
+                            <MessageSquareMore className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" aria-hidden />
+                            <span className="text-[0.52rem] leading-none sm:text-xs">Ver chat</span>
                           </Link>
-                        </div>
-                      ) : (
-                        <span className="text-xs font-medium text-ink-muted">Sin acciones</span>
-                      )}
+                        ) : (
+                          <span className="inline-flex w-full justify-center text-[0.62rem] font-medium text-ink-muted sm:text-xs">
+                            -
+                          </span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -373,12 +436,24 @@ export function PatientRequestsPage() {
             </table>
           </div>
         ) : (
-          <div className="px-4 py-8 text-center sm:px-5">
-            <p className="text-sm font-medium text-ink-muted">
-              {isLoading ? 'Cargando solicitudes...' : patientContent.requestsPage.emptyState}
-            </p>
+          <div className="grid min-h-0 flex-1 place-items-center px-5 py-10 text-center">
+            <div className="max-w-sm space-y-2">
+              <p className="font-semibold text-ink">
+                {isLoading ? 'Cargando solicitudes...' : patientContent.requestsPage.emptyState}
+              </p>
+            </div>
           </div>
         )}
+
+        <AdminTablePagination
+          currentPage={clampedCurrentPage}
+          onNext={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+          onPrevious={() => setCurrentPage((page) => Math.max(1, page - 1))}
+          pageEndLabel={pageEndLabel}
+          pageStartLabel={pageStartLabel}
+          totalItems={filteredRequests.length}
+          totalPages={totalPages}
+        />
       </AdminPanelCard>
     </div>
   );

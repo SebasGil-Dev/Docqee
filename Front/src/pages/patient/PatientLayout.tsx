@@ -64,7 +64,6 @@ export function PatientLayout() {
       avatarSrc={profile.avatarSrc}
       content={patientContent.shell}
       headerNotifications={notifications}
-      notificationsPageTo={ROUTES.patientNotifications}
       onMarkAllNotificationsRead={markAllNotificationsAsRead}
       onOpenNotification={markNotificationAsRead}
       surfacePaddingMode="inner"

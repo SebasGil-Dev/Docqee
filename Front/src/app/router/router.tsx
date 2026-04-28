@@ -225,14 +225,6 @@ export const router = createBrowserRouter([
         },
       },
       {
-        path: 'notificaciones',
-        lazy: async () => {
-          const { PatientNotificationsPage } =
-            await import('@/pages/patient/notifications/PatientNotificationsPage');
-          return { Component: PatientNotificationsPage };
-        },
-      },
-      {
         path: 'conversaciones',
         lazy: async () => {
           const { PatientConversationsPage } =

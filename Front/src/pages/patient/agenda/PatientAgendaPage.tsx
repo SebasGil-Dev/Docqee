@@ -1,4 +1,4 @@
-import { CalendarCheck2, CheckCircle2, Clock3 } from 'lucide-react';
+import { CalendarCheck2 } from 'lucide-react';
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -9,14 +9,18 @@ import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { ROUTES } from '@/constants/routes';
 import { patientContent } from '@/content/patientContent';
 import type {
-  PatientAppointmentStatus,
+  PatientAppointment,
   StudentAgendaAppointment,
 } from '@/content/types';
 import { usePatientModuleStore } from '@/lib/patientModuleStore';
 import { StudentAgendaCalendar } from '@/pages/student/agenda/StudentAgendaCalendar';
 
-function getAgendaStatus(status: PatientAppointmentStatus) {
-  return status === 'RECHAZADA' ? 'CANCELADA' : status;
+function getAgendaStatus(appointment: PatientAppointment): StudentAgendaAppointment['status'] {
+  if (appointment.isRescheduleProposal && appointment.status === 'PROPUESTA') {
+    return 'REPROGRAMACION_PENDIENTE';
+  }
+
+  return appointment.status === 'RECHAZADA' ? 'CANCELADA' : appointment.status;
 }
 
 export function PatientAgendaPage() {
@@ -37,8 +41,8 @@ export function PatientAgendaPage() {
         siteId: appointment.id,
         siteName: appointment.siteName,
         startAt: appointment.startAt,
-        myRating: null,
-        status: getAgendaStatus(appointment.status),
+        myRating: appointment.myRating,
+        status: getAgendaStatus(appointment),
         supervisorId: appointment.id,
         supervisorName: appointment.teacherName,
         treatmentIds: [],
@@ -46,96 +50,45 @@ export function PatientAgendaPage() {
       })),
     [appointments],
   );
-  const proposalCount = appointments.filter(
-    (appointment) => appointment.status === 'PROPUESTA',
-  ).length;
-  const confirmedCount = appointments.filter(
-    (appointment) => appointment.status === 'ACEPTADA',
-  ).length;
-  const completedCount = appointments.filter(
-    (appointment) => appointment.status === 'FINALIZADA',
-  ).length;
 
   return (
-    <div className="flex h-full w-full min-h-0 flex-col gap-4 overflow-hidden">
+    <div className="student-page-compact flex h-full w-full min-h-0 flex-col gap-1.5 overflow-hidden sm:gap-2">
       <Seo
         description={patientContent.agendaPage.meta.description}
         noIndex
         title={patientContent.agendaPage.meta.title}
       />
-      <AdminPageHeader
-        action={
-          <Link
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-[0.82rem] font-semibold text-primary transition duration-300 hover:bg-slate-50"
-            to={ROUTES.patientAppointments}
-          >
-            <CalendarCheck2 aria-hidden="true" className="h-4 w-4" />
-            <span>Ver citas</span>
-          </Link>
-        }
-        description={patientContent.agendaPage.description}
-        title={patientContent.agendaPage.title}
-      />
+      <div className="relative">
+        <AdminPageHeader
+          className="gap-1.5 sm:gap-2"
+          description={patientContent.agendaPage.description}
+          descriptionClassName="text-[0.78rem] leading-4 sm:text-[0.9rem] sm:leading-5"
+          headingAlign="center"
+          title={patientContent.agendaPage.title}
+          titleClassName="text-[1.45rem] sm:text-[1.75rem]"
+        />
+        <Link
+          className="mt-1.5 inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-full bg-brand-gradient px-3 text-[0.72rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 sm:absolute sm:right-0 sm:top-1/2 sm:mt-0 sm:w-auto sm:-translate-y-1/2"
+          to={ROUTES.patientAppointments}
+        >
+          <CalendarCheck2 aria-hidden="true" className="h-3.5 w-3.5" />
+          <span>Ver citas</span>
+        </Link>
+      </div>
       {errorMessage ? (
         <SurfaceCard
-          className="border border-rose-200 bg-rose-50/90 text-sm font-medium text-rose-800"
-          paddingClassName="p-3.5"
+          className="shrink-0 border border-rose-200 bg-rose-50/90 text-[0.78rem] font-semibold text-rose-800 sm:text-sm"
+          paddingClassName="p-2.5 sm:p-3"
         >
           <p role="alert">{errorMessage}</p>
         </SurfaceCard>
       ) : null}
-      <div className="grid gap-3 md:grid-cols-3">
-        <SurfaceCard
-          className="min-w-0 overflow-hidden bg-brand-gradient text-white"
-          paddingClassName="p-0"
-        >
-          <div className="flex items-center gap-3 px-4 py-3.5">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-white/12 text-white ring-1 ring-white/18">
-              <Clock3 aria-hidden="true" className="h-4.5 w-4.5" />
-            </span>
-            <div>
-              <p className="font-headline text-[1.55rem] font-extrabold tracking-tight text-white">
-                {proposalCount}
-              </p>
-              <p className="text-sm font-semibold text-white/90">Propuestas pendientes</p>
-            </div>
-          </div>
-        </SurfaceCard>
-        <SurfaceCard
-          className="border border-slate-200/80 bg-white shadow-none"
-          paddingClassName="p-0"
-        >
-          <div className="flex items-center gap-3 px-4 py-3.5">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-primary/10 text-primary ring-1 ring-primary/10">
-              <CheckCircle2 aria-hidden="true" className="h-4.5 w-4.5" />
-            </span>
-            <div>
-              <p className="font-headline text-[1.55rem] font-extrabold tracking-tight text-ink">
-                {confirmedCount}
-              </p>
-              <p className="text-sm font-semibold text-ink-muted">Citas confirmadas</p>
-            </div>
-          </div>
-        </SurfaceCard>
-        <SurfaceCard
-          className="border border-slate-200/80 bg-white shadow-none"
-          paddingClassName="p-0"
-        >
-          <div className="flex items-center gap-3 px-4 py-3.5">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] bg-primary/10 text-primary ring-1 ring-primary/10">
-              <CalendarCheck2 aria-hidden="true" className="h-4.5 w-4.5" />
-            </span>
-            <div>
-              <p className="font-headline text-[1.55rem] font-extrabold tracking-tight text-ink">
-                {completedCount}
-              </p>
-              <p className="text-sm font-semibold text-ink-muted">Citas finalizadas</p>
-            </div>
-          </div>
-        </SurfaceCard>
-      </div>
-      <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
-        <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
+      <AdminPanelCard
+        className="flex flex-1 flex-col"
+        panelClassName="bg-[#f4f8ff]"
+        shellPaddingClassName="p-0.5 sm:p-1"
+      >
+        <div className="min-h-0 flex flex-1 overflow-hidden px-1.5 py-1.5 sm:px-2 sm:py-2">
           <StudentAgendaCalendar
             appointments={calendarAppointments}
             emptyDayMessage="No hay citas visibles para este dia."
@@ -146,7 +99,7 @@ export function PatientAgendaPage() {
         </div>
       </AdminPanelCard>
       {isLoading ? (
-        <p className="pb-2 text-sm font-medium text-ink-muted">
+        <p className="shrink-0 pb-1 text-center text-[0.78rem] font-semibold text-ink-muted sm:text-sm">
           Cargando la agenda del paciente...
         </p>
       ) : null}

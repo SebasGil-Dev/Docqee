@@ -11,7 +11,6 @@ export const ROUTES = {
   patientAppointments: '/paciente/citas',
   patientConversations: '/paciente/conversaciones',
   patientHome: '/paciente/inicio',
-  patientNotifications: '/paciente/notificaciones',
   patientProfile: '/paciente/mi-perfil',
   patientRequests: '/paciente/solicitudes',
   patientRoot: '/paciente',

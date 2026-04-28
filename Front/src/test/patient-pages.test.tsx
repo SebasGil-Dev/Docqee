@@ -11,7 +11,6 @@ import { PatientAppointmentsPage } from '@/pages/patient/appointments/PatientApp
 import { PatientConversationsPage } from '@/pages/patient/conversations/PatientConversationsPage';
 import { PatientHomePage } from '@/pages/patient/home/PatientHomePage';
 import { PatientLayout } from '@/pages/patient/PatientLayout';
-import { PatientNotificationsPage } from '@/pages/patient/notifications/PatientNotificationsPage';
 import { PatientProfilePage } from '@/pages/patient/profile/PatientProfilePage';
 import { PatientRequestsPage } from '@/pages/patient/requests/PatientRequestsPage';
 import { PatientSearchStudentsPage } from '@/pages/patient/search/PatientSearchStudentsPage';
@@ -31,7 +30,6 @@ function renderPatientApp(
           <Route element={<PatientSearchStudentsPage />} path="buscar-estudiantes" />
           <Route element={<PatientRequestsPage />} path="solicitudes" />
           <Route element={<PatientAgendaPage />} path="agenda" />
-          <Route element={<PatientNotificationsPage />} path="notificaciones" />
           <Route element={<PatientConversationsPage />} path="conversaciones" />
           <Route element={<PatientAppointmentsPage />} path="citas" />
           <Route element={<PatientProfilePage />} path="mi-perfil" />
@@ -244,18 +242,31 @@ describe('Patient pages', () => {
     });
   });
 
-  it('permite marcar todas las notificaciones del paciente como leidas', async () => {
+  it('mantiene notificaciones del paciente solo en la campana del header', async () => {
     const user = userEvent.setup();
 
-    renderPatientApp([ROUTES.patientNotifications]);
+    renderPatientApp([ROUTES.patientProfile]);
 
-    expect(await screen.findByRole('heading', { name: /^Notificaciones$/i })).toBeInTheDocument();
-    expect(screen.getAllByText(/^Sin leer$/i).length).toBeGreaterThan(0);
+    expect(
+      screen.queryByRole('link', { name: /notificaciones/i }),
+    ).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /marcar todas como leidas/i }));
+    await user.click(screen.getByRole('button', { name: /notificaciones/i }));
 
-    await waitFor(() => {
-      expect(screen.queryByText(/^Sin leer$/i)).not.toBeInTheDocument();
-    });
+    expect(
+      screen.getByRole('dialog', { name: /panel de notificaciones/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByText(/tienes una nueva propuesta de cita/i).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.queryByRole('link', { name: /ver todas/i }),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /marcar todas/i }));
+
+    expect(
+      await screen.findByText(/no tienes notificaciones sin leer/i),
+    ).toBeInTheDocument();
   });
 });
