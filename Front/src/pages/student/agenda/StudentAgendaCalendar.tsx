@@ -228,10 +228,12 @@ export function StudentAgendaCalendar({
   const handleViewModeChange = (mode: CalendarViewMode) => {
     localStorage.setItem('agenda-view-mode', mode);
     setSelectedDayDetailsKey(null);
+    setSelectedWeekDetailsOpen(false);
     setViewMode(mode);
   };
   const [selectedDateKey, setSelectedDateKey] = useState(() => getTodayDateKey());
   const [selectedDayDetailsKey, setSelectedDayDetailsKey] = useState<string | null>(null);
+  const [selectedWeekDetailsOpen, setSelectedWeekDetailsOpen] = useState(false);
   const selectedDate = useMemo(() => fromDateKey(selectedDateKey), [selectedDateKey]);
   const visibleDays = useMemo(() => {
     if (viewMode === 'day') {
@@ -289,18 +291,39 @@ export function StudentAgendaCalendar({
     }
     return monthFormatter.format(selectedDate);
   }, [selectedDate, viewMode, visibleDays]);
+  const selectedAgendaDetailsEvents = selectedWeekDetailsOpen ? events : selectedDayDetailsEvents;
+  const selectedAgendaDetailsTitle = selectedWeekDetailsOpen
+    ? `Semana ${rangeLabel}`
+    : selectedDayDetailsDate
+      ? detailDateFormatter.format(selectedDayDetailsDate)
+      : '';
+  const shouldShowAgendaDetails =
+    (selectedWeekDetailsOpen || selectedDayDetailsDate !== null) && selectedAgendaDetailsEvents.length > 0;
 
   const stepCalendar = (direction: 'next' | 'previous') => {
     const factor = direction === 'next' ? 1 : -1;
     setSelectedDayDetailsKey(null);
+    setSelectedWeekDetailsOpen(false);
     setSelectedDateKey(
       toDateKey(viewMode === 'month' ? addMonths(selectedDate, factor) : addDays(selectedDate, viewMode === 'week' ? factor * 7 : factor)),
     );
   };
 
+  const closeDetailsPanel = () => {
+    setSelectedDayDetailsKey(null);
+    setSelectedWeekDetailsOpen(false);
+  };
+
   const handleMonthDaySelect = (dateKey: string, dayEvents: AgendaEvent[]) => {
     setSelectedDateKey(dateKey);
+    setSelectedWeekDetailsOpen(false);
     setSelectedDayDetailsKey(dayEvents.length > 0 ? dateKey : null);
+  };
+
+  const handleWeekSelect = (dateKey: string) => {
+    setSelectedDateKey(dateKey);
+    setSelectedDayDetailsKey(null);
+    setSelectedWeekDetailsOpen(events.length > 0);
   };
 
   const handleBlockClick = (
@@ -352,7 +375,10 @@ export function StudentAgendaCalendar({
               <button
                 className="inline-flex shrink-0 rounded-full border border-slate-200/90 bg-white/95 px-2 py-0.5 text-[0.66rem] font-semibold text-ink transition duration-200 hover:border-primary/20 hover:bg-white sm:px-2.5 sm:py-1 sm:text-[0.72rem]"
                 type="button"
-                onClick={() => setSelectedDateKey(getTodayDateKey())}
+                onClick={() => {
+                  closeDetailsPanel();
+                  setSelectedDateKey(getTodayDateKey());
+                }}
               >
                 Hoy
               </button>
@@ -379,7 +405,7 @@ export function StudentAgendaCalendar({
               </button>
             ) : null}
           </div>
-          <div className="flex max-h-[1rem] flex-nowrap items-center gap-[0.12rem] overflow-hidden text-[0.4rem] font-semibold uppercase tracking-[0.02em] text-ink-muted sm:max-h-[1.6rem] sm:flex-wrap sm:gap-1 sm:text-[0.5rem] sm:tracking-[0.08em]">
+          <div className="flex max-h-[1.2rem] w-full flex-nowrap items-center justify-between gap-[0.1rem] overflow-hidden text-[0.48rem] font-semibold uppercase tracking-normal text-ink-muted sm:max-h-[1.6rem] sm:flex-wrap sm:justify-start sm:gap-1 sm:text-[0.5rem] sm:tracking-[0.08em]">
             {[
               ['Pendiente', 'proposal'],
               ['Aceptada', 'accepted'],
@@ -390,7 +416,7 @@ export function StudentAgendaCalendar({
             ].map(([label, tone]) => (
               <span
                 key={label}
-                className="inline-flex shrink-0 items-center gap-[0.12rem] rounded-full border border-slate-200/70 bg-white/78 px-0.5 py-px sm:gap-1 sm:px-1.5 sm:py-0.5"
+                className="inline-flex shrink-0 items-center gap-[0.1rem] rounded-full border border-slate-200/70 bg-white/78 px-px py-px sm:gap-1 sm:px-1.5 sm:py-0.5"
               >
                 <span className={classNames('h-1.5 w-1.5 rounded-full sm:h-2 sm:w-2', getToneClasses(tone as AgendaTone).dot)} />
                 <span>{label}</span>
@@ -405,7 +431,7 @@ export function StudentAgendaCalendar({
               ? 'grid h-full grid-cols-7 grid-rows-6 gap-0.5 sm:gap-1'
               : viewMode === 'week'
                 ? 'grid h-full grid-rows-7 gap-0.5 sm:grid-cols-7 sm:grid-rows-none sm:gap-1'
-                : 'space-y-1.5',
+                : 'admin-scrollbar space-y-1.5 overflow-y-auto pr-1',
           )}
         >
           {visibleDays.map((day) => {
@@ -478,16 +504,23 @@ export function StudentAgendaCalendar({
                 <div
                   key={dayKey}
                   className={classNames(
-                    'grid min-h-0 grid-cols-[2.35rem_minmax(0,1fr)] overflow-hidden rounded-[0.78rem] border px-1 py-0.5 shadow-[0_10px_24px_-28px_rgba(15,23,42,0.25)] sm:flex sm:flex-col sm:px-1.5 sm:py-1',
+                    'grid min-h-0 cursor-pointer grid-cols-[2.35rem_minmax(0,1fr)] overflow-hidden rounded-[0.78rem] border px-1 py-0.5 shadow-[0_10px_24px_-28px_rgba(15,23,42,0.25)] sm:flex sm:flex-col sm:px-1.5 sm:py-1',
                     dayKey === selectedDateKey
                       ? 'border-primary/45 bg-[linear-gradient(180deg,rgba(22,78,99,0.08)_0%,rgba(255,255,255,0.96)_100%)]'
                       : 'border-slate-200/85 bg-white/72',
                   )}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => handleWeekSelect(dayKey)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      handleWeekSelect(dayKey);
+                    }
+                  }}
                 >
-                  <button
+                  <div
                     className="flex h-full shrink-0 flex-col items-start justify-center pr-1 text-left sm:mb-1 sm:h-auto sm:w-full sm:justify-start sm:pr-0"
-                    type="button"
-                    onClick={() => setSelectedDateKey(dayKey)}
                   >
                     <p className="max-w-full truncate text-[0.46rem] font-bold uppercase tracking-[0.08em] text-ink-muted sm:text-[0.54rem] sm:tracking-[0.1em]">
                       {dayFormatter.format(day).replace('.', '')}
@@ -495,7 +528,7 @@ export function StudentAgendaCalendar({
                     <p className="font-headline text-[0.72rem] font-extrabold tracking-tight text-ink sm:text-sm">
                       {day.getDate()}
                     </p>
-                  </button>
+                  </div>
                   <div className="min-h-0 flex-1 space-y-0.5 overflow-hidden sm:space-y-1">
                     {dayEvents.length > 0 ? (
                       <>
@@ -627,13 +660,13 @@ export function StudentAgendaCalendar({
           })}
         </div>
       </div>
-      {selectedDayDetailsDate && selectedDayDetailsEvents.length > 0 ? (
+      {shouldShowAgendaDetails ? (
         <div className="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/18 px-3 py-4 backdrop-blur-[1px]">
           <button
-            aria-label="Cerrar informacion del dia"
+            aria-label="Cerrar informacion de agenda"
             className="absolute inset-0"
             type="button"
-            onClick={() => setSelectedDayDetailsKey(null)}
+            onClick={closeDetailsPanel}
           />
           <div
             aria-labelledby="student-agenda-day-details-title"
@@ -647,24 +680,27 @@ export function StudentAgendaCalendar({
                   className="truncate text-[0.78rem] font-extrabold text-ink sm:text-sm"
                   id="student-agenda-day-details-title"
                 >
-                  {detailDateFormatter.format(selectedDayDetailsDate)}
+                  {selectedAgendaDetailsTitle}
                 </p>
                 <p className="text-[0.58rem] font-semibold uppercase tracking-[0.12em] text-ink-muted sm:text-[0.64rem]">
-                  {selectedDayDetailsEvents.length} movimiento{selectedDayDetailsEvents.length === 1 ? '' : 's'}
+                  {selectedAgendaDetailsEvents.length} movimiento{selectedAgendaDetailsEvents.length === 1 ? '' : 's'}
                 </p>
               </div>
               <button
-                aria-label="Cerrar informacion del dia"
+                aria-label="Cerrar informacion de agenda"
                 className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-ghost transition duration-150 hover:bg-slate-100 hover:text-ink"
                 type="button"
-                onClick={() => setSelectedDayDetailsKey(null)}
+                onClick={closeDetailsPanel}
               >
                 <X aria-hidden="true" className="h-3.5 w-3.5" />
               </button>
             </div>
             <div className="admin-scrollbar max-h-[18rem] space-y-2 overflow-y-auto px-3 py-2.5">
-              {selectedDayDetailsEvents.map((event) => {
+              {selectedAgendaDetailsEvents.map((event) => {
                 const tone = getToneClasses(event.tone);
+                const eventTimeLabel = selectedWeekDetailsOpen
+                  ? `${mediumDateFormatter.format(fromDateKey(event.dateKey))} · ${event.timeLabel}`
+                  : event.timeLabel;
 
                 return (
                   <div
@@ -687,14 +723,14 @@ export function StudentAgendaCalendar({
                     <div className="mt-1.5 flex items-center justify-between gap-2">
                       <p className="flex min-w-0 items-center gap-1.5 text-[0.62rem] font-semibold sm:text-[0.7rem]">
                         <span className={classNames('h-1.5 w-1.5 rounded-full', tone.dot)} />
-                        <span className="truncate">{event.timeLabel}</span>
+                        <span className="truncate">{eventTimeLabel}</span>
                       </p>
                       {event.source === 'schedule-block' && onSelectScheduleBlock ? (
                         <button
                           className="shrink-0 rounded-full bg-white/80 px-2 py-1 text-[0.58rem] font-bold text-primary ring-1 ring-slate-200 transition duration-150 hover:bg-white sm:text-[0.64rem]"
                           type="button"
                           onClick={() => {
-                            setSelectedDayDetailsKey(null);
+                            closeDetailsPanel();
                             onSelectScheduleBlock(event.blockId);
                           }}
                         >
