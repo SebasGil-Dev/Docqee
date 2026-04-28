@@ -2,6 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { BrevoClient } from '@getbrevo/brevo';
 
+type AppointmentReminderTiming = 'today' | 'tomorrow';
+
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
@@ -136,6 +138,18 @@ export class MailService {
         <p style="margin:4px 0;"><strong>Hora:</strong> ${this.formatAppointmentTime(startAt)} – ${this.formatAppointmentTime(endAt)}</p>
       </div>
     `;
+  }
+
+  private getAppointmentReminderCopy(timing: AppointmentReminderTiming) {
+    return timing === 'today'
+      ? {
+          phrase: 'hoy',
+          subject: 'Recordatorio: tu cita es hoy - Docqee',
+        }
+      : {
+          phrase: 'ma\u00f1ana',
+          subject: 'Recordatorio: tu cita es ma\u00f1ana - Docqee',
+        };
   }
 
   async sendAppointmentProposalToPatient(
@@ -332,17 +346,20 @@ export class MailService {
     city: string,
     startAt: string,
     endAt: string,
+    timing: AppointmentReminderTiming = 'tomorrow',
   ) {
+    const reminderCopy = this.getAppointmentReminderCopy(timing);
+
     try {
       await this.client.transactionalEmails.sendTransacEmail({
         sender: { email: this.from },
         to: [{ email: to }],
-        subject: 'Recordatorio: tu cita es mañana - Docqee',
+        subject: reminderCopy.subject,
         htmlContent: `
           <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1a1a2e;">
             <h2 style="color:#2563eb;">Recordatorio de cita</h2>
             <p>Hola <strong>${studentName}</strong>,</p>
-            <p>Te recordamos que mañana tienes una cita con el paciente <strong>${patientName}</strong>.</p>
+            <p>Te recordamos que ${reminderCopy.phrase} tienes una cita con el paciente <strong>${patientName}</strong>.</p>
             ${this.appointmentDetailsBlock(appointmentType, siteName, city, startAt, endAt)}
             <p style="color:#666;font-size:13px;">Asegurate de estar disponible y preparado para la sesion.</p>
           </div>
@@ -363,17 +380,20 @@ export class MailService {
     city: string,
     startAt: string,
     endAt: string,
+    timing: AppointmentReminderTiming = 'tomorrow',
   ) {
+    const reminderCopy = this.getAppointmentReminderCopy(timing);
+
     try {
       await this.client.transactionalEmails.sendTransacEmail({
         sender: { email: this.from },
         to: [{ email: to }],
-        subject: 'Recordatorio: tu cita es mañana - Docqee',
+        subject: reminderCopy.subject,
         htmlContent: `
           <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1a1a2e;">
             <h2 style="color:#2563eb;">Recordatorio de cita</h2>
             <p>Hola <strong>${patientName}</strong>,</p>
-            <p>Te recordamos que mañana tienes una cita con el estudiante <strong>${studentName}</strong>.</p>
+            <p>Te recordamos que ${reminderCopy.phrase} tienes una cita con el estudiante <strong>${studentName}</strong>.</p>
             ${this.appointmentDetailsBlock(appointmentType, siteName, city, startAt, endAt)}
             <p style="color:#666;font-size:13px;">Si necesitas mas informacion, contacta al estudiante por el chat de Docqee.</p>
           </div>

@@ -32,6 +32,41 @@ const PATIENT_RESCHEDULE_RESPONSE_ERROR_MESSAGE =
 const PATIENT_CANCEL_NOTICE_ERROR_MESSAGE =
   "No puedes cancelar esta cita porque faltan menos de 48 horas para la hora programada.";
 
+type AppointmentReminderCita = {
+  estado: string;
+  fecha_hora_fin: Date;
+  fecha_hora_inicio: Date;
+  id_cita: number;
+  recordatorio_24h_enviado: boolean;
+  sede: {
+    localidad: {
+      ciudad: {
+        nombre: string;
+      };
+    };
+    nombre: string;
+  };
+  solicitud: {
+    cuenta_estudiante: {
+      cuenta_acceso: { correo: string | null } | null;
+      persona: {
+        apellidos: string;
+        nombres: string;
+      };
+    };
+    cuenta_paciente: {
+      cuenta_acceso: { correo: string | null } | null;
+      persona: {
+        apellidos: string;
+        nombres: string;
+      };
+    };
+  };
+  tipo_cita: {
+    nombre: string;
+  };
+};
+
 const studentDirectorySelect =
   Prisma.validator<Prisma.cuenta_estudianteSelect>()({
     id_cuenta: true,
@@ -161,6 +196,103 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
 
   private floorDateToMinute(date: Date): Date {
     return new Date(Math.floor(date.getTime() / 60000) * 60000);
+  }
+
+  private getBogotaDateKey(date: Date) {
+    return new Intl.DateTimeFormat("en-CA", {
+      day: "2-digit",
+      month: "2-digit",
+      timeZone: "America/Bogota",
+      year: "numeric",
+    }).format(date);
+  }
+
+  private isSameBogotaDay(firstDate: Date, secondDate: Date) {
+    return (
+      this.getBogotaDateKey(firstDate) === this.getBogotaDateKey(secondDate)
+    );
+  }
+
+  private async sendSameDayAppointmentReminderSafely(
+    cita: AppointmentReminderCita,
+    referenceDate: Date,
+  ) {
+    try {
+      if (
+        cita.estado !== "ACEPTADA" ||
+        cita.recordatorio_24h_enviado ||
+        !this.isSameBogotaDay(cita.fecha_hora_inicio, referenceDate) ||
+        this.floorDateToMinute(cita.fecha_hora_fin) <=
+          this.floorDateToMinute(referenceDate)
+      ) {
+        return;
+      }
+
+      const reminderClaim = await this.prisma.cita.updateMany({
+        where: {
+          estado: "ACEPTADA",
+          id_cita: cita.id_cita,
+          recordatorio_24h_enviado: false,
+        },
+        data: { recordatorio_24h_enviado: true },
+      });
+
+      if (reminderClaim.count === 0) {
+        return;
+      }
+
+      const studentEmail =
+        cita.solicitud.cuenta_estudiante.cuenta_acceso?.correo;
+      const patientEmail =
+        cita.solicitud.cuenta_paciente.cuenta_acceso?.correo;
+      const studentName = `${cita.solicitud.cuenta_estudiante.persona.nombres} ${cita.solicitud.cuenta_estudiante.persona.apellidos}`;
+      const patientName = `${cita.solicitud.cuenta_paciente.persona.nombres} ${cita.solicitud.cuenta_paciente.persona.apellidos}`;
+      const appointmentType = cita.tipo_cita.nombre;
+      const siteName = cita.sede.nombre;
+      const city = cita.sede.localidad.ciudad.nombre;
+      const startAt = cita.fecha_hora_inicio.toISOString();
+      const endAt = cita.fecha_hora_fin.toISOString();
+      const sends: Promise<void>[] = [];
+
+      if (studentEmail) {
+        sends.push(
+          this.mailService.sendAppointmentReminderToStudent(
+            studentEmail,
+            studentName,
+            patientName,
+            appointmentType,
+            siteName,
+            city,
+            startAt,
+            endAt,
+            "today",
+          ),
+        );
+      }
+
+      if (patientEmail) {
+        sends.push(
+          this.mailService.sendAppointmentReminderToPatient(
+            patientEmail,
+            patientName,
+            studentName,
+            appointmentType,
+            siteName,
+            city,
+            startAt,
+            endAt,
+            "today",
+          ),
+        );
+      }
+
+      await Promise.all(sends);
+    } catch (error) {
+      this.logger.error(
+        "No pudimos enviar el recordatorio inmediato de cita del paciente.",
+        error,
+      );
+    }
   }
 
   private minuteRangesOverlap(
@@ -1345,6 +1477,12 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       },
       solicitud: {
         include: {
+          cuenta_paciente: {
+            include: {
+              persona: true,
+              cuenta_acceso: { select: { correo: true } },
+            },
+          },
           cuenta_estudiante: {
             include: {
               persona: true,
@@ -1590,6 +1728,10 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
           ? 'El paciente no acepto la reprogramacion. La cita conserva la fecha y hora originales.'
           : 'El paciente rechazo tu propuesta de cita.',
       });
+    }
+
+    if (payload.status === 'ACEPTADA') {
+      await this.sendSameDayAppointmentReminderSafely(updated, responseDate);
     }
 
     return {
