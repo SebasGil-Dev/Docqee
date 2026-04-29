@@ -991,14 +991,21 @@ export function RegisterPage({
       setCitiesState(createInitialCatalogState(catalogDataSource.getCities(), 'loading'));
 
       try {
-        const [documentTypes, cities] = await Promise.all([
-          resolveCatalogResult(
-            catalogDataSource.loadDocumentTypes
-              ? catalogDataSource.loadDocumentTypes()
-              : catalogDataSource.getDocumentTypes(),
-          ),
-          resolveCatalogResult(catalogDataSource.loadCities ? catalogDataSource.loadCities() : catalogDataSource.getCities()),
-        ]);
+        const initialCatalogs = catalogDataSource.loadInitialCatalogs
+          ? await catalogDataSource.loadInitialCatalogs()
+          : null;
+        const [documentTypes, cities] = initialCatalogs
+          ? [initialCatalogs.documentTypes, initialCatalogs.cities]
+          : await Promise.all([
+              resolveCatalogResult(
+                catalogDataSource.loadDocumentTypes
+                  ? catalogDataSource.loadDocumentTypes()
+                  : catalogDataSource.getDocumentTypes(),
+              ),
+              resolveCatalogResult(
+                catalogDataSource.loadCities ? catalogDataSource.loadCities() : catalogDataSource.getCities(),
+              ),
+            ]);
 
         if (isCancelled) {
           return;
@@ -1052,7 +1059,12 @@ export function RegisterPage({
     let isCancelled = false;
 
     async function loadLocalities() {
-      setLocalitiesState(createEmptyCatalogState('loading'));
+      setLocalitiesState(
+        createInitialCatalogState(
+          catalogDataSource.getLocalitiesByCity(formState.values.cityId),
+          'loading',
+        ),
+      );
 
       try {
         const localities = await resolveCatalogResult(

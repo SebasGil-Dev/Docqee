@@ -3,6 +3,7 @@ import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
 import { ListCitiesUseCase } from '../application/use-cases/list-cities.use-case';
 import { ListDocumentTypesUseCase } from '../application/use-cases/list-document-types.use-case';
 import { ListLocalitiesByCityUseCase } from '../application/use-cases/list-localities-by-city.use-case';
+import { ListRegisterCatalogUseCase } from '../application/use-cases/list-register-catalog.use-case';
 
 @Controller('catalogs')
 export class CatalogsController {
@@ -10,7 +11,13 @@ export class CatalogsController {
     private readonly listCitiesUseCase: ListCitiesUseCase,
     private readonly listDocumentTypesUseCase: ListDocumentTypesUseCase,
     private readonly listLocalitiesByCityUseCase: ListLocalitiesByCityUseCase,
+    private readonly listRegisterCatalogUseCase: ListRegisterCatalogUseCase,
   ) {}
+
+  @Get('register')
+  async listRegisterCatalog() {
+    return this.listRegisterCatalogUseCase.execute();
+  }
 
   @Get('cities')
   async listCities() {

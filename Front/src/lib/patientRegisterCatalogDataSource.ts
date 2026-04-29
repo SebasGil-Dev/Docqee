@@ -3,11 +3,18 @@ import type {
   DocumentTypeOption,
   LocalityOption,
   PatientRegisterCatalogDataSource,
+  PatientRegisterCatalogSnapshot,
 } from '@/content/types';
 
 type CatalogApiOption = {
   id: number;
   name: string;
+};
+
+type RegisterCatalogApiPayload = {
+  cities: CatalogApiOption[];
+  documentTypes: CatalogApiOption[];
+  localities: Array<CatalogApiOption & { cityId: number }>;
 };
 
 type PersistedCatalogCache = {
@@ -51,108 +58,7 @@ function readLocalStorage() {
 const API_BASE_URL = (getEnvValue('VITE_API_URL') ?? 'http://localhost:3000').replace(/\/+$/, '');
 const IS_TEST_MODE = getEnvValue('MODE') === 'test';
 
-const fallbackCities: CityOption[] = [
-  {
-    id: 'city-bogota',
-    label: 'Bogota',
-  },
-  {
-    id: 'city-medellin',
-    label: 'Medellin',
-  },
-  {
-    id: 'city-cali',
-    label: 'Cali',
-  },
-  {
-    id: 'city-barranquilla',
-    label: 'Barranquilla',
-  },
-  {
-    id: 'city-pereira',
-    label: 'Pereira',
-  },
-];
-
-const fallbackLocalities: LocalityOption[] = [
-  {
-    cityId: 'city-bogota',
-    id: 'locality-bogota-suba',
-    label: 'Suba',
-  },
-  {
-    cityId: 'city-bogota',
-    id: 'locality-bogota-usaquen',
-    label: 'Usaquen',
-  },
-  {
-    cityId: 'city-bogota',
-    id: 'locality-bogota-kennedy',
-    label: 'Kennedy',
-  },
-  {
-    cityId: 'city-medellin',
-    id: 'locality-medellin-poblado',
-    label: 'El Poblado',
-  },
-  {
-    cityId: 'city-medellin',
-    id: 'locality-medellin-laureles',
-    label: 'Laureles',
-  },
-  {
-    cityId: 'city-medellin',
-    id: 'locality-medellin-belen',
-    label: 'Belen',
-  },
-  {
-    cityId: 'city-cali',
-    id: 'locality-cali-comuna-2',
-    label: 'Comuna 2',
-  },
-  {
-    cityId: 'city-cali',
-    id: 'locality-cali-comuna-17',
-    label: 'Comuna 17',
-  },
-  {
-    cityId: 'city-cali',
-    id: 'locality-cali-comuna-22',
-    label: 'Comuna 22',
-  },
-  {
-    cityId: 'city-barranquilla',
-    id: 'locality-barranquilla-riomar',
-    label: 'Riomar',
-  },
-  {
-    cityId: 'city-barranquilla',
-    id: 'locality-barranquilla-norte-centro-historico',
-    label: 'Norte-Centro Historico',
-  },
-  {
-    cityId: 'city-barranquilla',
-    id: 'locality-barranquilla-metropolitana',
-    label: 'Metropolitana',
-  },
-  {
-    cityId: 'city-pereira',
-    id: 'locality-pereira-centro',
-    label: 'Comuna Centro',
-  },
-  {
-    cityId: 'city-pereira',
-    id: 'locality-pereira-cuba',
-    label: 'Cuba',
-  },
-  {
-    cityId: 'city-pereira',
-    id: 'locality-pereira-poblado',
-    label: 'Poblado I',
-  },
-];
-
-let citiesCache = [...fallbackCities];
+let citiesCache: CityOption[] = [];
 let documentTypesCache: DocumentTypeOption[] = [];
 const localitiesCache = new Map<string, LocalityOption[]>();
 const backendCityIdByFrontendId = new Map<string, number>();
@@ -163,17 +69,6 @@ let areCitiesLoadedFromApi = false;
 let areDocumentTypesLoadedFromApi = false;
 const loadedLocalityCityIds = new Set<string>();
 const localityRequestPromiseByCityId = new Map<string, Promise<LocalityOption[]>>();
-
-function seedLocalitiesCache() {
-  localitiesCache.clear();
-
-  fallbackCities.forEach((city) => {
-    localitiesCache.set(
-      city.id,
-      fallbackLocalities.filter((locality) => locality.cityId === city.id),
-    );
-  });
-}
 
 function refreshCityLabelCache(cities: CityOption[]) {
   cityLabelByFrontendId.clear();
@@ -330,7 +225,6 @@ function hydrateCatalogCacheFromStorage() {
   }
 }
 
-seedLocalitiesCache();
 refreshCityLabelCache(citiesCache);
 hydrateCatalogCacheFromStorage();
 
@@ -355,12 +249,8 @@ function buildDocumentTypeId(documentTypeCode: string) {
   return `document-${toSlug(documentTypeCode)}`;
 }
 
-function getFallbackLocalitiesByCity(cityId: string) {
-  return fallbackLocalities.filter((locality) => locality.cityId === cityId);
-}
-
 function getCachedLocalitiesByCity(cityId: string) {
-  return localitiesCache.get(cityId) ?? getFallbackLocalitiesByCity(cityId);
+  return localitiesCache.get(cityId) ?? [];
 }
 
 function isCatalogApiOption(value: unknown): value is CatalogApiOption {
@@ -370,6 +260,28 @@ function isCatalogApiOption(value: unknown): value is CatalogApiOption {
 
   const candidate = value as Partial<CatalogApiOption>;
   return typeof candidate.id === 'number' && typeof candidate.name === 'string';
+}
+
+function isRegisterCatalogApiPayload(value: unknown): value is RegisterCatalogApiPayload {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<RegisterCatalogApiPayload>;
+
+  return (
+    Array.isArray(candidate.cities) &&
+    candidate.cities.every(isCatalogApiOption) &&
+    Array.isArray(candidate.documentTypes) &&
+    candidate.documentTypes.every(isCatalogApiOption) &&
+    Array.isArray(candidate.localities) &&
+    candidate.localities.every(
+      (locality) =>
+        isCatalogApiOption(locality) &&
+        typeof (locality as Partial<RegisterCatalogApiPayload['localities'][number]>).cityId ===
+          'number',
+    )
+  );
 }
 
 async function fetchCatalogOptions(path: string) {
@@ -392,6 +304,26 @@ async function fetchCatalogOptions(path: string) {
   return data.filter(isCatalogApiOption);
 }
 
+async function fetchRegisterCatalog() {
+  const response = await fetch(`${API_BASE_URL}/catalogs/register`, {
+    headers: {
+      Accept: 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Register catalog request failed with status ${response.status}`);
+  }
+
+  const data: unknown = await response.json();
+
+  if (!isRegisterCatalogApiPayload(data)) {
+    throw new Error('Register catalog response is invalid');
+  }
+
+  return data;
+}
+
 function cacheCities(options: CatalogApiOption[]) {
   backendCityIdByFrontendId.clear();
 
@@ -407,7 +339,7 @@ function cacheCities(options: CatalogApiOption[]) {
     } satisfies CityOption;
   });
 
-  citiesCache = nextCities.length > 0 ? nextCities : [...fallbackCities];
+  citiesCache = nextCities;
   refreshCityLabelCache(citiesCache);
   persistCatalogCache();
 }
@@ -427,6 +359,51 @@ function cacheDocumentTypes(options: CatalogApiOption[]) {
 
   documentTypesCache = nextDocumentTypes;
   persistCatalogCache();
+}
+
+function cacheLocalities(options: RegisterCatalogApiPayload['localities']) {
+  localitiesCache.clear();
+  loadedLocalityCityIds.clear();
+
+  options.forEach((option) => {
+    const frontendCityId = [...backendCityIdByFrontendId.entries()].find(
+      ([, backendCityId]) => backendCityId === option.cityId,
+    )?.[0];
+
+    if (!frontendCityId) {
+      return;
+    }
+
+    const cityLocalities = localitiesCache.get(frontendCityId) ?? [];
+    cityLocalities.push({
+      cityId: frontendCityId,
+      id: String(option.id),
+      label: normalizeText(option.name),
+    });
+    localitiesCache.set(frontendCityId, cityLocalities);
+    loadedLocalityCityIds.add(frontendCityId);
+  });
+
+  persistCatalogCache();
+}
+
+function getInitialCatalogSnapshot(): PatientRegisterCatalogSnapshot {
+  return {
+    cities: getCities(),
+    documentTypes: getDocumentTypes(),
+    localitiesByCityId: Object.fromEntries(localitiesCache.entries()),
+  };
+}
+
+function cacheRegisterCatalog(payload: RegisterCatalogApiPayload) {
+  cacheCities(payload.cities);
+  cacheDocumentTypes(payload.documentTypes);
+  areCitiesLoadedFromApi = true;
+  areDocumentTypesLoadedFromApi = true;
+  cacheLocalities(payload.localities);
+  persistCatalogCache();
+
+  return getInitialCatalogSnapshot();
 }
 
 function ensureCitiesLoaded() {
@@ -508,6 +485,27 @@ async function loadDocumentTypes() {
   return ensureDocumentTypesLoaded();
 }
 
+async function loadInitialCatalogs() {
+  if (IS_TEST_MODE) {
+    return getInitialCatalogSnapshot();
+  }
+
+  return fetchRegisterCatalog()
+    .then(cacheRegisterCatalog)
+    .catch(async () => {
+      const [documentTypes, cities] = await Promise.all([
+        ensureDocumentTypesLoaded(),
+        ensureCitiesLoaded(),
+      ]);
+
+      return {
+        cities,
+        documentTypes,
+        localitiesByCityId: Object.fromEntries(localitiesCache.entries()),
+      } satisfies PatientRegisterCatalogSnapshot;
+    });
+}
+
 async function loadLocalitiesByCity(cityId: string) {
   if (IS_TEST_MODE) {
     return getLocalitiesByCity(cityId);
@@ -536,10 +534,7 @@ async function loadLocalitiesByCity(cityId: string) {
         label: normalizeText(option.name),
       })) satisfies LocalityOption[];
 
-      localitiesCache.set(
-        cityId,
-        nextLocalities.length > 0 ? nextLocalities : getFallbackLocalitiesByCity(cityId),
-      );
+      localitiesCache.set(cityId, nextLocalities);
       loadedLocalityCityIds.add(cityId);
       persistCatalogCache();
 
@@ -573,5 +568,6 @@ export const patientRegisterCatalogDataSource: PatientRegisterCatalogDataSource 
   getLocalitiesByCity,
   loadCities,
   loadDocumentTypes,
+  loadInitialCatalogs,
   loadLocalitiesByCity,
 };

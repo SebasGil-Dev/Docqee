@@ -135,6 +135,12 @@ export type LocalityOption = {
   label: string;
 };
 
+export type PatientRegisterCatalogSnapshot = {
+  cities: CityOption[];
+  documentTypes: DocumentTypeOption[];
+  localitiesByCityId: Record<string, LocalityOption[]>;
+};
+
 export type PatientRegisterCatalogDataSource = {
   getCities: () => Promise<CityOption[]> | CityOption[];
   getDocumentTypes: () => Promise<DocumentTypeOption[]> | DocumentTypeOption[];
@@ -143,6 +149,7 @@ export type PatientRegisterCatalogDataSource = {
   ) => Promise<LocalityOption[]> | LocalityOption[];
   loadCities?: () => Promise<CityOption[]>;
   loadDocumentTypes?: () => Promise<DocumentTypeOption[]>;
+  loadInitialCatalogs?: () => Promise<PatientRegisterCatalogSnapshot>;
   loadLocalitiesByCity?: (cityId: string) => Promise<LocalityOption[]>;
 };
 
