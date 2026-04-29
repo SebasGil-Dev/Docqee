@@ -197,8 +197,9 @@ export class PlatformAdminService {
                   select: {
                     id_credencial_inicial: true,
                     anulada_at: true,
-                    _count: {
-                      select: { envio_credencial: true },
+                    envio_credencial: {
+                      select: { enviado_at: true },
+                      take: 1,
                     },
                   },
                 },
@@ -229,8 +230,9 @@ export class PlatformAdminService {
                   select: {
                     id_credencial_inicial: true,
                     anulada_at: true,
-                    _count: {
-                      select: { envio_credencial: true },
+                    envio_credencial: {
+                      select: { enviado_at: true },
+                      take: 1,
                     },
                   },
                 },

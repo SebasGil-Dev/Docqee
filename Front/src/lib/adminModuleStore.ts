@@ -60,7 +60,7 @@ type PersistedAdminModuleCache = {
 
 const ADMIN_MODULE_CACHE_STORAGE_KEY = 'docqee.platform-admin.module-cache';
 const ADMIN_MODULE_CACHE_MAX_AGE_MS = 30 * 60 * 1000;
-const UNIVERSITY_STATUS_TOGGLE_MIN_LOCK_MS = 650;
+const UNIVERSITY_STATUS_TOGGLE_MIN_LOCK_MS = 0;
 
 const listeners = new Set<() => void>();
 const pendingUniversityStatusUpdates = new Set<string>();
