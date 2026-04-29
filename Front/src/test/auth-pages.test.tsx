@@ -21,6 +21,56 @@ import {
 } from '@/lib/forgotPasswordService';
 import { clearAuthSession, persistAuthSession } from '@/lib/authSession';
 import { persistVerifyEmailCooldown } from '@/lib/verifyEmailService';
+import type { PatientRegisterCatalogDataSource } from '@/content/types';
+
+const testRegisterCatalogDataSource: PatientRegisterCatalogDataSource = {
+  getCities: () => [
+    {
+      id: 'city-bogota',
+      label: 'Bogota',
+    },
+  ],
+  getDocumentTypes: () => [
+    {
+      code: 'CC',
+      id: 'document-cc',
+      label: 'Cedula de ciudadania',
+    },
+  ],
+  getLocalitiesByCity: (cityId) =>
+    cityId === 'city-bogota'
+      ? [
+          {
+            cityId,
+            id: 'locality-bogota-suba',
+            label: 'Suba',
+          },
+        ]
+      : [],
+  loadCities: async () => [
+    {
+      id: 'city-bogota',
+      label: 'Bogota',
+    },
+  ],
+  loadDocumentTypes: async () => [
+    {
+      code: 'CC',
+      id: 'document-cc',
+      label: 'Cedula de ciudadania',
+    },
+  ],
+  loadLocalitiesByCity: async (cityId) =>
+    cityId === 'city-bogota'
+      ? [
+          {
+            cityId,
+            id: 'locality-bogota-suba',
+            label: 'Suba',
+          },
+        ]
+      : [],
+};
 
 function renderAuthApp({
   initialEntries = [ROUTES.login],
@@ -31,12 +81,26 @@ function renderAuthApp({
   registerPageProps?: ComponentProps<typeof RegisterPage>;
   verifyEmailPageProps?: ComponentProps<typeof VerifyEmailPage>;
 } = {}) {
+  const {
+    catalogDataSource = testRegisterCatalogDataSource,
+    ...remainingRegisterPageProps
+  } = registerPageProps ?? {};
+  const resolvedRegisterPageProps = {
+    ...remainingRegisterPageProps,
+    catalogDataSource,
+  };
+
   return render(
     <MemoryRouter initialEntries={initialEntries}>
       <Routes>
         <Route element={<HomePage />} path={ROUTES.home} />
         <Route element={<LoginPage />} path={ROUTES.login} />
-        <Route element={<RegisterPage {...registerPageProps} />} path={ROUTES.register} />
+        <Route
+          element={
+            <RegisterPage {...resolvedRegisterPageProps} />
+          }
+          path={ROUTES.register}
+        />
         <Route element={<ForgotPasswordPage />} path={ROUTES.forgotPassword} />
         <Route element={<VerifyEmailPage {...verifyEmailPageProps} />} path={ROUTES.verifyEmail} />
         <Route element={<NotFoundPage />} path="*" />

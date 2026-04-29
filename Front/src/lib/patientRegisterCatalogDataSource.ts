@@ -51,19 +51,6 @@ function readLocalStorage() {
 const API_BASE_URL = (getEnvValue('VITE_API_URL') ?? 'http://localhost:3000').replace(/\/+$/, '');
 const IS_TEST_MODE = getEnvValue('MODE') === 'test';
 
-const fallbackDocumentTypes: DocumentTypeOption[] = [
-  {
-    code: 'CC',
-    id: 'document-cc',
-    label: 'Cedula de ciudadania',
-  },
-  {
-    code: 'TI',
-    id: 'document-ti',
-    label: 'Tarjeta de identidad',
-  },
-];
-
 const fallbackCities: CityOption[] = [
   {
     id: 'city-bogota',
@@ -166,7 +153,7 @@ const fallbackLocalities: LocalityOption[] = [
 ];
 
 let citiesCache = [...fallbackCities];
-let documentTypesCache = [...fallbackDocumentTypes];
+let documentTypesCache: DocumentTypeOption[] = [];
 const localitiesCache = new Map<string, LocalityOption[]>();
 const backendCityIdByFrontendId = new Map<string, number>();
 const cityLabelByFrontendId = new Map<string, string>();
@@ -283,8 +270,10 @@ function hydrateCatalogCacheFromStorage() {
     const cachedCities = Array.isArray(parsedCache.cities)
       ? parsedCache.cities.filter(isCityOption)
       : [];
-    const cachedDocumentTypes = Array.isArray(parsedCache.documentTypes)
-      ? parsedCache.documentTypes.filter(isDocumentTypeOption)
+    const cachedDocumentTypes =
+      parsedCache.areDocumentTypesLoadedFromApi === true &&
+      Array.isArray(parsedCache.documentTypes)
+        ? parsedCache.documentTypes.filter(isDocumentTypeOption)
       : [];
 
     if (cachedCities.length > 0) {
@@ -292,9 +281,7 @@ function hydrateCatalogCacheFromStorage() {
       refreshCityLabelCache(citiesCache);
     }
 
-    if (cachedDocumentTypes.length > 0) {
-      documentTypesCache = cachedDocumentTypes;
-    }
+    documentTypesCache = cachedDocumentTypes;
 
     backendCityIdByFrontendId.clear();
     Object.entries(parsedCache.backendCityIdByFrontendId ?? {}).forEach(([frontendId, backendId]) => {
@@ -438,7 +425,7 @@ function cacheDocumentTypes(options: CatalogApiOption[]) {
     } satisfies DocumentTypeOption;
   });
 
-  documentTypesCache = nextDocumentTypes.length > 0 ? nextDocumentTypes : [...fallbackDocumentTypes];
+  documentTypesCache = nextDocumentTypes;
   persistCatalogCache();
 }
 
