@@ -54,7 +54,7 @@ const AUTO_REFRESH_MIN_INTERVAL_MS = 5000;
 const DEFAULT_ROWS_PER_PAGE = 6;
 const MIN_ROWS_PER_PAGE = 1;
 const TABLE_HEADER_HEIGHT_PX = 38;
-const TABLE_ROW_HEIGHT_FALLBACK_PX = 58;
+const TABLE_ROW_HEIGHT_FALLBACK_PX = 60;
 const TABLE_HEIGHT_PADDING_PX = 4;
 
 function isValidEmail(value: string) {
@@ -136,7 +136,6 @@ export function AdminCredentialsPage() {
     headerHeightPx: TABLE_HEADER_HEIGHT_PX,
     rowHeightPx: TABLE_ROW_HEIGHT_FALLBACK_PX,
     heightPaddingPx: TABLE_HEIGHT_PADDING_PX,
-    rowMeasurementRef: tableBodyRef,
     rowSafetyBufferPx: 8,
   });
   const rowsPerPage = stableRowsPerPage;
@@ -622,7 +621,12 @@ export function AdminCredentialsPage() {
                             )}
                           >
                             <div className="min-w-0 space-y-1">
-                              <p className="break-words text-[0.66rem] font-semibold leading-tight text-ink sm:text-[0.82rem] lg:text-[0.86rem]">
+                              <p
+                                className="break-words text-[0.66rem] font-semibold leading-tight text-ink sm:text-[0.82rem] lg:truncate lg:break-normal lg:text-[0.86rem]"
+                                title={formatDisplayName(
+                                  credential.universityName,
+                                )}
+                              >
                                 {formatDisplayName(credential.universityName)}
                               </p>
                               <p className="text-[0.55rem] leading-tight text-ink-muted sm:text-[0.72rem] lg:text-[0.76rem]">
@@ -643,7 +647,12 @@ export function AdminCredentialsPage() {
                             )}
                           >
                             <div className="min-w-0 space-y-1">
-                              <p className="break-words text-[0.64rem] font-semibold leading-tight text-ink sm:text-[0.82rem] lg:text-[0.86rem]">
+                              <p
+                                className="break-words text-[0.64rem] font-semibold leading-tight text-ink sm:text-[0.82rem] lg:truncate lg:break-normal lg:text-[0.86rem]"
+                                title={formatDisplayName(
+                                  credential.administratorName,
+                                )}
+                              >
                                 <span className="lg:hidden">
                                   {buildCompactAdministratorLabel(
                                     credential,
@@ -739,7 +748,7 @@ export function AdminCredentialsPage() {
                                   className="mt-0.5 h-3.5 w-3.5 shrink-0"
                                 />
                                 <span
-                                  className="block min-w-0 break-all"
+                                  className="block min-w-0 break-all lg:truncate lg:break-normal"
                                   title={credential.administratorEmail}
                                 >
                                   {credential.administratorEmail}
