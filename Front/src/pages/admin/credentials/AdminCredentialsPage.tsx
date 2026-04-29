@@ -821,7 +821,14 @@ export function AdminCredentialsPage() {
                               isLast ? 'pb-2.5 sm:pb-3' : 'pb-2 sm:pb-2.75',
                             )}
                           >
-                            <div className="flex h-7 flex-nowrap items-center justify-center gap-0.5 sm:h-auto sm:gap-2">
+                            <div
+                              className={classNames(
+                                'flex items-center justify-center',
+                                isEditing
+                                  ? 'h-auto flex-col gap-1 sm:items-stretch sm:gap-1.5'
+                                  : 'h-7 flex-nowrap gap-0.5 sm:h-auto sm:gap-2',
+                              )}
+                            >
                               {isEditing ? (
                                 <>
                                   <button
@@ -829,7 +836,7 @@ export function AdminCredentialsPage() {
                                       adminContent.credentialsPage.actionLabels
                                         .saveEmail
                                     }
-                                    className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition duration-200 hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-auto sm:w-auto sm:min-w-[7.2rem] sm:gap-1.5 sm:px-2.5 sm:py-1.75 sm:text-[0.68rem] sm:font-semibold"
+                                    className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition duration-200 hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-auto sm:w-full sm:min-w-[7.2rem] sm:gap-1.5 sm:px-2.5 sm:py-1.75 sm:text-[0.68rem] sm:font-semibold"
                                     disabled={isLoading}
                                     type="button"
                                     onClick={() =>
@@ -852,7 +859,7 @@ export function AdminCredentialsPage() {
                                   </button>
                                   <button
                                     aria-label="Cancelar"
-                                    className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 sm:h-auto sm:w-auto sm:min-w-[7.2rem] sm:gap-1.5 sm:px-2.5 sm:py-1.75 sm:text-[0.68rem] sm:font-semibold"
+                                    className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 sm:h-auto sm:w-full sm:min-w-[7.2rem] sm:gap-1.5 sm:px-2.5 sm:py-1.75 sm:text-[0.68rem] sm:font-semibold"
                                     disabled={isLoading}
                                     type="button"
                                     onClick={handleCancelEmailEdit}
