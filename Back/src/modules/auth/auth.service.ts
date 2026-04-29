@@ -177,6 +177,9 @@ export class AuthService implements OnModuleInit {
     const verificationCode = generateSixDigitCode();
     const verificationCodeHash = await bcrypt.hash(verificationCode, 10);
     const tutorPayload = input.tutor ?? null;
+    const tutorDocumentType = tutorPayload
+      ? await this.resolveDocumentType(tutorPayload.documentTypeCode)
+      : null;
 
     const createdAccount = await this.prisma.$transaction(async (transaction) => {
       const person = await transaction.persona.create({
@@ -188,19 +191,31 @@ export class AuthService implements OnModuleInit {
         },
       });
 
-      const tutor = tutorPayload
-        ? await transaction.tutor_responsable.create({
-            data: {
-              id_tipo_documento: (await this.resolveDocumentType(tutorPayload.documentTypeCode))
-                .id_tipo_documento,
-              numero_documento: normalizeText(tutorPayload.documentNumber),
-              nombres: normalizeText(tutorPayload.firstName),
-              apellidos: normalizeText(tutorPayload.lastName),
-              correo: normalizeEmail(tutorPayload.email),
-              celular: normalizeText(tutorPayload.phone),
-            },
-          })
-        : null;
+      const tutor =
+        tutorPayload && tutorDocumentType
+          ? await transaction.tutor_responsable.upsert({
+              where: {
+                id_tipo_documento_numero_documento: {
+                  id_tipo_documento: tutorDocumentType.id_tipo_documento,
+                  numero_documento: normalizeText(tutorPayload.documentNumber),
+                },
+              },
+              create: {
+                id_tipo_documento: tutorDocumentType.id_tipo_documento,
+                numero_documento: normalizeText(tutorPayload.documentNumber),
+                nombres: normalizeText(tutorPayload.firstName),
+                apellidos: normalizeText(tutorPayload.lastName),
+                correo: normalizeEmail(tutorPayload.email),
+                celular: normalizeText(tutorPayload.phone),
+              },
+              update: {
+                nombres: normalizeText(tutorPayload.firstName),
+                apellidos: normalizeText(tutorPayload.lastName),
+                correo: normalizeEmail(tutorPayload.email),
+                celular: normalizeText(tutorPayload.phone),
+              },
+            })
+          : null;
 
       const account = await transaction.cuenta_acceso.create({
         data: {

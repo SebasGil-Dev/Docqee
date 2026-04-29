@@ -60,6 +60,7 @@ export class TasksService {
               include: {
                 persona: true,
                 cuenta_acceso: { select: { correo: true } },
+                tutor_responsable: true,
               },
             },
           },
@@ -112,6 +113,22 @@ export class TasksService {
           sends.push(
             this.mailService.sendAppointmentReminderToPatient(
               patientEmail, patientName, studentName,
+              appointmentType, siteName, city, startAt, endAt, reminderTiming,
+              siteAddress, universityName,
+            ),
+          );
+        }
+
+        const tutor = cita.solicitud.cuenta_paciente.tutor_responsable;
+        const birthDate = cita.solicitud.cuenta_paciente.fecha_nacimiento;
+        const eighteenYearsAgo = new Date(now);
+        eighteenYearsAgo.setFullYear(eighteenYearsAgo.getFullYear() - 18);
+        const isMinor = birthDate > eighteenYearsAgo;
+
+        if (isMinor && tutor) {
+          sends.push(
+            this.mailService.sendAppointmentReminderToPatient(
+              tutor.correo, patientName, studentName,
               appointmentType, siteName, city, startAt, endAt, reminderTiming,
               siteAddress, universityName,
             ),
