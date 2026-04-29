@@ -4,7 +4,6 @@
   Injectable,
   Logger,
   NotFoundException,
-  OnModuleInit,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -79,7 +78,7 @@ type SessionAccountBase = Pick<
 >;
 
 @Injectable()
-export class AuthService implements OnModuleInit {
+export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
@@ -88,10 +87,6 @@ export class AuthService implements OnModuleInit {
     private readonly configService: ConfigService,
     private readonly mailService: MailService,
   ) {}
-
-  async onModuleInit() {
-    await this.ensureDefaultPlatformAdmin();
-  }
 
   async login(input: LoginDto) {
     const email = normalizeEmail(input.email);
@@ -437,45 +432,6 @@ export class AuthService implements OnModuleInit {
     });
 
     return { ok: true };
-  }
-
-  private async ensureDefaultPlatformAdmin() {
-    const adminEmail = this.configService.get<string>('auth.platformAdminEmail') ?? 'admin@docqee.local';
-    const adminPassword = this.configService.get<string>('auth.platformAdminPassword') ?? 'Admin123!';
-    const adminNombres = this.configService.get<string>('auth.platformAdminNombres') ?? 'Admin';
-    const adminApellidos = this.configService.get<string>('auth.platformAdminApellidos') ?? 'Docqee';
-
-    const existingAdmin = await this.prisma.cuenta_acceso.findUnique({
-      where: { correo: adminEmail },
-      select: { id_cuenta: true },
-    });
-
-    if (existingAdmin) {
-      return;
-    }
-
-    const passwordHash = await bcrypt.hash(adminPassword, 10);
-
-    await this.prisma.$transaction(async (transaction) => {
-      const account = await transaction.cuenta_acceso.create({
-        data: {
-          tipo_cuenta: tipo_cuenta_enum.ADMIN_PLATAFORMA,
-          correo: adminEmail,
-          password_hash: passwordHash,
-          correo_verificado: true,
-          correo_verificado_at: new Date(),
-          primer_ingreso_pendiente: false,
-        },
-      });
-
-      await transaction.cuenta_admin_plataforma.create({
-        data: {
-          id_cuenta: account.id_cuenta,
-          nombres: adminNombres,
-          apellidos: adminApellidos,
-        },
-      });
-    });
   }
 
   private async findSessionAccountBaseByEmail(
