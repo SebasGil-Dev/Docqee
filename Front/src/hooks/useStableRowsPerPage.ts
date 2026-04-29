@@ -33,7 +33,7 @@ export function useStableRowsPerPage<TElement extends HTMLElement>({
       Math.floor(viewport.getBoundingClientRect().height) -
       headerHeightPx -
       heightPaddingPx -
-      (rowSafetyBufferPx ?? rowHeightPx);
+      (rowSafetyBufferPx ?? 8);
 
     const nextRowsPerPage =
       availableHeight > 0
