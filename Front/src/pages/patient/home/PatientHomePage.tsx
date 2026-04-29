@@ -12,6 +12,7 @@ import { AdminTablePagination } from '@/components/admin/AdminTablePagination';
 import { Seo } from '@/components/ui/Seo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { patientContent } from '@/content/patientContent';
+import { useStableRowsPerPage } from '@/hooks/useStableRowsPerPage';
 import { classNames } from '@/lib/classNames';
 import { formatDisplayName } from '@/lib/formatDisplayName';
 import { getOptimizedAvatarUrl } from '@/lib/imageOptimization';
@@ -79,12 +80,17 @@ export function PatientHomePage() {
     useState<PatientReviewRatingFilter>('all');
   const [isReviewRatingMenuOpen, setIsReviewRatingMenuOpen] = useState(false);
   const [reviewCurrentPage, setReviewCurrentPage] = useState(1);
-  const [reviewRowsPerPage, setReviewRowsPerPage] = useState(
-    DEFAULT_REVIEW_ROWS_PER_PAGE,
-  );
   const reviewRatingMenuRef = useRef<HTMLDivElement | null>(null);
   const reviewTableViewportRef = useRef<HTMLDivElement | null>(null);
   const reviewTableBodyRef = useRef<HTMLTableSectionElement | null>(null);
+  const reviewRowsPerPage = useStableRowsPerPage({
+    viewportRef: reviewTableViewportRef,
+    defaultRowsPerPage: DEFAULT_REVIEW_ROWS_PER_PAGE,
+    minRowsPerPage: MIN_REVIEW_ROWS_PER_PAGE,
+    headerHeightPx: REVIEW_TABLE_HEADER_HEIGHT_PX,
+    rowHeightPx: REVIEW_TABLE_ROW_HEIGHT_FALLBACK_PX,
+    heightPaddingPx: REVIEW_TABLE_HEIGHT_PADDING_PX,
+  });
   const patientName = formatDisplayName(
     `${profile.firstName || patientContent.shell.adminUser.firstName} ${
       profile.lastName || patientContent.shell.adminUser.lastName
@@ -160,71 +166,6 @@ export function PatientHomePage() {
     );
   }, [reviewTotalPages]);
 
-  useEffect(() => {
-    const tableViewportElement = reviewTableViewportRef.current;
-
-    if (!tableViewportElement) {
-      return undefined;
-    }
-
-    const tableViewport = tableViewportElement;
-
-    function updateReviewRowsPerPage() {
-      const nextAvailableHeight = tableViewport.getBoundingClientRect().height;
-
-      if (nextAvailableHeight <= 0) {
-        return;
-      }
-
-      const firstHeaderCell = tableViewport.querySelector('thead th');
-      const tableHeaderHeight =
-        firstHeaderCell?.getBoundingClientRect().height ??
-        REVIEW_TABLE_HEADER_HEIGHT_PX;
-      const rowElements = Array.from(
-        reviewTableBodyRef.current?.children ?? [],
-      );
-      const rowHeights = rowElements
-        .map((rowElement) => rowElement.getBoundingClientRect().height)
-        .filter((rowHeight) => rowHeight > 0);
-      const estimatedRowHeight =
-        rowHeights.length > 0
-          ? rowHeights.reduce((sum, rowHeight) => sum + rowHeight, 0) /
-            rowHeights.length
-          : REVIEW_TABLE_ROW_HEIGHT_FALLBACK_PX;
-      const nextRowsPerPage = Math.max(
-        MIN_REVIEW_ROWS_PER_PAGE,
-        Math.floor(
-          (nextAvailableHeight -
-            tableHeaderHeight -
-            REVIEW_TABLE_HEIGHT_PADDING_PX) /
-            estimatedRowHeight,
-        ),
-      );
-
-      setReviewRowsPerPage((currentRowsPerPage) =>
-        currentRowsPerPage === nextRowsPerPage
-          ? currentRowsPerPage
-          : nextRowsPerPage,
-      );
-    }
-
-    updateReviewRowsPerPage();
-
-    if (typeof ResizeObserver !== 'undefined') {
-      const resizeObserver = new ResizeObserver(updateReviewRowsPerPage);
-      resizeObserver.observe(tableViewport);
-
-      return () => {
-        resizeObserver.disconnect();
-      };
-    }
-
-    window.addEventListener('resize', updateReviewRowsPerPage);
-
-    return () => {
-      window.removeEventListener('resize', updateReviewRowsPerPage);
-    };
-  }, [filteredReviews.length, reviewPageStartIndex, paginatedReviews.length]);
 
   useEffect(() => {
     if (!isReviewRatingMenuOpen) {

@@ -19,6 +19,7 @@ import { Seo } from '@/components/ui/Seo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { studentContent } from '@/content/studentContent';
 import type { StudentRequest, StudentRequestStatus } from '@/content/types';
+import { useStableRowsPerPage } from '@/hooks/useStableRowsPerPage';
 import { classNames } from '@/lib/classNames';
 import { getOptimizedAvatarUrl } from '@/lib/imageOptimization';
 import { getStarFillRatio } from '@/lib/ratings';
@@ -432,7 +433,6 @@ export function StudentRequestsPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(
     null,
   );
@@ -451,6 +451,14 @@ export function StudentRequestsPage() {
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const tableViewportRef = useRef<HTMLDivElement | null>(null);
   const tableBodyRef = useRef<HTMLTableSectionElement | null>(null);
+  const rowsPerPage = useStableRowsPerPage({
+    viewportRef: tableViewportRef,
+    defaultRowsPerPage: DEFAULT_ROWS_PER_PAGE,
+    minRowsPerPage: MIN_ROWS_PER_PAGE,
+    headerHeightPx: TABLE_HEADER_HEIGHT_PX,
+    rowHeightPx: TABLE_ROW_HEIGHT_FALLBACK_PX,
+    heightPaddingPx: TABLE_HEIGHT_PADDING_PX,
+  });
   const hasRequestedFreshDashboardRef = useRef(false);
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const visibleRequests = useMemo(
@@ -570,67 +578,6 @@ export function StudentRequestsPage() {
     setCurrentPage((currentValue) => Math.min(currentValue, totalPages));
   }, [totalPages]);
 
-  useEffect(() => {
-    const tableViewportElement = tableViewportRef.current;
-
-    if (!tableViewportElement) {
-      return undefined;
-    }
-
-    const tableViewport = tableViewportElement;
-
-    function updateRowsPerPage() {
-      const nextAvailableHeight = tableViewport.getBoundingClientRect().height;
-
-      if (nextAvailableHeight <= 0) {
-        return;
-      }
-
-      const firstHeaderCell = tableViewport.querySelector('thead th');
-      const tableHeaderHeight =
-        firstHeaderCell?.getBoundingClientRect().height ??
-        TABLE_HEADER_HEIGHT_PX;
-      const rowElements = Array.from(tableBodyRef.current?.children ?? []);
-      const rowHeights = rowElements
-        .map((rowElement) => rowElement.getBoundingClientRect().height)
-        .filter((rowHeight) => rowHeight > 0);
-      const estimatedRowHeight =
-        rowHeights.length > 0
-          ? rowHeights.reduce((sum, rowHeight) => sum + rowHeight, 0) /
-            rowHeights.length
-          : TABLE_ROW_HEIGHT_FALLBACK_PX;
-      const nextRowsPerPage = Math.max(
-        MIN_ROWS_PER_PAGE,
-        Math.floor(
-          (nextAvailableHeight - tableHeaderHeight - TABLE_HEIGHT_PADDING_PX) /
-            estimatedRowHeight,
-        ),
-      );
-
-      setRowsPerPage((currentRowsPerPage) =>
-        currentRowsPerPage === nextRowsPerPage
-          ? currentRowsPerPage
-          : nextRowsPerPage,
-      );
-    }
-
-    updateRowsPerPage();
-
-    if (typeof ResizeObserver !== 'undefined') {
-      const resizeObserver = new ResizeObserver(updateRowsPerPage);
-      resizeObserver.observe(tableViewport);
-
-      return () => {
-        resizeObserver.disconnect();
-      };
-    }
-
-    window.addEventListener('resize', updateRowsPerPage);
-
-    return () => {
-      window.removeEventListener('resize', updateRowsPerPage);
-    };
-  }, [filteredRequests.length, pageStartIndex, paginatedRequests.length]);
 
   useEffect(() => {
     visibleRequests.forEach((request) => {

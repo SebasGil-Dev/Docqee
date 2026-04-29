@@ -20,6 +20,7 @@ import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
 import { Seo } from '@/components/ui/Seo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { universityAdminContent } from '@/content/universityAdminContent';
+import { useStableRowsPerPage } from '@/hooks/useStableRowsPerPage';
 import { classNames } from '@/lib/classNames';
 import { formatDisplayName } from '@/lib/formatDisplayName';
 import { useUniversityAdminStudentRecordsStore } from '@/lib/universityAdminStudentRecordsStore';
@@ -127,10 +128,17 @@ export function UniversityCredentialsPage() {
   const [isConfirmationSubmitting, setIsConfirmationSubmitting] =
     useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
   const filterMenuRef = useRef<HTMLDivElement | null>(null);
   const tableViewportRef = useRef<HTMLDivElement | null>(null);
   const tableBodyRef = useRef<HTMLTableSectionElement | null>(null);
+  const rowsPerPage = useStableRowsPerPage({
+    viewportRef: tableViewportRef,
+    defaultRowsPerPage: DEFAULT_ROWS_PER_PAGE,
+    minRowsPerPage: MIN_ROWS_PER_PAGE,
+    headerHeightPx: TABLE_HEADER_HEIGHT_PX,
+    rowHeightPx: TABLE_ROW_HEIGHT_FALLBACK_PX,
+    heightPaddingPx: TABLE_HEIGHT_PADDING_PX,
+  });
   const lastAutoRefreshAtRef = useRef(0);
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const filteredCredentialRows = credentialRows.filter((credential) => {
@@ -321,72 +329,6 @@ export function UniversityCredentialsPage() {
     };
   }, [feedbackMessage]);
 
-  useEffect(() => {
-    const tableViewportElement = tableViewportRef.current;
-
-    if (!tableViewportElement) {
-      return undefined;
-    }
-
-    const tableViewport = tableViewportElement;
-
-    function updateRowsPerPage() {
-      const nextAvailableHeight = tableViewport.getBoundingClientRect().height;
-
-      if (nextAvailableHeight <= 0) {
-        return;
-      }
-
-      const tableHeaderHeight =
-        tableViewport.querySelector('thead')?.getBoundingClientRect().height ??
-        TABLE_HEADER_HEIGHT_PX;
-      const rowHeights = Array.from(
-        tableBodyRef.current?.querySelectorAll('tr') ?? [],
-        (row) => row.getBoundingClientRect().height,
-      ).filter((height) => height > 0);
-      const estimatedRowHeight =
-        rowHeights.length > 0
-          ? rowHeights.reduce((total, height) => total + height, 0) /
-            rowHeights.length
-          : TABLE_ROW_HEIGHT_FALLBACK_PX;
-      const nextRowsPerPage = Math.max(
-        MIN_ROWS_PER_PAGE,
-        Math.floor(
-          (nextAvailableHeight - tableHeaderHeight - TABLE_HEIGHT_PADDING_PX) /
-            estimatedRowHeight,
-        ),
-      );
-
-      setRowsPerPage((currentRowsPerPage) =>
-        currentRowsPerPage === nextRowsPerPage
-          ? currentRowsPerPage
-          : nextRowsPerPage,
-      );
-    }
-
-    updateRowsPerPage();
-
-    if (typeof ResizeObserver !== 'undefined') {
-      const resizeObserver = new ResizeObserver(updateRowsPerPage);
-      resizeObserver.observe(tableViewport);
-
-      return () => {
-        resizeObserver.disconnect();
-      };
-    }
-
-    window.addEventListener('resize', updateRowsPerPage);
-
-    return () => {
-      window.removeEventListener('resize', updateRowsPerPage);
-    };
-  }, [
-    editingCredentialId,
-    emailError,
-    filteredCredentialRows.length,
-    pageStartIndex,
-    paginatedCredentialRows.length,
-  ]);
 
   useEffect(() => {
     setCurrentPage(1);

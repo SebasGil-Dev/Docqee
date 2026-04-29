@@ -18,6 +18,7 @@ import { ROUTES } from '@/constants/routes';
 import { patientContent } from '@/content/patientContent';
 import type { PatientRequest, PatientRequestStatus } from '@/content/types';
 import { useAutoDismissSystemMessage } from '@/hooks/useAutoDismissSystemMessage';
+import { useStableRowsPerPage } from '@/hooks/useStableRowsPerPage';
 import { classNames } from '@/lib/classNames';
 import { usePatientModuleStore } from '@/lib/patientModuleStore';
 
@@ -101,10 +102,17 @@ export function PatientRequestsPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const tableViewportRef = useRef<HTMLDivElement | null>(null);
   const tableBodyRef = useRef<HTMLTableSectionElement | null>(null);
+  const rowsPerPage = useStableRowsPerPage({
+    viewportRef: tableViewportRef,
+    defaultRowsPerPage: DEFAULT_ROWS_PER_PAGE,
+    minRowsPerPage: MIN_ROWS_PER_PAGE,
+    headerHeightPx: TABLE_HEADER_HEIGHT_PX,
+    rowHeightPx: TABLE_ROW_HEIGHT_FALLBACK_PX,
+    heightPaddingPx: TABLE_HEIGHT_PADDING_PX,
+  });
   const normalizedSearch = searchTerm.trim().toLowerCase();
 
   useAutoDismissSystemMessage(successMessage, () => setSuccessMessage(null));
@@ -165,46 +173,6 @@ export function PatientRequestsPage() {
     setCurrentPage((page) => Math.min(page, totalPages));
   }, [totalPages]);
 
-  useEffect(() => {
-    const viewport = tableViewportRef.current;
-
-    if (!viewport) {
-      return undefined;
-    }
-
-    const updateRowsPerPage = () => {
-      const firstRow = tableBodyRef.current?.querySelector('tr');
-      const measuredRowHeight = firstRow?.getBoundingClientRect().height ?? 0;
-      const rowHeight = Math.max(measuredRowHeight, TABLE_ROW_HEIGHT_FALLBACK_PX);
-      const availableHeight = viewport.getBoundingClientRect().height - TABLE_HEADER_HEIGHT_PX - TABLE_HEIGHT_PADDING_PX;
-
-      if (availableHeight <= 0) {
-        setRowsPerPage(DEFAULT_ROWS_PER_PAGE);
-        return;
-      }
-
-      const nextRowsPerPage = Math.max(MIN_ROWS_PER_PAGE, Math.floor(availableHeight / rowHeight));
-
-      setRowsPerPage(Number.isFinite(nextRowsPerPage) ? nextRowsPerPage : DEFAULT_ROWS_PER_PAGE);
-    };
-
-    updateRowsPerPage();
-
-    if (typeof ResizeObserver !== 'undefined') {
-      const resizeObserver = new ResizeObserver(updateRowsPerPage);
-      resizeObserver.observe(viewport);
-
-      return () => {
-        resizeObserver.disconnect();
-      };
-    }
-
-    window.addEventListener('resize', updateRowsPerPage);
-
-    return () => {
-      window.removeEventListener('resize', updateRowsPerPage);
-    };
-  }, [filteredRequests.length]);
 
   useEffect(() => {
     if (!isStatusMenuOpen) {

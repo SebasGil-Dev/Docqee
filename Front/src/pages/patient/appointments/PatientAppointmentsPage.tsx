@@ -24,6 +24,7 @@ import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { patientContent } from '@/content/patientContent';
 import type { PatientAppointment, PatientAppointmentStatus } from '@/content/types';
 import { useAutoDismissSystemMessage } from '@/hooks/useAutoDismissSystemMessage';
+import { useStableRowsPerPage } from '@/hooks/useStableRowsPerPage';
 import { classNames } from '@/lib/classNames';
 import { usePatientModuleStore } from '@/lib/patientModuleStore';
 
@@ -150,10 +151,17 @@ export function PatientAppointmentsPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const tableViewportRef = useRef<HTMLDivElement | null>(null);
   const tableBodyRef = useRef<HTMLTableSectionElement | null>(null);
+  const rowsPerPage = useStableRowsPerPage({
+    viewportRef: tableViewportRef,
+    defaultRowsPerPage: DEFAULT_ROWS_PER_PAGE,
+    minRowsPerPage: MIN_ROWS_PER_PAGE,
+    headerHeightPx: TABLE_HEADER_HEIGHT_PX,
+    rowHeightPx: TABLE_ROW_HEIGHT_FALLBACK_PX,
+    heightPaddingPx: TABLE_HEIGHT_PADDING_PX,
+  });
   const autoRejectedAppointmentIdsRef = useRef<Set<string>>(new Set());
   const normalizedSearch = searchTerm.trim().toLowerCase();
 
@@ -224,56 +232,6 @@ export function PatientAppointmentsPage() {
     setCurrentPage((currentValue) => Math.min(currentValue, totalPages));
   }, [totalPages]);
 
-  useEffect(() => {
-    const tableViewport = tableViewportRef.current;
-
-    if (!tableViewport) {
-      return undefined;
-    }
-
-    const updateRowsPerPage = () => {
-      const availableHeight = tableViewport.getBoundingClientRect().height;
-
-      if (availableHeight <= 0) {
-        setRowsPerPage(DEFAULT_ROWS_PER_PAGE);
-        return;
-      }
-
-      const headerCell = tableViewport.querySelector('thead th');
-      const tableHeaderHeight = headerCell?.getBoundingClientRect().height ?? TABLE_HEADER_HEIGHT_PX;
-      const rowElements = Array.from(tableBodyRef.current?.children ?? []);
-      const rowHeights = rowElements
-        .map((rowElement) => rowElement.getBoundingClientRect().height)
-        .filter((rowHeight) => rowHeight > 0);
-      const estimatedRowHeight =
-        rowHeights.length > 0
-          ? rowHeights.reduce((sum, rowHeight) => sum + rowHeight, 0) / rowHeights.length
-          : TABLE_ROW_HEIGHT_FALLBACK_PX;
-      const nextRowsPerPage = Math.max(
-        MIN_ROWS_PER_PAGE,
-        Math.floor((availableHeight - tableHeaderHeight - TABLE_HEIGHT_PADDING_PX) / estimatedRowHeight),
-      );
-
-      setRowsPerPage(Number.isFinite(nextRowsPerPage) ? nextRowsPerPage : DEFAULT_ROWS_PER_PAGE);
-    };
-
-    updateRowsPerPage();
-
-    if (typeof ResizeObserver !== 'undefined') {
-      const resizeObserver = new ResizeObserver(updateRowsPerPage);
-      resizeObserver.observe(tableViewport);
-
-      return () => {
-        resizeObserver.disconnect();
-      };
-    }
-
-    window.addEventListener('resize', updateRowsPerPage);
-
-    return () => {
-      window.removeEventListener('resize', updateRowsPerPage);
-    };
-  }, [filteredAppointments.length, pageStartIndex, paginatedAppointments.length]);
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
