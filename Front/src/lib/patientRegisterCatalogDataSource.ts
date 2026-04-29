@@ -364,10 +364,6 @@ function buildCityId(cityName: string) {
   return `city-${toSlug(cityName)}`;
 }
 
-function buildLocalityId(cityName: string, localityName: string) {
-  return `locality-${toSlug(cityName)}-${toSlug(localityName)}`;
-}
-
 function buildDocumentTypeId(documentTypeCode: string) {
   return `document-${toSlug(documentTypeCode)}`;
 }
@@ -547,10 +543,9 @@ async function loadLocalitiesByCity(cityId: string) {
       }
 
       const options = await fetchCatalogOptions(`/catalogs/localities/${backendCityId}`);
-      const cityLabel = cityLabelByFrontendId.get(cityId) ?? '';
       const nextLocalities = options.map((option) => ({
         cityId,
-        id: buildLocalityId(cityLabel, option.name),
+        id: String(option.id),
         label: normalizeText(option.name),
       })) satisfies LocalityOption[];
 

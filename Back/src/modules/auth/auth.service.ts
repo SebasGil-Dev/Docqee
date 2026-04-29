@@ -12,6 +12,7 @@ import { JwtService } from '@nestjs/jwt';
 import { estado_simple_enum, tipo_cuenta_enum } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
+import { PENDING_CREDENTIAL_PASSWORD_HASH_PREFIX } from '@/shared/constants/auth.constants';
 import { PrismaService } from '@/shared/database/prisma.service';
 import { MailService } from '@/shared/mail/mail.service';
 import type { RequestUser } from '@/shared/types/request-user.type';
@@ -100,7 +101,7 @@ export class AuthService implements OnModuleInit {
       throw new UnauthorizedException('Correo o contrasena incorrectos.');
     }
 
-    const passwordValidationPromise = bcrypt.compare(input.password, account.password_hash);
+    const passwordValidationPromise = this.verifyPassword(input.password, account.password_hash);
     const sessionAccountPromise = this.hydrateSessionAccount(account);
     const [isValidPassword, sessionAccount] = await Promise.all([
       passwordValidationPromise,
@@ -477,6 +478,14 @@ export class AuthService implements OnModuleInit {
         primer_ingreso_pendiente: true,
       },
     });
+  }
+
+  private verifyPassword(password: string, passwordHash: string) {
+    if (passwordHash.startsWith(PENDING_CREDENTIAL_PASSWORD_HASH_PREFIX)) {
+      return Promise.resolve(false);
+    }
+
+    return bcrypt.compare(password, passwordHash);
   }
 
   private async findSessionAccountById(id: number): Promise<SessionAccount | null> {
