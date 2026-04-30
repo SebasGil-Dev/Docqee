@@ -138,12 +138,25 @@ export function StudentProfilePage() {
   const avatarPreviewUrlRef = useRef<string | null>(null);
   const avatarUploadPromiseRef = useRef<Promise<string | null> | null>(null);
   const avatarUploadSequenceRef = useRef(0);
+  const hasUnsavedProfileValuesRef = useRef(false);
+  const hasPendingLinkDraftRef = useRef(false);
+  const hasUnsavedSiteSelectionRef = useRef(false);
+  const hasUnsavedTreatmentSelectionRef = useRef(false);
   const studentInitials = useMemo(
     () => `${profile.firstName.charAt(0)}${profile.lastName.charAt(0)}`.toUpperCase(),
     [profile.firstName, profile.lastName],
   );
 
   useEffect(() => {
+    if (
+      hasUnsavedProfileValuesRef.current ||
+      hasPendingLinkDraftRef.current ||
+      linkPendingDeletion ||
+      isSavingProfile
+    ) {
+      return;
+    }
+
     if (avatarPreviewUrlRef.current) {
       URL.revokeObjectURL(avatarPreviewUrlRef.current);
       avatarPreviewUrlRef.current = null;
@@ -160,6 +173,8 @@ export function StudentProfilePage() {
     setAvatarUploadMessage(null);
     setIsSavingProfile(false);
     setSaveMessage(null);
+    hasUnsavedProfileValuesRef.current = false;
+    hasPendingLinkDraftRef.current = false;
   }, [profile]);
 
   useEffect(
@@ -176,10 +191,15 @@ export function StudentProfilePage() {
   }, []);
 
   useEffect(() => {
+    if (hasUnsavedSiteSelectionRef.current) {
+      return;
+    }
+
     setSelectedSiteIds(new Set(practiceSites.map((s) => s.siteId)));
   }, [practiceSites]);
 
   const handleToggleSede = (siteId: string) => {
+    hasUnsavedSiteSelectionRef.current = true;
     setSelectedSiteIds((current) => {
       const next = new Set(current);
       if (next.has(siteId)) {
@@ -197,10 +217,15 @@ export function StudentProfilePage() {
   }, []);
 
   useEffect(() => {
+    if (hasUnsavedTreatmentSelectionRef.current) {
+      return;
+    }
+
     setSelectedTreatmentTypeIds(new Set(treatments.map((t) => t.treatmentTypeId)));
   }, [treatments]);
 
   const handleToggleTreatment = (typeId: string) => {
+    hasUnsavedTreatmentSelectionRef.current = true;
     setSelectedTreatmentTypeIds((current) => {
       const next = new Set(current);
       if (next.has(typeId)) {
@@ -217,6 +242,7 @@ export function StudentProfilePage() {
     field: K,
     nextValue: StudentProfileFormValues[K],
   ) => {
+    hasUnsavedProfileValuesRef.current = true;
     setValues((currentValues) => ({
       ...currentValues,
       [field]: nextValue,
@@ -335,6 +361,7 @@ export function StudentProfilePage() {
 
     handleFieldChange('links', nextLinks);
     setLinkDraft(initialLinkDraft);
+    hasPendingLinkDraftRef.current = false;
     setLinkError(null);
     void persistProfileChanges(nextValues, false);
   };
@@ -387,6 +414,9 @@ export function StudentProfilePage() {
         return false;
       }
 
+      hasUnsavedProfileValuesRef.current = false;
+      setValues(submissionValues);
+
       if (includeAssignments) {
         const updatedTreatments = await updateTreatments(
           nextSelectedTreatmentTypeIds,
@@ -396,11 +426,15 @@ export function StudentProfilePage() {
           return false;
         }
 
+        hasUnsavedTreatmentSelectionRef.current = false;
+
         const updatedPracticeSites = await updatePracticeSites(nextSelectedSiteIds);
 
         if (!updatedPracticeSites) {
           return false;
         }
+
+        hasUnsavedSiteSelectionRef.current = false;
       }
 
       setSaveMessage(studentContent.profilePage.successMessage);
@@ -828,6 +862,8 @@ export function StudentProfilePage() {
                       placeholder="Selecciona un tipo"
                       value={linkDraft.type}
                       onChange={(value) => {
+                        hasPendingLinkDraftRef.current =
+                          value !== initialLinkDraft.type || linkDraft.url.trim().length > 0;
                         setLinkDraft((currentDraft) => ({
                           ...currentDraft,
                           type: value as StudentProfessionalLinkType,
@@ -845,6 +881,8 @@ export function StudentProfilePage() {
                       placeholder="https://..."
                       value={linkDraft.url}
                       onChange={(value) => {
+                        hasPendingLinkDraftRef.current =
+                          value.trim().length > 0 || linkDraft.type !== initialLinkDraft.type;
                         setLinkDraft((currentDraft) => ({
                           ...currentDraft,
                           url: value,
@@ -911,6 +949,10 @@ export function StudentProfilePage() {
               disabled={isLoading || isSavingProfile}
               type="button"
               onClick={() => {
+                hasUnsavedProfileValuesRef.current = false;
+                hasPendingLinkDraftRef.current = false;
+                hasUnsavedSiteSelectionRef.current = false;
+                hasUnsavedTreatmentSelectionRef.current = false;
                 setValues(getInitialValues(profile));
                 setErrors({});
                 setLinkDraft(initialLinkDraft);
