@@ -74,14 +74,18 @@ export function UniversityStudentsPage() {
   const pendingStatusStudentIdsRef = useRef(new Set<string>());
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const tableViewportRef = useRef<HTMLDivElement | null>(null);
+  const tableHeaderRef = useRef<HTMLTableSectionElement | null>(null);
   const tableBodyRef = useRef<HTMLTableSectionElement | null>(null);
   const rowsPerPage = useStableRowsPerPage({
     viewportRef: tableViewportRef,
     defaultRowsPerPage: DEFAULT_ROWS_PER_PAGE,
     minRowsPerPage: MIN_ROWS_PER_PAGE,
+    headerMeasurementRef: tableHeaderRef,
     headerHeightPx: TABLE_HEADER_HEIGHT_PX,
+    rowMeasurementRef: tableBodyRef,
     rowHeightPx: TABLE_ROW_HEIGHT_FALLBACK_PX,
     heightPaddingPx: TABLE_HEIGHT_PADDING_PX,
+    rowSafetyBufferPx: 2,
   });
   const location = useLocation();
   const navigate = useNavigate();
@@ -437,7 +441,10 @@ export function UniversityStudentsPage() {
                     <col className="w-[18%] sm:w-[13%]" />
                     <col className="w-[26%] sm:w-[18%]" />
                   </colgroup>
-                  <thead className="sticky top-0 z-10 bg-slate-100 text-left">
+                  <thead
+                    ref={tableHeaderRef}
+                    className="sticky top-0 z-10 bg-slate-100 text-left"
+                  >
                     <tr className="text-[0.6rem] font-bold uppercase tracking-[0.14em] text-ink-muted sm:text-[0.64rem] sm:tracking-[0.16em]">
                       <th className="px-2.5 py-2 sm:px-4 sm:py-2.5">
                         Estudiante

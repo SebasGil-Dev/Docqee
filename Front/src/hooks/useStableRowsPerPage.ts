@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useLayoutEffect, useState } from 'react';
 import type { RefObject } from 'react';
 
 type UseStableRowsPerPageOptions<TElement extends HTMLElement> = {
   defaultRowsPerPage: number;
+  headerMeasurementRef?: RefObject<HTMLElement | null>;
   headerHeightPx: number;
   heightPaddingPx?: number;
   minRowsPerPage: number;
@@ -14,6 +15,7 @@ type UseStableRowsPerPageOptions<TElement extends HTMLElement> = {
 
 export function useStableRowsPerPage<TElement extends HTMLElement>({
   defaultRowsPerPage,
+  headerMeasurementRef,
   headerHeightPx,
   heightPaddingPx = 0,
   minRowsPerPage,
@@ -31,11 +33,16 @@ export function useStableRowsPerPage<TElement extends HTMLElement>({
       return;
     }
 
-    const availableHeight =
-      Math.floor(viewport.getBoundingClientRect().height) -
-      headerHeightPx -
-      heightPaddingPx -
-      (rowSafetyBufferPx ?? 8);
+    const measuredHeaderHeight =
+      headerMeasurementRef?.current?.getBoundingClientRect().height ?? 0;
+    const effectiveHeaderHeight =
+      measuredHeaderHeight > 0 ? measuredHeaderHeight : headerHeightPx;
+    const availableHeight = Math.floor(
+      viewport.getBoundingClientRect().height -
+        effectiveHeaderHeight -
+        heightPaddingPx -
+        (rowSafetyBufferPx ?? 8),
+    );
     const measuredRows = Array.from(
       rowMeasurementRef?.current?.querySelectorAll('tr') ?? [],
     );
@@ -61,6 +68,7 @@ export function useStableRowsPerPage<TElement extends HTMLElement>({
     );
   }, [
     defaultRowsPerPage,
+    headerMeasurementRef,
     headerHeightPx,
     heightPaddingPx,
     minRowsPerPage,
@@ -70,7 +78,7 @@ export function useStableRowsPerPage<TElement extends HTMLElement>({
     viewportRef,
   ]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     updateRowsPerPage();
 
     const viewport = viewportRef.current;
@@ -87,6 +95,10 @@ export function useStableRowsPerPage<TElement extends HTMLElement>({
         resizeObserver.observe(rowMeasurementRef.current);
       }
 
+      if (headerMeasurementRef?.current) {
+        resizeObserver.observe(headerMeasurementRef.current);
+      }
+
       return () => {
         resizeObserver.disconnect();
       };
@@ -97,7 +109,7 @@ export function useStableRowsPerPage<TElement extends HTMLElement>({
     return () => {
       window.removeEventListener('resize', updateRowsPerPage);
     };
-  }, [rowMeasurementRef, updateRowsPerPage, viewportRef]);
+  }, [headerMeasurementRef, rowMeasurementRef, updateRowsPerPage, viewportRef]);
 
   return rowsPerPage;
 }
