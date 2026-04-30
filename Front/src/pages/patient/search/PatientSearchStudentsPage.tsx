@@ -212,7 +212,12 @@ function getRatingLabel(student: PatientStudentDirectoryItem) {
     return 'Sin calificacion';
   }
 
-  return `${student.averageRating.toFixed(1)} (${student.reviewsCount})`;
+  const reviewsLabel =
+    student.reviewsCount === 1
+      ? '1 resena'
+      : `${student.reviewsCount} resenas`;
+
+  return `${student.averageRating.toFixed(1)} estrellas - ${reviewsLabel}`;
 }
 
 function renderStars(value: number | null, sizeClassName = 'h-3.5 w-3.5') {
@@ -926,120 +931,95 @@ export function PatientSearchStudentsPage() {
           <div
             aria-labelledby="patient-student-modal-title"
             aria-modal="true"
-            className="admin-scrollbar relative z-10 max-h-[calc(100vh-2rem)] w-full max-w-3xl overflow-y-auto rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_28px_90px_-30px_rgba(15,23,42,0.55)] sm:p-6"
+            className="admin-scrollbar relative z-10 max-h-[calc(100vh-2rem)] w-full max-w-6xl overflow-y-auto rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-[0_28px_90px_-30px_rgba(15,23,42,0.55)] sm:p-5 lg:p-6"
             role="dialog"
           >
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="flex min-w-0 items-start gap-3">
-                <div className="flex h-[4.5rem] w-[4.5rem] shrink-0 items-center justify-center overflow-hidden rounded-[1.4rem] bg-primary/10 ring-4 ring-primary/10">
-                  {selectedStudent.avatarSrc ? (
-                    <img
-                      alt={selectedStudent.avatarAlt}
-                      className="h-full w-full object-cover"
-                      decoding="async"
-                      src={getOptimizedAvatarUrl(
-                        selectedStudent.avatarSrc,
-                        220,
-                      )}
-                    />
-                  ) : (
-                    <span className="text-xl font-extrabold uppercase text-primary">
-                      {getStudentInitials(selectedStudent)}
-                    </span>
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <h2
-                    className="font-headline text-2xl font-extrabold tracking-tight text-ink"
-                    id="patient-student-modal-title"
-                  >
-                    {getStudentFullName(selectedStudent)}
-                  </h2>
-                  <p className="mt-1 text-sm leading-6 text-ink-muted">
-                    {selectedStudent.universityName} - Semestre{' '}
-                    {selectedStudent.semester}
-                  </p>
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200">
-                      Estudiante Verificado
-                    </span>
-                    <div className="flex items-center gap-0.5">
-                      {renderStars(selectedStudent.averageRating, 'h-4 w-4')}
-                    </div>
-                    <span className="text-sm font-semibold text-ink-muted">
-                      {getRatingLabel(selectedStudent)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <button
-                aria-label="Cerrar informacion del estudiante"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-ink-muted transition duration-200 hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
-                type="button"
-                onClick={handleCloseStudentModal}
-              >
-                <X aria-hidden="true" className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
-              <div className="rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-4 py-4">
-                <div className="flex items-center gap-2">
-                  <Building2
-                    aria-hidden="true"
-                    className="h-4.5 w-4.5 text-primary"
-                  />
-                  <p className="text-sm font-semibold text-ink">
-                    Universidad
-                  </p>
-                </div>
-                <div className="mt-3 flex items-center gap-3">
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-[1.1rem] border border-slate-200 bg-white">
-                    {selectedStudent.universityLogoSrc ? (
+            <button
+              aria-label="Cerrar informacion del estudiante"
+              className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-ink-muted transition duration-200 hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+              type="button"
+              onClick={handleCloseStudentModal}
+            >
+              <X aria-hidden="true" className="h-4 w-4" />
+            </button>
+            <div className="rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-4 py-4 pr-14 sm:px-5 sm:py-5">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex min-w-0 items-start gap-4">
+                  <div className="flex h-[5rem] w-[5rem] shrink-0 items-center justify-center overflow-hidden rounded-[1.4rem] bg-primary/10 ring-4 ring-primary/10">
+                    {selectedStudent.avatarSrc ? (
                       <img
-                        alt={getStudentUniversityLogoAlt(selectedStudent)}
-                        className="h-full w-full object-contain p-1.5"
+                        alt={selectedStudent.avatarAlt}
+                        className="h-full w-full object-cover"
                         decoding="async"
-                        src={getOptimizedLogoUrl(
-                          selectedStudent.universityLogoSrc,
-                          180,
-                          180,
+                        src={getOptimizedAvatarUrl(
+                          selectedStudent.avatarSrc,
+                          220,
                         )}
                       />
                     ) : (
-                      <Building2
-                        aria-hidden="true"
-                        className="h-5 w-5 text-primary"
-                      />
+                      <span className="text-xl font-extrabold uppercase text-primary">
+                        {getStudentInitials(selectedStudent)}
+                      </span>
                     )}
                   </div>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-ink">
-                      {selectedStudent.universityName}
-                    </p>
-                    <p className="text-sm leading-6 text-ink-muted">
-                      {getUniversityLocation(selectedStudent)}
-                    </p>
+                    <h2
+                      className="font-headline text-2xl font-extrabold tracking-tight text-ink"
+                      id="patient-student-modal-title"
+                    >
+                      {getStudentFullName(selectedStudent)}
+                    </h2>
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-semibold text-ink-muted">
+                        Semestre {selectedStudent.semester}
+                      </span>
+                      <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200">
+                        Estudiante Verificado
+                      </span>
+                    </div>
+                    <div className="mt-3 flex min-w-0 items-center gap-3">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[1rem] border border-slate-200 bg-white">
+                        {selectedStudent.universityLogoSrc ? (
+                          <img
+                            alt={getStudentUniversityLogoAlt(selectedStudent)}
+                            className="h-full w-full object-contain p-1.5"
+                            decoding="async"
+                            src={getOptimizedLogoUrl(
+                              selectedStudent.universityLogoSrc,
+                              160,
+                              160,
+                            )}
+                          />
+                        ) : (
+                          <Building2
+                            aria-hidden="true"
+                            className="h-5 w-5 text-primary"
+                          />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-ink">
+                          {selectedStudent.universityName}
+                        </p>
+                        <p className="text-sm leading-6 text-ink-muted">
+                          {getUniversityLocation(selectedStudent)}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-4 py-4">
-                <div className="flex items-center gap-2">
-                  <UserRound
-                    aria-hidden="true"
-                    className="h-4.5 w-4.5 text-primary"
-                  />
-                  <p className="text-sm font-semibold text-ink">
-                    Descripcion profesional
+                <div className="rounded-[1.15rem] border border-slate-200 bg-white px-4 py-3 lg:min-w-[17rem]">
+                  <div className="flex items-center gap-0.5">
+                    {renderStars(selectedStudent.averageRating, 'h-5 w-5')}
+                  </div>
+                  <p className="mt-2 text-sm font-semibold text-ink">
+                    {getRatingLabel(selectedStudent)}
                   </p>
                 </div>
-                <p className="mt-2 text-sm leading-6 text-ink-muted">
-                  {getStudentBiography(selectedStudent)}
-                </p>
               </div>
             </div>
 
-            <div className="mt-4 grid gap-4 lg:grid-cols-2">
+            <div className="mt-4 grid gap-4 lg:grid-cols-3">
               <div className="rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-4 py-4">
                 <div className="flex items-center gap-2">
                   <MapPin
@@ -1071,6 +1051,20 @@ export function PatientSearchStudentsPage() {
                     </p>
                   )}
                 </div>
+              </div>
+              <div className="rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-4 py-4">
+                <div className="flex items-center gap-2">
+                  <UserRound
+                    aria-hidden="true"
+                    className="h-4.5 w-4.5 text-primary"
+                  />
+                  <p className="text-sm font-semibold text-ink">
+                    Descripcion profesional
+                  </p>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-ink-muted">
+                  {getStudentBiography(selectedStudent)}
+                </p>
               </div>
               <div className="rounded-[1.35rem] border border-slate-200/80 bg-slate-50 px-4 py-4">
                 <div className="flex items-center gap-2">
@@ -1253,7 +1247,7 @@ export function PatientSearchStudentsPage() {
                     </p>
                   ) : null}
                 </div>
-                <div className="flex flex-wrap justify-end gap-2">
+                <div className="flex flex-wrap justify-center gap-2">
                   <button
                     className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-ink-muted transition duration-300 hover:border-primary/30 hover:text-primary"
                     type="button"
