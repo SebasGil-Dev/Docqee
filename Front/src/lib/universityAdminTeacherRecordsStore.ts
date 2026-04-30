@@ -4,7 +4,7 @@ import type { UniversityTeacher } from '@/content/types';
 import { IS_TEST_MODE } from '@/lib/apiClient';
 import { readAuthSession } from '@/lib/authSession';
 import { scheduleSystemMessageDismiss } from '@/lib/systemMessages';
-import { resetUniversityAdminOverviewState } from '@/lib/universityAdminOverviewStore';
+import { syncUniversityAdminOverviewTeachersFromRecords } from '@/lib/universityAdminOverviewStore';
 import {
   listUniversityTeachers,
   toggleUniversityTeacherStatus,
@@ -419,6 +419,7 @@ async function toggleTeacherStatus(teacherId: string) {
     );
 
     setTeachers(nextTeachers);
+    syncUniversityAdminOverviewTeachersFromRecords(nextTeachers);
     await waitForMinimumToggleLock(startedAt);
     return nextStatus;
   }
@@ -445,11 +446,10 @@ async function toggleTeacherStatus(teacherId: string) {
     isReady: true,
     shouldRefresh: false,
   });
+  syncUniversityAdminOverviewTeachersFromRecords(optimisticTeachers);
 
   try {
     const result = await toggleUniversityTeacherStatus(teacherId);
-
-    resetUniversityAdminOverviewState();
 
     if (result.status !== optimisticStatus) {
       const syncedTeachers = state.teachers.map((teacher) =>
@@ -463,6 +463,7 @@ async function toggleTeacherStatus(teacherId: string) {
         isReady: true,
         shouldRefresh: false,
       });
+      syncUniversityAdminOverviewTeachersFromRecords(syncedTeachers);
     }
 
     return result.status;
@@ -480,6 +481,7 @@ async function toggleTeacherStatus(teacherId: string) {
       isReady: true,
       shouldRefresh: false,
     });
+    syncUniversityAdminOverviewTeachersFromRecords(revertedTeachers);
     return null;
   } finally {
     await waitForMinimumToggleLock(startedAt);

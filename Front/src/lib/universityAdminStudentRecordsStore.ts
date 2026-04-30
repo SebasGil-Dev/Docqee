@@ -7,7 +7,7 @@ import type {
 import { IS_TEST_MODE } from '@/lib/apiClient';
 import { readAuthSession } from '@/lib/authSession';
 import { scheduleSystemMessageDismiss } from '@/lib/systemMessages';
-import { resetUniversityAdminOverviewState } from '@/lib/universityAdminOverviewStore';
+import { syncUniversityAdminOverviewStudentsFromRecords } from '@/lib/universityAdminOverviewStore';
 import {
   deleteUniversityStudentCredential,
   editUniversityStudentCredentialEmail,
@@ -624,6 +624,7 @@ async function toggleStudentStatus(studentId: string) {
     );
 
     setStudentRecords(nextStudents, state.credentials);
+    syncUniversityAdminOverviewStudentsFromRecords(nextStudents, state.credentials);
     await waitForMinimumToggleLock(startedAt);
     return nextStatus;
   }
@@ -653,11 +654,13 @@ async function toggleStudentStatus(studentId: string) {
     isReady: true,
     shouldRefresh: false,
   });
+  syncUniversityAdminOverviewStudentsFromRecords(
+    optimisticStudents,
+    state.credentials,
+  );
 
   try {
     const result = await toggleUniversityStudentStatus(studentId);
-
-    resetUniversityAdminOverviewState();
 
     if (result.status !== optimisticStatus) {
       const syncedStudents = state.students.map((student) =>
@@ -671,6 +674,10 @@ async function toggleStudentStatus(studentId: string) {
         isReady: true,
         shouldRefresh: false,
       });
+      syncUniversityAdminOverviewStudentsFromRecords(
+        syncedStudents,
+        state.credentials,
+      );
     }
 
     return result.status;
@@ -688,6 +695,10 @@ async function toggleStudentStatus(studentId: string) {
       isReady: true,
       shouldRefresh: false,
     });
+    syncUniversityAdminOverviewStudentsFromRecords(
+      revertedStudents,
+      state.credentials,
+    );
     return null;
   } finally {
     await waitForMinimumToggleLock(startedAt);
@@ -751,6 +762,7 @@ async function editStudentCredentialEmail(credentialId: string, email: string) {
 async function sendStudentCredential(credentialId: string) {
   if (IS_TEST_MODE) {
     markCredentialAsSent(credentialId);
+    syncUniversityAdminOverviewStudentsFromRecords(state.students, state.credentials);
     return 'TempStudent123!';
   }
 
@@ -763,7 +775,7 @@ async function sendStudentCredential(credentialId: string) {
     const result = await sendUniversityStudentCredential(credentialId);
 
     await loadRuntimeState(true);
-    resetUniversityAdminOverviewState();
+    syncUniversityAdminOverviewStudentsFromRecords(state.students, state.credentials);
     return result.temporaryPassword;
   } catch (error) {
     patchState({
@@ -780,6 +792,7 @@ async function sendStudentCredential(credentialId: string) {
 async function resendStudentCredential(credentialId: string) {
   if (IS_TEST_MODE) {
     markCredentialAsSent(credentialId);
+    syncUniversityAdminOverviewStudentsFromRecords(state.students, state.credentials);
     return 'TempStudent123!';
   }
 
@@ -792,7 +805,7 @@ async function resendStudentCredential(credentialId: string) {
     const result = await resendUniversityStudentCredential(credentialId);
 
     await loadRuntimeState(true);
-    resetUniversityAdminOverviewState();
+    syncUniversityAdminOverviewStudentsFromRecords(state.students, state.credentials);
     return result.temporaryPassword;
   } catch (error) {
     patchState({
@@ -808,7 +821,9 @@ async function resendStudentCredential(credentialId: string) {
 
 async function sendAllStudentCredentials() {
   if (IS_TEST_MODE) {
-    return markAllCredentialsAsSent();
+    const result = markAllCredentialsAsSent();
+    syncUniversityAdminOverviewStudentsFromRecords(state.students, state.credentials);
+    return result;
   }
 
   patchState({
@@ -819,7 +834,7 @@ async function sendAllStudentCredentials() {
   try {
     const result = await sendAllUniversityStudentCredentials();
     markAllCredentialsAsSent();
-    resetUniversityAdminOverviewState();
+    syncUniversityAdminOverviewStudentsFromRecords(state.students, state.credentials);
     return result.sentCount;
   } catch (error) {
     patchState({
@@ -836,6 +851,7 @@ async function sendAllStudentCredentials() {
 async function deleteStudentCredential(credentialId: string) {
   if (IS_TEST_MODE) {
     removeStudentCredential(credentialId);
+    syncUniversityAdminOverviewStudentsFromRecords(state.students, state.credentials);
     return true;
   }
 
@@ -848,7 +864,7 @@ async function deleteStudentCredential(credentialId: string) {
     await deleteUniversityStudentCredential(credentialId);
 
     await loadRuntimeState(true);
-    resetUniversityAdminOverviewState();
+    syncUniversityAdminOverviewStudentsFromRecords(state.students, state.credentials);
     return true;
   } catch (error) {
     patchState({

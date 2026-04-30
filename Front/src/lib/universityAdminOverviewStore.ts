@@ -2,12 +2,18 @@ import { useEffect, useSyncExternalStore } from 'react';
 
 import type {
   UniversityAdminOverview,
+  UniversityCampus,
   UniversityHomeCampus,
   UniversityHomeInstitution,
   UniversityHomeStudent,
   UniversityHomeStudentSummary,
+  UniversityHomeStudentStatus,
   UniversityHomeTeacher,
   UniversityHomeTeacherSummary,
+  UniversityInstitutionProfile,
+  UniversityStudent,
+  UniversityStudentCredential,
+  UniversityTeacher,
 } from '@/content/types';
 import { IS_TEST_MODE } from '@/lib/apiClient';
 import { readAuthSession } from '@/lib/authSession';
@@ -37,6 +43,9 @@ type UseUniversityAdminOverviewStoreOptions = {
 
 const OVERVIEW_CACHE_STORAGE_KEY = 'docqee.university-admin.overview-cache';
 const OVERVIEW_CACHE_MAX_AGE_MS = 30 * 60 * 1000;
+const MAX_RECENT_STUDENTS = 5;
+const MAX_RECENT_TEACHERS = 4;
+const MAX_RECENT_CAMPUSES = 3;
 const listeners = new Set<() => void>();
 
 function createMockState(): UniversityAdminOverviewStoreState {
@@ -487,6 +496,167 @@ function patchState(partialState: Partial<UniversityAdminOverviewStoreState>) {
   });
 }
 
+function getOverviewSnapshot(): UniversityAdminOverview {
+  return {
+    activeCampusesCount: state.activeCampusesCount,
+    institution: state.institution,
+    recentCampuses: state.recentCampuses,
+    recentStudents: state.recentStudents,
+    recentTeachers: state.recentTeachers,
+    studentSummary: state.studentSummary,
+    teacherSummary: state.teacherSummary,
+  };
+}
+
+function canPatchOverviewSnapshot() {
+  return state.isReady || state.institution.name.trim().length > 0;
+}
+
+function applyOverviewPatch(
+  updater: (overview: UniversityAdminOverview) => UniversityAdminOverview,
+) {
+  if (!canPatchOverviewSnapshot()) {
+    return;
+  }
+
+  const nextOverview = updater(getOverviewSnapshot());
+
+  persistOverviewCache(nextOverview);
+  updateState({
+    ...nextOverview,
+    errorMessage: null,
+    isLoading: false,
+    isReady: true,
+    shouldRefresh: false,
+  });
+}
+
+function compareCreatedAtDescending(
+  left: { createdAt: string },
+  right: { createdAt: string },
+) {
+  return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
+}
+
+function toHomeCampus(campus: UniversityCampus): UniversityHomeCampus {
+  return {
+    city: campus.city,
+    id: campus.id,
+    locality: campus.locality,
+    name: campus.name,
+    status: campus.status,
+  };
+}
+
+function toHomeInstitution(
+  profile: UniversityInstitutionProfile,
+): UniversityHomeInstitution {
+  return {
+    adminFirstName: profile.adminFirstName,
+    adminLastName: profile.adminLastName,
+    logoAlt: profile.logoAlt,
+    logoSrc: profile.logoSrc,
+    mainCity: profile.mainCity,
+    mainLocality: profile.mainLocality,
+    name: profile.name,
+  };
+}
+
+function getStudentDisplayStatus(
+  student: UniversityStudent,
+  credentials?: UniversityStudentCredential[],
+): UniversityHomeStudentStatus {
+  const credential = credentials?.find((item) => item.studentId === student.id);
+
+  if (credential) {
+    return credential.deliveryStatus === 'generated' ? 'pending' : student.status;
+  }
+
+  return student.credentialId ? 'pending' : student.status;
+}
+
+function toHomeStudent(
+  student: UniversityStudent,
+  credentials?: UniversityStudentCredential[],
+): UniversityHomeStudent {
+  return {
+    createdAt: student.createdAt,
+    displayStatus: getStudentDisplayStatus(student, credentials),
+    documentNumber: student.documentNumber,
+    documentTypeCode: student.documentTypeCode,
+    firstName: student.firstName,
+    id: student.id,
+    lastName: student.lastName,
+    semester: student.semester,
+  };
+}
+
+function toHomeTeacher(teacher: UniversityTeacher): UniversityHomeTeacher {
+  return {
+    createdAt: teacher.createdAt,
+    documentNumber: teacher.documentNumber,
+    documentTypeCode: teacher.documentTypeCode,
+    firstName: teacher.firstName,
+    id: teacher.id,
+    lastName: teacher.lastName,
+    status: teacher.status,
+  };
+}
+
+function calculateStudentSummary(
+  students: UniversityStudent[],
+  credentials: UniversityStudentCredential[],
+): UniversityHomeStudentSummary {
+  const generatedCredentialStudentIds = new Set(
+    credentials
+      .filter((credential) => credential.deliveryStatus === 'generated')
+      .map((credential) => credential.studentId),
+  );
+
+  return students.reduce<UniversityHomeStudentSummary>(
+    (summary, student) => {
+      if (generatedCredentialStudentIds.has(student.id)) {
+        summary.pending += 1;
+      } else if (student.status === 'active') {
+        summary.active += 1;
+      } else {
+        summary.inactive += 1;
+      }
+
+      summary.total += 1;
+      return summary;
+    },
+    {
+      active: 0,
+      inactive: 0,
+      pending: 0,
+      total: 0,
+    },
+  );
+}
+
+function calculateTeacherSummary(
+  teachers: UniversityTeacher[],
+): UniversityHomeTeacherSummary {
+  return teachers.reduce<UniversityHomeTeacherSummary>(
+    (summary, teacher) => {
+      if (teacher.status === 'active') {
+        summary.active += 1;
+      } else {
+        summary.inactive += 1;
+      }
+
+      summary.total += 1;
+      return summary;
+    },
+    {
+      active: 0,
+      inactive: 0,
+      total: 0,
+    },
+  );
+}
+
 function setOverview(
   overview: UniversityAdminOverview,
   options?: {
@@ -552,6 +722,90 @@ async function loadRuntimeState(forceRefresh = false) {
 
 export async function refreshUniversityAdminOverviewState() {
   await loadRuntimeState(true);
+}
+
+export function syncUniversityAdminOverviewStudentsFromRecords(
+  students: UniversityStudent[],
+  credentials: UniversityStudentCredential[],
+) {
+  applyOverviewPatch((overview) => ({
+    ...overview,
+    recentStudents: [...students]
+      .sort(compareCreatedAtDescending)
+      .slice(0, MAX_RECENT_STUDENTS)
+      .map((student) => toHomeStudent(student, credentials)),
+    studentSummary: calculateStudentSummary(students, credentials),
+  }));
+}
+
+export function syncUniversityAdminOverviewTeachersFromRecords(
+  teachers: UniversityTeacher[],
+) {
+  applyOverviewPatch((overview) => ({
+    ...overview,
+    recentTeachers: [...teachers]
+      .sort(compareCreatedAtDescending)
+      .slice(0, MAX_RECENT_TEACHERS)
+      .map(toHomeTeacher),
+    teacherSummary: calculateTeacherSummary(teachers),
+  }));
+}
+
+export function syncUniversityAdminOverviewInstitutionProfile(
+  profile: UniversityInstitutionProfile,
+) {
+  applyOverviewPatch((overview) => ({
+    ...overview,
+    activeCampusesCount: profile.campuses.filter(
+      (campus) => campus.status === 'active',
+    ).length,
+    institution: toHomeInstitution(profile),
+    recentCampuses: profile.campuses.slice(0, MAX_RECENT_CAMPUSES).map(toHomeCampus),
+  }));
+}
+
+export function patchUniversityAdminOverviewStudentBulkCreated(
+  createdStudents: number,
+  createdCredentials: number,
+) {
+  if (createdStudents <= 0) {
+    return;
+  }
+
+  applyOverviewPatch((overview) => {
+    const pendingCreated = Math.max(
+      0,
+      Math.min(createdStudents, createdCredentials),
+    );
+    const activeCreated = createdStudents - pendingCreated;
+
+    return {
+      ...overview,
+      studentSummary: {
+        active: overview.studentSummary.active + activeCreated,
+        inactive: overview.studentSummary.inactive,
+        pending: overview.studentSummary.pending + pendingCreated,
+        total: overview.studentSummary.total + createdStudents,
+      },
+    };
+  });
+}
+
+export function patchUniversityAdminOverviewTeacherBulkCreated(
+  createdTeachers: number,
+) {
+  if (createdTeachers <= 0) {
+    return;
+  }
+
+  applyOverviewPatch((overview) => ({
+    ...overview,
+    teacherSummary: {
+      active: overview.teacherSummary.active + createdTeachers,
+      inactive: overview.teacherSummary.inactive,
+      total: overview.teacherSummary.total + createdTeachers,
+    },
+  }));
 }
 
 export function resetUniversityAdminOverviewState() {
