@@ -24,7 +24,10 @@ import { useStableRowsPerPage } from '@/hooks/useStableRowsPerPage';
 import { classNames } from '@/lib/classNames';
 import { usePatientModuleStore } from '@/lib/patientModuleStore';
 
-type VisibleRequestStatus = Exclude<PatientRequestStatus, 'CERRADA'>;
+type VisibleRequestStatus = Exclude<
+  PatientRequestStatus,
+  'CERRADA' | 'RECHAZADA'
+>;
 type RequestStatusFilter = VisibleRequestStatus | 'all';
 
 const requestStatusOptions: Array<{
@@ -34,7 +37,6 @@ const requestStatusOptions: Array<{
   { label: 'Todas', value: 'all' },
   { label: 'Pendiente', value: 'PENDIENTE' },
   { label: 'Aceptada', value: 'ACEPTADA' },
-  { label: 'Rechazada', value: 'RECHAZADA' },
   { label: 'Cancelada', value: 'CANCELADA' },
 ];
 
@@ -127,7 +129,11 @@ export function PatientRequestsPage() {
   useAutoDismissSystemMessage(successMessage, () => setSuccessMessage(null));
 
   const visibleRequests = useMemo(
-    () => requests.filter((request) => request.status !== 'CERRADA'),
+    () =>
+      requests.filter(
+        (request) =>
+          request.status !== 'CERRADA' && request.status !== 'RECHAZADA',
+      ),
     [requests],
   );
 

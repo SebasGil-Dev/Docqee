@@ -559,7 +559,11 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     estado: "PENDIENTE" | "ACEPTADA" | "RECHAZADA" | "CERRADA" | "CANCELADA";
     conversacion?: { estado?: string } | null;
   }) {
-    return request.estado !== "CERRADA" && request.conversacion?.estado !== "CERRADA";
+    return (
+      request.estado !== "RECHAZADA" &&
+      request.estado !== "CERRADA" &&
+      request.conversacion?.estado !== "CERRADA"
+    );
   }
 
   private getStudentDirectoryLocation(student: StudentDirectoryRecord) {
@@ -653,7 +657,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     const solicitudes = await this.prisma.solicitud.findMany({
       where: {
         id_cuenta_paciente: patientAccountId,
-        estado: { not: "CERRADA" },
+        estado: { notIn: ["RECHAZADA", "CERRADA"] },
         OR: [
           { conversacion: { is: null } },
           { conversacion: { isNot: { estado: "CERRADA" } } },

@@ -155,13 +155,16 @@ describe('Patient pages', () => {
     });
   });
 
-  it('oculta una solicitud aceptada cuando el paciente la cierra', async () => {
+  it('oculta solicitudes cerradas o rechazadas en la tabla del paciente', async () => {
     const user = userEvent.setup();
 
     renderPatientApp([ROUTES.patientRequests]);
 
     expect(
       screen.queryByTestId('patient-request-row-patient-request-3'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('patient-request-row-patient-request-4'),
     ).not.toBeInTheDocument();
 
     await user.click(

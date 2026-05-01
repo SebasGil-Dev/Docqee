@@ -485,6 +485,18 @@ function createMockState(): PatientStoreState {
       studentName: 'Camila Perez',
       universityName: 'Universidad Metropolitana',
     },
+    {
+      appointmentsCount: 0,
+      conversationId: null,
+      id: 'patient-request-4',
+      reason: 'Buscaba una valoracion inicial para ortodoncia.',
+      responseAt: '2026-04-06T10:30:00.000Z',
+      sentAt: '2026-04-05T14:15:00.000Z',
+      status: 'RECHAZADA',
+      studentId: 'patient-student-4',
+      studentName: 'Nicolas Herrera',
+      universityName: 'Universidad de los Andes Clinica',
+    },
   ];
 
   const conversations: PatientConversation[] = [

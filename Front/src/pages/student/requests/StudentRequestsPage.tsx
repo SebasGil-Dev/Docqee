@@ -25,7 +25,11 @@ import { getOptimizedAvatarUrl } from '@/lib/imageOptimization';
 import { getStarFillRatio } from '@/lib/ratings';
 import { useStudentModuleStore } from '@/lib/studentModuleStore';
 
-type RequestStatusFilter = StudentRequestStatus | 'all';
+type VisibleRequestStatusFilter = Exclude<
+  StudentRequestStatus,
+  'CERRADA' | 'CANCELADA' | 'RECHAZADA'
+>;
+type RequestStatusFilter = VisibleRequestStatusFilter | 'all';
 
 type PendingRequestConfirmation = {
   message: string;
@@ -51,7 +55,6 @@ const requestStatusOptions: {
   { label: 'Todas', value: 'all' },
   { label: 'Pendiente', value: 'PENDIENTE' },
   { label: 'Aceptada', value: 'ACEPTADA' },
-  { label: 'Rechazada', value: 'RECHAZADA' },
 ];
 
 const DEFAULT_ROWS_PER_PAGE = 6;
