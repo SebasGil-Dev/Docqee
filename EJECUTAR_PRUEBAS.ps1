@@ -78,24 +78,24 @@ if ($LASTEXITCODE -ne 0) {
     Exit-WithPause 1
 }
 
-$orderedTests = @(
-    "e2e/auth/login.spec.ts",
-    "e2e/solicitudes/solicitudes.spec.ts",
-    "e2e/chat/chat.spec.ts",
-    "e2e/citas/citas.spec.ts",
-    "e2e/valoraciones/valoraciones.spec.ts",
-    "e2e/perfil/perfil.spec.ts"
+$orderedSuites = @(
+    [PSCustomObject]@{ Name = "auth"; Label = "E2E-01 a E2E-05 | auth"; Path = "e2e/auth/login.spec.ts" },
+    [PSCustomObject]@{ Name = "solicitudes"; Label = "E2E-06 a E2E-10 | solicitudes"; Path = "e2e/solicitudes/solicitudes.spec.ts" },
+    [PSCustomObject]@{ Name = "chat"; Label = "E2E-11 a E2E-12 | chat"; Path = "e2e/chat/chat.spec.ts" },
+    [PSCustomObject]@{ Name = "citas"; Label = "E2E-13 a E2E-20 | citas"; Path = "e2e/citas/citas.spec.ts" },
+    [PSCustomObject]@{ Name = "valoraciones"; Label = "E2E-21 a E2E-23 | valoraciones"; Path = "e2e/valoraciones/valoraciones.spec.ts" },
+    [PSCustomObject]@{ Name = "perfil"; Label = "E2E-24 a E2E-27 | perfil"; Path = "e2e/perfil/perfil.spec.ts" }
 )
 
-$missingTests = $orderedTests | Where-Object {
-    -not (Test-Path (Join-Path $frontPath $_))
+$missingTests = $orderedSuites | Where-Object {
+    -not (Test-Path (Join-Path $frontPath $_.Path))
 }
 
 if ($missingTests.Count -gt 0) {
     Write-Host ""
     Write-Host " ERROR: Faltan archivos de pruebas E2E:" -ForegroundColor Red
-    foreach ($testPath in $missingTests) {
-        Write-Host " - $testPath" -ForegroundColor Yellow
+    foreach ($suite in $missingTests) {
+        Write-Host " - $($suite.Path)" -ForegroundColor Yellow
     }
     Exit-WithPause 1
 }
@@ -105,27 +105,81 @@ Write-Host " Ejecutando pruebas... (~3 minutos)" -ForegroundColor Yellow
 Write-Host " Orden: auth -> solicitudes -> chat -> citas -> valoraciones -> perfil" -ForegroundColor DarkCyan
 Write-Host ""
 
-& $pw test @orderedTests
+$blobReportDir = Join-Path $frontPath ("blob-report-ordered-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
+$failedSuites = @()
+$previousBlobOutputDir = $env:PLAYWRIGHT_BLOB_OUTPUT_DIR
+$previousBlobOutputName = $env:PLAYWRIGHT_BLOB_OUTPUT_NAME
+$previousBlobDoNotRemove = $env:PWTEST_BLOB_DO_NOT_REMOVE
 
-$ok = ($LASTEXITCODE -eq 0)
+try {
+    $env:PLAYWRIGHT_BLOB_OUTPUT_DIR = $blobReportDir
+    $env:PWTEST_BLOB_DO_NOT_REMOVE = "1"
+
+    Write-Host " Preparando sesiones..." -ForegroundColor Yellow
+    $env:PLAYWRIGHT_BLOB_OUTPUT_NAME = "00-setup.zip"
+    & $pw test --project=setup --reporter=blob,list
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host ""
+        Write-Host " ERROR: fallo el setup de autenticacion. No se ejecutan las pruebas." -ForegroundColor Red
+        Exit-WithPause 1
+    }
+
+    for ($i = 0; $i -lt $orderedSuites.Count; $i++) {
+        $suite = $orderedSuites[$i]
+        $order = "{0:D2}" -f ($i + 1)
+
+        Write-Host ""
+        Write-Host " Ejecutando $($suite.Label)..." -ForegroundColor Cyan
+
+        $env:PLAYWRIGHT_BLOB_OUTPUT_NAME = "$order-$($suite.Name).zip"
+        & $pw test $($suite.Path) --project=chromium --no-deps --reporter=blob,list
+
+        if ($LASTEXITCODE -ne 0) {
+            $failedSuites += $suite.Label
+            Write-Host " Fallo: $($suite.Label)" -ForegroundColor Red
+        } else {
+            Write-Host " OK: $($suite.Label)" -ForegroundColor Green
+        }
+    }
+}
+finally {
+    $env:PLAYWRIGHT_BLOB_OUTPUT_DIR = $previousBlobOutputDir
+    $env:PLAYWRIGHT_BLOB_OUTPUT_NAME = $previousBlobOutputName
+    $env:PWTEST_BLOB_DO_NOT_REMOVE = $previousBlobDoNotRemove
+}
+
+$ok = ($failedSuites.Count -eq 0)
 
 Write-Host ""
 if ($ok) {
     Write-Host " TODOS LOS TESTS PASARON" -ForegroundColor Green
 } else {
     Write-Host " Algunos tests fallaron - ver reporte" -ForegroundColor Red
+    foreach ($failedSuite in $failedSuites) {
+        Write-Host " - $failedSuite" -ForegroundColor Yellow
+    }
 }
 
 Write-Host ""
-Write-Host " Abriendo reporte en el navegador..." -ForegroundColor Yellow
-Start-Sleep -Seconds 1
+Write-Host " Generando reporte consolidado..." -ForegroundColor Yellow
+& $pw merge-reports --reporter html $blobReportDir
+if ($LASTEXITCODE -ne 0) {
+    Write-Host " No se pudo consolidar el reporte. Revisa: $blobReportDir" -ForegroundColor Red
+    Exit-WithPause 1
+}
 
 $reportHtml = Join-Path $frontPath "playwright-report\index.html"
 if (Test-Path $reportHtml) {
+    Write-Host " Abriendo reporte en el navegador..." -ForegroundColor Yellow
+    Start-Sleep -Seconds 1
     Start-Process $reportHtml
     Write-Host " Reporte abierto: $reportHtml" -ForegroundColor DarkGreen
 } else {
     & $pw show-report --port 9330
 }
 
-Exit-WithPause 0
+if ($ok) {
+    Exit-WithPause 0
+}
+
+Exit-WithPause 1
