@@ -766,8 +766,8 @@ export function StudentRequestsPage() {
         </SurfaceCard>
       </div>
       <AdminPanelCard
-        className="flex min-h-0 flex-1"
-        panelClassName="bg-[#f4f8ff]"
+        className="flex min-h-0 w-full min-w-0 flex-1"
+        panelClassName="h-full w-full min-w-0 bg-[#f4f8ff]"
         shellPaddingClassName="p-0.5 sm:p-1"
       >
         <div className="border-b border-slate-200/80 px-4 py-3.5 sm:px-4 sm:py-2.5">
@@ -880,9 +880,9 @@ export function StudentRequestsPage() {
         {filteredRequests.length > 0 ? (
           <div
             ref={tableViewportRef}
-            className="min-h-0 flex-1 overflow-hidden"
+            className="min-h-0 w-full min-w-0 flex-1 overflow-hidden bg-white"
           >
-            <table className="w-full table-fixed">
+            <table className="h-auto w-full min-w-full table-fixed">
               <thead
                 ref={tableHeaderRef}
                 className="sticky top-0 z-10 bg-slate-100 text-left"
