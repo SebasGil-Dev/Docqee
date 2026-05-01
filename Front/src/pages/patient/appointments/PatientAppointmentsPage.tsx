@@ -113,6 +113,13 @@ function getAppointmentDisplayStatus(
     return 'RECHAZADA';
   }
 
+  if (
+    appointment.status === 'ACEPTADA' &&
+    hasAppointmentEnded(appointment, currentTimestamp)
+  ) {
+    return 'FINALIZADA';
+  }
+
   return appointment.status;
 }
 

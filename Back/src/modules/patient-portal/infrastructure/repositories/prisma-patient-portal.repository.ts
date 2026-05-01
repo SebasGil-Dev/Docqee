@@ -29,6 +29,9 @@ import { PatientPortalRepository } from "../../domain/repositories/patient-porta
 
 const PATIENT_RESCHEDULE_RESPONSE_ERROR_MESSAGE =
   "No pudimos responder la propuesta porque ya no cumple las reglas de agenda. Coordina con el estudiante una nueva fecha.";
+const APPOINTMENT_CHANGE_NOTICE_HOURS = 48;
+const APPOINTMENT_CHANGE_NOTICE_MS =
+  APPOINTMENT_CHANGE_NOTICE_HOURS * 60 * 60 * 1000;
 const PATIENT_CANCEL_NOTICE_ERROR_MESSAGE =
   "No puedes cancelar esta cita porque faltan menos de 48 horas para la hora programada.";
 
@@ -351,6 +354,47 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         "Esta propuesta ya vencio y no puede ser aceptada.",
       );
     }
+  }
+
+  private assertAppointmentHasMinimumNotice(
+    startAt: Date,
+    errorMessage = PATIENT_RESCHEDULE_RESPONSE_ERROR_MESSAGE,
+  ) {
+    const earliestStartAt = new Date(Date.now() + APPOINTMENT_CHANGE_NOTICE_MS);
+
+    if (
+      this.floorDateToMinute(startAt) <=
+      this.floorDateToMinute(earliestStartAt)
+    ) {
+      throw new BadRequestException(errorMessage);
+    }
+  }
+
+  private assertAppointmentCanBeCancelled(startAt: Date) {
+    this.assertAppointmentHasMinimumNotice(
+      startAt,
+      PATIENT_CANCEL_NOTICE_ERROR_MESSAGE,
+    );
+  }
+
+  private async finalizeEndedAcceptedAppointmentsForPatient(
+    patientAccountId: number,
+  ) {
+    const finalizedAt = new Date();
+
+    await this.prisma.cita.updateMany({
+      where: {
+        estado: "ACEPTADA",
+        fecha_hora_fin: { lte: finalizedAt },
+        solicitud: { id_cuenta_paciente: patientAccountId },
+        reprogramacion_cita: { none: { estado: "PENDIENTE" } },
+      },
+      data: {
+        estado: "FINALIZADA",
+        finalizada_at: finalizedAt,
+        fecha_actualizacion: finalizedAt,
+      },
+    });
   }
 
   private isDatabaseConstraintError(error: unknown) {
@@ -1124,6 +1168,8 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
   async getDashboard(
     patientAccountId: number,
   ): Promise<PatientPortalDashboardDto> {
+    await this.finalizeEndedAcceptedAppointmentsForPatient(patientAccountId);
+
     const patient = await this.prisma.cuenta_paciente.findUnique({
       where: { id_cuenta: patientAccountId },
       include: {
@@ -1696,6 +1742,10 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       throw new BadRequestException("Solo puedes cancelar citas aceptadas.");
     }
 
+    if (payload.status === "CANCELADA") {
+      this.assertAppointmentCanBeCancelled(cita.fecha_hora_inicio);
+    }
+
     const responseDate = new Date();
     const updateInclude = {
       tipo_cita: true,
@@ -1736,6 +1786,10 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         pendingReschedule?.nueva_fecha_hora_fin ?? cita.fecha_hora_fin;
 
       this.assertAppointmentHasNotEnded(acceptedEndAt, responseDate);
+
+      if (pendingReschedule) {
+        this.assertAppointmentHasMinimumNotice(acceptedStartAt);
+      }
 
       const studentConflict = await this.checkStudentAppointmentConflicts(
         cita.solicitud.id_cuenta_estudiante,
@@ -1995,7 +2049,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       where: {
         id_cita: appointmentId,
         solicitud: { id_cuenta_paciente: patientAccountId },
-        estado: "FINALIZADA",
+        estado: { in: ["ACEPTADA", "FINALIZADA"] },
       },
       include: {
         tipo_cita: true,
@@ -2017,8 +2071,25 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
 
     if (!cita) {
       throw new NotFoundException(
-        "La cita no existe, no esta finalizada o no te pertenece.",
+        "La cita no existe o no te pertenece.",
       );
+    }
+
+    if (cita.estado !== "FINALIZADA") {
+      const finalizedAt = new Date();
+
+      if (cita.fecha_hora_fin > finalizedAt) {
+        throw new BadRequestException("La cita aun no ha finalizado.");
+      }
+
+      await this.prisma.cita.update({
+        where: { id_cita: appointmentId },
+        data: {
+          estado: "FINALIZADA",
+          finalizada_at: finalizedAt,
+          fecha_actualizacion: finalizedAt,
+        },
+      });
     }
 
     if (cita.valoracion.length > 0) {
@@ -2049,7 +2120,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       respondedAt: cita.respondida_at?.toISOString() ?? null,
       siteName: cita.sede.nombre,
       startAt: cita.fecha_hora_inicio.toISOString(),
-      status: cita.estado,
+      status: "FINALIZADA",
       studentName: `${cita.solicitud.cuenta_estudiante.persona.nombres} ${cita.solicitud.cuenta_estudiante.persona.apellidos}`,
       teacherName: `${cita.docente_universidad.docente.nombres} ${cita.docente_universidad.docente.apellidos}`,
       universityName: cita.solicitud.cuenta_estudiante.universidad.nombre,

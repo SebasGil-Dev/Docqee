@@ -1700,6 +1700,7 @@ export function StudentAppointmentsPage() {
                   return (
                     <button
                       key={treatment.id}
+                      data-testid={`student-appointment-treatment-option-${treatment.treatmentTypeId}`}
                       className={classNames(
                         'rounded-[0.85rem] border px-2 py-1.5 text-left transition duration-200',
                         isAppointmentDialogReadOnly || isRescheduleMode

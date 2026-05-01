@@ -313,6 +313,8 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
   }
 
   async getDashboard(studentAccountId: number): Promise<StudentPortalDashboardDto> {
+    await this.finalizeEndedAcceptedAppointmentsForStudent(studentAccountId);
+
     const [student, solicitudes, bloques, valoraciones, tiposCita] = await Promise.all([
       this.prisma.cuenta_estudiante.findUnique({
         where: { id_cuenta: studentAccountId },
@@ -1393,9 +1395,29 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
   private assertAppointmentCanBeCancelled(startAt: Date) {
     const earliestStartAt = new Date(Date.now() + APPOINTMENT_CHANGE_NOTICE_MS);
 
-    if (this.floorDateToMinute(startAt) < this.floorDateToMinute(earliestStartAt)) {
+    if (this.floorDateToMinute(startAt) <= this.floorDateToMinute(earliestStartAt)) {
       throw new BadRequestException(STUDENT_CANCEL_NOTICE_ERROR_MESSAGE);
     }
+  }
+
+  private async finalizeEndedAcceptedAppointmentsForStudent(
+    studentAccountId: number,
+  ) {
+    const finalizedAt = new Date();
+
+    await this.prisma.cita.updateMany({
+      where: {
+        estado: 'ACEPTADA',
+        fecha_hora_fin: { lte: finalizedAt },
+        solicitud: { id_cuenta_estudiante: studentAccountId },
+        reprogramacion_cita: { none: { estado: 'PENDIENTE' } },
+      },
+      data: {
+        estado: 'FINALIZADA',
+        finalizada_at: finalizedAt,
+        fecha_actualizacion: finalizedAt,
+      },
+    });
   }
 
   private isDatabaseConstraintError(error: unknown) {
@@ -1751,6 +1773,7 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
 
     this.assertAppointmentDateRange(startAt, endAt);
     this.assertAppointmentStartsInFuture(startAt);
+    this.assertAppointmentHasMinimumNotice(startAt);
 
     const conflict = await this.checkAppointmentConflicts(studentAccountId, startAt, endAt, appointmentId);
     if (conflict) {
@@ -1986,7 +2009,11 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
           data: {
             estado: status as any,
             ...(status === 'FINALIZADA'
-              ? { finalizada_at: responseDate, respondida_at: responseDate }
+              ? {
+                  finalizada_at: responseDate,
+                  fecha_actualizacion: responseDate,
+                  respondida_at: responseDate,
+                }
               : {}),
           },
           include: this.getCitaWithRelationsArgs(),
@@ -2058,7 +2085,7 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       where: {
         id_cita: appointmentId,
         solicitud: { id_cuenta_estudiante: studentAccountId },
-        estado: 'FINALIZADA',
+        estado: { in: ['ACEPTADA', 'FINALIZADA'] },
       },
       include: {
         tipo_cita: true,
@@ -2074,7 +2101,24 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     });
 
     if (!cita) {
-      throw new NotFoundException('La cita no existe, no esta finalizada o no te pertenece.');
+      throw new NotFoundException('La cita no existe o no te pertenece.');
+    }
+
+    if (cita.estado !== 'FINALIZADA') {
+      const finalizedAt = new Date();
+
+      if (cita.fecha_hora_fin > finalizedAt) {
+        throw new BadRequestException('La cita aun no ha finalizado.');
+      }
+
+      await this.prisma.cita.update({
+        where: { id_cita: appointmentId },
+        data: {
+          estado: 'FINALIZADA',
+          finalizada_at: finalizedAt,
+          fecha_actualizacion: finalizedAt,
+        },
+      });
     }
 
     if (cita.valoracion.length > 0) {
@@ -2107,7 +2151,7 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       siteId: String(cita.id_sede),
       siteName: cita.sede.nombre,
       startAt: cita.fecha_hora_inicio.toISOString(),
-      status: cita.estado,
+      status: 'FINALIZADA',
       supervisorId: String(cita.id_docente_universidad),
       supervisorName: `${cita.docente_universidad.docente.nombres} ${cita.docente_universidad.docente.apellidos}`,
       treatmentIds: cita.cita_tratamiento.map((ct) => String(ct.id_tipo_tratamiento)),

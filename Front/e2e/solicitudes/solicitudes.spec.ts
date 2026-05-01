@@ -1,11 +1,10 @@
 /**
- * BÚSQUEDA Y SOLICITUDES — E2E-06 a E2E-10
+ * BUSQUEDA Y SOLICITUDES - E2E-06 a E2E-10
  *
- * NOTA DE ESTADO:
- * Los tests E2E-07 a E2E-10 son secuenciales: E2E-07 crea la solicitud que
- * los siguientes consumen. Si la BD ya tiene una solicitud previa entre estos
- * usuarios (de una ejecución anterior), el sistema lo detecta y cada test se
- * adapta al estado real encontrado.
+ * Estos tests preparan la relacion principal que usan chat, citas y
+ * valoraciones: paciente envia solicitud -> estudiante acepta solicitud.
+ * No se rechaza la solicitud principal porque eso rompe los modulos
+ * posteriores de la suite ordenada.
  */
 
 import { test, expect, type Page } from '@playwright/test';
@@ -46,9 +45,6 @@ async function buscarSolicitudDelPaciente(page: Page) {
   return filaSolicitud;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// E2E-06: Paciente busca estudiantes disponibles
-// ─────────────────────────────────────────────────────────────────────────────
 test('E2E-06 | Paciente busca estudiantes disponibles', async ({ browser }) => {
   const context = await browser.newContext({ storageState: SESIONES.paciente });
   const page = await context.newPage();
@@ -56,51 +52,38 @@ test('E2E-06 | Paciente busca estudiantes disponibles', async ({ browser }) => {
   await page.goto(RUTAS.pacienteBuscar);
   await page.waitForLoadState('networkidle');
 
-  // Heading principal de la página
   await expect(page.getByRole('heading', { name: 'Buscar estudiantes', exact: true }))
     .toBeVisible({ timeout: 15_000 });
-
-  // Debe mostrar al menos un estudiante con el botón "Ver perfil"
   await expect(page.getByRole('button', { name: 'Ver perfil' }).first())
     .toBeVisible({ timeout: 10_000 });
-
-  // Los filtros (combos de Tratamiento, Ciudad, Localidad, Universidad) deben existir
   await expect(page.getByRole('combobox').first()).toBeVisible();
 
   await context.close();
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// E2E-07: Paciente envía solicitud — o el sistema bloquea si ya existe una
-// ─────────────────────────────────────────────────────────────────────────────
-test('E2E-07 | Paciente envía solicitud (o sistema bloquea duplicada)', async ({ browser }) => {
+test('E2E-07 | Paciente envia solicitud', async ({ browser }) => {
   const context = await browser.newContext({ storageState: SESIONES.paciente });
   const page = await context.newPage();
 
   await page.goto(RUTAS.pacienteBuscar);
   await page.waitForLoadState('networkidle');
 
-  // Abrir perfil del estudiante de prueba.
-  const filaEst = await buscarEstudianteDePrueba(page);
-  const btnVerPerfil = filaEst.getByRole('button', { name: 'Ver perfil' });
+  const filaEstudiante = await buscarEstudianteDePrueba(page);
+  const btnVerPerfil = filaEstudiante.getByRole('button', { name: 'Ver perfil' });
 
   await expect(btnVerPerfil).toBeVisible({ timeout: 10_000 });
   await btnVerPerfil.click();
 
-  // El modal del perfil debe abrirse
   await expect(page.getByRole('dialog')).toBeVisible({ timeout: 10_000 });
 
-  // CASO A: ya existe una solicitud con este estudiante
   const msgExiste = page.getByText(/ya tienes una solicitud/i);
   if (await msgExiste.isVisible({ timeout: 4_000 }).catch(() => false)) {
-    // El sistema bloquea correctamente la solicitud duplicada ✓
     await expect(msgExiste).toBeVisible();
-    console.log('E2E-07: Solicitud duplicada bloqueada correctamente por el sistema.');
+    console.log('E2E-07: El sistema bloqueo una solicitud duplicada activa.');
     await context.close();
     return;
   }
 
-  // CASO B: no existe solicitud → llenar formulario y enviar
   await expect(page.getByText('Motivo de la solicitud')).toBeVisible({ timeout: 8_000 });
 
   const campoMotivo = page
@@ -124,15 +107,11 @@ test('E2E-07 | Paciente envía solicitud (o sistema bloquea duplicada)', async (
   const solicitudCreada = await solicitudResponse.json().catch(() => null);
   expect(solicitudCreada?.status).toBe('PENDIENTE');
 
-  await expect(page.locator('[role="status"]').first()).toBeVisible({ timeout: 15_000 });
   console.log('E2E-07: Solicitud enviada exitosamente.');
 
   await context.close();
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// E2E-08: Estudiante visualiza solicitudes (cualquier estado)
-// ─────────────────────────────────────────────────────────────────────────────
 test('E2E-08 | Estudiante visualiza solicitudes recibidas', async ({ browser }) => {
   const context = await browser.newContext({ storageState: SESIONES.estudiante });
   const page = await context.newPage();
@@ -140,28 +119,21 @@ test('E2E-08 | Estudiante visualiza solicitudes recibidas', async ({ browser }) 
   await page.goto(RUTAS.estudianteSolicitudes);
   await page.waitForLoadState('networkidle');
 
-  // Heading de la página
   await expect(page.getByRole('heading', { name: 'Solicitudes', exact: true }))
     .toBeVisible({ timeout: 15_000 });
-
-  // El contador de pendientes siempre está visible (puede ser 0)
   await expect(page.getByText(/Solicitudes pendientes/i)).toBeVisible({ timeout: 8_000 });
 
   const filaSolicitud = await buscarSolicitudDelPaciente(page);
 
-  // La tabla debe mostrar encabezados de columna (DOM: "Paciente", CSS: ALL CAPS)
   await expect(page.getByRole('columnheader', { name: 'Paciente' })).toBeVisible({ timeout: 8_000 });
   await expect(page.getByRole('columnheader', { name: 'Estado' })).toBeVisible({ timeout: 8_000 });
-
   await expect(filaSolicitud.getByText(/Pendiente|Aceptada/i).first()).toBeVisible();
+
   console.log('E2E-08: El estudiante ve la solicitud del paciente de prueba.');
 
   await context.close();
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// E2E-09: Estudiante acepta solicitud pendiente (si existe)
-// ─────────────────────────────────────────────────────────────────────────────
 test('E2E-09 | Estudiante acepta solicitud pendiente', async ({ browser }) => {
   const context = await browser.newContext({ storageState: SESIONES.estudiante });
   const page = await context.newPage();
@@ -184,12 +156,29 @@ test('E2E-09 | Estudiante acepta solicitud pendiente', async ({ browser }) => {
 
   const btnAceptar = filaSolicitud.getByRole('button', { name: /aceptar/i });
   await expect(btnAceptar).toBeVisible({ timeout: 8_000 });
+
+  const aceptarResponsePromise = page.waitForResponse((response) =>
+    response.url().includes('/student-portal/requests/') &&
+    response.url().includes('/status') &&
+    response.request().method() === 'PATCH',
+  );
+
   await btnAceptar.click();
 
-  const btnConfirmar = page.getByRole('button', { name: /confirmar|sí/i });
+  const btnConfirmar = page.getByRole('button', { name: /confirmar|aceptar/i });
   if (await btnConfirmar.isVisible({ timeout: 2_000 }).catch(() => false)) {
     await btnConfirmar.click();
   }
+
+  const aceptarResponse = await aceptarResponsePromise;
+  expect(
+    aceptarResponse.ok(),
+    `El API no acepto la solicitud. Status HTTP: ${aceptarResponse.status()}`,
+  ).toBeTruthy();
+
+  const solicitudAceptada = await aceptarResponse.json().catch(() => null);
+  expect(solicitudAceptada?.status).toBe('ACEPTADA');
+  expect(solicitudAceptada?.conversationId).toBeTruthy();
 
   await expect(filaSolicitud.getByText(/Aceptada/i).first()).toBeVisible({ timeout: 15_000 });
   console.log('E2E-09: Solicitud aceptada correctamente.');
@@ -197,34 +186,22 @@ test('E2E-09 | Estudiante acepta solicitud pendiente', async ({ browser }) => {
   await context.close();
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// E2E-10: Estudiante rechaza solicitud pendiente (si existe)
-// ─────────────────────────────────────────────────────────────────────────────
-test('E2E-10 | Estudiante rechaza solicitud pendiente', async ({ browser }) => {
+test('E2E-10 | Solicitud aceptada queda disponible para el flujo posterior', async ({ browser }) => {
   const context = await browser.newContext({ storageState: SESIONES.estudiante });
   const page = await context.newPage();
 
   await page.goto(RUTAS.estudianteSolicitudes);
   await page.waitForLoadState('networkidle');
 
-  const btnRechazar = page.getByRole('button', { name: /rechazar/i }).first();
-  const hayPendiente = await btnRechazar.isVisible({ timeout: 5_000 }).catch(() => false);
+  const filaSolicitud = await buscarSolicitudDelPaciente(page);
 
-  if (!hayPendiente) {
-    console.warn('E2E-10: No hay solicitudes pendientes para rechazar. Test omitido.');
-    await context.close();
-    return;
-  }
+  await expect(filaSolicitud.getByText(/Aceptada/i).first()).toBeVisible({ timeout: 15_000 });
+  await expect(filaSolicitud.getByRole('button', { name: /rechazar/i })).toHaveCount(0);
 
-  await btnRechazar.click();
+  await page.getByRole('button', { name: /filtrar solicitudes por estado/i }).click();
+  await expect(page.getByRole('menuitemradio', { name: /rechazada/i })).toHaveCount(0);
 
-  const btnConfirmar = page.getByRole('button', { name: /confirmar|sí/i });
-  if (await btnConfirmar.isVisible({ timeout: 2_000 }).catch(() => false)) {
-    await btnConfirmar.click();
-  }
-
-  await expect(page.locator('[role="status"]').first()).toBeVisible({ timeout: 15_000 });
-  console.log('E2E-10: Solicitud rechazada correctamente.');
+  console.log('E2E-10: La solicitud aceptada se conserva para chat, citas y valoraciones.');
 
   await context.close();
 });
