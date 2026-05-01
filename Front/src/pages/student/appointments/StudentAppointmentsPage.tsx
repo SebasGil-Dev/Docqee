@@ -156,7 +156,7 @@ function StudentAppointmentsDialogFrame({
         }
         aria-labelledby="student-appointments-dialog-title"
         aria-modal="true"
-        className="student-appointment-dialog relative mx-auto w-full max-w-3xl overflow-visible rounded-[1.35rem] border border-slate-200/80 bg-white shadow-[0_34px_90px_-36px_rgba(15,23,42,0.55)]"
+        className="student-appointment-dialog relative mx-auto w-full max-w-3xl overflow-visible rounded-[1.35rem] border border-slate-200/80 bg-white shadow-[0_34px_90px_-36px_rgba(15,23,42,0.55)] lg:max-w-5xl xl:max-w-6xl"
         role="dialog"
       >
         <div className="absolute right-2.5 top-2.5 z-30">
@@ -1771,7 +1771,7 @@ export function StudentAppointmentsPage() {
                 {appointmentApiError}
               </div>
             ) : null}
-            <div className="flex flex-wrap items-center justify-end gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-2">
               <button
                 className="inline-flex items-center justify-center rounded-full bg-slate-100 px-3 py-1.5 text-[0.76rem] font-semibold text-ink-muted transition duration-200 hover:bg-slate-200"
                 type="button"
