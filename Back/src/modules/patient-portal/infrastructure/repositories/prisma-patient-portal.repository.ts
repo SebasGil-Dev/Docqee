@@ -1420,6 +1420,12 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     const reusedRequest = await reuseClosedRequest();
 
     if (reusedRequest) {
+      void this.createNotificationSafely({
+        id_cuenta_destino: studentAccountId,
+        tipo: "SOLICITUD",
+        contenido: "Tienes una nueva solicitud de paciente pendiente por revisar.",
+      });
+
       return this.toRequestDto(reusedRequest);
     }
 
@@ -1438,6 +1444,12 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
           id_solicitud: true,
           motivo_consulta: true,
         },
+      });
+
+      void this.createNotificationSafely({
+        id_cuenta_destino: studentAccountId,
+        tipo: "SOLICITUD",
+        contenido: "Tienes una nueva solicitud de paciente pendiente por revisar.",
       });
 
       return this.toRequestDto({

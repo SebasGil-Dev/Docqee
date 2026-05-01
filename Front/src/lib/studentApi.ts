@@ -23,6 +23,10 @@ export function getStudentPortalDashboard() {
   return apiRequest<StudentModuleState>('/student-portal/dashboard');
 }
 
+export function getStudentPortalRequests() {
+  return apiRequest<StudentRequest[]>('/student-portal/requests');
+}
+
 export function updateStudentPortalProfile(values: StudentProfileFormValues) {
   return apiRequest<StudentProfile>('/student-portal/profile', {
     body: values,

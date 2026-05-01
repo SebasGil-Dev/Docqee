@@ -30,6 +30,7 @@ import {
   deleteStudentPortalScheduleBlock,
   getStudentPortalConversation,
   getStudentPortalDashboard,
+  getStudentPortalRequests,
   sendStudentPortalConversationMessage,
   toggleStudentPortalPracticeSiteStatus,
   toggleStudentPortalScheduleBlockStatus,
@@ -50,6 +51,7 @@ import {
 type StudentModuleActions = {
   deleteScheduleBlock: (blockId: string) => Promise<boolean>;
   refresh: () => Promise<void>;
+  refreshRequests: () => Promise<void>;
   refreshConversation: (conversationId: string) => Promise<void>;
   updateAppointmentStatus: (
     appointmentId: string,
@@ -1185,6 +1187,7 @@ let nextConversationMessageSequence =
     0,
   ) + 1;
 let runtimeLoadPromise: Promise<StudentStoreState> | null = null;
+let requestsRefreshPromise: Promise<void> | null = null;
 let errorMessageDismissTimerId: number | null = null;
 const conversationRefreshPromises = new Map<string, Promise<void>>();
 let universitySitesCache: {
@@ -1222,6 +1225,7 @@ function resetRuntimeStateForSession(nextUserId: number | null) {
   runtimeStateOwnerUserId = nextUserId;
   syncStudentRuntimeSequences(createEmptyRuntimeModuleState());
   runtimeLoadPromise = null;
+  requestsRefreshPromise = null;
   conversationRefreshPromises.clear();
   universitySitesCache = null;
   universitySitesLoadPromise = null;
@@ -2219,6 +2223,49 @@ export async function refreshStudentModuleState() {
   await loadRuntimeState(true);
 }
 
+export async function refreshStudentRequestsState() {
+  if (IS_TEST_MODE) {
+    return;
+  }
+
+  const requestUserId = ensureRuntimeStateMatchesCurrentStudentSession();
+
+  if (!requestUserId) {
+    return;
+  }
+
+  if (!state.isReady) {
+    await loadRuntimeState();
+    return;
+  }
+
+  if (requestsRefreshPromise) {
+    return requestsRefreshPromise;
+  }
+
+  requestsRefreshPromise = getStudentPortalRequests()
+    .then((requests) => {
+      if (getCurrentStudentSessionUserId() !== requestUserId) {
+        return;
+      }
+
+      updateState({
+        ...state,
+        isReady: true,
+        requests,
+        shouldRefresh: false,
+      });
+    })
+    .catch(() => {
+      // The full dashboard refresh keeps the visible error handling path.
+    })
+    .finally(() => {
+      requestsRefreshPromise = null;
+    });
+
+  return requestsRefreshPromise;
+}
+
 async function updateProfile(values: StudentProfileFormValues) {
   if (IS_TEST_MODE) {
     updateProfileMock(values);
@@ -2941,6 +2988,7 @@ export function resetStudentModuleState() {
     IS_TEST_MODE ? initialMockState : createEmptyRuntimeModuleState(),
   );
   runtimeLoadPromise = null;
+  requestsRefreshPromise = null;
   conversationRefreshPromises.clear();
   universitySitesCache = null;
   universitySitesLoadPromise = null;
@@ -2976,6 +3024,7 @@ export function useStudentModuleStore(
   const actions: StudentModuleActions = {
     deleteScheduleBlock,
     refresh: refreshStudentModuleState,
+    refreshRequests: refreshStudentRequestsState,
     refreshConversation,
     updateAppointmentStatus,
     respondToRequest,

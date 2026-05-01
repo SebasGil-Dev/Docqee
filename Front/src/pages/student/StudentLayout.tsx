@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
 import { useAuth } from '@/app/providers/AuthProvider';
@@ -13,7 +13,8 @@ import {
 import { useStudentPortalNotifications } from '@/lib/portalNotifications';
 import { useStudentModuleStore } from '@/lib/studentModuleStore';
 
-const NOTIFICATION_POLL_INTERVAL_MS = 30_000;
+const REQUEST_NOTIFICATION_POLL_INTERVAL_MS = 8_000;
+const MODULE_NOTIFICATION_POLL_INTERVAL_MS = 30_000;
 
 export function StudentLayout() {
   const { session } = useAuth();
@@ -22,10 +23,17 @@ export function StudentLayout() {
     IS_TEST_MODE ||
     (session?.user.role === 'STUDENT' &&
       !shouldRequireFirstLoginPasswordChange(session));
-  const { appointments, conversations, isLoading, profile, requests, refresh } =
-    useStudentModuleStore({
-      autoLoad: shouldAutoLoadStudentModule,
-    });
+  const {
+    appointments,
+    conversations,
+    isLoading,
+    profile,
+    requests,
+    refresh,
+    refreshRequests,
+  } = useStudentModuleStore({
+    autoLoad: shouldAutoLoadStudentModule,
+  });
   const { markAllNotificationsAsRead, markNotificationAsRead, notifications } =
     useStudentPortalNotifications({
       appointments,
@@ -33,19 +41,48 @@ export function StudentLayout() {
       requests,
     });
 
+  const refreshRequestsIfVisible = useCallback(() => {
+    if (document.visibilityState === 'visible' && !isLoading) {
+      void refreshRequests();
+    }
+  }, [isLoading, refreshRequests]);
+
+  const refreshModuleIfVisible = useCallback(() => {
+    if (document.visibilityState === 'visible' && !isLoading) {
+      void refresh();
+    }
+  }, [isLoading, refresh]);
+
   useEffect(() => {
     if (IS_TEST_MODE || !shouldAutoLoadStudentModule) {
       return;
     }
 
-    const interval = setInterval(() => {
-      if (document.visibilityState === 'visible' && !isLoading) {
-        void refresh();
-      }
-    }, NOTIFICATION_POLL_INTERVAL_MS);
+    refreshRequestsIfVisible();
 
-    return () => clearInterval(interval);
-  }, [isLoading, shouldAutoLoadStudentModule, refresh]);
+    const requestInterval = setInterval(
+      refreshRequestsIfVisible,
+      REQUEST_NOTIFICATION_POLL_INTERVAL_MS,
+    );
+    const moduleInterval = setInterval(
+      refreshModuleIfVisible,
+      MODULE_NOTIFICATION_POLL_INTERVAL_MS,
+    );
+
+    document.addEventListener('visibilitychange', refreshRequestsIfVisible);
+    window.addEventListener('focus', refreshRequestsIfVisible);
+
+    return () => {
+      clearInterval(requestInterval);
+      clearInterval(moduleInterval);
+      document.removeEventListener('visibilitychange', refreshRequestsIfVisible);
+      window.removeEventListener('focus', refreshRequestsIfVisible);
+    };
+  }, [
+    refreshModuleIfVisible,
+    refreshRequestsIfVisible,
+    shouldAutoLoadStudentModule,
+  ]);
 
   if (!IS_TEST_MODE) {
     if (!session) {

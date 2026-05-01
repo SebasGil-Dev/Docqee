@@ -258,6 +258,41 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     };
   }
 
+  async getRequests(studentAccountId: number): Promise<StudentRequestDto[]> {
+    const solicitudes = await this.prisma.solicitud.findMany({
+      where: { id_cuenta_estudiante: studentAccountId },
+      include: {
+        cuenta_paciente: {
+          include: {
+            persona: true,
+            localidad: { include: { ciudad: true } },
+          },
+        },
+        conversacion: {
+          select: {
+            estado: true,
+            id_conversacion: true,
+          },
+        },
+        cita: {
+          select: { id_cita: true },
+        },
+      },
+      orderBy: { fecha_envio: 'desc' },
+    });
+
+    const patientReviewsByAccountId = await this.getPatientReviewsByAccountId(
+      solicitudes.map((solicitud) => solicitud.cuenta_paciente.id_cuenta),
+    );
+
+    return solicitudes.map((solicitud) =>
+      this.toStudentRequestDto(
+        solicitud,
+        patientReviewsByAccountId.get(solicitud.cuenta_paciente.id_cuenta) ?? [],
+      ),
+    );
+  }
+
   async getDashboard(studentAccountId: number): Promise<StudentPortalDashboardDto> {
     const [student, solicitudes, bloques, valoraciones, tiposCita] = await Promise.all([
       this.prisma.cuenta_estudiante.findUnique({
