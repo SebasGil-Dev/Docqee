@@ -642,6 +642,29 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     };
   }
 
+  async getRequests(patientAccountId: number): Promise<PatientRequestDto[]> {
+    const solicitudes = await this.prisma.solicitud.findMany({
+      where: { id_cuenta_paciente: patientAccountId },
+      include: {
+        cuenta_estudiante: {
+          select: patientRequestStudentSelect,
+        },
+        conversacion: {
+          select: {
+            estado: true,
+            id_conversacion: true,
+          },
+        },
+        cita: {
+          select: { id_cita: true },
+        },
+      },
+      orderBy: { fecha_envio: "desc" },
+    });
+
+    return solicitudes.map((solicitud) => this.toRequestDto(solicitud));
+  }
+
   private buildStudentDirectoryWhere(
     query: PatientStudentDirectoryQueryDto,
   ): Prisma.cuenta_estudianteWhereInput {

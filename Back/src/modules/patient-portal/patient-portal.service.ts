@@ -23,6 +23,10 @@ export class PatientPortalService {
     return this.patientPortalRepository.getDashboard(user.id);
   }
 
+  getRequests(user: RequestUser) {
+    return this.patientPortalRepository.getRequests(user.id);
+  }
+
   getStudentDirectory(user: RequestUser, query: PatientStudentDirectoryQueryDto) {
     return this.patientPortalRepository.getStudentDirectory(user.id, query);
   }

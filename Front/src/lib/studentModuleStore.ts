@@ -2693,10 +2693,35 @@ async function respondToRequest(
     return respondToRequestMock(requestId, nextStatus);
   }
 
-  patchState({
-    errorMessage: null,
-    isLoading: true,
-  });
+  const previousRequests = state.requests;
+  const currentRequest = state.requests.find(
+    (request) => request.id === requestId,
+  );
+  const optimisticRequest =
+    nextStatus === 'RECHAZADA' && currentRequest?.status === 'PENDIENTE'
+      ? {
+          ...currentRequest,
+          responseAt: new Date().toISOString(),
+          status: nextStatus,
+        }
+      : null;
+
+  if (optimisticRequest) {
+    updateState({
+      ...state,
+      errorMessage: null,
+      isLoading: true,
+      isReady: true,
+      requests: state.requests.map((request) =>
+        request.id === requestId ? optimisticRequest : request,
+      ),
+    });
+  } else {
+    patchState({
+      errorMessage: null,
+      isLoading: true,
+    });
+  }
 
   try {
     const request = await updateStudentPortalRequestStatus(
@@ -2714,17 +2739,19 @@ async function respondToRequest(
       ),
     });
 
-    return true;
-  } catch (error) {
-    patchState({
-      errorMessage: getErrorMessage(
-        error,
-        'No pudimos actualizar la solicitud.',
-      ),
-      isLoading: false,
-    });
-    return false;
-  }
+      return true;
+    } catch (error) {
+      updateState({
+        ...state,
+        errorMessage: getErrorMessage(
+          error,
+          'No pudimos actualizar la solicitud.',
+        ),
+        isLoading: false,
+        requests: optimisticRequest ? previousRequests : state.requests,
+      });
+      return false;
+    }
 }
 
 async function refreshConversation(conversationId: string) {

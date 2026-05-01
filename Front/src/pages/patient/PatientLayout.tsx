@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
 import { useAuth } from '@/app/providers/AuthProvider';
@@ -10,7 +10,8 @@ import { getDefaultRouteForRole } from '@/lib/authRouting';
 import { usePatientPortalNotifications } from '@/lib/portalNotifications';
 import { usePatientModuleStore } from '@/lib/patientModuleStore';
 
-const NOTIFICATION_POLL_INTERVAL_MS = 15_000;
+const REQUEST_NOTIFICATION_POLL_INTERVAL_MS = 8_000;
+const MODULE_NOTIFICATION_POLL_INTERVAL_MS = 15_000;
 
 export function PatientLayout() {
   const { session } = useAuth();
@@ -19,7 +20,15 @@ export function PatientLayout() {
     IS_TEST_MODE || session?.user.role === 'PATIENT';
   const isSearchingStudentsRoute =
     location.pathname === ROUTES.patientSearchStudents;
-  const { appointments, conversations, profile, requests, refresh } = usePatientModuleStore({
+  const {
+    appointments,
+    conversations,
+    isLoading,
+    profile,
+    requests,
+    refresh,
+    refreshRequests,
+  } = usePatientModuleStore({
     autoLoad: shouldAutoLoadPatientModule,
   });
   const {
@@ -32,19 +41,48 @@ export function PatientLayout() {
     requests,
   });
 
+  const refreshRequestsIfVisible = useCallback(() => {
+    if (document.visibilityState === 'visible' && !isLoading) {
+      void refreshRequests();
+    }
+  }, [isLoading, refreshRequests]);
+
+  const refreshModuleIfVisible = useCallback(() => {
+    if (document.visibilityState === 'visible' && !isLoading) {
+      void refresh({ preserveStudents: isSearchingStudentsRoute });
+    }
+  }, [isLoading, isSearchingStudentsRoute, refresh]);
+
   useEffect(() => {
     if (IS_TEST_MODE || !shouldAutoLoadPatientModule) {
       return;
     }
 
-    const interval = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        void refresh({ preserveStudents: isSearchingStudentsRoute });
-      }
-    }, NOTIFICATION_POLL_INTERVAL_MS);
+    refreshRequestsIfVisible();
 
-    return () => clearInterval(interval);
-  }, [isSearchingStudentsRoute, shouldAutoLoadPatientModule, refresh]);
+    const requestInterval = setInterval(
+      refreshRequestsIfVisible,
+      REQUEST_NOTIFICATION_POLL_INTERVAL_MS,
+    );
+    const moduleInterval = setInterval(
+      refreshModuleIfVisible,
+      MODULE_NOTIFICATION_POLL_INTERVAL_MS,
+    );
+
+    document.addEventListener('visibilitychange', refreshRequestsIfVisible);
+    window.addEventListener('focus', refreshRequestsIfVisible);
+
+    return () => {
+      clearInterval(requestInterval);
+      clearInterval(moduleInterval);
+      document.removeEventListener('visibilitychange', refreshRequestsIfVisible);
+      window.removeEventListener('focus', refreshRequestsIfVisible);
+    };
+  }, [
+    refreshModuleIfVisible,
+    refreshRequestsIfVisible,
+    shouldAutoLoadPatientModule,
+  ]);
 
   if (!IS_TEST_MODE) {
     if (!session) {

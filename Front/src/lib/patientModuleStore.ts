@@ -20,6 +20,7 @@ import {
   createPatientPortalRequest,
   getPatientPortalConversation,
   getPatientPortalDashboard,
+  getPatientPortalRequests,
   getPatientPortalStudents,
   sendPatientPortalConversationMessage,
   submitPatientPortalAppointmentReview,
@@ -36,6 +37,7 @@ type PatientModuleActions = {
   ) => Promise<PatientRequest | null>;
   prefetchStudentDirectory: () => Promise<void>;
   refresh: (options?: { preserveStudents?: boolean }) => Promise<void>;
+  refreshRequests: () => Promise<void>;
   refreshConversation: (conversationId: string) => Promise<void>;
   searchStudents: (
     filters: PatientStudentDirectorySearchParams,
@@ -866,6 +868,7 @@ let nextMessageSequence =
     0,
   ) + 1;
 let runtimeLoadPromise: Promise<PatientStoreState> | null = null;
+let requestsRefreshPromise: Promise<void> | null = null;
 let errorMessageDismissTimerId: number | null = null;
 
 function emitChange() {
@@ -1237,7 +1240,7 @@ function buildConversationFromRequest(request: PatientRequest) {
   };
 
   return {
-    id: `patient-conversation-${nextConversationSequence++}`,
+    id: request.conversationId ?? `patient-conversation-${nextConversationSequence++}`,
     messages: [firstMessage],
     reason: request.reason,
     requestId: request.id,
@@ -1535,6 +1538,72 @@ export async function refreshPatientModuleState(
   options: { preserveStudents?: boolean } = {},
 ) {
   await loadRuntimeState(true, options);
+}
+
+function buildMissingConversationsFromRequests(requests: PatientRequest[]) {
+  const existingConversationIds = new Set(
+    state.conversations.map((conversation) => conversation.id),
+  );
+
+  return requests.flatMap((request) => {
+    if (
+      request.status !== 'ACEPTADA' ||
+      !request.conversationId ||
+      existingConversationIds.has(request.conversationId)
+    ) {
+      return [];
+    }
+
+    existingConversationIds.add(request.conversationId);
+    return [buildConversationFromRequest(request)];
+  });
+}
+
+export async function refreshPatientRequestsState() {
+  if (IS_TEST_MODE) {
+    return;
+  }
+
+  if (!state.isReady) {
+    await loadRuntimeState();
+    return;
+  }
+
+  if (requestsRefreshPromise) {
+    return requestsRefreshPromise;
+  }
+
+  requestsRefreshPromise = getPatientPortalRequests()
+    .then((requests) => {
+      if (hasNewlyClosedPatientRequest(state.requests, requests)) {
+        clearStudentDirectorySearchState({ persisted: true });
+      }
+
+      const missingConversations =
+        buildMissingConversationsFromRequests(requests);
+
+      setRuntimeState(
+        {
+          ...state,
+          conversations:
+            missingConversations.length > 0
+              ? [...missingConversations, ...state.conversations]
+              : state.conversations,
+          isReady: true,
+          requests,
+          shouldRefresh: false,
+        },
+        { persistCache: true },
+      );
+    })
+    .catch(() => {
+      // The full dashboard refresh keeps the visible error handling path.
+    })
+    .finally(() => {
+      requestsRefreshPromise = null;
+    });
+
+  return requestsRefreshPromise;
 }
 
 async function updateProfile(values: PatientProfileFormValues) {
@@ -2164,6 +2233,7 @@ export function resetPatientModuleState() {
   studentDirectoryIndexPromise = null;
   studentDirectoryIndexUpdatedAt = 0;
   runtimeLoadPromise = null;
+  requestsRefreshPromise = null;
   studentSearchCache.clear();
   studentSearchPromises.clear();
   studentSearchRequestSequence = 0;
@@ -2198,6 +2268,7 @@ export function usePatientModuleStore(
     createRequest,
     prefetchStudentDirectory,
     refresh: refreshPatientModuleState,
+    refreshRequests: refreshPatientRequestsState,
     refreshConversation,
     searchStudents,
     sendConversationMessage,

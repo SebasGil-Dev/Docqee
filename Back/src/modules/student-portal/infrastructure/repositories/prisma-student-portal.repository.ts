@@ -1051,13 +1051,19 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
                 localidad: { include: { ciudad: true } },
               },
             },
-            conversacion: true,
-            cita: true,
+            conversacion: {
+              select: { estado: true, id_conversacion: true },
+            },
+            cita: { select: { id_cita: true } },
           },
         });
       });
       const patientReviewsByAccountId = await this.getPatientReviewsByAccountId(
         [updated.cuenta_paciente.id_cuenta],
+      );
+      this.createRequestResponseNotification(
+        updated.cuenta_paciente.id_cuenta,
+        payload.status,
       );
 
       return this.toStudentRequestDto(
@@ -1070,6 +1076,41 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       throw new BadRequestException('Solo se pueden responder solicitudes pendientes.');
     }
 
+    if (payload.status === 'RECHAZADA') {
+      const updated = await this.prisma.solicitud.update({
+        where: { id_solicitud: requestId },
+        data: {
+          estado: payload.status,
+          fecha_respuesta: new Date(),
+          fecha_actualizacion: new Date(),
+        },
+        include: {
+          cuenta_paciente: {
+            include: {
+              persona: true,
+              localidad: { include: { ciudad: true } },
+            },
+          },
+          conversacion: {
+            select: { estado: true, id_conversacion: true },
+          },
+          cita: { select: { id_cita: true } },
+        },
+      });
+      const patientReviewsByAccountId = await this.getPatientReviewsByAccountId(
+        [updated.cuenta_paciente.id_cuenta],
+      );
+      this.createRequestResponseNotification(
+        updated.cuenta_paciente.id_cuenta,
+        payload.status,
+      );
+
+      return this.toStudentRequestDto(
+        updated,
+        patientReviewsByAccountId.get(updated.cuenta_paciente.id_cuenta) ?? [],
+      );
+    }
+
     const updated = await this.prisma.$transaction(async (tx) => {
       await tx.solicitud.update({
         where: { id_solicitud: requestId },
@@ -1080,23 +1121,21 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
         },
       });
 
-      if (payload.status === 'ACEPTADA') {
-        const activatedConversation = await tx.conversacion.updateMany({
-          where: { id_solicitud: requestId },
+      const activatedConversation = await tx.conversacion.updateMany({
+        where: { id_solicitud: requestId },
+        data: {
+          estado: 'ACTIVA',
+          solo_lectura_at: null,
+        },
+      });
+
+      if (activatedConversation.count === 0) {
+        await tx.conversacion.create({
           data: {
+            id_solicitud: requestId,
             estado: 'ACTIVA',
-            solo_lectura_at: null,
           },
         });
-
-        if (activatedConversation.count === 0) {
-          await tx.conversacion.create({
-            data: {
-              id_solicitud: requestId,
-              estado: 'ACTIVA',
-            },
-          });
-        }
       }
 
       return tx.solicitud.findUniqueOrThrow({
@@ -1108,13 +1147,19 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
               localidad: { include: { ciudad: true } },
             },
           },
-          conversacion: true,
-          cita: true,
+          conversacion: {
+            select: { estado: true, id_conversacion: true },
+          },
+          cita: { select: { id_cita: true } },
         },
       });
     });
     const patientReviewsByAccountId = await this.getPatientReviewsByAccountId(
       [updated.cuenta_paciente.id_cuenta],
+    );
+    this.createRequestResponseNotification(
+      updated.cuenta_paciente.id_cuenta,
+      payload.status,
     );
 
     return this.toStudentRequestDto(
@@ -1336,6 +1381,23 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
         error,
       );
     }
+  }
+
+  private createRequestResponseNotification(
+    patientAccountId: number,
+    status: 'ACEPTADA' | 'RECHAZADA' | 'CERRADA',
+  ) {
+    const contentByStatus: Record<typeof status, string> = {
+      ACEPTADA: 'El estudiante acepto tu solicitud. Ya puedes continuar la conversacion.',
+      CERRADA: 'El estudiante cerro el proceso asociado a tu solicitud.',
+      RECHAZADA: 'El estudiante respondio y no acepto tu solicitud.',
+    };
+
+    void this.createNotificationSafely({
+      id_cuenta_destino: patientAccountId,
+      tipo: 'RESPUESTA_SOLICITUD',
+      contenido: contentByStatus[status],
+    });
   }
 
   private assertAppointmentDateRange(startAt: Date, endAt: Date) {

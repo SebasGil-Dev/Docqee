@@ -35,6 +35,11 @@ export class PatientPortalController {
     return this.patientPortalService.getDashboard(user);
   }
 
+  @Get('requests')
+  getRequests(@CurrentUser() user: RequestUser) {
+    return this.patientPortalService.getRequests(user);
+  }
+
   @Get('students')
   getStudentDirectory(
     @CurrentUser() user: RequestUser,

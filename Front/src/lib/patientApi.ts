@@ -43,6 +43,10 @@ export function getPatientPortalDashboard() {
   return apiRequest<PatientModuleState>('/patient-portal/dashboard');
 }
 
+export function getPatientPortalRequests() {
+  return apiRequest<PatientRequest[]>('/patient-portal/requests');
+}
+
 export function getPatientPortalStudents(filters: PatientStudentDirectorySearchParams) {
   const params = new URLSearchParams();
 
