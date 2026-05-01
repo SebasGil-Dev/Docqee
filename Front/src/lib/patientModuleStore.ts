@@ -105,6 +105,7 @@ const studentSearchPromises = new Map<
   string,
   Promise<PatientStudentDirectoryItem[]>
 >();
+const pendingPatientRequestStudentIds = new Set<string>();
 let studentDirectoryIndex: PatientStudentDirectoryItem[] | null = null;
 let studentDirectoryIndexPromise: Promise<
   PatientStudentDirectoryItem[]
@@ -1257,6 +1258,14 @@ function buildConversationFromRequest(request: PatientRequest) {
   } satisfies PatientConversation;
 }
 
+function hasActiveRequestForStudent(studentId: string) {
+  return state.requests.some(
+    (request) =>
+      request.studentId === studentId &&
+      (request.status === 'PENDIENTE' || request.status === 'ACEPTADA'),
+  );
+}
+
 function updateProfileMock(values: PatientProfileFormValues) {
   updateState({
     ...state,
@@ -1274,13 +1283,7 @@ function createRequestMock(studentId: string, reason: string) {
     return null;
   }
 
-  const hasActiveRequest = state.requests.some(
-    (request) =>
-      request.studentId === studentId &&
-      (request.status === 'PENDIENTE' || request.status === 'ACEPTADA'),
-  );
-
-  if (hasActiveRequest) {
+  if (hasActiveRequestForStudent(studentId)) {
     return null;
   }
 
@@ -1315,13 +1318,7 @@ function buildOptimisticPatientRequest(studentId: string, reason: string) {
     return null;
   }
 
-  const hasActiveRequest = state.requests.some(
-    (request) =>
-      request.studentId === studentId &&
-      (request.status === 'PENDIENTE' || request.status === 'ACEPTADA'),
-  );
-
-  if (hasActiveRequest) {
+  if (hasActiveRequestForStudent(studentId)) {
     return null;
   }
 
@@ -1656,7 +1653,18 @@ async function createRequest(studentId: string, reason: string) {
     return createRequestMock(studentId, reason);
   }
 
-  const optimisticRequest = buildOptimisticPatientRequest(studentId, reason);
+  if (pendingPatientRequestStudentIds.has(studentId)) {
+    return null;
+  }
+
+  pendingPatientRequestStudentIds.add(studentId);
+
+  let optimisticRequest = buildOptimisticPatientRequest(studentId, reason);
+
+  if (!optimisticRequest && hasActiveRequestForStudent(studentId)) {
+    await refreshPatientRequestsState();
+    optimisticRequest = buildOptimisticPatientRequest(studentId, reason);
+  }
 
   if (!optimisticRequest) {
     patchState({
@@ -1664,6 +1672,7 @@ async function createRequest(studentId: string, reason: string) {
         'Ya tienes una solicitud activa con este estudiante o la informacion no es valida.',
       isLoading: false,
     });
+    pendingPatientRequestStudentIds.delete(studentId);
     return null;
   }
 
@@ -1717,6 +1726,8 @@ async function createRequest(studentId: string, reason: string) {
       },
     );
     return null;
+  } finally {
+    pendingPatientRequestStudentIds.delete(studentId);
   }
 }
 
@@ -2259,6 +2270,7 @@ export function resetPatientModuleState() {
   studentDirectoryIndex = null;
   studentDirectoryIndexPromise = null;
   studentDirectoryIndexUpdatedAt = 0;
+  pendingPatientRequestStudentIds.clear();
   runtimeLoadPromise = null;
   requestsRefreshPromise = null;
   studentSearchCache.clear();

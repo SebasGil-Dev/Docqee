@@ -260,7 +260,10 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
 
   async getRequests(studentAccountId: number): Promise<StudentRequestDto[]> {
     const solicitudes = await this.prisma.solicitud.findMany({
-      where: { id_cuenta_estudiante: studentAccountId },
+      where: {
+        id_cuenta_estudiante: studentAccountId,
+        estado: { notIn: ['CANCELADA', 'RECHAZADA'] },
+      },
       include: {
         cuenta_paciente: {
           include: {
@@ -310,7 +313,10 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
         },
       }),
       this.prisma.solicitud.findMany({
-        where: { id_cuenta_estudiante: studentAccountId },
+        where: {
+          id_cuenta_estudiante: studentAccountId,
+          estado: { notIn: ['CANCELADA', 'RECHAZADA'] },
+        },
         include: {
           cuenta_paciente: {
             include: {

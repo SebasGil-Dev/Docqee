@@ -463,7 +463,13 @@ export function StudentRequestsPage() {
   const hasRequestedFreshDashboardRef = useRef(false);
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const visibleRequests = useMemo(
-    () => requests.filter((request) => request.status !== 'CERRADA'),
+    () =>
+      requests.filter(
+        (request) =>
+          request.status !== 'CERRADA' &&
+          request.status !== 'CANCELADA' &&
+          request.status !== 'RECHAZADA',
+      ),
     [requests],
   );
   const pendingCount = useMemo(

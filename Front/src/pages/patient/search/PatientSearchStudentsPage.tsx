@@ -252,6 +252,7 @@ export function PatientSearchStudentsPage() {
     isSearchingStudents,
     prefetchStudentDirectory,
     profile,
+    refreshRequests,
     requests,
     searchStudents,
     studentFilters,
@@ -506,6 +507,7 @@ export function PatientSearchStudentsPage() {
   const handleOpenStudentModal = (studentId: string) => {
     setSelectedStudentId(studentId);
     setSuccessMessage(null);
+    void refreshRequests();
   };
 
   const handleCloseStudentModal = () => {
