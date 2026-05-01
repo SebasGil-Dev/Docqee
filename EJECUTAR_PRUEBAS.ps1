@@ -78,11 +78,34 @@ if ($LASTEXITCODE -ne 0) {
     Exit-WithPause 1
 }
 
+$orderedTests = @(
+    "e2e/auth/login.spec.ts",
+    "e2e/solicitudes/solicitudes.spec.ts",
+    "e2e/chat/chat.spec.ts",
+    "e2e/citas/citas.spec.ts",
+    "e2e/valoraciones/valoraciones.spec.ts",
+    "e2e/perfil/perfil.spec.ts"
+)
+
+$missingTests = $orderedTests | Where-Object {
+    -not (Test-Path (Join-Path $frontPath $_))
+}
+
+if ($missingTests.Count -gt 0) {
+    Write-Host ""
+    Write-Host " ERROR: Faltan archivos de pruebas E2E:" -ForegroundColor Red
+    foreach ($testPath in $missingTests) {
+        Write-Host " - $testPath" -ForegroundColor Yellow
+    }
+    Exit-WithPause 1
+}
+
 Write-Host ""
 Write-Host " Ejecutando pruebas... (~3 minutos)" -ForegroundColor Yellow
+Write-Host " Orden: auth -> solicitudes -> chat -> citas -> valoraciones -> perfil" -ForegroundColor DarkCyan
 Write-Host ""
 
-& $pw test
+& $pw test @orderedTests
 
 $ok = ($LASTEXITCODE -eq 0)
 

@@ -415,7 +415,8 @@ function createMockState(): PatientStoreState {
     {
       avatarAlt: 'Foto de perfil de Laura Mendoza',
       avatarSrc: null,
-      availabilityGeneral: 'Martes, jueves y sabados con disponibilidad variable.',
+      availabilityGeneral:
+        'Martes, jueves y sabados con disponibilidad variable.',
       availabilityStatus: 'available',
       averageRating: 4.5,
       biography:
@@ -612,8 +613,7 @@ function createMockState(): PatientStoreState {
       universityName: 'Universidad Clinica del Norte',
     },
     {
-      additionalInfo:
-        'Propuesta vencida sin respuesta del paciente.',
+      additionalInfo: 'Propuesta vencida sin respuesta del paciente.',
       appointmentType: 'Valoracion inicial',
       city: 'Bogota',
       createdAt: '2026-04-02T10:00:00.000Z',
@@ -1110,7 +1110,9 @@ function readPersistedStudentDirectoryIndex() {
   }
 }
 
-function clearStudentDirectorySearchState(options: { persisted?: boolean } = {}) {
+function clearStudentDirectorySearchState(
+  options: { persisted?: boolean } = {},
+) {
   studentSearchCache.clear();
   studentSearchPromises.clear();
   studentDirectoryIndex = null;
@@ -1135,8 +1137,9 @@ function hasNewlyClosedPatientRequest(
     }
 
     return (
-      previousRequests.find((previousRequest) => previousRequest.id === request.id)
-        ?.status !== 'CERRADA'
+      previousRequests.find(
+        (previousRequest) => previousRequest.id === request.id,
+      )?.status !== 'CERRADA'
     );
   });
 }
@@ -1156,10 +1159,10 @@ function hasActiveStudentSearchFilters(
 ) {
   return Boolean(
     normalizeSearchFilterValue(filters.search) ||
-      normalizeSearchFilterValue(filters.treatment) ||
-      normalizeSearchFilterValue(filters.city) ||
-      normalizeSearchFilterValue(filters.locality) ||
-      normalizeSearchFilterValue(filters.university),
+    normalizeSearchFilterValue(filters.treatment) ||
+    normalizeSearchFilterValue(filters.city) ||
+    normalizeSearchFilterValue(filters.locality) ||
+    normalizeSearchFilterValue(filters.university),
   );
 }
 
@@ -1240,7 +1243,9 @@ function buildConversationFromRequest(request: PatientRequest) {
   };
 
   return {
-    id: request.conversationId ?? `patient-conversation-${nextConversationSequence++}`,
+    id:
+      request.conversationId ??
+      `patient-conversation-${nextConversationSequence++}`,
     messages: [firstMessage],
     reason: request.reason,
     requestId: request.id,
@@ -1389,10 +1394,7 @@ function sendConversationMessageMock(conversationId: string, content: string) {
     (conversation) => conversation.id === conversationId,
   );
 
-  if (
-    currentConversation?.status !== 'ACTIVA' ||
-    !normalizedContent
-  ) {
+  if (currentConversation?.status !== 'ACTIVA' || !normalizedContent) {
     return false;
   }
 
@@ -1481,8 +1483,13 @@ async function loadRuntimeState(
         ...createEmptyRuntimeState(),
         ...payload,
         conversations: payload.conversations.map((dashboardConv) => {
-          const currentConv = state.conversations.find((c) => c.id === dashboardConv.id);
-          if (currentConv && currentConv.messages.length > dashboardConv.messages.length) {
+          const currentConv = state.conversations.find(
+            (c) => c.id === dashboardConv.id,
+          );
+          if (
+            currentConv &&
+            currentConv.messages.length > dashboardConv.messages.length
+          ) {
             return { ...dashboardConv, messages: currentConv.messages };
           }
           return dashboardConv;
@@ -1981,17 +1988,29 @@ async function updateRequestStatus(
             (conversation) => conversation.id === request.conversationId,
           ) ?? buildConversationFromRequest(request))
         : null;
+    const nextConversations =
+      request.status === 'CERRADA' && request.conversationId
+        ? state.conversations.map((conversation) =>
+            conversation.id === request.conversationId
+              ? {
+                  ...conversation,
+                  status: 'CERRADA' as const,
+                  unreadCount: 0,
+                }
+              : conversation,
+          )
+        : state.conversations;
 
     setRuntimeState(
       {
         ...state,
         conversations:
           nextConversation &&
-          !state.conversations.some(
+          !nextConversations.some(
             (conversation) => conversation.id === nextConversation.id,
           )
             ? [nextConversation, ...state.conversations]
-            : state.conversations,
+            : nextConversations,
         errorMessage: null,
         isLoading: false,
         isReady: true,
@@ -2080,7 +2099,10 @@ async function sendConversationMessage(
       ...state,
       conversations: state.conversations.map((conversation) =>
         conversation.id === conversationId
-          ? { ...conversation, messages: [...conversation.messages, optimisticMessage] }
+          ? {
+              ...conversation,
+              messages: [...conversation.messages, optimisticMessage],
+            }
           : conversation,
       ),
       errorMessage: null,
@@ -2089,7 +2111,10 @@ async function sendConversationMessage(
   );
 
   try {
-    const message = await sendPatientPortalConversationMessage(conversationId, content);
+    const message = await sendPatientPortalConversationMessage(
+      conversationId,
+      content,
+    );
 
     setRuntimeState(
       {
@@ -2098,7 +2123,9 @@ async function sendConversationMessage(
           conversation.id === conversationId
             ? {
                 ...conversation,
-                messages: conversation.messages.map((m) => (m.id === tempId ? message : m)),
+                messages: conversation.messages.map((m) =>
+                  m.id === tempId ? message : m,
+                ),
               }
             : conversation,
         ),

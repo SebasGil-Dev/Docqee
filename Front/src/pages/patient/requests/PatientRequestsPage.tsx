@@ -2,6 +2,7 @@ import {
   Check,
   MessageSquareMore,
   Search,
+  ShieldX,
   SlidersHorizontal,
   UserRound,
   XCircle,
@@ -9,6 +10,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import { AdminConfirmationDialog } from '@/components/admin/AdminConfirmationDialog';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
 import { AdminTablePagination } from '@/components/admin/AdminTablePagination';
@@ -24,7 +26,10 @@ import { usePatientModuleStore } from '@/lib/patientModuleStore';
 
 type RequestStatusFilter = PatientRequestStatus | 'all';
 
-const requestStatusOptions: Array<{ label: string; value: RequestStatusFilter }> = [
+const requestStatusOptions: Array<{
+  label: string;
+  value: RequestStatusFilter;
+}> = [
   { label: 'Todas', value: 'all' },
   { label: 'Pendiente', value: 'PENDIENTE' },
   { label: 'Aceptada', value: 'ACEPTADA' },
@@ -96,12 +101,16 @@ function getRequestResponseTime(request: PatientRequest) {
 }
 
 export function PatientRequestsPage() {
-  const { errorMessage, isLoading, requests, updateRequestStatus } = usePatientModuleStore();
+  const { errorMessage, isLoading, requests, updateRequestStatus } =
+    usePatientModuleStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<RequestStatusFilter>('all');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [requestToClose, setRequestToClose] = useState<PatientRequest | null>(
+    null,
+  );
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const tableViewportRef = useRef<HTMLDivElement | null>(null);
   const tableBodyRef = useRef<HTMLTableSectionElement | null>(null);
@@ -131,13 +140,15 @@ export function PatientRequestsPage() {
           [request.studentName, request.universityName, request.reason]
             .filter((value): value is string => Boolean(value))
             .some((value) => value.toLowerCase().includes(normalizedSearch));
-        const matchesStatus = statusFilter === 'all' || request.status === statusFilter;
+        const matchesStatus =
+          statusFilter === 'all' || request.status === statusFilter;
 
         return matchesSearch && matchesStatus;
       })
       .sort((left, right) => {
         const statusPriority =
-          getRequestStatusPriority(left.request.status) - getRequestStatusPriority(right.request.status);
+          getRequestStatusPriority(left.request.status) -
+          getRequestStatusPriority(right.request.status);
 
         if (statusPriority !== 0) {
           return statusPriority;
@@ -155,15 +166,24 @@ export function PatientRequestsPage() {
       .map(({ request }) => request);
   }, [normalizedSearch, requests, statusFilter]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredRequests.length / rowsPerPage));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredRequests.length / rowsPerPage),
+  );
   const clampedCurrentPage = Math.min(currentPage, totalPages);
   const paginatedRequests = useMemo(() => {
     const start = (clampedCurrentPage - 1) * rowsPerPage;
 
     return filteredRequests.slice(start, start + rowsPerPage);
   }, [clampedCurrentPage, filteredRequests, rowsPerPage]);
-  const pageStartLabel = filteredRequests.length === 0 ? 0 : (clampedCurrentPage - 1) * rowsPerPage + 1;
-  const pageEndLabel = Math.min(filteredRequests.length, clampedCurrentPage * rowsPerPage);
+  const pageStartLabel =
+    filteredRequests.length === 0
+      ? 0
+      : (clampedCurrentPage - 1) * rowsPerPage + 1;
+  const pageEndLabel = Math.min(
+    filteredRequests.length,
+    clampedCurrentPage * rowsPerPage,
+  );
 
   useEffect(() => {
     setCurrentPage(1);
@@ -172,7 +192,6 @@ export function PatientRequestsPage() {
   useEffect(() => {
     setCurrentPage((page) => Math.min(page, totalPages));
   }, [totalPages]);
-
 
   useEffect(() => {
     if (!isStatusMenuOpen) {
@@ -196,13 +215,37 @@ export function PatientRequestsPage() {
 
   const handleCancelRequest = async (requestId: string) => {
     setSuccessMessage(null);
-    await updateRequestStatus(requestId, 'CANCELADA');
-    setSuccessMessage(`${patientContent.requestsPage.successNoticePrefix} cancelada.`);
+    const updated = await updateRequestStatus(requestId, 'CANCELADA');
+
+    if (updated) {
+      setSuccessMessage(
+        `${patientContent.requestsPage.successNoticePrefix} cancelada.`,
+      );
+    }
+  };
+
+  const handleCloseRequest = async () => {
+    if (!requestToClose) {
+      return;
+    }
+
+    setSuccessMessage(null);
+    const updated = await updateRequestStatus(requestToClose.id, 'CERRADA');
+
+    if (updated) {
+      setSuccessMessage(
+        `${patientContent.requestsPage.successNoticePrefix} cerrada.`,
+      );
+      setRequestToClose(null);
+    }
   };
 
   return (
     <div className="student-page-compact flex h-full w-full min-h-0 flex-col gap-3 overflow-hidden">
-      <Seo title="Solicitudes del paciente" description={patientContent.requestsPage.description} />
+      <Seo
+        title="Solicitudes del paciente"
+        description={patientContent.requestsPage.description}
+      />
       <AdminPageHeader
         className="gap-3"
         description={patientContent.requestsPage.description}
@@ -231,10 +274,16 @@ export function PatientRequestsPage() {
       )}
 
       <div className="shrink-0">
-        <SurfaceCard className="min-w-0 overflow-hidden bg-brand-gradient text-white" paddingClassName="p-0">
+        <SurfaceCard
+          className="min-w-0 overflow-hidden bg-brand-gradient text-white"
+          paddingClassName="p-0"
+        >
           <div className="flex items-center gap-2 px-3 py-1.5 sm:gap-2 sm:px-3 sm:py-1.5">
             <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[0.8rem] bg-white/12 text-white sm:h-7 sm:w-7 sm:rounded-[0.85rem]">
-              <UserRound className="h-3.5 w-3.5 sm:h-3.5 sm:w-3.5" aria-hidden />
+              <UserRound
+                className="h-3.5 w-3.5 sm:h-3.5 sm:w-3.5"
+                aria-hidden
+              />
             </span>
             <span className="font-headline text-[1.12rem] font-extrabold tracking-tight text-white sm:text-[1.14rem]">
               {pendingCount}
@@ -253,7 +302,10 @@ export function PatientRequestsPage() {
       >
         <div className="border-b border-slate-200/80 px-4 py-3.5 sm:px-4 sm:py-2.5">
           <div className="flex items-center gap-2 sm:justify-between sm:gap-3">
-            <label className="relative min-w-0 flex-1 sm:max-w-[30rem] xl:max-w-[34rem]" htmlFor="patient-request-search">
+            <label
+              className="relative min-w-0 flex-1 sm:max-w-[30rem] xl:max-w-[34rem]"
+              htmlFor="patient-request-search"
+            >
               <span className="sr-only">Buscar solicitud</span>
               <Search
                 className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ghost sm:left-3.5 sm:h-4 sm:w-4"
@@ -283,7 +335,10 @@ export function PatientRequestsPage() {
                 type="button"
                 onClick={() => setIsStatusMenuOpen((current) => !current)}
               >
-                <SlidersHorizontal className="h-4 w-4 sm:h-[1rem] sm:w-[1rem]" aria-hidden />
+                <SlidersHorizontal
+                  className="h-4 w-4 sm:h-[1rem] sm:w-[1rem]"
+                  aria-hidden
+                />
               </button>
               {statusFilter !== 'all' && (
                 <span className="absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-primary ring-2 ring-white" />
@@ -302,7 +357,9 @@ export function PatientRequestsPage() {
                         key={option.value}
                         className={classNames(
                           'flex w-full items-center justify-between gap-2 rounded-[0.8rem] px-3 py-2 text-left text-[0.78rem] font-semibold transition duration-200',
-                          isSelected ? 'bg-primary/10 text-primary' : 'text-ink-muted hover:bg-slate-100 hover:text-ink',
+                          isSelected
+                            ? 'bg-primary/10 text-primary'
+                            : 'text-ink-muted hover:bg-slate-100 hover:text-ink',
                         )}
                         role="menuitemradio"
                         aria-checked={isSelected}
@@ -313,7 +370,9 @@ export function PatientRequestsPage() {
                         }}
                       >
                         <span>{option.label}</span>
-                        {isSelected && <Check className="h-3.5 w-3.5" aria-hidden />}
+                        {isSelected && (
+                          <Check className="h-3.5 w-3.5" aria-hidden />
+                        )}
                       </button>
                     );
                   })}
@@ -324,19 +383,37 @@ export function PatientRequestsPage() {
         </div>
 
         {filteredRequests.length > 0 ? (
-          <div ref={tableViewportRef} className="min-h-0 flex-1 overflow-hidden">
+          <div
+            ref={tableViewportRef}
+            className="min-h-0 flex-1 overflow-hidden"
+          >
             <table className="w-full table-fixed">
               <thead className="sticky top-0 z-10 bg-slate-100 text-left">
                 <tr className="text-[0.55rem] font-bold uppercase leading-[0.72rem] tracking-[0.1em] text-ink-muted sm:text-[0.66rem] sm:leading-none sm:tracking-[0.16em]">
-                  <th className="w-[36%] px-1.5 py-1 sm:px-3 sm:py-2 md:w-[27%]">Estudiante</th>
-                  <th className="hidden px-2 py-1.5 sm:px-3 sm:py-2 md:table-cell md:w-[28%]">Motivo</th>
-                  <th className="w-[19%] px-1 py-1 text-left sm:px-3 sm:py-2 md:w-[15%]">Estado</th>
-                  <th className="w-[45%] px-1 py-1 text-center sm:px-3 sm:py-2 md:w-[30%]">Acciones</th>
+                  <th className="w-[36%] px-1.5 py-1 sm:px-3 sm:py-2 md:w-[27%]">
+                    Estudiante
+                  </th>
+                  <th className="hidden px-2 py-1.5 sm:px-3 sm:py-2 md:table-cell md:w-[28%]">
+                    Motivo
+                  </th>
+                  <th className="w-[19%] px-1 py-1 text-left sm:px-3 sm:py-2 md:w-[15%]">
+                    Estado
+                  </th>
+                  <th className="w-[45%] px-1 py-1 text-center sm:px-3 sm:py-2 md:w-[30%]">
+                    Acciones
+                  </th>
                 </tr>
               </thead>
-              <tbody ref={tableBodyRef} className="divide-y divide-slate-200/80 bg-white">
+              <tbody
+                ref={tableBodyRef}
+                className="divide-y divide-slate-200/80 bg-white"
+              >
                 {paginatedRequests.map((request) => (
-                  <tr key={request.id} className="align-top" data-testid={`patient-request-row-${request.id}`}>
+                  <tr
+                    key={request.id}
+                    className="align-top"
+                    data-testid={`patient-request-row-${request.id}`}
+                  >
                     <td className="px-1.5 py-1.5 sm:px-3 sm:py-2.5">
                       <div className="min-w-0 space-y-0.5 sm:space-y-1">
                         <p className="break-words text-[0.76rem] font-semibold leading-4 text-ink sm:text-sm sm:leading-5">
@@ -346,11 +423,17 @@ export function PatientRequestsPage() {
                           {request.universityName}
                         </p>
                         <p className="text-[0.66rem] leading-[0.92rem] text-ink-muted sm:text-xs">
-                          Envio: <span className="font-medium text-ink">{formatRequestDate(request.sentAt)}</span>
+                          Envio:{' '}
+                          <span className="font-medium text-ink">
+                            {formatRequestDate(request.sentAt)}
+                          </span>
                         </p>
                         {request.responseAt && (
                           <p className="hidden text-xs leading-5 text-ink-muted sm:block">
-                            Respuesta: <span className="font-medium text-ink">{formatRequestDate(request.responseAt)}</span>
+                            Respuesta:{' '}
+                            <span className="font-medium text-ink">
+                              {formatRequestDate(request.responseAt)}
+                            </span>
                           </p>
                         )}
                       </div>
@@ -380,17 +463,46 @@ export function PatientRequestsPage() {
                             type="button"
                             onClick={() => void handleCancelRequest(request.id)}
                           >
-                            <XCircle className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" aria-hidden />
-                            <span className="text-[0.52rem] leading-none sm:text-xs">Cancelar</span>
+                            <XCircle
+                              className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5"
+                              aria-hidden
+                            />
+                            <span className="text-[0.52rem] leading-none sm:text-xs">
+                              Cancelar
+                            </span>
                           </button>
                         ) : request.conversationId ? (
-                          <Link
-                            className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full bg-slate-100 px-1 py-0.5 text-[0.56rem] font-semibold text-slate-700 transition duration-200 hover:bg-slate-200 sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs"
-                            to={`${ROUTES.patientConversations}?conversation=${request.conversationId}`}
-                          >
-                            <MessageSquareMore className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" aria-hidden />
-                            <span className="text-[0.52rem] leading-none sm:text-xs">Ver chat</span>
-                          </Link>
+                          <>
+                            <Link
+                              className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full bg-slate-100 px-1 py-0.5 text-[0.56rem] font-semibold text-slate-700 transition duration-200 hover:bg-slate-200 sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs"
+                              to={`${ROUTES.patientConversations}?conversation=${request.conversationId}`}
+                            >
+                              <MessageSquareMore
+                                className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5"
+                                aria-hidden
+                              />
+                              <span className="text-[0.52rem] leading-none sm:text-xs">
+                                Ver chat
+                              </span>
+                            </Link>
+                            {request.status === 'ACEPTADA' ? (
+                              <button
+                                aria-label={`Cerrar solicitud con ${request.studentName}`}
+                                className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full bg-slate-100 px-1 py-0.5 text-[0.56rem] font-semibold text-slate-700 transition duration-200 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60 sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs"
+                                disabled={isLoading}
+                                type="button"
+                                onClick={() => setRequestToClose(request)}
+                              >
+                                <ShieldX
+                                  className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5"
+                                  aria-hidden
+                                />
+                                <span className="text-[0.52rem] leading-none sm:text-xs">
+                                  Cerrar
+                                </span>
+                              </button>
+                            ) : null}
+                          </>
                         ) : (
                           <span className="inline-flex w-full justify-center text-[0.62rem] font-medium text-ink-muted sm:text-xs">
                             -
@@ -407,7 +519,9 @@ export function PatientRequestsPage() {
           <div className="grid min-h-0 flex-1 place-items-center px-5 py-10 text-center">
             <div className="max-w-sm space-y-2">
               <p className="font-semibold text-ink">
-                {isLoading ? 'Cargando solicitudes...' : patientContent.requestsPage.emptyState}
+                {isLoading
+                  ? 'Cargando solicitudes...'
+                  : patientContent.requestsPage.emptyState}
               </p>
             </div>
           </div>
@@ -415,7 +529,9 @@ export function PatientRequestsPage() {
 
         <AdminTablePagination
           currentPage={clampedCurrentPage}
-          onNext={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+          onNext={() =>
+            setCurrentPage((page) => Math.min(totalPages, page + 1))
+          }
           onPrevious={() => setCurrentPage((page) => Math.max(1, page - 1))}
           pageEndLabel={pageEndLabel}
           pageStartLabel={pageStartLabel}
@@ -423,6 +539,20 @@ export function PatientRequestsPage() {
           totalPages={totalPages}
         />
       </AdminPanelCard>
+      <AdminConfirmationDialog
+        cancelLabel="No, volver"
+        confirmLabel="Sí, cerrar solicitud"
+        description="Si cierras esta solicitud, ya no podrás comunicarte más con este estudiante. ¿Estás seguro de que deseas continuar?"
+        icon={ShieldX}
+        isOpen={!!requestToClose}
+        isSubmitting={isLoading}
+        title="Cerrar solicitud"
+        tone="danger"
+        onCancel={() => setRequestToClose(null)}
+        onConfirm={() => {
+          void handleCloseRequest();
+        }}
+      />
     </div>
   );
 }

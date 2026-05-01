@@ -203,12 +203,10 @@ type StudentDirectoryRow = {
 
 const STUDENT_DIRECTORY_FILTERS_CACHE_MS = 5 * 60 * 1000;
 
-let studentDirectoryFiltersCache:
-  | {
-      expiresAt: number;
-      value: PatientStudentDirectoryFiltersDto;
-    }
-  | null = null;
+let studentDirectoryFiltersCache: {
+  expiresAt: number;
+  value: PatientStudentDirectoryFiltersDto;
+} | null = null;
 
 const PATIENT_INITIAL_STUDENT_DIRECTORY_LIMIT = 5;
 
@@ -272,14 +270,14 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
 
       const studentEmail =
         cita.solicitud.cuenta_estudiante.cuenta_acceso?.correo;
-      const patientEmail =
-        cita.solicitud.cuenta_paciente.cuenta_acceso?.correo;
+      const patientEmail = cita.solicitud.cuenta_paciente.cuenta_acceso?.correo;
       const studentName = `${cita.solicitud.cuenta_estudiante.persona.nombres} ${cita.solicitud.cuenta_estudiante.persona.apellidos}`;
       const patientName = `${cita.solicitud.cuenta_paciente.persona.nombres} ${cita.solicitud.cuenta_paciente.persona.apellidos}`;
       const appointmentType = cita.tipo_cita.nombre;
       const siteName = cita.sede.nombre;
       const siteAddress = cita.sede.direccion;
-      const universityName = cita.solicitud.cuenta_estudiante.universidad.nombre;
+      const universityName =
+        cita.solicitud.cuenta_estudiante.universidad.nombre;
       const city = cita.sede.localidad.ciudad.nombre;
       const startAt = cita.fecha_hora_inicio.toISOString();
       const endAt = cita.fecha_hora_fin.toISOString();
@@ -347,8 +345,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     referenceDate: Date = new Date(),
   ) {
     if (
-      this.floorDateToMinute(endAt) <=
-      this.floorDateToMinute(referenceDate)
+      this.floorDateToMinute(endAt) <= this.floorDateToMinute(referenceDate)
     ) {
       throw new BadRequestException(
         "Esta propuesta ya vencio y no puede ser aceptada.",
@@ -534,7 +531,8 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     cuenta_estudiante: PatientRequestStudentRecord;
   }): PatientRequestDto {
     const requestStatus =
-      request.estado === "ACEPTADA" && request.conversacion?.estado === "CERRADA"
+      request.estado === "ACEPTADA" &&
+      request.conversacion?.estado === "CERRADA"
         ? "CERRADA"
         : request.estado;
     const conversationId =
@@ -620,7 +618,8 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       avatarSrc: student.foto_url ?? null,
       availabilityGeneral: student.disponibilidad_general ?? "",
       availabilityStatus: "available",
-      averageRating: student.average_rating !== null ? Number(student.average_rating) : null,
+      averageRating:
+        student.average_rating !== null ? Number(student.average_rating) : null,
       biography: student.descripcion ?? "",
       city: student.city,
       firstName: student.nombres,
@@ -1153,7 +1152,9 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
                   orderBy: { fecha_creacion: "desc" },
                   take: 1,
                   include: {
-                    nueva_sede: { include: { localidad: { include: { ciudad: true } } } },
+                    nueva_sede: {
+                      include: { localidad: { include: { ciudad: true } } },
+                    },
                     nuevo_docente_universidad: { include: { docente: true } },
                   },
                 },
@@ -1223,7 +1224,9 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
           createdAt: (
             pendingReschedule?.fecha_creacion ?? c.fecha_creacion
           ).toISOString(),
-          endAt: (pendingReschedule?.nueva_fecha_hora_fin ?? c.fecha_hora_fin).toISOString(),
+          endAt: (
+            pendingReschedule?.nueva_fecha_hora_fin ?? c.fecha_hora_fin
+          ).toISOString(),
           id: String(c.id_cita),
           isRescheduleProposal: Boolean(pendingReschedule),
           myRating: c.valoracion[0]?.calificacion ?? null,
@@ -1232,7 +1235,9 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
             c.respondida_at?.toISOString() ??
             null,
           siteName: displaySite.nombre,
-          startAt: (pendingReschedule?.nueva_fecha_hora_inicio ?? c.fecha_hora_inicio).toISOString(),
+          startAt: (
+            pendingReschedule?.nueva_fecha_hora_inicio ?? c.fecha_hora_inicio
+          ).toISOString(),
           status: pendingReschedule ? "PROPUESTA" : c.estado,
           studentName: `${s.cuenta_estudiante.persona.nombres} ${s.cuenta_estudiante.persona.apellidos}`,
           teacherName: `${displayTeacher.docente.nombres} ${displayTeacher.docente.apellidos}`,
@@ -1446,7 +1451,8 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       void this.createNotificationSafely({
         id_cuenta_destino: studentAccountId,
         tipo: "SOLICITUD",
-        contenido: "Tienes una nueva solicitud de paciente pendiente por revisar.",
+        contenido:
+          "Tienes una nueva solicitud de paciente pendiente por revisar.",
       });
 
       return this.toRequestDto(reusedRequest);
@@ -1472,7 +1478,8 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       void this.createNotificationSafely({
         id_cuenta_destino: studentAccountId,
         tipo: "SOLICITUD",
-        contenido: "Tienes una nueva solicitud de paciente pendiente por revisar.",
+        contenido:
+          "Tienes una nueva solicitud de paciente pendiente por revisar.",
       });
 
       return this.toRequestDto({
@@ -1504,10 +1511,66 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
   ): Promise<PatientRequestDto> {
     const solicitud = await this.prisma.solicitud.findFirst({
       where: { id_solicitud: requestId, id_cuenta_paciente: patientAccountId },
+      include: { conversacion: true },
     });
 
     if (!solicitud) {
       throw new NotFoundException("La solicitud no existe o no te pertenece.");
+    }
+
+    if (payload.status === "CERRADA") {
+      if (solicitud.estado !== "ACEPTADA") {
+        throw new BadRequestException(
+          "Solo puedes cerrar solicitudes aceptadas.",
+        );
+      }
+
+      const updated = await this.prisma.$transaction(async (tx) => {
+        const closedConversation = await tx.conversacion.updateMany({
+          where: { id_solicitud: requestId },
+          data: { estado: "CERRADA" },
+        });
+
+        if (closedConversation.count === 0) {
+          await tx.conversacion.create({
+            data: {
+              id_solicitud: requestId,
+              estado: "CERRADA",
+            },
+          });
+        }
+
+        return tx.solicitud.findUniqueOrThrow({
+          where: { id_solicitud: requestId },
+          include: {
+            cita: { select: { id_cita: true } },
+            conversacion: { select: { estado: true, id_conversacion: true } },
+            cuenta_estudiante: {
+              include: { persona: true, universidad: true },
+            },
+          },
+        });
+      });
+
+      void this.createNotificationSafely({
+        id_cuenta_destino: updated.id_cuenta_estudiante,
+        tipo: "RESPUESTA_SOLICITUD",
+        contenido: "El paciente cerro el proceso asociado a la solicitud.",
+      });
+
+      return this.toRequestDto(updated);
+    }
+
+    if (payload.status !== "CANCELADA") {
+      throw new BadRequestException(
+        "El paciente solo puede cancelar solicitudes pendientes o cerrar solicitudes aceptadas.",
+      );
+    }
+
+    if (solicitud.estado !== "PENDIENTE") {
+      throw new BadRequestException(
+        "Solo puedes cancelar solicitudes pendientes.",
+      );
     }
 
     const updated = await this.prisma.solicitud.update({
@@ -1542,7 +1605,9 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
           orderBy: { fecha_creacion: "desc" },
           take: 1,
           include: {
-            nueva_sede: { include: { localidad: { include: { ciudad: true } } } },
+            nueva_sede: {
+              include: { localidad: { include: { ciudad: true } } },
+            },
             nuevo_docente_universidad: { include: { docente: true } },
           },
         },
@@ -1582,7 +1647,9 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       !isAlreadyAcceptedResponse &&
       !isAlreadyRejectedRescheduleResponse
     ) {
-      throw new BadRequestException("Solo puedes responder propuestas de cita.");
+      throw new BadRequestException(
+        "Solo puedes responder propuestas de cita.",
+      );
     }
 
     if (payload.status === "CANCELADA" && cita.estado !== "ACEPTADA") {
@@ -1652,18 +1719,14 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     }
 
     try {
-      if (
-        isAlreadyAcceptedResponse ||
-        isAlreadyRejectedRescheduleResponse
-      ) {
+      if (isAlreadyAcceptedResponse || isAlreadyRejectedRescheduleResponse) {
         // No-op: the previous attempt may have updated the cita but failed on
         // a secondary side effect such as notification delivery.
       } else if (payload.status === "ACEPTADA" && pendingReschedule) {
         await this.prisma.$transaction(async (tx) => {
           const updatedReschedule = await tx.reprogramacion_cita.updateMany({
             where: {
-              id_reprogramacion_cita:
-                pendingReschedule.id_reprogramacion_cita,
+              id_reprogramacion_cita: pendingReschedule.id_reprogramacion_cita,
               estado: "PENDIENTE",
             },
             data: {
@@ -1698,8 +1761,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         await this.prisma.$transaction(async (tx) => {
           const updatedReschedule = await tx.reprogramacion_cita.updateMany({
             where: {
-              id_reprogramacion_cita:
-                pendingReschedule.id_reprogramacion_cita,
+              id_reprogramacion_cita: pendingReschedule.id_reprogramacion_cita,
               estado: "PENDIENTE",
             },
             data: {
@@ -1770,7 +1832,9 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
 
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
-        (error.code === "P2002" || error.code === "P2003" || error.code === "P2014")
+        (error.code === "P2002" ||
+          error.code === "P2003" ||
+          error.code === "P2014")
       ) {
         throw new BadRequestException(
           payload.status === "CANCELADA"
@@ -1803,14 +1867,15 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       throw new NotFoundException("La cita no existe o no te pertenece.");
     }
 
-    if (payload.status === 'CANCELADA') {
+    if (payload.status === "CANCELADA") {
       await this.createNotificationSafely({
         id_cuenta_destino: updated.solicitud.id_cuenta_estudiante,
-        tipo: 'CANCELACION_CITA',
-        contenido: 'El paciente cancelo una de tus citas agendadas.',
+        tipo: "CANCELACION_CITA",
+        contenido: "El paciente cancelo una de tus citas agendadas.",
       });
 
-      const studentEmail = updated.solicitud.cuenta_estudiante.cuenta_acceso.correo;
+      const studentEmail =
+        updated.solicitud.cuenta_estudiante.cuenta_acceso.correo;
       const studentName = `${updated.solicitud.cuenta_estudiante.persona.nombres} ${updated.solicitud.cuenta_estudiante.persona.apellidos}`;
 
       const [patientPerson, patientAccount] = await Promise.all([
@@ -1837,28 +1902,28 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
           updated.fecha_hora_fin.toISOString(),
         );
       }
-    } else if (payload.status === 'ACEPTADA' && !isAlreadyAcceptedResponse) {
+    } else if (payload.status === "ACEPTADA" && !isAlreadyAcceptedResponse) {
       await this.createNotificationSafely({
         id_cuenta_destino: updated.solicitud.id_cuenta_estudiante,
-        tipo: 'RESPUESTA_CITA',
+        tipo: "RESPUESTA_CITA",
         contenido: isRescheduleResponse
-          ? 'El paciente acepto la reprogramacion de tu cita.'
-          : 'El paciente acepto tu propuesta de cita.',
+          ? "El paciente acepto la reprogramacion de tu cita."
+          : "El paciente acepto tu propuesta de cita.",
       });
     } else if (
-      payload.status === 'RECHAZADA' &&
+      payload.status === "RECHAZADA" &&
       !isAlreadyRejectedRescheduleResponse
     ) {
       await this.createNotificationSafely({
         id_cuenta_destino: updated.solicitud.id_cuenta_estudiante,
-        tipo: 'RESPUESTA_CITA',
+        tipo: "RESPUESTA_CITA",
         contenido: isRescheduleResponse
-          ? 'El paciente no acepto la reprogramacion. La cita conserva la fecha y hora originales.'
-          : 'El paciente rechazo tu propuesta de cita.',
+          ? "El paciente no acepto la reprogramacion. La cita conserva la fecha y hora originales."
+          : "El paciente rechazo tu propuesta de cita.",
       });
     }
 
-    if (payload.status === 'ACEPTADA') {
+    if (payload.status === "ACEPTADA") {
       await this.sendSameDayAppointmentReminderSafely(updated, responseDate);
     }
 
@@ -1890,7 +1955,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       where: {
         id_cita: appointmentId,
         solicitud: { id_cuenta_paciente: patientAccountId },
-        estado: 'FINALIZADA',
+        estado: "FINALIZADA",
       },
       include: {
         tipo_cita: true,
@@ -1898,7 +1963,9 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         docente_universidad: { include: { docente: true } },
         solicitud: {
           include: {
-            cuenta_estudiante: { include: { persona: true, universidad: true } },
+            cuenta_estudiante: {
+              include: { persona: true, universidad: true },
+            },
           },
         },
         valoracion: {
@@ -1909,11 +1976,13 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     });
 
     if (!cita) {
-      throw new NotFoundException('La cita no existe, no esta finalizada o no te pertenece.');
+      throw new NotFoundException(
+        "La cita no existe, no esta finalizada o no te pertenece.",
+      );
     }
 
     if (cita.valoracion.length > 0) {
-      throw new ConflictException('Ya has valorado esta cita.');
+      throw new ConflictException("Ya has valorado esta cita.");
     }
 
     const comment = payload.comment?.trim() || null;
