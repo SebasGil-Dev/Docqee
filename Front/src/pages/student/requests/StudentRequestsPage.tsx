@@ -35,6 +35,7 @@ type PendingRequestConfirmation = {
 };
 
 type StudentRequestProfileDialogProps = {
+  isActionPending: boolean;
   onAccept: () => void;
   onClose: () => void;
   onReject: () => void;
@@ -188,6 +189,7 @@ function preloadPatientAvatar(src: string | undefined) {
 }
 
 function StudentRequestProfileDialog({
+  isActionPending,
   onAccept,
   onClose,
   onReject,
@@ -396,7 +398,8 @@ function StudentRequestProfileDialog({
               {request.status === 'PENDIENTE' ? (
                 <>
                   <button
-                    className="inline-flex items-center gap-2 rounded-full bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700 transition duration-200 hover:bg-rose-100"
+                    className="inline-flex items-center gap-2 rounded-full bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700 transition duration-200 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={isActionPending}
                     type="button"
                     onClick={onReject}
                   >
@@ -406,7 +409,8 @@ function StudentRequestProfileDialog({
                     </span>
                   </button>
                   <button
-                    className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition duration-200 hover:bg-emerald-100"
+                    className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition duration-200 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={isActionPending}
                     type="button"
                     onClick={onAccept}
                   >
@@ -441,6 +445,10 @@ export function StudentRequestsPage() {
   );
   const [pendingRequestConfirmation, setPendingRequestConfirmation] =
     useState<PendingRequestConfirmation | null>(null);
+  const pendingRequestActionIdsRef = useRef<Set<string>>(new Set());
+  const [pendingRequestActionIds, setPendingRequestActionIds] = useState<
+    Set<string>
+  >(() => new Set());
   const [isMobileViewport, setIsMobileViewport] = useState(() => {
     if (typeof window === 'undefined' || !window.matchMedia) {
       return false;
@@ -561,10 +569,7 @@ export function StudentRequestsPage() {
       mobileViewportMedia.addEventListener('change', updateMobileViewport);
 
       return () => {
-        mobileViewportMedia.removeEventListener(
-          'change',
-          updateMobileViewport,
-        );
+        mobileViewportMedia.removeEventListener('change', updateMobileViewport);
       };
     }
 
@@ -582,7 +587,6 @@ export function StudentRequestsPage() {
   useEffect(() => {
     setCurrentPage((currentValue) => Math.min(currentValue, totalPages));
   }, [totalPages]);
-
 
   useEffect(() => {
     visibleRequests.forEach((request) => {
@@ -650,21 +654,55 @@ export function StudentRequestsPage() {
     };
   }, [successMessage]);
 
+  const setRequestActionPending = (requestId: string, isPending: boolean) => {
+    const nextPendingIds = new Set(pendingRequestActionIdsRef.current);
+
+    if (isPending) {
+      nextPendingIds.add(requestId);
+    } else {
+      nextPendingIds.delete(requestId);
+    }
+
+    pendingRequestActionIdsRef.current = nextPendingIds;
+    setPendingRequestActionIds(nextPendingIds);
+  };
+
   const handleRequestAction = (
     requestId: string,
     nextStatus: StudentRequestStatus,
     message: string,
     onSuccess?: () => void,
   ) => {
+    if (pendingRequestActionIdsRef.current.has(requestId)) {
+      return;
+    }
+
+    const currentRequest = requests.find((request) => request.id === requestId);
+    const isValidTransition =
+      currentRequest &&
+      ((currentRequest.status === 'PENDIENTE' &&
+        (nextStatus === 'ACEPTADA' || nextStatus === 'RECHAZADA')) ||
+        (currentRequest.status === 'ACEPTADA' && nextStatus === 'CERRADA'));
+
+    if (!isValidTransition) {
+      return;
+    }
+
+    setRequestActionPending(requestId, true);
+    onSuccess?.();
+
     void (async () => {
-      const updated = await respondToRequest(requestId, nextStatus);
+      try {
+        const updated = await respondToRequest(requestId, nextStatus);
 
-      if (!updated) {
-        return;
+        if (!updated) {
+          return;
+        }
+
+        setSuccessMessage(message);
+      } finally {
+        setRequestActionPending(requestId, false);
       }
-
-      setSuccessMessage(message);
-      onSuccess?.();
     })();
   };
 
@@ -674,6 +712,10 @@ export function StudentRequestsPage() {
     message: string,
     onSuccess?: () => void,
   ) => {
+    if (pendingRequestActionIdsRef.current.has(request.id)) {
+      return;
+    }
+
     if (
       isMobileViewport &&
       (nextStatus === 'ACEPTADA' || nextStatus === 'RECHAZADA')
@@ -964,7 +1006,8 @@ export function StudentRequestsPage() {
                             </span>
                           </button>
                           <button
-                            className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full bg-emerald-50 px-1 py-0.5 text-[0.56rem] font-semibold text-emerald-700 transition duration-200 hover:bg-emerald-100 sm:gap-1 sm:px-2 sm:py-1 sm:text-[0.72rem]"
+                            className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full bg-emerald-50 px-1 py-0.5 text-[0.56rem] font-semibold text-emerald-700 transition duration-200 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60 sm:gap-1 sm:px-2 sm:py-1 sm:text-[0.72rem]"
+                            disabled={pendingRequestActionIds.has(request.id)}
                             type="button"
                             onClick={() =>
                               handleResponsiveRequestAction(
@@ -983,7 +1026,8 @@ export function StudentRequestsPage() {
                             </span>
                           </button>
                           <button
-                            className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full bg-rose-50 px-1 py-0.5 text-[0.56rem] font-semibold text-rose-700 transition duration-200 hover:bg-rose-100 sm:gap-1 sm:px-2 sm:py-1 sm:text-[0.72rem]"
+                            className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full bg-rose-50 px-1 py-0.5 text-[0.56rem] font-semibold text-rose-700 transition duration-200 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60 sm:gap-1 sm:px-2 sm:py-1 sm:text-[0.72rem]"
+                            disabled={pendingRequestActionIds.has(request.id)}
                             type="button"
                             onClick={() =>
                               handleResponsiveRequestAction(
@@ -1022,7 +1066,8 @@ export function StudentRequestsPage() {
                             </span>
                           </button>
                           <button
-                            className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full bg-slate-100 px-1 py-0.5 text-[0.56rem] font-semibold text-slate-700 transition duration-200 hover:bg-slate-200 sm:gap-1 sm:px-2 sm:py-1 sm:text-[0.72rem]"
+                            className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full bg-slate-100 px-1 py-0.5 text-[0.56rem] font-semibold text-slate-700 transition duration-200 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60 sm:gap-1 sm:px-2 sm:py-1 sm:text-[0.72rem]"
+                            disabled={pendingRequestActionIds.has(request.id)}
                             type="button"
                             onClick={() => setRequestToClose(request)}
                           >
@@ -1090,6 +1135,7 @@ export function StudentRequestsPage() {
 
       {selectedRequest ? (
         <StudentRequestProfileDialog
+          isActionPending={pendingRequestActionIds.has(selectedRequest.id)}
           request={selectedRequest}
           onAccept={() =>
             handleResponsiveRequestAction(
@@ -1117,7 +1163,13 @@ export function StudentRequestsPage() {
           description={pendingRequestConfirmationCopy.description}
           icon={pendingRequestConfirmationCopy.icon}
           isOpen={!!pendingRequestConfirmation}
-          isSubmitting={isLoading}
+          isSubmitting={
+            pendingRequestConfirmation
+              ? pendingRequestActionIds.has(
+                  pendingRequestConfirmation.request.id,
+                )
+              : false
+          }
           title={pendingRequestConfirmationCopy.title}
           tone={pendingRequestConfirmationCopy.tone}
           onCancel={() => setPendingRequestConfirmation(null)}
@@ -1144,7 +1196,11 @@ export function StudentRequestsPage() {
         description="Si cierras esta solicitud, ya no podrás comunicarte más con este usuario. ¿Estás seguro de que deseas continuar?"
         icon={ShieldX}
         isOpen={!!requestToClose}
-        isSubmitting={isLoading}
+        isSubmitting={
+          requestToClose
+            ? pendingRequestActionIds.has(requestToClose.id)
+            : false
+        }
         title="Cerrar solicitud"
         tone="danger"
         onCancel={() => setRequestToClose(null)}

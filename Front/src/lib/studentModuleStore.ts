@@ -1189,6 +1189,7 @@ let nextConversationMessageSequence =
 let runtimeLoadPromise: Promise<StudentStoreState> | null = null;
 let requestsRefreshPromise: Promise<void> | null = null;
 let errorMessageDismissTimerId: number | null = null;
+const pendingRequestResponseIds = new Set<string>();
 const conversationRefreshPromises = new Map<string, Promise<void>>();
 let universitySitesCache: {
   data: StudentPracticeSite[];
@@ -1226,6 +1227,7 @@ function resetRuntimeStateForSession(nextUserId: number | null) {
   syncStudentRuntimeSequences(createEmptyRuntimeModuleState());
   runtimeLoadPromise = null;
   requestsRefreshPromise = null;
+  pendingRequestResponseIds.clear();
   conversationRefreshPromises.clear();
   universitySitesCache = null;
   universitySitesLoadPromise = null;
@@ -1376,7 +1378,9 @@ function buildConversationForRequest(
   };
 
   return {
-    id: `student-conversation-${nextConversationSequence++}`,
+    id:
+      request.conversationId ??
+      `student-conversation-${nextConversationSequence++}`,
     messages: [firstMessage],
     patientAge: request.patientAge,
     patientCity: request.patientCity,
@@ -1386,6 +1390,180 @@ function buildConversationForRequest(
     status,
     unreadCount: 1,
   } satisfies StudentConversation;
+}
+
+function findConversationForRequest(
+  requestId: string,
+  conversationId: string | null | undefined,
+  conversations: StudentConversation[] = state.conversations,
+) {
+  return (
+    conversations.find(
+      (conversation) =>
+        (conversationId && conversation.id === conversationId) ||
+        conversation.requestId === requestId,
+    ) ?? null
+  );
+}
+
+function updateConversationsForRequestResponse(
+  conversations: StudentConversation[],
+  request: StudentRequest,
+  nextStatus: StudentRequestStatus,
+): StudentConversation[] {
+  const currentConversation = findConversationForRequest(
+    request.id,
+    request.conversationId,
+    conversations,
+  );
+
+  if (nextStatus === 'ACEPTADA') {
+    const nextConversation =
+      currentConversation ?? buildConversationForRequest(request);
+
+    if (!currentConversation) {
+      return [nextConversation, ...conversations];
+    }
+
+    return conversations.map((conversation) =>
+      conversation.requestId === request.id
+        ? {
+            ...conversation,
+            id: request.conversationId ?? conversation.id,
+            status: 'ACTIVA' as const,
+          }
+        : conversation,
+    );
+  }
+
+  if (nextStatus === 'CERRADA' || nextStatus === 'CANCELADA') {
+    return conversations.map((conversation) =>
+      conversation.requestId === request.id
+        ? {
+            ...conversation,
+            status: 'CERRADA' as const,
+            unreadCount: 0,
+          }
+        : conversation,
+    );
+  }
+
+  return conversations;
+}
+
+function buildOptimisticRequestResponse(
+  request: StudentRequest,
+  nextStatus: StudentRequestStatus,
+) {
+  const conversations = updateConversationsForRequestResponse(
+    state.conversations,
+    request,
+    nextStatus,
+  );
+  const nextConversation = findConversationForRequest(
+    request.id,
+    request.conversationId,
+    conversations,
+  );
+
+  return {
+    conversations,
+    request: {
+      ...request,
+      conversationId:
+        nextStatus === 'ACEPTADA'
+          ? (nextConversation?.id ?? request.conversationId)
+          : request.conversationId,
+      conversationEnabled:
+        nextStatus === 'ACEPTADA'
+          ? true
+          : nextStatus === 'CERRADA' || nextStatus === 'CANCELADA'
+            ? false
+            : request.conversationEnabled,
+      responseAt: new Date().toISOString(),
+      status: nextStatus,
+    } satisfies StudentRequest,
+  };
+}
+
+function mergePendingRequests(nextRequests: StudentRequest[]) {
+  if (pendingRequestResponseIds.size === 0) {
+    return nextRequests;
+  }
+
+  const pendingRequestsById = new Map(
+    state.requests
+      .filter((request) => pendingRequestResponseIds.has(request.id))
+      .map((request) => [request.id, request]),
+  );
+
+  if (pendingRequestsById.size === 0) {
+    return nextRequests;
+  }
+
+  const mergedRequests = nextRequests.map(
+    (request) => pendingRequestsById.get(request.id) ?? request,
+  );
+
+  pendingRequestsById.forEach((request, requestId) => {
+    if (
+      !mergedRequests.some((currentRequest) => currentRequest.id === requestId)
+    ) {
+      mergedRequests.push(request);
+    }
+  });
+
+  return mergedRequests;
+}
+
+function mergePendingConversations(nextConversations: StudentConversation[]) {
+  if (pendingRequestResponseIds.size === 0) {
+    return nextConversations;
+  }
+
+  const pendingConversationsByRequestId = new Map(
+    state.conversations
+      .filter((conversation) =>
+        pendingRequestResponseIds.has(conversation.requestId),
+      )
+      .map((conversation) => [conversation.requestId, conversation]),
+  );
+
+  if (pendingConversationsByRequestId.size === 0) {
+    return nextConversations;
+  }
+
+  const mergedConversations = nextConversations.map(
+    (conversation) =>
+      pendingConversationsByRequestId.get(conversation.requestId) ??
+      conversation,
+  );
+
+  pendingConversationsByRequestId.forEach((conversation, requestId) => {
+    if (
+      !mergedConversations.some(
+        (currentConversation) => currentConversation.requestId === requestId,
+      )
+    ) {
+      mergedConversations.unshift(conversation);
+    }
+  });
+
+  return mergedConversations;
+}
+
+function mergePendingRequestResponses(
+  nextDashboard: StudentModuleState,
+): StudentModuleState {
+  if (pendingRequestResponseIds.size === 0) {
+    return nextDashboard;
+  }
+
+  return {
+    ...nextDashboard,
+    conversations: mergePendingConversations(nextDashboard.conversations),
+    requests: mergePendingRequests(nextDashboard.requests),
+  };
 }
 
 function getErrorMessage(error: unknown, fallbackMessage: string) {
@@ -2182,7 +2360,9 @@ async function loadRuntimeState(forceRefresh = false) {
         return state;
       }
 
-      const nextDashboard = normalizeStudentModuleData(payload);
+      const nextDashboard = mergePendingRequestResponses(
+        normalizeStudentModuleData(payload),
+      );
       syncStudentRuntimeSequences(nextDashboard);
       runtimeStateOwnerUserId = requestUserId;
 
@@ -2252,7 +2432,7 @@ export async function refreshStudentRequestsState() {
       updateState({
         ...state,
         isReady: true,
-        requests,
+        requests: mergePendingRequests(requests),
         shouldRefresh: false,
       });
     })
@@ -2693,27 +2873,36 @@ async function respondToRequest(
     return respondToRequestMock(requestId, nextStatus);
   }
 
+  if (pendingRequestResponseIds.has(requestId)) {
+    return false;
+  }
+
+  pendingRequestResponseIds.add(requestId);
+
   const previousRequests = state.requests;
+  const previousConversations = state.conversations;
   const currentRequest = state.requests.find(
     (request) => request.id === requestId,
   );
+  const canOptimisticallyRespond =
+    currentRequest &&
+    ((currentRequest.status === 'PENDIENTE' &&
+      (nextStatus === 'ACEPTADA' || nextStatus === 'RECHAZADA')) ||
+      (currentRequest.status === 'ACEPTADA' && nextStatus === 'CERRADA'));
   const optimisticRequest =
-    nextStatus === 'RECHAZADA' && currentRequest?.status === 'PENDIENTE'
-      ? {
-          ...currentRequest,
-          responseAt: new Date().toISOString(),
-          status: nextStatus,
-        }
+    canOptimisticallyRespond && currentRequest
+      ? buildOptimisticRequestResponse(currentRequest, nextStatus)
       : null;
 
   if (optimisticRequest) {
     updateState({
       ...state,
+      conversations: optimisticRequest.conversations,
       errorMessage: null,
       isLoading: true,
       isReady: true,
       requests: state.requests.map((request) =>
-        request.id === requestId ? optimisticRequest : request,
+        request.id === requestId ? optimisticRequest.request : request,
       ),
     });
   } else {
@@ -2729,8 +2918,15 @@ async function respondToRequest(
       nextStatus,
     );
 
+    const conversations = updateConversationsForRequestResponse(
+      state.conversations,
+      request,
+      request.status,
+    );
+
     updateState({
       ...state,
+      conversations,
       errorMessage: null,
       isLoading: false,
       isReady: true,
@@ -2739,19 +2935,24 @@ async function respondToRequest(
       ),
     });
 
-      return true;
-    } catch (error) {
-      updateState({
-        ...state,
-        errorMessage: getErrorMessage(
-          error,
-          'No pudimos actualizar la solicitud.',
-        ),
-        isLoading: false,
-        requests: optimisticRequest ? previousRequests : state.requests,
-      });
-      return false;
-    }
+    return true;
+  } catch (error) {
+    updateState({
+      ...state,
+      conversations: optimisticRequest
+        ? previousConversations
+        : state.conversations,
+      errorMessage: getErrorMessage(
+        error,
+        'No pudimos actualizar la solicitud.',
+      ),
+      isLoading: false,
+      requests: optimisticRequest ? previousRequests : state.requests,
+    });
+    return false;
+  } finally {
+    pendingRequestResponseIds.delete(requestId);
+  }
 }
 
 async function refreshConversation(conversationId: string) {
@@ -3016,6 +3217,7 @@ export function resetStudentModuleState() {
   );
   runtimeLoadPromise = null;
   requestsRefreshPromise = null;
+  pendingRequestResponseIds.clear();
   conversationRefreshPromises.clear();
   universitySitesCache = null;
   universitySitesLoadPromise = null;
