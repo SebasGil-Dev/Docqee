@@ -434,15 +434,8 @@ export function StudentAppointmentsPage() {
   const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const tableViewportRef = useRef<HTMLDivElement | null>(null);
+  const tableHeaderRef = useRef<HTMLTableSectionElement | null>(null);
   const tableBodyRef = useRef<HTMLTableSectionElement | null>(null);
-  const rowsPerPage = useStableRowsPerPage({
-    viewportRef: tableViewportRef,
-    defaultRowsPerPage: DEFAULT_ROWS_PER_PAGE,
-    minRowsPerPage: MIN_ROWS_PER_PAGE,
-    headerHeightPx: TABLE_HEADER_HEIGHT_PX,
-    rowHeightPx: TABLE_ROW_HEIGHT_FALLBACK_PX,
-    heightPaddingPx: TABLE_HEIGHT_PADDING_PX,
-  });
   const autoRejectedAppointmentIdsRef = useRef<Set<string>>(new Set());
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const now = new Date();
@@ -590,6 +583,18 @@ export function StudentAppointmentsPage() {
     sortOrder,
     statusFilter,
   ]);
+  const rowsPerPage = useStableRowsPerPage({
+    viewportRef: tableViewportRef,
+    defaultRowsPerPage: DEFAULT_ROWS_PER_PAGE,
+    minRowsPerPage: MIN_ROWS_PER_PAGE,
+    maxRowsPerPage: filteredAppointments.length,
+    headerMeasurementRef: tableHeaderRef,
+    headerHeightPx: TABLE_HEADER_HEIGHT_PX,
+    rowMeasurementRef: tableBodyRef,
+    rowHeightPx: TABLE_ROW_HEIGHT_FALLBACK_PX,
+    heightPaddingPx: TABLE_HEIGHT_PADDING_PX,
+    rowSafetyBufferPx: 1,
+  });
   const totalPages = Math.max(
     1,
     Math.ceil(filteredAppointments.length / rowsPerPage),
@@ -1007,8 +1012,8 @@ export function StudentAppointmentsPage() {
         </SurfaceCard>
       </div>
       <AdminPanelCard
-        className="flex-1"
-        panelClassName="bg-[#f4f8ff]"
+        className="flex min-h-0 w-full min-w-0 flex-1"
+        panelClassName="h-full w-full min-w-0 bg-[#f4f8ff]"
         shellPaddingClassName="p-0.5 sm:p-1"
       >
         <div className="border-b border-slate-200/80 px-3 py-2.5 sm:px-4 sm:py-2.5">
@@ -1192,10 +1197,13 @@ export function StudentAppointmentsPage() {
         {filteredAppointments.length > 0 ? (
           <div
             ref={tableViewportRef}
-            className="min-h-0 flex-1 overflow-hidden"
+            className="min-h-0 w-full min-w-0 flex-1 overflow-hidden bg-white"
           >
-            <table className="w-full table-fixed">
-              <thead className="sticky top-0 z-10 bg-slate-100 text-left">
+            <table className="h-auto w-full min-w-full table-fixed">
+              <thead
+                ref={tableHeaderRef}
+                className="sticky top-0 z-10 bg-slate-100 text-left"
+              >
                 <tr className="text-[0.56rem] font-bold uppercase leading-3 tracking-[0.12em] text-ink-muted sm:text-[0.62rem] sm:leading-none sm:tracking-[0.16em]">
                   <th className="w-[39%] px-2 py-1.5 sm:w-[20%] sm:px-4 sm:py-2 md:w-[14%]">
                     Paciente
@@ -1505,7 +1513,7 @@ export function StudentAppointmentsPage() {
             </table>
           </div>
         ) : (
-          <div className="px-4 py-8 text-center sm:px-5">
+          <div className="grid min-h-0 flex-1 place-items-center px-4 py-8 text-center sm:px-5">
             <p className="text-sm font-medium text-ink-muted">
               {isLoading
                 ? 'Cargando citas...'
