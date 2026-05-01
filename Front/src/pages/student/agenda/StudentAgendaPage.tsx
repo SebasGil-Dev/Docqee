@@ -377,7 +377,7 @@ export function StudentAgendaPage() {
           titleClassName="text-[1.45rem] sm:text-[1.75rem]"
         />
         <button
-          className="mt-1.5 inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-full bg-brand-gradient px-3 text-[0.72rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 sm:absolute sm:right-0 sm:top-1/2 sm:mt-0 sm:w-auto sm:-translate-y-1/2"
+          className="mt-1.5 inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-full bg-brand-gradient px-3 text-[0.72rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 lg:hidden"
           type="button"
           onClick={handleOpenCreateDialog}
         >
@@ -405,8 +405,10 @@ export function StudentAgendaPage() {
       >
         <div className="min-h-0 flex flex-1 overflow-hidden px-1.5 py-1.5 sm:px-2 sm:py-2">
           <StudentAgendaCalendar
+            addBlockLabel={studentContent.agendaPage.actionLabels.add}
             appointments={appointments}
             scheduleBlocks={scheduleBlocks}
+            onAddBlock={handleOpenCreateDialog}
             onSelectScheduleBlock={handleSelectBlock}
           />
         </div>

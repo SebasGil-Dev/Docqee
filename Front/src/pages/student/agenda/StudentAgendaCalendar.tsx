@@ -430,7 +430,7 @@ export function StudentAgendaCalendar({
             </div>
             {onAddBlock ? (
               <button
-                className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full bg-brand-gradient px-3.5 text-[0.76rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+                className="hidden h-8 shrink-0 items-center justify-center gap-1.5 rounded-full bg-brand-gradient px-3.5 text-[0.76rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 lg:inline-flex"
                 type="button"
                 onClick={onAddBlock}
               >
