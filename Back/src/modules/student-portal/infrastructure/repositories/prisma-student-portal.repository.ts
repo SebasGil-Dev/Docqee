@@ -258,11 +258,27 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     };
   }
 
+  private shouldShowRequestInRequestsList(request: {
+    estado: StudentRequestDto['status'];
+    conversacion?: { estado?: string } | null;
+  }) {
+    return (
+      request.estado !== 'CANCELADA' &&
+      request.estado !== 'RECHAZADA' &&
+      request.estado !== 'CERRADA' &&
+      request.conversacion?.estado !== 'CERRADA'
+    );
+  }
+
   async getRequests(studentAccountId: number): Promise<StudentRequestDto[]> {
     const solicitudes = await this.prisma.solicitud.findMany({
       where: {
         id_cuenta_estudiante: studentAccountId,
-        estado: { notIn: ['CANCELADA', 'RECHAZADA'] },
+        estado: { notIn: ['CANCELADA', 'RECHAZADA', 'CERRADA'] },
+        OR: [
+          { conversacion: { is: null } },
+          { conversacion: { isNot: { estado: 'CERRADA' } } },
+        ],
       },
       include: {
         cuenta_paciente: {
@@ -416,12 +432,14 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       solicitudes.map((solicitud) => solicitud.cuenta_paciente.id_cuenta),
     );
 
-    const requests: StudentRequestDto[] = solicitudes.map((s) =>
-      this.toStudentRequestDto(
-        s,
-        patientReviewsByAccountId.get(s.cuenta_paciente.id_cuenta) ?? [],
-      ),
-    );
+    const requests: StudentRequestDto[] = solicitudes
+      .filter((s) => this.shouldShowRequestInRequestsList(s))
+      .map((s) =>
+        this.toStudentRequestDto(
+          s,
+          patientReviewsByAccountId.get(s.cuenta_paciente.id_cuenta) ?? [],
+        ),
+      );
 
     const appointments: StudentAgendaAppointmentDto[] = solicitudes.flatMap((s) =>
       s.cita.map((c) => {
@@ -1033,7 +1051,18 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
         throw new BadRequestException('Solo se pueden cerrar solicitudes aceptadas.');
       }
 
+      const closedAt = new Date();
       const updated = await this.prisma.$transaction(async (tx) => {
+        await tx.solicitud.update({
+          where: { id_solicitud: requestId },
+          data: {
+            cerrada_por_cuenta: studentAccountId,
+            estado: 'CERRADA',
+            fecha_actualizacion: closedAt,
+            fecha_cierre: closedAt,
+          },
+        });
+
         const closedConversation = await tx.conversacion.updateMany({
           where: { id_solicitud: requestId },
           data: { estado: 'CERRADA' },

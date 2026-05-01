@@ -1132,7 +1132,8 @@ function hasNewlyClosedPatientRequest(
   previousRequests: PatientRequest[],
   nextRequests: PatientRequest[],
 ) {
-  return nextRequests.some((request) => {
+  const nextRequestIds = new Set(nextRequests.map((request) => request.id));
+  const hasClosedRequest = nextRequests.some((request) => {
     if (request.status !== 'CERRADA') {
       return false;
     }
@@ -1143,6 +1144,16 @@ function hasNewlyClosedPatientRequest(
       )?.status !== 'CERRADA'
     );
   });
+
+  if (hasClosedRequest) {
+    return true;
+  }
+
+  return previousRequests.some(
+    (request) =>
+      (request.status === 'PENDIENTE' || request.status === 'ACEPTADA') &&
+      !nextRequestIds.has(request.id),
+  );
 }
 
 function filterStudentDirectoryIndex(
@@ -1371,15 +1382,18 @@ function updateRequestStatusMock(
             : conversation,
         )
       : state.conversations,
-    requests: state.requests.map((request) =>
-      request.id === requestId
-        ? {
-            ...request,
-            responseAt: new Date().toISOString(),
-            status,
-          }
-        : request,
-    ),
+    requests:
+      status === 'CERRADA'
+        ? state.requests.filter((request) => request.id !== requestId)
+        : state.requests.map((request) =>
+            request.id === requestId
+              ? {
+                  ...request,
+                  responseAt: new Date().toISOString(),
+                  status,
+                }
+              : request,
+          ),
   });
 
   return true;
@@ -1993,6 +2007,12 @@ async function updateRequestStatus(
 
   try {
     const request = await updatePatientPortalRequestStatus(requestId, status);
+    const isClosedRequest = request.status === 'CERRADA';
+
+    if (isClosedRequest) {
+      clearStudentDirectorySearchState({ persisted: true });
+    }
+
     const nextConversation =
       request.status === 'ACEPTADA' && request.conversationId
         ? (state.conversations.find(
@@ -2025,9 +2045,13 @@ async function updateRequestStatus(
         errorMessage: null,
         isLoading: false,
         isReady: true,
-        requests: state.requests.map((currentRequest) =>
-          currentRequest.id === request.id ? request : currentRequest,
-        ),
+        requests: isClosedRequest
+          ? state.requests.filter(
+              (currentRequest) => currentRequest.id !== request.id,
+            )
+          : state.requests.map((currentRequest) =>
+              currentRequest.id === request.id ? request : currentRequest,
+            ),
         shouldRefresh: false,
       },
       {

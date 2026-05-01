@@ -536,7 +536,8 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         ? "CERRADA"
         : request.estado;
     const conversationId =
-      request.estado === "ACEPTADA" && request.conversacion
+      (request.estado === "ACEPTADA" || requestStatus === "CERRADA") &&
+      request.conversacion
         ? String(request.conversacion.id_conversacion)
         : null;
 
@@ -552,6 +553,13 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       studentName: `${request.cuenta_estudiante.persona.nombres} ${request.cuenta_estudiante.persona.apellidos}`,
       universityName: request.cuenta_estudiante.universidad.nombre,
     };
+  }
+
+  private shouldShowRequestInRequestsList(request: {
+    estado: "PENDIENTE" | "ACEPTADA" | "RECHAZADA" | "CERRADA" | "CANCELADA";
+    conversacion?: { estado?: string } | null;
+  }) {
+    return request.estado !== "CERRADA" && request.conversacion?.estado !== "CERRADA";
   }
 
   private getStudentDirectoryLocation(student: StudentDirectoryRecord) {
@@ -643,7 +651,14 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
 
   async getRequests(patientAccountId: number): Promise<PatientRequestDto[]> {
     const solicitudes = await this.prisma.solicitud.findMany({
-      where: { id_cuenta_paciente: patientAccountId },
+      where: {
+        id_cuenta_paciente: patientAccountId,
+        estado: { not: "CERRADA" },
+        OR: [
+          { conversacion: { is: null } },
+          { conversacion: { isNot: { estado: "CERRADA" } } },
+        ],
+      },
       include: {
         cuenta_estudiante: {
           select: patientRequestStudentSelect,
@@ -1205,9 +1220,9 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
 
     const profile = patient ? this.toProfileDto(patient) : this.emptyProfile();
 
-    const requests: PatientRequestDto[] = solicitudes.map((s) =>
-      this.toRequestDto(s),
-    );
+    const requests: PatientRequestDto[] = solicitudes
+      .filter((s) => this.shouldShowRequestInRequestsList(s))
+      .map((s) => this.toRequestDto(s));
 
     const appointments: PatientAppointmentDto[] = solicitudes.flatMap((s) =>
       s.cita.map((c) => {
@@ -1390,8 +1405,10 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       return this.prisma.solicitud.update({
         where: { id_solicitud: closedRequest.id_solicitud },
         data: {
+          cerrada_por_cuenta: null,
           estado: "PENDIENTE",
           fecha_actualizacion: new Date(),
+          fecha_cierre: null,
           fecha_envio: new Date(),
           fecha_respuesta: null,
           motivo_consulta: normalizedReason,
@@ -1525,7 +1542,18 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         );
       }
 
+      const closedAt = new Date();
       const updated = await this.prisma.$transaction(async (tx) => {
+        await tx.solicitud.update({
+          where: { id_solicitud: requestId },
+          data: {
+            cerrada_por_cuenta: patientAccountId,
+            estado: "CERRADA",
+            fecha_actualizacion: closedAt,
+            fecha_cierre: closedAt,
+          },
+        });
+
         const closedConversation = await tx.conversacion.updateMany({
           where: { id_solicitud: requestId },
           data: { estado: "CERRADA" },

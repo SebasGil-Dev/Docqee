@@ -24,7 +24,8 @@ import { useStableRowsPerPage } from '@/hooks/useStableRowsPerPage';
 import { classNames } from '@/lib/classNames';
 import { usePatientModuleStore } from '@/lib/patientModuleStore';
 
-type RequestStatusFilter = PatientRequestStatus | 'all';
+type VisibleRequestStatus = Exclude<PatientRequestStatus, 'CERRADA'>;
+type RequestStatusFilter = VisibleRequestStatus | 'all';
 
 const requestStatusOptions: Array<{
   label: string;
@@ -34,7 +35,6 @@ const requestStatusOptions: Array<{
   { label: 'Pendiente', value: 'PENDIENTE' },
   { label: 'Aceptada', value: 'ACEPTADA' },
   { label: 'Rechazada', value: 'RECHAZADA' },
-  { label: 'Cerrada', value: 'CERRADA' },
   { label: 'Cancelada', value: 'CANCELADA' },
 ];
 
@@ -126,13 +126,20 @@ export function PatientRequestsPage() {
 
   useAutoDismissSystemMessage(successMessage, () => setSuccessMessage(null));
 
-  const pendingCount = useMemo(
-    () => requests.filter((request) => request.status === 'PENDIENTE').length,
+  const visibleRequests = useMemo(
+    () => requests.filter((request) => request.status !== 'CERRADA'),
     [requests],
   );
 
+  const pendingCount = useMemo(
+    () =>
+      visibleRequests.filter((request) => request.status === 'PENDIENTE')
+        .length,
+    [visibleRequests],
+  );
+
   const filteredRequests = useMemo(() => {
-    return requests
+    return visibleRequests
       .map((request, index) => ({ request, index }))
       .filter(({ request }) => {
         const matchesSearch =
@@ -164,7 +171,7 @@ export function PatientRequestsPage() {
         return left.index - right.index;
       })
       .map(({ request }) => request);
-  }, [normalizedSearch, requests, statusFilter]);
+  }, [normalizedSearch, statusFilter, visibleRequests]);
 
   const totalPages = Math.max(
     1,

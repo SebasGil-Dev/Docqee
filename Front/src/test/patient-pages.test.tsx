@@ -155,6 +155,34 @@ describe('Patient pages', () => {
     });
   });
 
+  it('oculta una solicitud aceptada cuando el paciente la cierra', async () => {
+    const user = userEvent.setup();
+
+    renderPatientApp([ROUTES.patientRequests]);
+
+    expect(
+      screen.queryByTestId('patient-request-row-patient-request-3'),
+    ).not.toBeInTheDocument();
+
+    await user.click(
+      within(screen.getByTestId('patient-request-row-patient-request-1')).getByRole('button', {
+        name: /cerrar solicitud/i,
+      }),
+    );
+    await user.click(
+      screen.getByRole('button', { name: /s[ií], cerrar solicitud/i }),
+    );
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      /solicitud actualizada: cerrada/i,
+    );
+    await waitFor(() => {
+      expect(
+        screen.queryByTestId('patient-request-row-patient-request-1'),
+      ).not.toBeInTheDocument();
+    });
+  });
+
   it('permite enviar un mensaje en una conversacion activa', async () => {
     const user = userEvent.setup();
 

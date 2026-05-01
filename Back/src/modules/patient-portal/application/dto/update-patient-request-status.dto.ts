@@ -1,3 +1,8 @@
+import { IsIn, IsNotEmpty, IsString } from 'class-validator';
+
 export class UpdatePatientRequestStatusDto {
-  status!: 'PENDIENTE' | 'ACEPTADA' | 'RECHAZADA' | 'CERRADA' | 'CANCELADA';
+  @IsString()
+  @IsNotEmpty()
+  @IsIn(['CERRADA', 'CANCELADA'])
+  status!: 'CERRADA' | 'CANCELADA';
 }
