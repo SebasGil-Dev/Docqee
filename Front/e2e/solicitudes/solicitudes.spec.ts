@@ -8,8 +8,43 @@
  * adapta al estado real encontrado.
  */
 
-import { test, expect } from '@playwright/test';
-import { RUTAS, SESIONES, ESTUDIANTE } from '../fixtures/credenciales';
+import { test, expect, type Page } from '@playwright/test';
+import { RUTAS, SESIONES } from '../fixtures/credenciales';
+
+const ESTUDIANTE_PRUEBA = /sebasti.n d.az romero/i;
+const PACIENTE_PRUEBA = /fernanda/i;
+const BUSQUEDA_ESTUDIANTE_PRUEBA = 'Sebasti';
+const MOTIVO_SOLICITUD_PRUEBA = 'Solicitud de prueba automatizada E2E-07 - Playwright.';
+
+async function buscarEstudianteDePrueba(page: Page) {
+  const searchInput = page.locator('#patient-student-search');
+  await expect(searchInput).toBeVisible({ timeout: 10_000 });
+  await searchInput.fill(BUSQUEDA_ESTUDIANTE_PRUEBA);
+
+  const filaEstudiante = page.locator('tbody tr').filter({ hasText: ESTUDIANTE_PRUEBA }).first();
+  await expect(filaEstudiante).toBeVisible({ timeout: 15_000 });
+
+  return filaEstudiante;
+}
+
+async function buscarSolicitudDelPaciente(page: Page) {
+  const searchInput = page.locator('input[type="search"]').first();
+  if (await searchInput.isVisible({ timeout: 3_000 }).catch(() => false)) {
+    await searchInput.fill('Fernanda');
+  }
+
+  const filasSolicitud = page.locator('[data-testid^="student-request-row-"]');
+  const filaPorMotivo = filasSolicitud
+    .filter({ hasText: MOTIVO_SOLICITUD_PRUEBA })
+    .first();
+  const filaSolicitud = (await filaPorMotivo.isVisible({ timeout: 3_000 }).catch(() => false))
+    ? filaPorMotivo
+    : filasSolicitud.filter({ hasText: PACIENTE_PRUEBA }).first();
+
+  await expect(filaSolicitud).toBeVisible({ timeout: 15_000 });
+
+  return filaSolicitud;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // E2E-06: Paciente busca estudiantes disponibles
@@ -45,11 +80,9 @@ test('E2E-07 | Paciente envía solicitud (o sistema bloquea duplicada)', async (
   await page.goto(RUTAS.pacienteBuscar);
   await page.waitForLoadState('networkidle');
 
-  // Abrir perfil del estudiante de prueba
-  const filaEst = page.locator('tr, [role="row"], li').filter({ hasText: ESTUDIANTE.nombre }).first();
-  const btnVerPerfil = (await filaEst.isVisible({ timeout: 4_000 }).catch(() => false))
-    ? filaEst.getByRole('button', { name: 'Ver perfil' })
-    : page.getByRole('button', { name: 'Ver perfil' }).first();
+  // Abrir perfil del estudiante de prueba.
+  const filaEst = await buscarEstudianteDePrueba(page);
+  const btnVerPerfil = filaEst.getByRole('button', { name: 'Ver perfil' });
 
   await expect(btnVerPerfil).toBeVisible({ timeout: 10_000 });
   await btnVerPerfil.click();
@@ -73,9 +106,23 @@ test('E2E-07 | Paciente envía solicitud (o sistema bloquea duplicada)', async (
   const campoMotivo = page
     .getByPlaceholder(/solicitar atencion|motivo/i)
     .or(page.locator('dialog textarea'));
-  await campoMotivo.fill('Solicitud de prueba automatizada E2E-07 — Playwright.');
+  await campoMotivo.fill(MOTIVO_SOLICITUD_PRUEBA);
+
+  const solicitudResponsePromise = page.waitForResponse((response) =>
+    response.url().includes('/patient-portal/requests') &&
+    response.request().method() === 'POST',
+  );
 
   await page.getByRole('button', { name: 'Enviar solicitud' }).click();
+
+  const solicitudResponse = await solicitudResponsePromise;
+  expect(
+    solicitudResponse.ok(),
+    `El API no creo la solicitud. Status HTTP: ${solicitudResponse.status()}`,
+  ).toBeTruthy();
+
+  const solicitudCreada = await solicitudResponse.json().catch(() => null);
+  expect(solicitudCreada?.status).toBe('PENDIENTE');
 
   await expect(page.locator('[role="status"]').first()).toBeVisible({ timeout: 15_000 });
   console.log('E2E-07: Solicitud enviada exitosamente.');
@@ -100,24 +147,14 @@ test('E2E-08 | Estudiante visualiza solicitudes recibidas', async ({ browser }) 
   // El contador de pendientes siempre está visible (puede ser 0)
   await expect(page.getByText(/Solicitudes pendientes/i)).toBeVisible({ timeout: 8_000 });
 
+  const filaSolicitud = await buscarSolicitudDelPaciente(page);
+
   // La tabla debe mostrar encabezados de columna (DOM: "Paciente", CSS: ALL CAPS)
   await expect(page.getByRole('columnheader', { name: 'Paciente' })).toBeVisible({ timeout: 8_000 });
   await expect(page.getByRole('columnheader', { name: 'Estado' })).toBeVisible({ timeout: 8_000 });
 
-  // Si hay solicitudes en cualquier estado, verificar que se muestran
-  const filas = page.locator('tr, [data-testid*="row"]').filter({ hasText: /Pendiente|Aceptada|Rechazada|Cerrada/i });
-  const cantFilas = await filas.count();
-  if (cantFilas > 0) {
-    // Hay solicitudes — verificar que muestran estado y acciones
-    await expect(filas.first()).toBeVisible();
-    console.log(`E2E-08: Se encontraron ${cantFilas} solicitudes.`);
-  } else {
-    // Sin solicitudes — mensaje vacío visible
-    await expect(
-      page.getByText(/no encontramos solicitudes|no hay solicitudes/i)
-    ).toBeVisible({ timeout: 5_000 });
-    console.log('E2E-08: Sin solicitudes en este momento.');
-  }
+  await expect(filaSolicitud.getByText(/Pendiente|Aceptada/i).first()).toBeVisible();
+  console.log('E2E-08: El estudiante ve la solicitud del paciente de prueba.');
 
   await context.close();
 });
@@ -132,15 +169,21 @@ test('E2E-09 | Estudiante acepta solicitud pendiente', async ({ browser }) => {
   await page.goto(RUTAS.estudianteSolicitudes);
   await page.waitForLoadState('networkidle');
 
-  const btnAceptar = page.getByRole('button', { name: /aceptar/i }).first();
-  const hayPendiente = await btnAceptar.isVisible({ timeout: 5_000 }).catch(() => false);
+  const filaSolicitud = await buscarSolicitudDelPaciente(page);
+  const yaAceptada = await filaSolicitud
+    .getByText(/Aceptada/i)
+    .first()
+    .isVisible({ timeout: 2_000 })
+    .catch(() => false);
 
-  if (!hayPendiente) {
-    console.warn('E2E-09: No hay solicitudes pendientes. (Ya fueron procesadas en ejecución anterior.)');
+  if (yaAceptada) {
+    console.log('E2E-09: La solicitud del paciente de prueba ya estaba aceptada.');
     await context.close();
     return;
   }
 
+  const btnAceptar = filaSolicitud.getByRole('button', { name: /aceptar/i });
+  await expect(btnAceptar).toBeVisible({ timeout: 8_000 });
   await btnAceptar.click();
 
   const btnConfirmar = page.getByRole('button', { name: /confirmar|sí/i });
@@ -148,7 +191,7 @@ test('E2E-09 | Estudiante acepta solicitud pendiente', async ({ browser }) => {
     await btnConfirmar.click();
   }
 
-  await expect(page.locator('[role="status"]').first()).toBeVisible({ timeout: 15_000 });
+  await expect(filaSolicitud.getByText(/Aceptada/i).first()).toBeVisible({ timeout: 15_000 });
   console.log('E2E-09: Solicitud aceptada correctamente.');
 
   await context.close();

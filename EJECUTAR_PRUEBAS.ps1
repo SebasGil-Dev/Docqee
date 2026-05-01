@@ -162,7 +162,14 @@ if ($ok) {
 
 Write-Host ""
 Write-Host " Generando reporte consolidado..." -ForegroundColor Yellow
-& $pw merge-reports --reporter html $blobReportDir
+$previousHtmlOpen = $env:PLAYWRIGHT_HTML_OPEN
+try {
+    $env:PLAYWRIGHT_HTML_OPEN = "never"
+    & $pw merge-reports --reporter html $blobReportDir
+}
+finally {
+    $env:PLAYWRIGHT_HTML_OPEN = $previousHtmlOpen
+}
 if ($LASTEXITCODE -ne 0) {
     Write-Host " No se pudo consolidar el reporte. Revisa: $blobReportDir" -ForegroundColor Red
     Exit-WithPause 1
@@ -175,7 +182,8 @@ if (Test-Path $reportHtml) {
     Start-Process $reportHtml
     Write-Host " Reporte abierto: $reportHtml" -ForegroundColor DarkGreen
 } else {
-    & $pw show-report --port 9330
+    Write-Host " Reporte consolidado en: $blobReportDir" -ForegroundColor DarkGreen
+    Write-Host " Puedes abrirlo con: npx playwright show-report" -ForegroundColor DarkCyan
 }
 
 if ($ok) {

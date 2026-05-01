@@ -9,12 +9,31 @@
  *  - Botón enviar: ícono (sin texto), junto al input
  */
 
-import { test, expect } from '@playwright/test';
-import { RUTAS, SESIONES, ESTUDIANTE, PACIENTE } from '../fixtures/credenciales';
+import { test, expect, type Page } from '@playwright/test';
+import { RUTAS, SESIONES } from '../fixtures/credenciales';
 
 const TS = Date.now();
 const MENSAJE_PACIENTE   = `Mensaje E2E-11 — Playwright [${TS}]`;
 const MENSAJE_ESTUDIANTE = `Respuesta E2E-12 — Playwright [${TS}]`;
+const ESTUDIANTE_PRUEBA = /sebasti.n d.az romero/i;
+const PACIENTE_PRUEBA = /fernanda/i;
+
+async function seleccionarConversacionActiva(
+  page: Page,
+  cardTestIdPrefix: string,
+  participante: RegExp,
+) {
+  await page.getByRole('button', { name: /filtrar conversaciones por estado/i }).click();
+  await page.getByRole('menuitemradio', { name: /^Activa$/i }).click();
+
+  const conversationCard = page
+    .locator(`[data-testid^="${cardTestIdPrefix}"]`)
+    .filter({ hasText: participante })
+    .first();
+
+  await expect(conversationCard).toBeVisible({ timeout: 15_000 });
+  await conversationCard.click();
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // E2E-11: Paciente envía mensaje
@@ -29,20 +48,15 @@ test('E2E-11 | Paciente envía mensaje en conversación activa', async ({ browse
   // Heading de la página
   await expect(page.getByText('Chat con estudiantes')).toBeVisible({ timeout: 15_000 });
 
-  // La lista de chats debe tener al menos una conversación
-  // Seleccionar la conversación con Sebastián (estudiante de prueba)
-  const convEst = page.getByText(ESTUDIANTE.nombre, { exact: false });
-  const hayConvEst = await convEst.isVisible({ timeout: 5_000 }).catch(() => false);
-
-  if (hayConvEst) {
-    await convEst.click();
-    await page.waitForTimeout(1_000);
-  }
-  // Si no está visible el nombre exacto, la primera conversación ya está abierta
+  await seleccionarConversacionActiva(
+    page,
+    'patient-conversation-card-',
+    ESTUDIANTE_PRUEBA,
+  );
 
   // El input debe estar visible y habilitado
-  const input = page.locator('[placeholder*="mensaje" i]');
-  await expect(input).toBeVisible({ timeout: 10_000 });
+  const input = page.locator('#patient-conversation-message');
+  await expect(input).toBeVisible({ timeout: 15_000 });
   await expect(input).toBeEnabled();
 
   // Escribir el mensaje
@@ -73,16 +87,14 @@ test('E2E-12 | Estudiante responde mensaje en conversación activa', async ({ br
     page.getByRole('heading', { name: 'Chat con pacientes', exact: true })
   ).toBeVisible({ timeout: 15_000 });
 
-  // Hacer clic en la primera conversación del sidebar
-  const sidebarCard = page.locator('[data-testid*="conversation-card"]').first();
-  const haySidebar = await sidebarCard.isVisible({ timeout: 5_000 }).catch(() => false);
-  if (haySidebar) {
-    await sidebarCard.click();
-    await page.waitForTimeout(1_500);
-  }
+  await seleccionarConversacionActiva(
+    page,
+    'student-conversation-card-',
+    PACIENTE_PRUEBA,
+  );
 
   // Input del chat — selector por atributo parcial para evitar problemas con "..."
-  const input = page.locator('[placeholder*="mensaje" i]');
+  const input = page.locator('#student-conversation-message');
   await expect(input).toBeVisible({ timeout: 15_000 });
   await expect(input).toBeEnabled();
 

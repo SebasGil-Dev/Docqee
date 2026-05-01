@@ -1395,7 +1395,7 @@ function updateRequestStatusMock(
         )
       : state.conversations,
     requests:
-      status === 'CERRADA'
+      status === 'CANCELADA' || status === 'CERRADA' || status === 'RECHAZADA'
         ? state.requests.filter((request) => request.id !== requestId)
         : state.requests.map((request) =>
             request.id === requestId
@@ -2019,9 +2019,12 @@ async function updateRequestStatus(
 
   try {
     const request = await updatePatientPortalRequestStatus(requestId, status);
-    const isClosedRequest = request.status === 'CERRADA';
+    const isTerminalRequest =
+      request.status === 'CANCELADA' ||
+      request.status === 'CERRADA' ||
+      request.status === 'RECHAZADA';
 
-    if (isClosedRequest) {
+    if (isTerminalRequest) {
       clearStudentDirectorySearchState({ persisted: true });
     }
 
@@ -2057,7 +2060,7 @@ async function updateRequestStatus(
         errorMessage: null,
         isLoading: false,
         isReady: true,
-        requests: isClosedRequest
+        requests: isTerminalRequest
           ? state.requests.filter(
               (currentRequest) => currentRequest.id !== request.id,
             )

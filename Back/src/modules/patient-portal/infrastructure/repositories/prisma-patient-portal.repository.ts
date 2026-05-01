@@ -560,6 +560,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     conversacion?: { estado?: string } | null;
   }) {
     return (
+      request.estado !== "CANCELADA" &&
       request.estado !== "RECHAZADA" &&
       request.estado !== "CERRADA" &&
       request.conversacion?.estado !== "CERRADA"
@@ -657,7 +658,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     const solicitudes = await this.prisma.solicitud.findMany({
       where: {
         id_cuenta_paciente: patientAccountId,
-        estado: { notIn: ["RECHAZADA", "CERRADA"] },
+        estado: { notIn: ["CANCELADA", "RECHAZADA", "CERRADA"] },
         OR: [
           { conversacion: { is: null } },
           { conversacion: { isNot: { estado: "CERRADA" } } },
@@ -1406,18 +1407,30 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         return null;
       }
 
-      return this.prisma.solicitud.update({
-        where: { id_solicitud: closedRequest.id_solicitud },
-        data: {
-          cerrada_por_cuenta: null,
-          estado: "PENDIENTE",
-          fecha_actualizacion: new Date(),
-          fecha_cierre: null,
-          fecha_envio: new Date(),
-          fecha_respuesta: null,
-          motivo_consulta: normalizedReason,
-        },
-        include: requestInclude,
+      const reopenedAt = new Date();
+
+      return this.prisma.$transaction(async (tx) => {
+        await tx.conversacion.updateMany({
+          where: { id_solicitud: closedRequest.id_solicitud },
+          data: {
+            estado: "SOLO_LECTURA",
+            solo_lectura_at: reopenedAt,
+          },
+        });
+
+        return tx.solicitud.update({
+          where: { id_solicitud: closedRequest.id_solicitud },
+          data: {
+            cerrada_por_cuenta: null,
+            estado: "PENDIENTE",
+            fecha_actualizacion: reopenedAt,
+            fecha_cierre: null,
+            fecha_envio: reopenedAt,
+            fecha_respuesta: null,
+            motivo_consulta: normalizedReason,
+          },
+          include: requestInclude,
+        });
       });
     };
 
@@ -1437,15 +1450,10 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         where: {
           id_cuenta_estudiante: studentAccountId,
           id_cuenta_paciente: patientAccountId,
+          estado: { in: ["PENDIENTE", "ACEPTADA"] },
           OR: [
-            { estado: "PENDIENTE" },
-            {
-              estado: "ACEPTADA",
-              OR: [
-                { conversacion: { is: null } },
-                { conversacion: { isNot: { estado: "CERRADA" } } },
-              ],
-            },
+            { conversacion: { is: null } },
+            { conversacion: { isNot: { estado: "CERRADA" } } },
           ],
         },
         select: { id_solicitud: true },

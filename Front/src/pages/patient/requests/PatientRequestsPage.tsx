@@ -26,7 +26,7 @@ import { usePatientModuleStore } from '@/lib/patientModuleStore';
 
 type VisibleRequestStatus = Exclude<
   PatientRequestStatus,
-  'CERRADA' | 'RECHAZADA'
+  'CERRADA' | 'CANCELADA' | 'RECHAZADA'
 >;
 type RequestStatusFilter = VisibleRequestStatus | 'all';
 
@@ -37,7 +37,6 @@ const requestStatusOptions: Array<{
   { label: 'Todas', value: 'all' },
   { label: 'Pendiente', value: 'PENDIENTE' },
   { label: 'Aceptada', value: 'ACEPTADA' },
-  { label: 'Cancelada', value: 'CANCELADA' },
 ];
 
 const DEFAULT_ROWS_PER_PAGE = 6;
@@ -132,7 +131,9 @@ export function PatientRequestsPage() {
     () =>
       requests.filter(
         (request) =>
-          request.status !== 'CERRADA' && request.status !== 'RECHAZADA',
+          request.status !== 'CERRADA' &&
+          request.status !== 'CANCELADA' &&
+          request.status !== 'RECHAZADA',
       ),
     [requests],
   );
