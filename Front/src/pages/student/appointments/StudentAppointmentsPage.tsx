@@ -1582,24 +1582,44 @@ export function StudentAppointmentsPage() {
                 }
               />
             </div>
-            <AdminDropdownField
-              containerClassName="student-appointment-dialog-field"
-              disabled={isAppointmentDialogReadOnly || isRescheduleMode}
-              error={appointmentErrors.appointmentTypeId}
-              icon={Stethoscope}
-              id="student-appointment-type"
-              label="Tipo de cita"
-              name="studentAppointmentType"
-              options={availableAppointmentTypes.map((appointmentType) => ({
-                id: appointmentType.id,
-                label: appointmentType.name,
-              }))}
-              placeholder="Selecciona el tipo de cita"
-              value={appointmentValues.appointmentTypeId}
-              onChange={(value) =>
-                handleAppointmentFieldChange('appointmentTypeId', value)
-              }
-            />
+            <div className="grid gap-2 lg:grid-cols-2">
+              <AdminDropdownField
+                containerClassName="student-appointment-dialog-field"
+                disabled={isAppointmentDialogReadOnly || isRescheduleMode}
+                error={appointmentErrors.appointmentTypeId}
+                icon={Stethoscope}
+                id="student-appointment-type"
+                label="Tipo de cita"
+                name="studentAppointmentType"
+                options={availableAppointmentTypes.map((appointmentType) => ({
+                  id: appointmentType.id,
+                  label: appointmentType.name,
+                }))}
+                placeholder="Selecciona el tipo de cita"
+                value={appointmentValues.appointmentTypeId}
+                onChange={(value) =>
+                  handleAppointmentFieldChange('appointmentTypeId', value)
+                }
+              />
+              <AdminDropdownField
+                containerClassName="student-appointment-dialog-field"
+                disabled={isAppointmentDialogReadOnly}
+                error={appointmentErrors.supervisorId}
+                icon={GraduationCap}
+                id="student-appointment-supervisor"
+                label="Docente supervisor"
+                name="studentAppointmentSupervisor"
+                options={activeSupervisors.map((supervisor) => ({
+                  id: supervisor.id,
+                  label: supervisor.name,
+                }))}
+                placeholder="Selecciona un docente supervisor"
+                value={appointmentValues.supervisorId}
+                onChange={(value) =>
+                  handleAppointmentFieldChange('supervisorId', value)
+                }
+              />
+            </div>
             <div
               className="student-appointment-datetime-row grid w-full grid-cols-[minmax(0,1.18fr)_minmax(0,0.91fr)_minmax(0,0.91fr)] items-start gap-1 sm:grid-cols-3 sm:gap-2"
             >
@@ -1648,24 +1668,6 @@ export function StudentAppointmentsPage() {
                 }
               />
             </div>
-            <AdminDropdownField
-              containerClassName="student-appointment-dialog-field"
-              disabled={isAppointmentDialogReadOnly}
-              error={appointmentErrors.supervisorId}
-              icon={GraduationCap}
-              id="student-appointment-supervisor"
-              label="Docente supervisor"
-              name="studentAppointmentSupervisor"
-              options={activeSupervisors.map((supervisor) => ({
-                id: supervisor.id,
-                label: supervisor.name,
-              }))}
-              placeholder="Selecciona un docente supervisor"
-              value={appointmentValues.supervisorId}
-              onChange={(value) =>
-                handleAppointmentFieldChange('supervisorId', value)
-              }
-            />
             <div className="space-y-1.5">
               <div className="flex items-start justify-between gap-2">
                 <div>
