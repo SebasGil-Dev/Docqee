@@ -450,15 +450,8 @@ export function StudentRequestsPage() {
   });
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const tableViewportRef = useRef<HTMLDivElement | null>(null);
+  const tableHeaderRef = useRef<HTMLTableSectionElement | null>(null);
   const tableBodyRef = useRef<HTMLTableSectionElement | null>(null);
-  const rowsPerPage = useStableRowsPerPage({
-    viewportRef: tableViewportRef,
-    defaultRowsPerPage: DEFAULT_ROWS_PER_PAGE,
-    minRowsPerPage: MIN_ROWS_PER_PAGE,
-    headerHeightPx: TABLE_HEADER_HEIGHT_PX,
-    rowHeightPx: TABLE_ROW_HEIGHT_FALLBACK_PX,
-    heightPaddingPx: TABLE_HEIGHT_PADDING_PX,
-  });
   const hasRequestedFreshDashboardRef = useRef(false);
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const visibleRequests = useMemo(
@@ -509,6 +502,18 @@ export function StudentRequestsPage() {
         .map(({ request }) => request),
     [normalizedSearch, statusFilter, visibleRequests],
   );
+  const rowsPerPage = useStableRowsPerPage({
+    viewportRef: tableViewportRef,
+    defaultRowsPerPage: DEFAULT_ROWS_PER_PAGE,
+    minRowsPerPage: MIN_ROWS_PER_PAGE,
+    maxRowsPerPage: filteredRequests.length,
+    headerMeasurementRef: tableHeaderRef,
+    headerHeightPx: TABLE_HEADER_HEIGHT_PX,
+    rowMeasurementRef: tableBodyRef,
+    rowHeightPx: TABLE_ROW_HEIGHT_FALLBACK_PX,
+    heightPaddingPx: TABLE_HEIGHT_PADDING_PX,
+    rowSafetyBufferPx: 1,
+  });
   const totalPages = Math.max(
     1,
     Math.ceil(filteredRequests.length / rowsPerPage),
@@ -720,7 +725,7 @@ export function StudentRequestsPage() {
       />
       {successMessage ? (
         <SurfaceCard
-          className="border border-emerald-200 bg-emerald-50/90 text-sm font-medium text-emerald-800"
+          className="shrink-0 border border-emerald-200 bg-emerald-50/90 text-sm font-medium text-emerald-800"
           paddingClassName="p-3.5"
         >
           <p role="status">
@@ -733,13 +738,13 @@ export function StudentRequestsPage() {
       ) : null}
       {errorMessage ? (
         <SurfaceCard
-          className="border border-rose-200 bg-rose-50/90 text-sm font-medium text-rose-800"
+          className="shrink-0 border border-rose-200 bg-rose-50/90 text-sm font-medium text-rose-800"
           paddingClassName="p-3.5"
         >
           <p role="alert">{errorMessage}</p>
         </SurfaceCard>
       ) : null}
-      <div>
+      <div className="shrink-0">
         <SurfaceCard
           className="min-w-0 overflow-hidden bg-brand-gradient text-white"
           paddingClassName="p-0"
@@ -761,7 +766,7 @@ export function StudentRequestsPage() {
         </SurfaceCard>
       </div>
       <AdminPanelCard
-        className="flex-1"
+        className="flex min-h-0 flex-1"
         panelClassName="bg-[#f4f8ff]"
         shellPaddingClassName="p-0.5 sm:p-1"
       >
@@ -878,7 +883,10 @@ export function StudentRequestsPage() {
             className="min-h-0 flex-1 overflow-hidden"
           >
             <table className="w-full table-fixed">
-              <thead className="sticky top-0 z-10 bg-slate-100 text-left">
+              <thead
+                ref={tableHeaderRef}
+                className="sticky top-0 z-10 bg-slate-100 text-left"
+              >
                 <tr className="text-[0.55rem] font-bold uppercase leading-[0.72rem] tracking-[0.1em] text-ink-muted sm:text-[0.62rem] sm:leading-none sm:tracking-[0.16em]">
                   <th className="w-[36%] px-1.5 py-1 sm:px-3 sm:py-2 md:w-[27%]">
                     Paciente
@@ -1055,7 +1063,7 @@ export function StudentRequestsPage() {
             </table>
           </div>
         ) : (
-          <div className="px-4 py-8 text-center sm:px-5">
+          <div className="grid min-h-0 flex-1 place-items-center px-4 py-8 text-center sm:px-5">
             <p className="text-sm font-medium text-ink-muted">
               {isLoading
                 ? 'Cargando solicitudes...'
