@@ -1,0 +1,14 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "https://docqee.vercel.app",
+      "localStorage": [
+        {
+          "name": "docqee.auth-session",
+          "value": "{\"accessToken\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6IkZlcm5hZGFFU2JhMkBvenNhaXAuY29tIiwiZmlyc3ROYW1lIjoiRmVybmFuZGEiLCJpZCI6MTIsImxhc3ROYW1lIjoiQmFleiIsInJvbGUiOiJQQVRJRU5UIiwiaWF0IjoxNzc3NjgyMTM4LCJleHAiOjE3Nzc2ODMwMzh9.Y3V4Nw1Lj44x8aE7Fn1HZknZXVeFNV2hFeQTS8KNNoc\",\"refreshToken\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6IkZlcm5hZGFFU2JhMkBvenNhaXAuY29tIiwiZmlyc3ROYW1lIjoiRmVybmFuZGEiLCJpZCI6MTIsImxhc3ROYW1lIjoiQmFleiIsInJvbGUiOiJQQVRJRU5UIiwidG9rZW5UeXBlIjoicmVmcmVzaCIsImlhdCI6MTc3NzY4MjEzOCwiZXhwIjoxNzc4Mjg2OTM4fQ.Rbu5A5pOyzbiwGTWBRTIDDf6CkCF-UrRBDOJtdJINx4\",\"requiresPasswordChange\":false,\"user\":{\"email\":\"FernadaESba2@ozsaip.com\",\"firstName\":\"Fernanda\",\"id\":12,\"lastName\":\"Baez\",\"role\":\"PATIENT\"}}"
+        }
+      ]
+    }
+  ]
+}

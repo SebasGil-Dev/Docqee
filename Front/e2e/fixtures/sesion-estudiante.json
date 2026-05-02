@@ -1,0 +1,14 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "https://docqee.vercel.app",
+      "localStorage": [
+        {
+          "name": "docqee.auth-session",
+          "value": "{\"accessToken\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InNlYmFzdGlhbkB3bmJhbGR3eS5jb20iLCJmaXJzdE5hbWUiOiJTZWJhc3Rpw6FuIiwiaWQiOjI3LCJsYXN0TmFtZSI6IkTDrWF6IFJvbWVybyIsInJvbGUiOiJTVFVERU5UIiwiaWF0IjoxNzc3NjgyMTQwLCJleHAiOjE3Nzc2ODMwNDB9.FRuGrbOCGd80Yv3b1CHTXrdXSvYA3TAa79z5Qj_o19w\",\"refreshToken\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InNlYmFzdGlhbkB3bmJhbGR3eS5jb20iLCJmaXJzdE5hbWUiOiJTZWJhc3Rpw6FuIiwiaWQiOjI3LCJsYXN0TmFtZSI6IkTDrWF6IFJvbWVybyIsInJvbGUiOiJTVFVERU5UIiwidG9rZW5UeXBlIjoicmVmcmVzaCIsImlhdCI6MTc3NzY4MjE0MCwiZXhwIjoxNzc4Mjg2OTQwfQ.ODfO0WcXA7hTFpScEV8f0tRlemrYxX5rY0kKQ726Dg8\",\"requiresPasswordChange\":false,\"user\":{\"email\":\"sebastian@wnbaldwy.com\",\"firstName\":\"Sebastián\",\"id\":27,\"lastName\":\"Díaz Romero\",\"role\":\"STUDENT\"}}"
+        }
+      ]
+    }
+  ]
+}
