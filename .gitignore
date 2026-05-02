@@ -36,9 +36,11 @@ Thumbs.db
 # Playwright — archivos generados en ejecucion (no subir)
 Front/playwright-report/
 Front/test-results/
-Front/e2e/fixtures/sesion-paciente.json
-Front/e2e/fixtures/sesion-estudiante.json
-Front/e2e/fixtures/.rating-appointment.json
+Front/e2e/generados/sesion-paciente.json
+Front/e2e/generados/sesion-estudiante.json
+Front/e2e/generados/sesion-admin-plataforma.json
+Front/e2e/generados/sesion-admin-universidad.json
+Front/e2e/generados/.rating-appointment.json
 
 # Claude config local
 .claude/

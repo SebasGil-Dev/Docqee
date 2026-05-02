@@ -14,7 +14,7 @@ export type RatingAppointmentState = {
 
 const STATE_PATH = resolve(
   process.cwd(),
-  'e2e/fixtures/.rating-appointment.json',
+  'e2e/generados/.rating-appointment.json',
 );
 
 export function saveRatingAppointmentState(state: RatingAppointmentState) {

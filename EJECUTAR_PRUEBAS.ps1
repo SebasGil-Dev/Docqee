@@ -79,12 +79,23 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 $orderedSuites = @(
-    [PSCustomObject]@{ Name = "auth"; Label = "E2E-01 a E2E-05 | auth"; Path = "e2e/auth/login.spec.ts" },
-    [PSCustomObject]@{ Name = "solicitudes"; Label = "E2E-06 a E2E-10 | solicitudes"; Path = "e2e/solicitudes/solicitudes.spec.ts" },
-    [PSCustomObject]@{ Name = "chat"; Label = "E2E-11 a E2E-12 | chat"; Path = "e2e/chat/chat.spec.ts" },
-    [PSCustomObject]@{ Name = "citas"; Label = "E2E-13 a E2E-20 | citas"; Path = "e2e/citas/citas.spec.ts" },
-    [PSCustomObject]@{ Name = "valoraciones"; Label = "E2E-21 a E2E-23 | valoraciones"; Path = "e2e/valoraciones/valoraciones.spec.ts" },
-    [PSCustomObject]@{ Name = "perfil"; Label = "E2E-24 a E2E-27 | perfil"; Path = "e2e/perfil/perfil.spec.ts" }
+    # ── Requerimientos compartidos / flujo principal ──────────────────────
+    [PSCustomObject]@{ Name = "auth";              Label = "E2E-01 a E2E-05   | auth (RF-01 RF-02 RF-23)";                      Path = "e2e/auth/login.spec.ts" },
+    [PSCustomObject]@{ Name = "registro";          Label = "E2E-71 a E2E-74   | registro y recuperacion (RF-03 RF-43 RF-44)";   Path = "e2e/registro/registro.spec.ts" },
+    [PSCustomObject]@{ Name = "solicitudes";       Label = "E2E-06 a E2E-10   | solicitudes (RF-12 RF-40 RF-46 RF-47 RF-48)";   Path = "e2e/solicitudes/solicitudes.spec.ts" },
+    [PSCustomObject]@{ Name = "solicitudes-filt";  Label = "E2E-75 a E2E-77   | filtrado solicitudes (RF-13)";                  Path = "e2e/solicitudes/solicitudes-filtros.spec.ts" },
+    [PSCustomObject]@{ Name = "chat";              Label = "E2E-11 a E2E-12   | chat (RF-09)";                                  Path = "e2e/chat/chat.spec.ts" },
+    [PSCustomObject]@{ Name = "citas";             Label = "E2E-13 a E2E-20   | citas (RF-11 RF-14 RF-15 RF-16 RF-17 RF-18 RF-42 RF-49)"; Path = "e2e/citas/citas.spec.ts" },
+    [PSCustomObject]@{ Name = "citas-gestion";     Label = "E2E-78 a E2E-80   | gestion citas (RF-14 RF-15 RF-16)";             Path = "e2e/citas/citas-gestion.spec.ts" },
+    [PSCustomObject]@{ Name = "valoraciones";      Label = "E2E-21 a E2E-23   | valoraciones (RF-19 RF-20)";                    Path = "e2e/valoraciones/valoraciones.spec.ts" },
+    [PSCustomObject]@{ Name = "perfil";            Label = "E2E-24 a E2E-27   | perfil (RF-38 RF-45)";                          Path = "e2e/perfil/perfil.spec.ts" },
+    [PSCustomObject]@{ Name = "perfil-enlaces";    Label = "E2E-81 a E2E-82   | enlaces profesionales (RF-39)";                 Path = "e2e/perfil/perfil-enlaces.spec.ts" },
+    [PSCustomObject]@{ Name = "calendario";        Label = "E2E-63 a E2E-67   | calendario (RF-10 RF-17 RF-41)";                Path = "e2e/calendario/calendario.spec.ts" },
+    [PSCustomObject]@{ Name = "notificaciones";    Label = "E2E-68 a E2E-70   | notificaciones (RF-21 RF-22)";                  Path = "e2e/notificaciones/notificaciones.spec.ts" },
+    # ── Admin Plataforma ──────────────────────────────────────────────────
+    [PSCustomObject]@{ Name = "admin-plataforma";  Label = "E2E-43 a E2E-49   | admin plataforma (RF-04 RF-05 RF-07 RF-08 RF-24 RF-25 RF-26)"; Path = "e2e/admin-plataforma/admin-plataforma.spec.ts" },
+    # ── Admin Universidad ─────────────────────────────────────────────────
+    [PSCustomObject]@{ Name = "admin-universidad"; Label = "E2E-50 a E2E-62   | admin universidad (RF-04 RF-27 a RF-36)";       Path = "e2e/admin-universidad/admin-universidad.spec.ts" }
 )
 
 $missingTests = $orderedSuites | Where-Object {
@@ -106,7 +117,7 @@ if ($env:E2E_FAST_RATING_TIME -match '^(1|true|yes|si)$') {
 } else {
     Write-Host " Ejecutando pruebas... (~10-15 minutos, valoraciones con horario real)" -ForegroundColor Yellow
 }
-Write-Host " Orden: auth -> solicitudes -> chat -> citas -> valoraciones -> perfil" -ForegroundColor DarkCyan
+Write-Host " Orden: auth -> registro -> solicitudes -> solicitudes-filtros -> chat -> citas -> citas-gestion -> valoraciones -> perfil -> perfil-enlaces -> calendario -> notificaciones -> admin-plataforma -> admin-universidad" -ForegroundColor DarkCyan
 Write-Host " Nota: el tiempo entre parentesis es total; las lineas METRICA_E2E miden solo la accion real." -ForegroundColor DarkGray
 Write-Host ""
 
