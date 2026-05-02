@@ -1,4 +1,12 @@
-import { IsEmail, IsEnum, IsInt, IsOptional, IsString, Matches, Min } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Matches,
+  Min,
+} from "class-validator";
 
 export class CreateStudentDto {
   @IsString()
@@ -7,11 +15,13 @@ export class CreateStudentDto {
   @IsString()
   lastName!: string;
 
-  @IsEnum(['CC', 'CE', 'TI', 'PASSPORT'])
-  documentType!: 'CC' | 'CE' | 'TI' | 'PASSPORT';
+  @IsEnum(["CC", "CE", "TI", "PASSPORT"])
+  documentType!: "CC" | "CE" | "TI" | "PASSPORT";
 
   @IsString()
-  @Matches(/^\d+$/, { message: 'El número de documento solo debe contener números.' })
+  @Matches(/^\d+$/, {
+    message: "El número de documento solo debe contener números.",
+  })
   documentNumber!: string;
 
   @IsEmail()
@@ -19,6 +29,7 @@ export class CreateStudentDto {
 
   @IsOptional()
   @IsString()
+  @Matches(/^\d{10}$/, { message: "El celular debe tener 10 digitos." })
   phone?: string;
 
   @IsInt()

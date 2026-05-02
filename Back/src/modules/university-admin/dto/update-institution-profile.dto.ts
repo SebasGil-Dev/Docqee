@@ -1,5 +1,14 @@
-import { Type } from 'class-transformer';
-import { IsArray, IsEmail, IsIn, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { Type } from "class-transformer";
+import {
+  IsArray,
+  IsEmail,
+  IsIn,
+  IsOptional,
+  IsString,
+  Matches,
+  ValidateIf,
+  ValidateNested,
+} from "class-validator";
 
 export class UpdateCampusDto {
   @IsString()
@@ -17,8 +26,8 @@ export class UpdateCampusDto {
   @IsString()
   localityId!: string;
 
-  @IsIn(['active', 'inactive'])
-  status!: 'active' | 'inactive';
+  @IsIn(["active", "inactive"])
+  status!: "active" | "inactive";
 }
 
 export class UpdateInstitutionProfileDto {
@@ -41,7 +50,9 @@ export class UpdateInstitutionProfileDto {
   adminLastName!: string;
 
   @IsOptional()
+  @ValidateIf((_, value) => value !== "")
   @IsString()
+  @Matches(/^\d{10}$/, { message: "El celular debe tener 10 digitos." })
   adminPhone?: string;
 
   @IsOptional()

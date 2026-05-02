@@ -1,4 +1,10 @@
-import { ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, Circle } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  ChevronDown,
+  Circle,
+} from 'lucide-react';
 import type { FormEvent, ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -32,6 +38,11 @@ import {
   keepOnlyDigits,
 } from '@/lib/documentNumber';
 import { patientRegisterCatalogDataSource } from '@/lib/patientRegisterCatalogDataSource';
+import {
+  PHONE_NUMBER_DIGITS_MESSAGE,
+  normalizePhoneNumberInput,
+  PHONE_NUMBER_MAX_DIGITS,
+} from '@/lib/phoneNumber';
 import {
   persistPendingVerificationEmail,
   persistVerifyEmailDebugCode,
@@ -125,7 +136,11 @@ const passwordRuleOrder: RegisterPasswordRuleKey[] = [
 
 const MOBILE_REGISTER_BREAKPOINT = 768;
 
-type MobileRegisterStepId = 'personal' | 'profile-location' | 'tutor' | 'account';
+type MobileRegisterStepId =
+  | 'personal'
+  | 'profile-location'
+  | 'tutor'
+  | 'account';
 
 type MobileRegisterStepConfig = {
   description?: string | undefined;
@@ -144,7 +159,9 @@ function getIsMobileRegisterView(breakpoint: number) {
 }
 
 function useIsMobileRegisterView(breakpoint = MOBILE_REGISTER_BREAKPOINT) {
-  const [isMobileView, setIsMobileView] = useState(() => getIsMobileRegisterView(breakpoint));
+  const [isMobileView, setIsMobileView] = useState(() =>
+    getIsMobileRegisterView(breakpoint),
+  );
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -174,9 +191,11 @@ function TextField({
   id,
   inputMode,
   label,
+  maxLength,
   name,
   onBlur,
   onChange,
+  pattern,
   placeholder,
   type = 'text',
   value,
@@ -191,8 +210,10 @@ function TextField({
     | 'tel'
     | 'text'
     | 'url';
+  maxLength?: number;
   name: string;
   onChange: (value: string) => void;
+  pattern?: string;
   placeholder: string;
   type?: 'date' | 'email' | 'tel' | 'text';
   value: string;
@@ -218,12 +239,16 @@ function TextField({
           disabled
             ? 'cursor-not-allowed bg-slate-100 text-ghost'
             : 'focus-visible:border-primary/35 focus-visible:bg-surface-card',
-          error ? 'border-rose-300 ring-2 ring-rose-500/15 focus-visible:ring-rose-500/25' : '',
+          error
+            ? 'border-rose-300 ring-2 ring-rose-500/15 focus-visible:ring-rose-500/25'
+            : '',
         )}
         disabled={disabled}
         id={id}
         inputMode={inputMode}
+        maxLength={maxLength}
         name={name}
+        pattern={pattern}
         placeholder={placeholder}
         type={type}
         value={value}
@@ -297,7 +322,9 @@ function SelectField({
               ? 'cursor-not-allowed bg-slate-100 text-ghost'
               : 'focus-visible:border-primary/35 focus-visible:bg-surface-card',
             showChevron ? 'appearance-none pr-12' : '',
-            error ? 'border-rose-300 ring-2 ring-rose-500/15 focus-visible:ring-rose-500/25' : '',
+            error
+              ? 'border-rose-300 ring-2 ring-rose-500/15 focus-visible:ring-rose-500/25'
+              : '',
             selectClassName,
           )}
           disabled={disabled}
@@ -311,11 +338,7 @@ function SelectField({
             {placeholder}
           </option>
           {options.map((option) => (
-            <option
-              className="text-base"
-              key={option.id}
-              value={option.id}
-            >
+            <option className="text-base" key={option.id} value={option.id}>
               {name === 'sex'
                 ? formatPatientSexLabel(option.id as PatientSex)
                 : option.label}
@@ -371,7 +394,9 @@ function CheckboxField({
       <label
         className={classNames(
           'flex cursor-pointer items-start gap-3 rounded-2xl border px-4 py-3 text-[13px] transition-colors duration-300 sm:text-sm',
-          compact ? 'gap-2.5 rounded-[1.15rem] px-3 py-2.5 text-[12px] sm:text-[12px]' : '',
+          compact
+            ? 'gap-2.5 rounded-[1.15rem] px-3 py-2.5 text-[12px] sm:text-[12px]'
+            : '',
           error
             ? 'border-rose-300 bg-rose-50/80 text-rose-900'
             : 'border-slate-200/80 bg-white/75 text-ink hover:border-primary/25',
@@ -391,7 +416,14 @@ function CheckboxField({
           onBlur={onBlur}
           onChange={(event) => onChange(event.target.checked)}
         />
-        <span className={classNames('leading-5', compact ? 'leading-[1.15rem]' : '')}>{label}</span>
+        <span
+          className={classNames(
+            'leading-5',
+            compact ? 'leading-[1.15rem]' : '',
+          )}
+        >
+          {label}
+        </span>
       </label>
       {error ? (
         <p
@@ -437,8 +469,8 @@ function PrivacyConsentLabel() {
       >
         Política de Privacidad
       </a>{' '}
-      de Docqee, para la gestión de mi vinculación con estudiantes de odontología y
-      el uso de los servicios de la plataforma.
+      de Docqee, para la gestión de mi vinculación con estudiantes de
+      odontología y el uso de los servicios de la plataforma.
     </>
   );
 }
@@ -458,18 +490,23 @@ function SectionHeader({
   title: string;
 }) {
   return (
-    <div className={classNames('space-y-2', align === 'center' ? 'text-center' : '')}>
-      <p className="text-[11px] font-black uppercase tracking-[0.28em] text-primary">{title}</p>
-      {description ? <p className="text-sm leading-6 text-ink-muted">{description}</p> : null}
+    <div
+      className={classNames(
+        'space-y-2',
+        align === 'center' ? 'text-center' : '',
+      )}
+    >
+      <p className="text-[11px] font-black uppercase tracking-[0.28em] text-primary">
+        {title}
+      </p>
+      {description ? (
+        <p className="text-sm leading-6 text-ink-muted">{description}</p>
+      ) : null}
     </div>
   );
 }
 
-function PasswordRequirementsList({
-  password,
-}: {
-  password: string;
-}) {
+function PasswordRequirementsList({ password }: { password: string }) {
   const requirements = authContent.register.password.requirements;
   const requirementStatus = getPasswordRequirementStatus(password);
 
@@ -495,10 +532,7 @@ function PasswordRequirementsList({
                 className="mt-0.5 h-4 w-4 shrink-0"
               />
             ) : (
-              <Circle
-                aria-hidden="true"
-                className="mt-0.5 h-4 w-4 shrink-0"
-              />
+              <Circle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
             )}
             <span>{requirement.label}</span>
           </li>
@@ -537,7 +571,11 @@ function parseDateParts(value: string) {
   const month = Number(monthString);
   const day = Number(dayString);
 
-  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) {
+  if (
+    !Number.isInteger(year) ||
+    !Number.isInteger(month) ||
+    !Number.isInteger(day)
+  ) {
     return null;
   }
 
@@ -562,7 +600,11 @@ function normalizeBirthDateInput(value: string) {
   const trimmedValue = value.trim();
 
   if (/^\d{4}-\d{2}-\d{2}$/.test(trimmedValue)) {
-    const [year, month, day] = trimmedValue.split('-') as [string, string, string];
+    const [year, month, day] = trimmedValue.split('-') as [
+      string,
+      string,
+      string,
+    ];
     return `${day}/${month}/${year}`;
   }
 
@@ -626,7 +668,10 @@ function getAgeFromBirthDate(value: string, today: Date) {
   const todayMonth = today.getMonth() + 1;
   const todayDay = today.getDate();
 
-  if (todayMonth < parts.month || (todayMonth === parts.month && todayDay < parts.day)) {
+  if (
+    todayMonth < parts.month ||
+    (todayMonth === parts.month && todayDay < parts.day)
+  ) {
     age -= 1;
   }
 
@@ -642,7 +687,9 @@ function shouldShowTutorSection(birthDate: string, today: Date) {
   return age !== null && age < 18;
 }
 
-function getPasswordRequirementStatus(password: string): Record<RegisterPasswordRuleKey, boolean> {
+function getPasswordRequirementStatus(
+  password: string,
+): Record<RegisterPasswordRuleKey, boolean> {
   return {
     lowercase: /[a-z]/.test(password),
     minLength: password.length >= 8,
@@ -675,7 +722,11 @@ function validateRequiredSelection(value: string, message: string) {
   return value.trim().length === 0 ? message : undefined;
 }
 
-function validateEmail(value: string, requiredMessage: string, invalidMessage: string) {
+function validateEmail(
+  value: string,
+  requiredMessage: string,
+  invalidMessage: string,
+) {
   const trimmedValue = value.trim();
 
   if (trimmedValue.length === 0) {
@@ -703,7 +754,10 @@ function validatePassword(value: string) {
   return undefined;
 }
 
-function validateRegisterForm(values: RegisterFormValues, today: Date): RegisterFormErrors {
+function validateRegisterForm(
+  values: RegisterFormValues,
+  today: Date,
+): RegisterFormErrors {
   const content = authContent.register;
   const errors: RegisterFormErrors = {};
   const showTutorSection = shouldShowTutorSection(values.birthDate, today);
@@ -739,7 +793,10 @@ function validateRegisterForm(values: RegisterFormValues, today: Date): Register
 
     return undefined;
   })();
-  const cityError = validateRequiredSelection(values.cityId, content.patientFields.city.requiredMessage);
+  const cityError = validateRequiredSelection(
+    values.cityId,
+    content.patientFields.city.requiredMessage,
+  );
   const localityError = validateRequiredSelection(
     values.localityId,
     content.patientFields.locality.requiredMessage,
@@ -749,7 +806,14 @@ function validateRegisterForm(values: RegisterFormValues, today: Date): Register
     content.patientFields.email.requiredMessage,
     content.patientFields.email.invalidMessage,
   );
-  const phoneError = validateRequiredText(values.phone, content.patientFields.phone.requiredMessage);
+  const phoneError =
+    validateRequiredText(
+      values.phone,
+      content.patientFields.phone.requiredMessage,
+    ) ??
+    (values.phone.trim().length === PHONE_NUMBER_MAX_DIGITS
+      ? undefined
+      : PHONE_NUMBER_DIGITS_MESSAGE);
   const passwordError = validatePassword(values.password);
   const confirmPasswordError = (() => {
     if (values.confirmPassword.length === 0) {
@@ -841,10 +905,14 @@ function validateRegisterForm(values: RegisterFormValues, today: Date): Register
       content.tutorFields.email.requiredMessage,
       content.tutorFields.email.invalidMessage,
     );
-    const tutorPhoneError = validateRequiredText(
-      values.tutorPhone,
-      content.tutorFields.phone.requiredMessage,
-    );
+    const tutorPhoneError =
+      validateRequiredText(
+        values.tutorPhone,
+        content.tutorFields.phone.requiredMessage,
+      ) ??
+      (values.tutorPhone.trim().length === PHONE_NUMBER_MAX_DIGITS
+        ? undefined
+        : PHONE_NUMBER_DIGITS_MESSAGE);
 
     if (tutorFirstNameError) {
       errors.tutorFirstName = tutorFirstNameError;
@@ -909,7 +977,9 @@ function normalizeRegisterPayload(
   };
 }
 
-function createEmptyCatalogState<T>(status: AsyncCatalogState<T>['status']): AsyncCatalogState<T> {
+function createEmptyCatalogState<T>(
+  status: AsyncCatalogState<T>['status'],
+): AsyncCatalogState<T> {
   return {
     error: null,
     options: [],
@@ -952,43 +1022,60 @@ export function RegisterPage({
     errors: {},
     values: initialValues,
   });
-  const [documentTypesState, setDocumentTypesState] = useState<AsyncCatalogState<DocumentTypeOption>>(
-    () => createInitialCatalogState(catalogDataSource.getDocumentTypes(), 'loading'),
+  const [documentTypesState, setDocumentTypesState] = useState<
+    AsyncCatalogState<DocumentTypeOption>
+  >(() =>
+    createInitialCatalogState(catalogDataSource.getDocumentTypes(), 'loading'),
   );
   const [citiesState, setCitiesState] = useState<AsyncCatalogState<CityOption>>(
     () => createInitialCatalogState(catalogDataSource.getCities(), 'loading'),
   );
-  const [localitiesState, setLocalitiesState] = useState<AsyncCatalogState<LocalityOption>>(
-    createEmptyCatalogState('idle'),
-  );
+  const [localitiesState, setLocalitiesState] = useState<
+    AsyncCatalogState<LocalityOption>
+  >(createEmptyCatalogState('idle'));
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentMobileStepIndex, setCurrentMobileStepIndex] = useState(0);
-  const [hasAttemptedMobileAccountSubmit, setHasAttemptedMobileAccountSubmit] = useState(false);
+  const [hasAttemptedMobileAccountSubmit, setHasAttemptedMobileAccountSubmit] =
+    useState(false);
   const passwordInputRef = useRef<HTMLInputElement>(null);
   const confirmPasswordInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const content = authContent.register;
   const isMobileView = useIsMobileRegisterView();
-  const showTutor = shouldShowTutorSection(formState.values.birthDate, currentDate);
-  const isMobileAccountStep = isMobileView && currentMobileStepIndex === (showTutor ? 3 : 2);
+  const showTutor = shouldShowTutorSection(
+    formState.values.birthDate,
+    currentDate,
+  );
+  const isMobileAccountStep =
+    isMobileView && currentMobileStepIndex === (showTutor ? 3 : 2);
   const shouldDeferMobileAccountValidation =
     isMobileAccountStep && !hasAttemptedMobileAccountSubmit;
 
   const shouldHideMobileAccountFieldError = (field: RegisterFormField) =>
-    shouldDeferMobileAccountValidation && mobileAccountFieldNames.includes(field);
+    shouldDeferMobileAccountValidation &&
+    mobileAccountFieldNames.includes(field);
 
   const getVisibleFieldError = (field: RegisterFormField) =>
-    shouldHideMobileAccountFieldError(field) ? undefined : formState.errors[field];
+    shouldHideMobileAccountFieldError(field)
+      ? undefined
+      : formState.errors[field];
 
   useEffect(() => {
     let isCancelled = false;
 
     async function loadInitialCatalogs() {
-      setDocumentTypesState(createInitialCatalogState(catalogDataSource.getDocumentTypes(), 'loading'));
-      setCitiesState(createInitialCatalogState(catalogDataSource.getCities(), 'loading'));
+      setDocumentTypesState(
+        createInitialCatalogState(
+          catalogDataSource.getDocumentTypes(),
+          'loading',
+        ),
+      );
+      setCitiesState(
+        createInitialCatalogState(catalogDataSource.getCities(), 'loading'),
+      );
 
       try {
         const initialCatalogs = catalogDataSource.loadInitialCatalogs
@@ -1003,7 +1090,9 @@ export function RegisterPage({
                   : catalogDataSource.getDocumentTypes(),
               ),
               resolveCatalogResult(
-                catalogDataSource.loadCities ? catalogDataSource.loadCities() : catalogDataSource.getCities(),
+                catalogDataSource.loadCities
+                  ? catalogDataSource.loadCities()
+                  : catalogDataSource.getCities(),
               ),
             ]);
 
@@ -1068,7 +1157,9 @@ export function RegisterPage({
 
       try {
         const localities = await resolveCatalogResult(
-          catalogDataSource.loadLocalitiesByCity ? catalogDataSource.loadLocalitiesByCity(formState.values.cityId) : catalogDataSource.getLocalitiesByCity(formState.values.cityId),
+          catalogDataSource.loadLocalitiesByCity
+            ? catalogDataSource.loadLocalitiesByCity(formState.values.cityId)
+            : catalogDataSource.getLocalitiesByCity(formState.values.cityId),
         );
 
         if (isCancelled) {
@@ -1137,7 +1228,10 @@ export function RegisterPage({
         }
       });
 
-      if (field === 'birthDate' && !shouldShowTutorSection(nextValues.birthDate, currentDate)) {
+      if (
+        field === 'birthDate' &&
+        !shouldShowTutorSection(nextValues.birthDate, currentDate)
+      ) {
         tutorFieldNames.forEach((fieldName) => {
           delete nextErrors[fieldName];
         });
@@ -1155,7 +1249,10 @@ export function RegisterPage({
   const handleFieldBlur = (field: RegisterFormField) => {
     setFormState((currentState) => {
       const nextErrors = { ...currentState.errors };
-      const validationErrors = validateRegisterForm(currentState.values, currentDate);
+      const validationErrors = validateRegisterForm(
+        currentState.values,
+        currentDate,
+      );
       const fieldsToRefresh = [field, ...getDependentFields(field)];
 
       fieldsToRefresh.forEach((fieldName) => {
@@ -1215,7 +1312,10 @@ export function RegisterPage({
         setHasAttemptedMobileAccountSubmit(true);
       }
 
-      const validationErrors = validateRegisterForm(formState.values, currentDate);
+      const validationErrors = validateRegisterForm(
+        formState.values,
+        currentDate,
+      );
 
       setFormState((currentState) => ({
         ...currentState,
@@ -1241,14 +1341,19 @@ export function RegisterPage({
         'acceptPrivacyPolicy',
       ];
 
-      const firstInvalidField = fieldOrder.find((fieldName) => Boolean(validationErrors[fieldName]));
+      const firstInvalidField = fieldOrder.find((fieldName) =>
+        Boolean(validationErrors[fieldName]),
+      );
 
       if (firstInvalidField) {
         focusField(firstInvalidField);
         return;
       }
 
-      const normalizedPayload = normalizeRegisterPayload(formState.values, showTutor);
+      const normalizedPayload = normalizeRegisterPayload(
+        formState.values,
+        showTutor,
+      );
 
       if (IS_TEST_MODE) {
         persistPendingVerificationEmail(normalizedPayload.patient.email);
@@ -1274,7 +1379,9 @@ export function RegisterPage({
         });
       } catch (error) {
         setSubmissionError(
-          error instanceof Error ? error.message : 'No pudimos completar el registro.',
+          error instanceof Error
+            ? error.message
+            : 'No pudimos completar el registro.',
         );
       } finally {
         setIsSubmitting(false);
@@ -1296,7 +1403,9 @@ export function RegisterPage({
     documentTypesState.error
       ? documentTypesState.error
       : undefined;
-  const tutorDocumentTypeOptions = documentTypesState.options.filter((option) => option.code === 'CC');
+  const tutorDocumentTypeOptions = documentTypesState.options.filter(
+    (option) => option.code === 'CC',
+  );
   const tutorDocumentTypePlaceholder =
     documentTypesState.status === 'loading'
       ? content.tutorFields.documentType.loadingMessage
@@ -1322,7 +1431,9 @@ export function RegisterPage({
           ? content.patientFields.city.emptyMessage
           : content.patientFields.city.placeholder;
   const cityHelpText =
-    !formState.errors.cityId && citiesState.status === 'error' && citiesState.error
+    !formState.errors.cityId &&
+    citiesState.status === 'error' &&
+    citiesState.error
       ? citiesState.error
       : undefined;
   const localityPlaceholder = !formState.values.cityId
@@ -1369,7 +1480,8 @@ export function RegisterPage({
       <SelectField
         chevronClassName={isMobileView ? 'right-[1.15rem]' : undefined}
         disabled={
-          documentTypesState.status !== 'ready' || documentTypesState.options.length === 0
+          documentTypesState.status !== 'ready' ||
+          documentTypesState.options.length === 0
         }
         error={formState.errors.documentTypeId}
         helpText={documentTypeHelpText}
@@ -1398,7 +1510,9 @@ export function RegisterPage({
         placeholder={content.patientFields.documentNumber.placeholder}
         value={formState.values.documentNumber}
         onBlur={() => handleFieldBlur('documentNumber')}
-        onChange={(value) => updateFieldValue('documentNumber', keepOnlyDigits(value))}
+        onChange={(value) =>
+          updateFieldValue('documentNumber', keepOnlyDigits(value))
+        }
       />
     </div>
   );
@@ -1428,7 +1542,9 @@ export function RegisterPage({
         placeholder={content.patientFields.birthDate.placeholder}
         value={formState.values.birthDate}
         onBlur={() => handleFieldBlur('birthDate')}
-        onChange={(value) => updateFieldValue('birthDate', normalizeBirthDateInput(value))}
+        onChange={(value) =>
+          updateFieldValue('birthDate', normalizeBirthDateInput(value))
+        }
       />
     </div>
   );
@@ -1436,7 +1552,9 @@ export function RegisterPage({
   const locationFields = (
     <div className="grid gap-4 md:grid-cols-2">
       <SelectField
-        disabled={citiesState.status !== 'ready' || citiesState.options.length === 0}
+        disabled={
+          citiesState.status !== 'ready' || citiesState.options.length === 0
+        }
         error={formState.errors.cityId}
         helpText={cityHelpText}
         id={fieldIds.cityId}
@@ -1488,12 +1606,16 @@ export function RegisterPage({
         id={fieldIds.phone}
         inputMode="numeric"
         label={content.patientFields.phone.label}
+        maxLength={PHONE_NUMBER_MAX_DIGITS}
         name="phone"
+        pattern="[0-9]*"
         placeholder={content.patientFields.phone.placeholder}
         type="tel"
         value={formState.values.phone}
         onBlur={() => handleFieldBlur('phone')}
-        onChange={(value) => updateFieldValue('phone', value.replace(/\D/g, ''))}
+        onChange={(value) =>
+          updateFieldValue('phone', normalizePhoneNumberInput(value))
+        }
       />
       <div className="space-y-4 md:col-span-2">
         <PasswordField
@@ -1510,7 +1632,9 @@ export function RegisterPage({
           value={formState.values.password}
           onBlur={() => handleFieldBlur('password')}
           onChange={(value) => updateFieldValue('password', value)}
-          onToggleVisibility={() => setShowPassword((currentState) => !currentState)}
+          onToggleVisibility={() =>
+            setShowPassword((currentState) => !currentState)
+          }
         />
         <PasswordRequirementsList password={formState.values.password} />
       </div>
@@ -1529,7 +1653,9 @@ export function RegisterPage({
           value={formState.values.confirmPassword}
           onBlur={() => handleFieldBlur('confirmPassword')}
           onChange={(value) => updateFieldValue('confirmPassword', value)}
-          onToggleVisibility={() => setShowConfirmPassword((currentState) => !currentState)}
+          onToggleVisibility={() =>
+            setShowConfirmPassword((currentState) => !currentState)
+          }
         />
       </div>
     </div>
@@ -1561,7 +1687,8 @@ export function RegisterPage({
       />
       <SelectField
         disabled={
-          documentTypesState.status !== 'ready' || tutorDocumentTypeOptions.length === 0
+          documentTypesState.status !== 'ready' ||
+          tutorDocumentTypeOptions.length === 0
         }
         error={formState.errors.tutorDocumentTypeId}
         helpText={tutorDocumentTypeHelpText}
@@ -1584,7 +1711,9 @@ export function RegisterPage({
         placeholder={content.tutorFields.documentNumber.placeholder}
         value={formState.values.tutorDocumentNumber}
         onBlur={() => handleFieldBlur('tutorDocumentNumber')}
-        onChange={(value) => updateFieldValue('tutorDocumentNumber', keepOnlyDigits(value))}
+        onChange={(value) =>
+          updateFieldValue('tutorDocumentNumber', keepOnlyDigits(value))
+        }
       />
       <TextField
         autoComplete="email"
@@ -1604,12 +1733,16 @@ export function RegisterPage({
         id={fieldIds.tutorPhone}
         inputMode="numeric"
         label={content.tutorFields.phone.label}
+        maxLength={PHONE_NUMBER_MAX_DIGITS}
         name="tutorPhone"
+        pattern="[0-9]*"
         placeholder={content.tutorFields.phone.placeholder}
         type="tel"
         value={formState.values.tutorPhone}
         onBlur={() => handleFieldBlur('tutorPhone')}
-        onChange={(value) => updateFieldValue('tutorPhone', value)}
+        onChange={(value) =>
+          updateFieldValue('tutorPhone', normalizePhoneNumberInput(value))
+        }
       />
     </div>
   );
@@ -1647,7 +1780,8 @@ export function RegisterPage({
           title: content.personalSection.title,
         },
         {
-          description: 'Completa tu sexo, fecha de nacimiento y ubicación principal.',
+          description:
+            'Completa tu sexo, fecha de nacimiento y ubicación principal.',
           fields: ['sex', 'birthDate', 'cityId', 'localityId'],
           id: 'profile-location',
           shortLabel: 'Perfil',
@@ -1677,7 +1811,8 @@ export function RegisterPage({
           title: content.personalSection.title,
         },
         {
-          description: 'Completa tu sexo, fecha de nacimiento y ubicación principal.',
+          description:
+            'Completa tu sexo, fecha de nacimiento y ubicación principal.',
           fields: ['sex', 'birthDate', 'cityId', 'localityId'],
           id: 'profile-location',
           shortLabel: 'Perfil',
@@ -1710,7 +1845,9 @@ export function RegisterPage({
     }
 
     setFormState((currentState) => {
-      const hasStepErrors = currentMobileStep.fields.some((fieldName) => Boolean(currentState.errors[fieldName]));
+      const hasStepErrors = currentMobileStep.fields.some((fieldName) =>
+        Boolean(currentState.errors[fieldName]),
+      );
 
       if (!hasStepErrors) {
         return currentState;
@@ -1730,9 +1867,15 @@ export function RegisterPage({
   }, [currentMobileStep.id, currentMobileStepIndex, isMobileView]);
 
   const handleNextMobileStep = () => {
-    const validationErrors = validateRegisterForm(formState.values, currentDate);
-    const firstInvalidField = currentMobileStep.fields.find((fieldName) => Boolean(validationErrors[fieldName]));
-    const nextMobileStep = mobileSteps[Math.min(currentMobileStepIndex + 1, mobileSteps.length - 1)];
+    const validationErrors = validateRegisterForm(
+      formState.values,
+      currentDate,
+    );
+    const firstInvalidField = currentMobileStep.fields.find((fieldName) =>
+      Boolean(validationErrors[fieldName]),
+    );
+    const nextMobileStep =
+      mobileSteps[Math.min(currentMobileStepIndex + 1, mobileSteps.length - 1)];
 
     setFormState((currentState) => {
       const nextErrors = { ...currentState.errors };
@@ -1763,7 +1906,9 @@ export function RegisterPage({
       return;
     }
 
-    setCurrentMobileStepIndex((currentIndex) => Math.min(currentIndex + 1, mobileSteps.length - 1));
+    setCurrentMobileStepIndex((currentIndex) =>
+      Math.min(currentIndex + 1, mobileSteps.length - 1),
+    );
   };
 
   const handlePreviousMobileStep = () => {
@@ -1831,27 +1976,27 @@ export function RegisterPage({
             <h1 className="font-headline text-[2rem] font-extrabold tracking-tight text-ink sm:text-[2.35rem]">
               {content.title}
             </h1>
-            {!(isMobileView &&
+            {!(
+              isMobileView &&
               (currentMobileStep.id === 'profile-location' ||
                 currentMobileStep.id === 'tutor' ||
-                currentMobileStep.id === 'account')) ? (
+                currentMobileStep.id === 'account')
+            ) ? (
               <p className="max-w-3xl text-sm leading-7 text-ink-muted sm:text-base">
                 {content.subtitle}
               </p>
             ) : null}
           </div>
 
-          <form
-            className="space-y-6"
-            noValidate
-            onSubmit={handleSubmit}
-          >
+          <form className="space-y-6" noValidate onSubmit={handleSubmit}>
             {isMobileView ? (
               <div className="space-y-5">
                 <section className="rounded-[1.7rem] border border-slate-200/80 bg-white/80 p-4 shadow-float">
                   <div className="space-y-4">
                     <SectionHeader
-                      align={currentMobileStep.id === 'personal' ? 'center' : 'left'}
+                      align={
+                        currentMobileStep.id === 'personal' ? 'center' : 'left'
+                      }
                       description={
                         currentMobileStep.id === 'personal' ||
                         currentMobileStep.id === 'profile-location' ||
@@ -1892,7 +2037,10 @@ export function RegisterPage({
                         onClick={handleNextMobileStep}
                       >
                         <span>Siguiente paso</span>
-                        <ArrowRight aria-hidden="true" className="h-4.5 w-4.5" />
+                        <ArrowRight
+                          aria-hidden="true"
+                          className="h-4.5 w-4.5"
+                        />
                       </button>
                     ) : (
                       <button
@@ -1909,7 +2057,11 @@ export function RegisterPage({
                       {content.loginPrompt}{' '}
                       <Link
                         className="font-semibold text-primary transition-colors duration-300 hover:text-primary-strong hover:underline"
-                        to={content.loginCta.kind === 'internal' ? content.loginCta.to : ROUTES.login}
+                        to={
+                          content.loginCta.kind === 'internal'
+                            ? content.loginCta.to
+                            : ROUTES.login
+                        }
                       >
                         {content.loginCta.label}
                       </Link>
@@ -1919,335 +2071,407 @@ export function RegisterPage({
               </div>
             ) : (
               <>
-            <section className="rounded-[1.6rem] border border-slate-200/80 bg-white/70 p-5 shadow-float sm:p-6">
-              <SectionHeader
-                description={content.personalSection.description}
-                title={content.personalSection.title}
-              />
-              <div className="mt-5 grid gap-4 md:grid-cols-2">
-                <TextField
-                  autoComplete="given-name"
-                  error={formState.errors.firstName}
-                  id={fieldIds.firstName}
-                  label={content.patientFields.firstName.label}
-                  name="firstName"
-                  placeholder={content.patientFields.firstName.placeholder}
-                  value={formState.values.firstName}
-                  onBlur={() => handleFieldBlur('firstName')}
-                  onChange={(value) => updateFieldValue('firstName', value)}
-                />
-                <TextField
-                  autoComplete="family-name"
-                  error={formState.errors.lastName}
-                  id={fieldIds.lastName}
-                  label={content.patientFields.lastName.label}
-                  name="lastName"
-                  placeholder={content.patientFields.lastName.placeholder}
-                  value={formState.values.lastName}
-                  onBlur={() => handleFieldBlur('lastName')}
-                  onChange={(value) => updateFieldValue('lastName', value)}
-                />
-                <SelectField
-                  disabled={
-                    documentTypesState.status !== 'ready' || documentTypesState.options.length === 0
-                  }
-                  error={formState.errors.documentTypeId}
-                  helpText={documentTypeHelpText}
-                  id={fieldIds.documentTypeId}
-                  label={content.patientFields.documentType.label}
-                  name="documentTypeId"
-                  options={documentTypesState.options}
-                  placeholder={documentTypePlaceholder}
-                  value={formState.values.documentTypeId}
-                  onBlur={() => handleFieldBlur('documentTypeId')}
-                  onChange={(value) => updateFieldValue('documentTypeId', value)}
-                />
-                <TextField
-                  autoComplete="off"
-                  error={formState.errors.documentNumber}
-                  id={fieldIds.documentNumber}
-                  inputMode="numeric"
-                  label={content.patientFields.documentNumber.label}
-                  name="documentNumber"
-                  placeholder={content.patientFields.documentNumber.placeholder}
-                  value={formState.values.documentNumber}
-                  onBlur={() => handleFieldBlur('documentNumber')}
-                  onChange={(value) => updateFieldValue('documentNumber', keepOnlyDigits(value))}
-                />
-                <SelectField
-                  error={formState.errors.sex}
-                  id={fieldIds.sex}
-                  label={content.patientFields.sex.label}
-                  name="sex"
-        options={content.patientFields.sex.options.map((option) => ({
-          id: option,
-          label: option,
-        }))}
-        placeholder="Selecciona una opción"
-        value={formState.values.sex}
-        onBlur={() => handleFieldBlur('sex')}
-        onChange={(value) => updateFieldValue('sex', value as PatientSex)}
-      />
-      <TextField
-        error={formState.errors.birthDate}
-        id={fieldIds.birthDate}
-        inputMode="numeric"
-        label={content.patientFields.birthDate.label}
-        name="birthDate"
-        placeholder={content.patientFields.birthDate.placeholder}
-        value={formState.values.birthDate}
-        onBlur={() => handleFieldBlur('birthDate')}
-        onChange={(value) => updateFieldValue('birthDate', normalizeBirthDateInput(value))}
-      />
-              </div>
-            </section>
-
-            <section className="rounded-[1.6rem] border border-slate-200/80 bg-white/70 p-5 shadow-float sm:p-6">
-              <SectionHeader
-                description={content.locationSection.description}
-                title={content.locationSection.title}
-              />
-              <div className="mt-5 grid gap-4 md:grid-cols-2">
-                <SelectField
-                  disabled={citiesState.status !== 'ready' || citiesState.options.length === 0}
-                  error={formState.errors.cityId}
-                  helpText={cityHelpText}
-                  id={fieldIds.cityId}
-                  label={content.patientFields.city.label}
-                  name="cityId"
-                  options={citiesState.options}
-                  placeholder={cityPlaceholder}
-                  value={formState.values.cityId}
-                  onBlur={() => handleFieldBlur('cityId')}
-                  onChange={(value) => updateFieldValue('cityId', value)}
-                />
-                <SelectField
-                  disabled={
-                    !formState.values.cityId ||
-                    localitiesState.status !== 'ready' ||
-                    localitiesState.options.length === 0
-                  }
-                  error={formState.errors.localityId}
-                  helpText={localityHelpText}
-                  id={fieldIds.localityId}
-                  label={content.patientFields.locality.label}
-                  name="localityId"
-                  options={localitiesState.options}
-                  placeholder={localityPlaceholder}
-                  value={formState.values.localityId}
-                  onBlur={() => handleFieldBlur('localityId')}
-                  onChange={(value) => updateFieldValue('localityId', value)}
-                />
-              </div>
-            </section>
-
-            <section className="rounded-[1.6rem] border border-slate-200/80 bg-white/70 p-5 shadow-float sm:p-6">
-              <SectionHeader
-                description={content.accountSection.description}
-                title={content.accountSection.title}
-              />
-              <div className="mt-5 grid gap-4 md:grid-cols-2">
-                <TextField
-                  autoComplete="email"
-                  error={formState.errors.email}
-                  id={fieldIds.email}
-                  label={content.patientFields.email.label}
-                  name="email"
-                  placeholder={content.patientFields.email.placeholder}
-                  type="email"
-                  value={formState.values.email}
-                  onBlur={() => handleFieldBlur('email')}
-                  onChange={(value) => updateFieldValue('email', value)}
-                />
-                <TextField
-                  autoComplete="tel"
-                  error={formState.errors.phone}
-                  id={fieldIds.phone}
-                  inputMode="numeric"
-                  label={content.patientFields.phone.label}
-                  name="phone"
-                  placeholder={content.patientFields.phone.placeholder}
-                  type="tel"
-                  value={formState.values.phone}
-                  onBlur={() => handleFieldBlur('phone')}
-                  onChange={(value) => updateFieldValue('phone', value.replace(/\D/g, ''))}
-                />
-                <div className="space-y-4 md:col-span-2">
-                  <PasswordField
-                    autoComplete="new-password"
-                    error={formState.errors.password}
-                    hidePasswordLabel={content.password.hidePasswordLabel}
-                    id={fieldIds.password}
-                    inputRef={passwordInputRef}
-                    label={content.password.label}
-                    name="password"
-                    placeholder={content.password.placeholder}
-                    showPassword={showPassword}
-                    showPasswordLabel={content.password.showPasswordLabel}
-                    value={formState.values.password}
-                    onBlur={() => handleFieldBlur('password')}
-                    onChange={(value) => updateFieldValue('password', value)}
-                    onToggleVisibility={() => setShowPassword((currentState) => !currentState)}
+                <section className="rounded-[1.6rem] border border-slate-200/80 bg-white/70 p-5 shadow-float sm:p-6">
+                  <SectionHeader
+                    description={content.personalSection.description}
+                    title={content.personalSection.title}
                   />
-                  <PasswordRequirementsList password={formState.values.password} />
+                  <div className="mt-5 grid gap-4 md:grid-cols-2">
+                    <TextField
+                      autoComplete="given-name"
+                      error={formState.errors.firstName}
+                      id={fieldIds.firstName}
+                      label={content.patientFields.firstName.label}
+                      name="firstName"
+                      placeholder={content.patientFields.firstName.placeholder}
+                      value={formState.values.firstName}
+                      onBlur={() => handleFieldBlur('firstName')}
+                      onChange={(value) => updateFieldValue('firstName', value)}
+                    />
+                    <TextField
+                      autoComplete="family-name"
+                      error={formState.errors.lastName}
+                      id={fieldIds.lastName}
+                      label={content.patientFields.lastName.label}
+                      name="lastName"
+                      placeholder={content.patientFields.lastName.placeholder}
+                      value={formState.values.lastName}
+                      onBlur={() => handleFieldBlur('lastName')}
+                      onChange={(value) => updateFieldValue('lastName', value)}
+                    />
+                    <SelectField
+                      disabled={
+                        documentTypesState.status !== 'ready' ||
+                        documentTypesState.options.length === 0
+                      }
+                      error={formState.errors.documentTypeId}
+                      helpText={documentTypeHelpText}
+                      id={fieldIds.documentTypeId}
+                      label={content.patientFields.documentType.label}
+                      name="documentTypeId"
+                      options={documentTypesState.options}
+                      placeholder={documentTypePlaceholder}
+                      value={formState.values.documentTypeId}
+                      onBlur={() => handleFieldBlur('documentTypeId')}
+                      onChange={(value) =>
+                        updateFieldValue('documentTypeId', value)
+                      }
+                    />
+                    <TextField
+                      autoComplete="off"
+                      error={formState.errors.documentNumber}
+                      id={fieldIds.documentNumber}
+                      inputMode="numeric"
+                      label={content.patientFields.documentNumber.label}
+                      name="documentNumber"
+                      placeholder={
+                        content.patientFields.documentNumber.placeholder
+                      }
+                      value={formState.values.documentNumber}
+                      onBlur={() => handleFieldBlur('documentNumber')}
+                      onChange={(value) =>
+                        updateFieldValue(
+                          'documentNumber',
+                          keepOnlyDigits(value),
+                        )
+                      }
+                    />
+                    <SelectField
+                      error={formState.errors.sex}
+                      id={fieldIds.sex}
+                      label={content.patientFields.sex.label}
+                      name="sex"
+                      options={content.patientFields.sex.options.map(
+                        (option) => ({
+                          id: option,
+                          label: option,
+                        }),
+                      )}
+                      placeholder="Selecciona una opción"
+                      value={formState.values.sex}
+                      onBlur={() => handleFieldBlur('sex')}
+                      onChange={(value) =>
+                        updateFieldValue('sex', value as PatientSex)
+                      }
+                    />
+                    <TextField
+                      error={formState.errors.birthDate}
+                      id={fieldIds.birthDate}
+                      inputMode="numeric"
+                      label={content.patientFields.birthDate.label}
+                      name="birthDate"
+                      placeholder={content.patientFields.birthDate.placeholder}
+                      value={formState.values.birthDate}
+                      onBlur={() => handleFieldBlur('birthDate')}
+                      onChange={(value) =>
+                        updateFieldValue(
+                          'birthDate',
+                          normalizeBirthDateInput(value),
+                        )
+                      }
+                    />
+                  </div>
+                </section>
+
+                <section className="rounded-[1.6rem] border border-slate-200/80 bg-white/70 p-5 shadow-float sm:p-6">
+                  <SectionHeader
+                    description={content.locationSection.description}
+                    title={content.locationSection.title}
+                  />
+                  <div className="mt-5 grid gap-4 md:grid-cols-2">
+                    <SelectField
+                      disabled={
+                        citiesState.status !== 'ready' ||
+                        citiesState.options.length === 0
+                      }
+                      error={formState.errors.cityId}
+                      helpText={cityHelpText}
+                      id={fieldIds.cityId}
+                      label={content.patientFields.city.label}
+                      name="cityId"
+                      options={citiesState.options}
+                      placeholder={cityPlaceholder}
+                      value={formState.values.cityId}
+                      onBlur={() => handleFieldBlur('cityId')}
+                      onChange={(value) => updateFieldValue('cityId', value)}
+                    />
+                    <SelectField
+                      disabled={
+                        !formState.values.cityId ||
+                        localitiesState.status !== 'ready' ||
+                        localitiesState.options.length === 0
+                      }
+                      error={formState.errors.localityId}
+                      helpText={localityHelpText}
+                      id={fieldIds.localityId}
+                      label={content.patientFields.locality.label}
+                      name="localityId"
+                      options={localitiesState.options}
+                      placeholder={localityPlaceholder}
+                      value={formState.values.localityId}
+                      onBlur={() => handleFieldBlur('localityId')}
+                      onChange={(value) =>
+                        updateFieldValue('localityId', value)
+                      }
+                    />
+                  </div>
+                </section>
+
+                <section className="rounded-[1.6rem] border border-slate-200/80 bg-white/70 p-5 shadow-float sm:p-6">
+                  <SectionHeader
+                    description={content.accountSection.description}
+                    title={content.accountSection.title}
+                  />
+                  <div className="mt-5 grid gap-4 md:grid-cols-2">
+                    <TextField
+                      autoComplete="email"
+                      error={formState.errors.email}
+                      id={fieldIds.email}
+                      label={content.patientFields.email.label}
+                      name="email"
+                      placeholder={content.patientFields.email.placeholder}
+                      type="email"
+                      value={formState.values.email}
+                      onBlur={() => handleFieldBlur('email')}
+                      onChange={(value) => updateFieldValue('email', value)}
+                    />
+                    <TextField
+                      autoComplete="tel"
+                      error={formState.errors.phone}
+                      id={fieldIds.phone}
+                      inputMode="numeric"
+                      label={content.patientFields.phone.label}
+                      maxLength={PHONE_NUMBER_MAX_DIGITS}
+                      name="phone"
+                      pattern="[0-9]*"
+                      placeholder={content.patientFields.phone.placeholder}
+                      type="tel"
+                      value={formState.values.phone}
+                      onBlur={() => handleFieldBlur('phone')}
+                      onChange={(value) =>
+                        updateFieldValue(
+                          'phone',
+                          normalizePhoneNumberInput(value),
+                        )
+                      }
+                    />
+                    <div className="space-y-4 md:col-span-2">
+                      <PasswordField
+                        autoComplete="new-password"
+                        error={formState.errors.password}
+                        hidePasswordLabel={content.password.hidePasswordLabel}
+                        id={fieldIds.password}
+                        inputRef={passwordInputRef}
+                        label={content.password.label}
+                        name="password"
+                        placeholder={content.password.placeholder}
+                        showPassword={showPassword}
+                        showPasswordLabel={content.password.showPasswordLabel}
+                        value={formState.values.password}
+                        onBlur={() => handleFieldBlur('password')}
+                        onChange={(value) =>
+                          updateFieldValue('password', value)
+                        }
+                        onToggleVisibility={() =>
+                          setShowPassword((currentState) => !currentState)
+                        }
+                      />
+                      <PasswordRequirementsList
+                        password={formState.values.password}
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <PasswordField
+                        autoComplete="new-password"
+                        error={formState.errors.confirmPassword}
+                        hidePasswordLabel={content.password.hidePasswordLabel}
+                        id={fieldIds.confirmPassword}
+                        inputRef={confirmPasswordInputRef}
+                        label={content.password.confirmLabel}
+                        name="confirmPassword"
+                        placeholder={content.password.confirmPlaceholder}
+                        showPassword={showConfirmPassword}
+                        showPasswordLabel={content.password.showPasswordLabel}
+                        value={formState.values.confirmPassword}
+                        onBlur={() => handleFieldBlur('confirmPassword')}
+                        onChange={(value) =>
+                          updateFieldValue('confirmPassword', value)
+                        }
+                        onToggleVisibility={() =>
+                          setShowConfirmPassword(
+                            (currentState) => !currentState,
+                          )
+                        }
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                {showTutor ? (
+                  <section className="rounded-[1.6rem] border border-slate-200/80 bg-white/70 p-5 shadow-float sm:p-6">
+                    <SectionHeader
+                      description={content.tutorSection.description}
+                      title={content.tutorSection.title}
+                    />
+                    <div className="mt-5 grid gap-4 md:grid-cols-2">
+                      <TextField
+                        autoComplete="given-name"
+                        error={formState.errors.tutorFirstName}
+                        id={fieldIds.tutorFirstName}
+                        label={content.tutorFields.firstName.label}
+                        name="tutorFirstName"
+                        placeholder={content.tutorFields.firstName.placeholder}
+                        value={formState.values.tutorFirstName}
+                        onBlur={() => handleFieldBlur('tutorFirstName')}
+                        onChange={(value) =>
+                          updateFieldValue('tutorFirstName', value)
+                        }
+                      />
+                      <TextField
+                        autoComplete="family-name"
+                        error={formState.errors.tutorLastName}
+                        id={fieldIds.tutorLastName}
+                        label={content.tutorFields.lastName.label}
+                        name="tutorLastName"
+                        placeholder={content.tutorFields.lastName.placeholder}
+                        value={formState.values.tutorLastName}
+                        onBlur={() => handleFieldBlur('tutorLastName')}
+                        onChange={(value) =>
+                          updateFieldValue('tutorLastName', value)
+                        }
+                      />
+                      <SelectField
+                        disabled={
+                          documentTypesState.status !== 'ready' ||
+                          tutorDocumentTypeOptions.length === 0
+                        }
+                        error={formState.errors.tutorDocumentTypeId}
+                        helpText={tutorDocumentTypeHelpText}
+                        id={fieldIds.tutorDocumentTypeId}
+                        label={content.tutorFields.documentType.label}
+                        name="tutorDocumentTypeId"
+                        options={tutorDocumentTypeOptions}
+                        placeholder={tutorDocumentTypePlaceholder}
+                        value={formState.values.tutorDocumentTypeId}
+                        onBlur={() => handleFieldBlur('tutorDocumentTypeId')}
+                        onChange={(value) =>
+                          updateFieldValue('tutorDocumentTypeId', value)
+                        }
+                      />
+                      <TextField
+                        autoComplete="off"
+                        error={formState.errors.tutorDocumentNumber}
+                        id={fieldIds.tutorDocumentNumber}
+                        inputMode="numeric"
+                        label={content.tutorFields.documentNumber.label}
+                        name="tutorDocumentNumber"
+                        placeholder={
+                          content.tutorFields.documentNumber.placeholder
+                        }
+                        value={formState.values.tutorDocumentNumber}
+                        onBlur={() => handleFieldBlur('tutorDocumentNumber')}
+                        onChange={(value) =>
+                          updateFieldValue(
+                            'tutorDocumentNumber',
+                            keepOnlyDigits(value),
+                          )
+                        }
+                      />
+                      <TextField
+                        autoComplete="email"
+                        error={formState.errors.tutorEmail}
+                        id={fieldIds.tutorEmail}
+                        label={content.tutorFields.email.label}
+                        name="tutorEmail"
+                        placeholder={content.tutorFields.email.placeholder}
+                        type="email"
+                        value={formState.values.tutorEmail}
+                        onBlur={() => handleFieldBlur('tutorEmail')}
+                        onChange={(value) =>
+                          updateFieldValue('tutorEmail', value)
+                        }
+                      />
+                      <TextField
+                        autoComplete="tel"
+                        error={formState.errors.tutorPhone}
+                        id={fieldIds.tutorPhone}
+                        inputMode="numeric"
+                        label={content.tutorFields.phone.label}
+                        maxLength={PHONE_NUMBER_MAX_DIGITS}
+                        name="tutorPhone"
+                        pattern="[0-9]*"
+                        placeholder={content.tutorFields.phone.placeholder}
+                        type="tel"
+                        value={formState.values.tutorPhone}
+                        onBlur={() => handleFieldBlur('tutorPhone')}
+                        onChange={(value) =>
+                          updateFieldValue(
+                            'tutorPhone',
+                            normalizePhoneNumberInput(value),
+                          )
+                        }
+                      />
+                    </div>
+                  </section>
+                ) : null}
+
+                <section className="rounded-[1.6rem] border border-slate-200/80 bg-white/70 p-5 shadow-float sm:p-6">
+                  <SectionHeader title="Consentimientos" />
+                  <div className="mt-5 space-y-3">
+                    <CheckboxField
+                      checked={formState.values.acceptTerms}
+                      error={formState.errors.acceptTerms}
+                      id={fieldIds.acceptTerms}
+                      label={<TermsConsentLabel />}
+                      onBlur={() => handleFieldBlur('acceptTerms')}
+                      onChange={(value) =>
+                        updateFieldValue('acceptTerms', value)
+                      }
+                    />
+                    <CheckboxField
+                      checked={formState.values.acceptPrivacyPolicy}
+                      error={formState.errors.acceptPrivacyPolicy}
+                      id={fieldIds.acceptPrivacyPolicy}
+                      label={<PrivacyConsentLabel />}
+                      onBlur={() => handleFieldBlur('acceptPrivacyPolicy')}
+                      onChange={(value) =>
+                        updateFieldValue('acceptPrivacyPolicy', value)
+                      }
+                    />
+                  </div>
+                </section>
+
+                <div className="flex flex-col items-center gap-4 border-t border-slate-200/70 pt-2 text-center">
+                  {submissionError ? (
+                    <div
+                      aria-live="polite"
+                      className="w-full rounded-xl bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700"
+                      role="alert"
+                    >
+                      {submissionError}
+                    </div>
+                  ) : null}
+                  <button
+                    className="inline-flex min-w-[14rem] items-center justify-center rounded-xl bg-brand-gradient px-6 py-3 font-headline text-[15px] font-extrabold text-white shadow-ambient transition-all duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 sm:text-base"
+                    disabled={isSubmitting}
+                    type="submit"
+                  >
+                    {content.submitLabel}
+                  </button>
+                  <p className="text-sm text-ink-muted">
+                    {content.loginPrompt}{' '}
+                    <Link
+                      className="font-semibold text-primary transition-colors duration-300 hover:text-primary-strong hover:underline"
+                      to={
+                        content.loginCta.kind === 'internal'
+                          ? content.loginCta.to
+                          : ROUTES.login
+                      }
+                    >
+                      {content.loginCta.label}
+                    </Link>
+                  </p>
                 </div>
-                <div className="md:col-span-2">
-                  <PasswordField
-                    autoComplete="new-password"
-                    error={formState.errors.confirmPassword}
-                    hidePasswordLabel={content.password.hidePasswordLabel}
-                    id={fieldIds.confirmPassword}
-                    inputRef={confirmPasswordInputRef}
-                    label={content.password.confirmLabel}
-                    name="confirmPassword"
-                    placeholder={content.password.confirmPlaceholder}
-                    showPassword={showConfirmPassword}
-                    showPasswordLabel={content.password.showPasswordLabel}
-                    value={formState.values.confirmPassword}
-                    onBlur={() => handleFieldBlur('confirmPassword')}
-                    onChange={(value) => updateFieldValue('confirmPassword', value)}
-                    onToggleVisibility={() =>
-                      setShowConfirmPassword((currentState) => !currentState)
-                    }
-                  />
-                </div>
-              </div>
-            </section>
-
-            {showTutor ? (
-              <section className="rounded-[1.6rem] border border-slate-200/80 bg-white/70 p-5 shadow-float sm:p-6">
-                <SectionHeader
-                  description={content.tutorSection.description}
-                  title={content.tutorSection.title}
-                />
-                <div className="mt-5 grid gap-4 md:grid-cols-2">
-                  <TextField
-                    autoComplete="given-name"
-                    error={formState.errors.tutorFirstName}
-                    id={fieldIds.tutorFirstName}
-                    label={content.tutorFields.firstName.label}
-                    name="tutorFirstName"
-                    placeholder={content.tutorFields.firstName.placeholder}
-                    value={formState.values.tutorFirstName}
-                    onBlur={() => handleFieldBlur('tutorFirstName')}
-                    onChange={(value) => updateFieldValue('tutorFirstName', value)}
-                  />
-                  <TextField
-                    autoComplete="family-name"
-                    error={formState.errors.tutorLastName}
-                    id={fieldIds.tutorLastName}
-                    label={content.tutorFields.lastName.label}
-                    name="tutorLastName"
-                    placeholder={content.tutorFields.lastName.placeholder}
-                    value={formState.values.tutorLastName}
-                    onBlur={() => handleFieldBlur('tutorLastName')}
-                    onChange={(value) => updateFieldValue('tutorLastName', value)}
-                  />
-                  <SelectField
-                    disabled={
-                      documentTypesState.status !== 'ready' || tutorDocumentTypeOptions.length === 0
-                    }
-                    error={formState.errors.tutorDocumentTypeId}
-                    helpText={tutorDocumentTypeHelpText}
-                    id={fieldIds.tutorDocumentTypeId}
-                    label={content.tutorFields.documentType.label}
-                    name="tutorDocumentTypeId"
-                    options={tutorDocumentTypeOptions}
-                    placeholder={tutorDocumentTypePlaceholder}
-                    value={formState.values.tutorDocumentTypeId}
-                    onBlur={() => handleFieldBlur('tutorDocumentTypeId')}
-                    onChange={(value) => updateFieldValue('tutorDocumentTypeId', value)}
-                  />
-                  <TextField
-                    autoComplete="off"
-                    error={formState.errors.tutorDocumentNumber}
-                    id={fieldIds.tutorDocumentNumber}
-                    inputMode="numeric"
-                    label={content.tutorFields.documentNumber.label}
-                    name="tutorDocumentNumber"
-                    placeholder={content.tutorFields.documentNumber.placeholder}
-                    value={formState.values.tutorDocumentNumber}
-                    onBlur={() => handleFieldBlur('tutorDocumentNumber')}
-                    onChange={(value) => updateFieldValue('tutorDocumentNumber', keepOnlyDigits(value))}
-                  />
-                  <TextField
-                    autoComplete="email"
-                    error={formState.errors.tutorEmail}
-                    id={fieldIds.tutorEmail}
-                    label={content.tutorFields.email.label}
-                    name="tutorEmail"
-                    placeholder={content.tutorFields.email.placeholder}
-                    type="email"
-                    value={formState.values.tutorEmail}
-                    onBlur={() => handleFieldBlur('tutorEmail')}
-                    onChange={(value) => updateFieldValue('tutorEmail', value)}
-                  />
-                  <TextField
-                    autoComplete="tel"
-                    error={formState.errors.tutorPhone}
-                    id={fieldIds.tutorPhone}
-                    inputMode="numeric"
-                    label={content.tutorFields.phone.label}
-                    name="tutorPhone"
-                    placeholder={content.tutorFields.phone.placeholder}
-                    type="tel"
-                    value={formState.values.tutorPhone}
-                    onBlur={() => handleFieldBlur('tutorPhone')}
-                    onChange={(value) => updateFieldValue('tutorPhone', value.replace(/\D/g, ''))}
-                  />
-                </div>
-              </section>
-            ) : null}
-
-            <section className="rounded-[1.6rem] border border-slate-200/80 bg-white/70 p-5 shadow-float sm:p-6">
-              <SectionHeader title="Consentimientos" />
-              <div className="mt-5 space-y-3">
-                <CheckboxField
-                  checked={formState.values.acceptTerms}
-                  error={formState.errors.acceptTerms}
-                  id={fieldIds.acceptTerms}
-                  label={<TermsConsentLabel />}
-                  onBlur={() => handleFieldBlur('acceptTerms')}
-                  onChange={(value) => updateFieldValue('acceptTerms', value)}
-                />
-                <CheckboxField
-                  checked={formState.values.acceptPrivacyPolicy}
-                  error={formState.errors.acceptPrivacyPolicy}
-                  id={fieldIds.acceptPrivacyPolicy}
-                  label={<PrivacyConsentLabel />}
-                  onBlur={() => handleFieldBlur('acceptPrivacyPolicy')}
-                  onChange={(value) => updateFieldValue('acceptPrivacyPolicy', value)}
-                />
-              </div>
-            </section>
-
-            <div className="flex flex-col items-center gap-4 border-t border-slate-200/70 pt-2 text-center">
-              {submissionError ? (
-                <div
-                  aria-live="polite"
-                  className="w-full rounded-xl bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700"
-                  role="alert"
-                >
-                  {submissionError}
-                </div>
-              ) : null}
-              <button
-                className="inline-flex min-w-[14rem] items-center justify-center rounded-xl bg-brand-gradient px-6 py-3 font-headline text-[15px] font-extrabold text-white shadow-ambient transition-all duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 sm:text-base"
-                disabled={isSubmitting}
-                type="submit"
-              >
-                {content.submitLabel}
-              </button>
-              <p className="text-sm text-ink-muted">
-                {content.loginPrompt}{' '}
-                <Link
-                  className="font-semibold text-primary transition-colors duration-300 hover:text-primary-strong hover:underline"
-                  to={content.loginCta.kind === 'internal' ? content.loginCta.to : ROUTES.login}
-                >
-                  {content.loginCta.label}
-                </Link>
-              </p>
-            </div>
               </>
             )}
           </form>

@@ -1,4 +1,10 @@
-import { IsEmail, IsOptional, IsString } from 'class-validator';
+import {
+  IsEmail,
+  IsOptional,
+  IsString,
+  Matches,
+  ValidateIf,
+} from "class-validator";
 
 export class CreateUniversityDto {
   @IsString()
@@ -20,6 +26,8 @@ export class CreateUniversityDto {
   adminEmail!: string;
 
   @IsOptional()
+  @ValidateIf((_, value) => value !== "")
   @IsString()
+  @Matches(/^\d{10}$/, { message: "El celular debe tener 10 digitos." })
   adminPhone?: string;
 }

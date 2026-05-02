@@ -8,8 +8,8 @@ import {
   Matches,
   MinLength,
   ValidateNested,
-} from 'class-validator';
-import { Type } from 'class-transformer';
+} from "class-validator";
+import { Type } from "class-transformer";
 
 class PatientConsentsDto {
   @IsBoolean()
@@ -27,7 +27,9 @@ class PatientPayloadDto {
   cityId!: string;
 
   @IsString()
-  @Matches(/^\d+$/, { message: 'El número de documento solo debe contener números.' })
+  @Matches(/^\d+$/, {
+    message: "El número de documento solo debe contener números.",
+  })
   documentNumber!: string;
 
   @IsString()
@@ -50,15 +52,18 @@ class PatientPayloadDto {
   password!: string;
 
   @IsString()
+  @Matches(/^\d{10}$/, { message: "El celular debe tener 10 digitos." })
   phone!: string;
 
-  @IsEnum(['FEMENINO', 'MASCULINO', 'OTRO'])
-  sex!: 'FEMENINO' | 'MASCULINO' | 'OTRO';
+  @IsEnum(["FEMENINO", "MASCULINO", "OTRO"])
+  sex!: "FEMENINO" | "MASCULINO" | "OTRO";
 }
 
 class TutorPayloadDto {
   @IsString()
-  @Matches(/^\d+$/, { message: 'El número de documento del tutor solo debe contener números.' })
+  @Matches(/^\d+$/, {
+    message: "El número de documento del tutor solo debe contener números.",
+  })
   documentNumber!: string;
 
   @IsString()
@@ -74,6 +79,9 @@ class TutorPayloadDto {
   lastName!: string;
 
   @IsString()
+  @Matches(/^\d{10}$/, {
+    message: "El celular del tutor debe tener 10 digitos.",
+  })
   phone!: string;
 }
 

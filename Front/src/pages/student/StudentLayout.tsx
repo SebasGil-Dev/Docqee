@@ -75,7 +75,10 @@ export function StudentLayout() {
     return () => {
       clearInterval(requestInterval);
       clearInterval(moduleInterval);
-      document.removeEventListener('visibilitychange', refreshRequestsIfVisible);
+      document.removeEventListener(
+        'visibilitychange',
+        refreshRequestsIfVisible,
+      );
       window.removeEventListener('focus', refreshRequestsIfVisible);
     };
   }, [
@@ -112,6 +115,7 @@ export function StudentLayout() {
       headerNotifications={notifications}
       onMarkAllNotificationsRead={markAllNotificationsAsRead}
       onOpenNotification={markNotificationAsRead}
+      profileTo={ROUTES.studentProfile}
       surfacePaddingMode="inner"
       {...(overrideName ? { overrideName } : {})}
     >

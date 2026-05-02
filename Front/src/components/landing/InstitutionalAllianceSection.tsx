@@ -10,6 +10,11 @@ import { useAutoDismissSystemMessage } from '@/hooks/useAutoDismissSystemMessage
 import { ApiError } from '@/lib/apiClient';
 import { classNames } from '@/lib/classNames';
 import { submitInstitutionalAllianceRequest } from '@/lib/institutionalAllianceApi';
+import {
+  PHONE_NUMBER_DIGITS_MESSAGE,
+  normalizePhoneNumberInput,
+  PHONE_NUMBER_MAX_DIGITS,
+} from '@/lib/phoneNumber';
 
 import { SectionHeading } from '../ui/SectionHeading';
 import { SurfaceCard } from '../ui/SurfaceCard';
@@ -96,6 +101,13 @@ function validateForm(values: InstitutionalAllianceFormValues) {
     errors.phone = 'Ingresa el teléfono.';
   }
 
+  if (
+    values.phone.trim() &&
+    values.phone.trim().length !== PHONE_NUMBER_MAX_DIGITS
+  ) {
+    errors.phone = PHONE_NUMBER_DIGITS_MESSAGE;
+  }
+
   if (!values.interestType) {
     errors.interestType = 'Selecciona el tipo de interés.';
   }
@@ -111,11 +123,14 @@ function validateForm(values: InstitutionalAllianceFormValues) {
 export function InstitutionalAllianceSection({
   content,
 }: InstitutionalAllianceSectionProps) {
-  const [values, setValues] = useState<InstitutionalAllianceFormValues>(initialFormValues);
+  const [values, setValues] =
+    useState<InstitutionalAllianceFormValues>(initialFormValues);
   const [errors, setErrors] = useState<InstitutionalAllianceFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
-  const [statusTone, setStatusTone] = useState<'error' | 'success' | null>(null);
+  const [statusTone, setStatusTone] = useState<'error' | 'success' | null>(
+    null,
+  );
 
   useAutoDismissSystemMessage(statusMessage, () => {
     setStatusMessage(null);
@@ -152,7 +167,9 @@ export function InstitutionalAllianceSection({
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
       setStatusTone('error');
-      setStatusMessage('Revisa los campos obligatorios antes de enviar la solicitud.');
+      setStatusMessage(
+        'Revisa los campos obligatorios antes de enviar la solicitud.',
+      );
       return;
     }
 
@@ -227,7 +244,9 @@ export function InstitutionalAllianceSection({
                     <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/8 text-primary">
                       <CheckCircle2 className="h-4.5 w-4.5" />
                     </span>
-                    <p className="text-sm leading-6 text-ink-muted">{benefit}</p>
+                    <p className="text-sm leading-6 text-ink-muted">
+                      {benefit}
+                    </p>
                   </div>
                 </SurfaceCard>
               ))}
@@ -240,7 +259,9 @@ export function InstitutionalAllianceSection({
                 <h3 className="font-headline text-[1.45rem] font-extrabold tracking-tight text-ink">
                   {content.formTitle}
                 </h3>
-                <p className="text-sm leading-6 text-ink-muted">{content.formDescription}</p>
+                <p className="text-sm leading-6 text-ink-muted">
+                  {content.formDescription}
+                </p>
               </div>
 
               {statusMessage ? (
@@ -260,7 +281,10 @@ export function InstitutionalAllianceSection({
               <form className="grid gap-4" noValidate onSubmit={handleSubmit}>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <label className={labelClassName} htmlFor="alliance-university-name">
+                    <label
+                      className={labelClassName}
+                      htmlFor="alliance-university-name"
+                    >
                       Nombre de la universidad
                     </label>
                     <input
@@ -269,7 +293,9 @@ export function InstitutionalAllianceSection({
                       placeholder="Ej. Universidad de Colombia"
                       type="text"
                       value={values.universityName}
-                      onChange={(event) => updateField('universityName', event.target.value)}
+                      onChange={(event) =>
+                        updateField('universityName', event.target.value)
+                      }
                     />
                     {errors.universityName ? (
                       <p className={errorClassName}>{errors.universityName}</p>
@@ -286,13 +312,20 @@ export function InstitutionalAllianceSection({
                       placeholder="Ej. Bogotá D. C."
                       type="text"
                       value={values.city}
-                      onChange={(event) => updateField('city', event.target.value)}
+                      onChange={(event) =>
+                        updateField('city', event.target.value)
+                      }
                     />
-                    {errors.city ? <p className={errorClassName}>{errors.city}</p> : null}
+                    {errors.city ? (
+                      <p className={errorClassName}>{errors.city}</p>
+                    ) : null}
                   </div>
 
                   <div className="space-y-2">
-                    <label className={labelClassName} htmlFor="alliance-contact-name">
+                    <label
+                      className={labelClassName}
+                      htmlFor="alliance-contact-name"
+                    >
                       Nombre del contacto
                     </label>
                     <input
@@ -301,7 +334,9 @@ export function InstitutionalAllianceSection({
                       placeholder="Ej. María Gómez"
                       type="text"
                       value={values.contactName}
-                      onChange={(event) => updateField('contactName', event.target.value)}
+                      onChange={(event) =>
+                        updateField('contactName', event.target.value)
+                      }
                     />
                     {errors.contactName ? (
                       <p className={errorClassName}>{errors.contactName}</p>
@@ -309,7 +344,10 @@ export function InstitutionalAllianceSection({
                   </div>
 
                   <div className="space-y-2">
-                    <label className={labelClassName} htmlFor="alliance-contact-role">
+                    <label
+                      className={labelClassName}
+                      htmlFor="alliance-contact-role"
+                    >
                       Cargo del contacto
                     </label>
                     <input
@@ -318,7 +356,9 @@ export function InstitutionalAllianceSection({
                       placeholder="Ej. Coordinación académica"
                       type="text"
                       value={values.contactRole}
-                      onChange={(event) => updateField('contactRole', event.target.value)}
+                      onChange={(event) =>
+                        updateField('contactRole', event.target.value)
+                      }
                     />
                     {errors.contactRole ? (
                       <p className={errorClassName}>{errors.contactRole}</p>
@@ -326,7 +366,10 @@ export function InstitutionalAllianceSection({
                   </div>
 
                   <div className="space-y-2">
-                    <label className={labelClassName} htmlFor="alliance-institutional-email">
+                    <label
+                      className={labelClassName}
+                      htmlFor="alliance-institutional-email"
+                    >
                       Correo institucional
                     </label>
                     <div className="relative">
@@ -343,7 +386,9 @@ export function InstitutionalAllianceSection({
                       />
                     </div>
                     {errors.institutionalEmail ? (
-                      <p className={errorClassName}>{errors.institutionalEmail}</p>
+                      <p className={errorClassName}>
+                        {errors.institutionalEmail}
+                      </p>
                     ) : null}
                   </div>
 
@@ -356,18 +401,31 @@ export function InstitutionalAllianceSection({
                       <input
                         id="alliance-phone"
                         className={classNames(fieldClassName, 'pl-11')}
+                        inputMode="numeric"
+                        maxLength={PHONE_NUMBER_MAX_DIGITS}
+                        pattern="[0-9]*"
                         placeholder="Ej. 300 123 4567"
                         type="tel"
                         value={values.phone}
-                        onChange={(event) => updateField('phone', event.target.value)}
+                        onChange={(event) =>
+                          updateField(
+                            'phone',
+                            normalizePhoneNumberInput(event.target.value),
+                          )
+                        }
                       />
                     </div>
-                    {errors.phone ? <p className={errorClassName}>{errors.phone}</p> : null}
+                    {errors.phone ? (
+                      <p className={errorClassName}>{errors.phone}</p>
+                    ) : null}
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className={labelClassName} htmlFor="alliance-interest-type">
+                  <label
+                    className={labelClassName}
+                    htmlFor="alliance-interest-type"
+                  >
                     Tipo de interés
                   </label>
                   <select
@@ -377,7 +435,9 @@ export function InstitutionalAllianceSection({
                     onChange={(event) =>
                       updateField(
                         'interestType',
-                        event.target.value as InstitutionalAllianceInterestValue | '',
+                        event.target.value as
+                          | InstitutionalAllianceInterestValue
+                          | '',
                       )
                     }
                   >
@@ -394,15 +454,21 @@ export function InstitutionalAllianceSection({
                 </div>
 
                 <div className="space-y-2">
-                  <label className={labelClassName} htmlFor="alliance-additional-message">
-                    Mensaje adicional <span className="text-ghost">(opcional)</span>
+                  <label
+                    className={labelClassName}
+                    htmlFor="alliance-additional-message"
+                  >
+                    Mensaje adicional{' '}
+                    <span className="text-ghost">(opcional)</span>
                   </label>
                   <textarea
                     id="alliance-additional-message"
                     className={textareaClassName}
                     placeholder="Comparte contexto adicional sobre la solicitud institucional."
                     value={values.additionalMessage}
-                    onChange={(event) => updateField('additionalMessage', event.target.value)}
+                    onChange={(event) =>
+                      updateField('additionalMessage', event.target.value)
+                    }
                   />
                 </div>
 
@@ -417,11 +483,15 @@ export function InstitutionalAllianceSection({
                       className="mt-1 h-4.5 w-4.5 rounded border-slate-300 text-primary focus:ring-primary"
                       type="checkbox"
                       onChange={(event) =>
-                        updateField('authorizeDataProcessing', event.target.checked)
+                        updateField(
+                          'authorizeDataProcessing',
+                          event.target.checked,
+                        )
                       }
                     />
                     <span>
-                      Autorizo el tratamiento de mis datos personales conforme a la{' '}
+                      Autorizo el tratamiento de mis datos personales conforme a
+                      la{' '}
                       <a
                         className={legalLinkClassName}
                         href={ROUTES.privacyPolicy}
@@ -443,7 +513,9 @@ export function InstitutionalAllianceSection({
                     </span>
                   </label>
                   {errors.authorizeDataProcessing ? (
-                    <p className={errorClassName}>{errors.authorizeDataProcessing}</p>
+                    <p className={errorClassName}>
+                      {errors.authorizeDataProcessing}
+                    </p>
                   ) : null}
                 </div>
 
@@ -454,7 +526,9 @@ export function InstitutionalAllianceSection({
                 >
                   <Send className="h-4 w-4" />
                   <span>
-                    {isSubmitting ? 'Enviando solicitud...' : content.submitLabel}
+                    {isSubmitting
+                      ? 'Enviando solicitud...'
+                      : content.submitLabel}
                   </span>
                 </button>
               </form>

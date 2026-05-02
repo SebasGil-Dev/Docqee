@@ -19,15 +19,27 @@ type AdminTextFieldProps = {
   icon: LucideIcon;
   id: string;
   inputClassName?: string;
-  inputMode?: 'none' | 'text' | 'tel' | 'url' | 'email' | 'numeric' | 'decimal' | 'search';
+  inputMode?:
+    | 'none'
+    | 'text'
+    | 'tel'
+    | 'url'
+    | 'email'
+    | 'numeric'
+    | 'decimal'
+    | 'search';
   inputRef?: Ref<HTMLInputElement> | undefined;
   label: string;
   labelClassName?: string;
+  maxLength?: number | undefined;
   min?: string | undefined;
   name: string;
   onBlur?: (() => void) | undefined;
   onChange: (value: string) => void;
-  onKeyDown?: ((event: ReactKeyboardEvent<HTMLInputElement>) => void) | undefined;
+  onKeyDown?:
+    | ((event: ReactKeyboardEvent<HTMLInputElement>) => void)
+    | undefined;
+  pattern?: string | undefined;
   placeholder: string;
   type?: HTMLInputTypeAttribute;
   value: string;
@@ -48,19 +60,26 @@ export function AdminTextField({
   inputRef,
   label,
   labelClassName,
+  maxLength,
   min,
   name,
   onBlur,
   onChange,
   onKeyDown,
+  pattern,
   placeholder,
   type = 'text',
   value,
 }: AdminTextFieldProps) {
   return (
-    <div className={classNames('admin-text-field space-y-1.5', containerClassName)}>
+    <div
+      className={classNames('admin-text-field space-y-1.5', containerClassName)}
+    >
       <label
-        className={classNames('admin-text-field__label block text-sm font-semibold text-ink', labelClassName)}
+        className={classNames(
+          'admin-text-field__label block text-sm font-semibold text-ink',
+          labelClassName,
+        )}
         htmlFor={id}
       >
         {label}
@@ -75,7 +94,9 @@ export function AdminTextField({
           autoCapitalize={autoCapitalize}
           autoComplete={autoComplete}
           autoCorrect={autoCorrect}
-          aria-describedby={error ? `${id}-error` : helpText ? `${id}-help` : undefined}
+          aria-describedby={
+            error ? `${id}-error` : helpText ? `${id}-help` : undefined
+          }
           aria-invalid={Boolean(error)}
           className={classNames(
             'admin-text-field__input w-full rounded-2xl border bg-surface py-3 pl-11 pr-4 text-sm text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
@@ -88,8 +109,10 @@ export function AdminTextField({
           disabled={disabled}
           id={id}
           inputMode={inputMode}
+          maxLength={maxLength}
           min={min}
           name={name}
+          pattern={pattern}
           placeholder={placeholder}
           type={type}
           value={value}

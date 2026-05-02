@@ -241,9 +241,10 @@ describe('Admin pages', () => {
     const phoneInput = screen.getByLabelText(/celular \(opcional\)/i);
 
     expect(phoneInput).toHaveAttribute('inputmode', 'numeric');
+    expect(phoneInput).toHaveAttribute('maxlength', '10');
     expect(phoneInput).toHaveAttribute('pattern', '[0-9]*');
 
-    await user.type(phoneInput, 'abc300-777 8899x');
+    await user.type(phoneInput, 'abc300-777 8899x12345');
 
     expect(phoneInput).toHaveValue('3007778899');
   });

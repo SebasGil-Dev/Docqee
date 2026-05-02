@@ -1,4 +1,4 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString, Matches } from "class-validator";
 
 export class UpdatePatientProfileDto {
   @IsOptional()
@@ -19,5 +19,6 @@ export class UpdatePatientProfileDto {
 
   @IsOptional()
   @IsString()
+  @Matches(/^\d{10}$/, { message: "El celular debe tener 10 digitos." })
   phone!: string;
 }

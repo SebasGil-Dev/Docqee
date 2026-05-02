@@ -31,6 +31,11 @@ import type {
 import { classNames } from '@/lib/classNames';
 import { useAdminModuleStore } from '@/lib/adminModuleStore';
 import { patientRegisterCatalogDataSource } from '@/lib/patientRegisterCatalogDataSource';
+import {
+  PHONE_NUMBER_DIGITS_MESSAGE,
+  normalizePhoneNumberInput,
+  PHONE_NUMBER_MAX_DIGITS,
+} from '@/lib/phoneNumber';
 
 type AdminRegisterUniversityPageProps = {
   catalogDataSource?: PatientRegisterCatalogDataSource;
@@ -159,7 +164,7 @@ function getNormalizedFieldValue(
   value: string,
 ) {
   if (field === 'adminPhone') {
-    return value.replace(/\D/g, '');
+    return normalizePhoneNumberInput(value);
   }
 
   return value;
@@ -202,7 +207,10 @@ function validateField(
   const copy = adminContent.registerPage.fields;
 
   if (field === 'adminPhone') {
-    return undefined;
+    return trimmedValue.length > 0 &&
+      trimmedValue.length !== PHONE_NUMBER_MAX_DIGITS
+      ? PHONE_NUMBER_DIGITS_MESSAGE
+      : undefined;
   }
 
   if (trimmedValue.length === 0) {
@@ -932,6 +940,7 @@ export function AdminRegisterUniversityPage({
                       <input
                         autoComplete="tel"
                         inputMode="numeric"
+                        maxLength={PHONE_NUMBER_MAX_DIGITS}
                         pattern="[0-9]*"
                         ref={adminPhoneRef}
                         aria-invalid={Boolean(errors.adminPhone)}

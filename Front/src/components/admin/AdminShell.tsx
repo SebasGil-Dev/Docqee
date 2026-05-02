@@ -52,6 +52,7 @@ type AdminShellProps = PropsWithChildren<{
   mobileNavigationDensity?: 'regular' | 'compact';
   onMarkAllNotificationsRead?: () => void;
   onOpenNotification?: (notificationId: string) => void;
+  profileTo?: `/${string}`;
   overrideName?: { firstName: string; lastName: string };
   shellBackgroundClassName?: string;
   surfacePaddingMode?: 'inner' | 'outer';
@@ -229,6 +230,7 @@ export function AdminShell({
   notificationsPageTo,
   onMarkAllNotificationsRead,
   onOpenNotification,
+  profileTo,
   overrideName,
   shellBackgroundClassName = 'bg-[#f4f8ff]',
   surfacePaddingMode = 'outer',
@@ -308,6 +310,33 @@ export function AdminShell({
   const accountMenuButtonLabel = isAccountMenuOpen
     ? 'Cerrar menú de cuenta'
     : 'Abrir menú de cuenta';
+  const avatarLinkLabel = 'Ir a mi perfil';
+  const avatarNode = optimizedAvatarSrc ? (
+    <img
+      alt={profileTo ? '' : adminFullName}
+      className={classNames(
+        'shrink-0 ring-2 ring-primary/20',
+        isMobileLandscapeViewport ? 'h-7 w-7' : 'h-9 w-9 sm:h-8 sm:w-8',
+        avatarKind === 'logo'
+          ? 'rounded-xl bg-white object-contain'
+          : 'rounded-full object-cover',
+      )}
+      decoding="async"
+      src={optimizedAvatarSrc}
+    />
+  ) : (
+    <span
+      aria-hidden={profileTo ? 'true' : undefined}
+      className={classNames(
+        'flex shrink-0 items-center justify-center rounded-full bg-primary font-extrabold uppercase tracking-[0.12em] text-white',
+        isMobileLandscapeViewport
+          ? 'h-7 w-7 text-[0.68rem]'
+          : 'h-9 w-9 text-[0.8rem] sm:h-8 sm:w-8 sm:text-[0.72rem]',
+      )}
+    >
+      {adminInitials}
+    </span>
+  );
 
   useEffect(() => {
     try {
@@ -577,32 +606,20 @@ export function AdminShell({
                     ) : null}
                   </div>
                 ) : null}
-                {optimizedAvatarSrc ? (
-                  <img
-                    alt={adminFullName}
+                {profileTo ? (
+                  <Link
+                    aria-label={avatarLinkLabel}
                     className={classNames(
-                      'shrink-0 ring-2 ring-primary/20',
-                      isMobileLandscapeViewport
-                        ? 'h-7 w-7'
-                        : 'h-9 w-9 sm:h-8 sm:w-8',
-                      avatarKind === 'logo'
-                        ? 'rounded-xl bg-white object-contain'
-                        : 'rounded-full object-cover',
+                      'inline-flex shrink-0 transition-transform duration-200 hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/12',
+                      avatarKind === 'logo' ? 'rounded-xl' : 'rounded-full',
                     )}
-                    decoding="async"
-                    src={optimizedAvatarSrc}
-                  />
-                ) : (
-                  <span
-                    className={classNames(
-                      'flex shrink-0 items-center justify-center rounded-full bg-primary font-extrabold uppercase tracking-[0.12em] text-white',
-                      isMobileLandscapeViewport
-                        ? 'h-7 w-7 text-[0.68rem]'
-                        : 'h-9 w-9 text-[0.8rem] sm:h-8 sm:w-8 sm:text-[0.72rem]',
-                    )}
+                    title={avatarLinkLabel}
+                    to={profileTo}
                   >
-                    {adminInitials}
-                  </span>
+                    {avatarNode}
+                  </Link>
+                ) : (
+                  avatarNode
                 )}
                 <div className="relative lg:hidden" ref={accountMenuRef}>
                   <button

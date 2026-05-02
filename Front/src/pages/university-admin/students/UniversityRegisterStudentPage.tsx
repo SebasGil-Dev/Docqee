@@ -1,4 +1,11 @@
-import { ArrowLeft, GraduationCap, IdCard, Mail, Phone, UserRound } from 'lucide-react';
+import {
+  ArrowLeft,
+  GraduationCap,
+  IdCard,
+  Mail,
+  Phone,
+  UserRound,
+} from 'lucide-react';
 import type { FormEvent, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -25,6 +32,11 @@ import {
   keepOnlyDigits,
 } from '@/lib/documentNumber';
 import { useUniversityAdminModuleStore } from '@/lib/universityAdminModuleStore';
+import {
+  PHONE_NUMBER_DIGITS_MESSAGE,
+  normalizePhoneNumberInput,
+  PHONE_NUMBER_MAX_DIGITS,
+} from '@/lib/phoneNumber';
 
 type UniversityRegisterStudentPageProps = {
   catalogDataSource?: PatientRegisterCatalogDataSource;
@@ -98,15 +110,20 @@ function validateField(
     return 'Ingresa un correo electrónico válido';
   }
 
+  if (field === 'phone' && normalizedValue.length !== PHONE_NUMBER_MAX_DIGITS) {
+    return PHONE_NUMBER_DIGITS_MESSAGE;
+  }
+
   return undefined;
 }
 
 export function UniversityRegisterStudentPage({
   catalogDataSource = patientRegisterCatalogDataSource,
 }: UniversityRegisterStudentPageProps) {
-  const { errorMessage, isLoading, registerStudent } = useUniversityAdminModuleStore({
-    autoLoad: false,
-  });
+  const { errorMessage, isLoading, registerStudent } =
+    useUniversityAdminModuleStore({
+      autoLoad: false,
+    });
   const navigate = useNavigate();
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<RegisterStudentFormErrors>({});
@@ -166,7 +183,10 @@ export function UniversityRegisterStudentPage({
     firstNameRef.current?.focus();
   }, []);
 
-  const updateFieldValue = (field: RegisterStudentFormField, nextValue: string) => {
+  const updateFieldValue = (
+    field: RegisterStudentFormField,
+    nextValue: string,
+  ) => {
     setValues((currentValues) => ({
       ...currentValues,
       [field]: nextValue,
@@ -214,7 +234,9 @@ export function UniversityRegisterStudentPage({
     event.preventDefault();
 
     if (field === 'semester') {
-      event.currentTarget.form?.requestSubmit(submitButtonRef.current ?? undefined);
+      event.currentTarget.form?.requestSubmit(
+        submitButtonRef.current ?? undefined,
+      );
       return;
     }
 
@@ -269,7 +291,8 @@ export function UniversityRegisterStudentPage({
 
       navigate(ROUTES.universityStudents, {
         state: {
-          successNotice: universityAdminContent.registerStudentPage.successMessage,
+          successNotice:
+            universityAdminContent.registerStudentPage.successMessage,
         },
       });
     })();
@@ -278,7 +301,9 @@ export function UniversityRegisterStudentPage({
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden sm:gap-5 lg:h-auto lg:min-h-fit lg:gap-3 lg:overflow-visible lg:pr-2 xl:pr-3">
       <Seo
-        description={universityAdminContent.registerStudentPage.meta.description}
+        description={
+          universityAdminContent.registerStudentPage.meta.description
+        }
         noIndex
         title={universityAdminContent.registerStudentPage.meta.title}
       />
@@ -300,7 +325,10 @@ export function UniversityRegisterStudentPage({
         title={universityAdminContent.registerStudentPage.title}
       />
       {errorMessage ? (
-        <SurfaceCard className="border border-rose-200 bg-rose-50/90 text-sm text-rose-800 shadow-none" paddingClassName="p-4">
+        <SurfaceCard
+          className="border border-rose-200 bg-rose-50/90 text-sm text-rose-800 shadow-none"
+          paddingClassName="p-4"
+        >
           <p role="alert">{errorMessage}</p>
         </SurfaceCard>
       ) : null}
@@ -362,9 +390,13 @@ export function UniversityRegisterStudentPage({
                   selectClassName="py-2.5 sm:py-3"
                   selectRef={documentTypeRef}
                   value={values.documentTypeId}
-                  onKeyDown={(event) => handleInputKeyDown(event, 'documentTypeId')}
+                  onKeyDown={(event) =>
+                    handleInputKeyDown(event, 'documentTypeId')
+                  }
                   onBlur={() => handleFieldBlur('documentTypeId')}
-                  onChange={(value) => updateFieldValue('documentTypeId', value)}
+                  onChange={(value) =>
+                    updateFieldValue('documentTypeId', value)
+                  }
                 />
                 <AdminTextField
                   autoComplete="off"
@@ -379,9 +411,13 @@ export function UniversityRegisterStudentPage({
                   name="documentNumber"
                   placeholder="Ingresa el número de documento"
                   value={values.documentNumber}
-                  onKeyDown={(event) => handleInputKeyDown(event, 'documentNumber')}
+                  onKeyDown={(event) =>
+                    handleInputKeyDown(event, 'documentNumber')
+                  }
                   onBlur={() => handleFieldBlur('documentNumber')}
-                  onChange={(value) => updateFieldValue('documentNumber', keepOnlyDigits(value))}
+                  onChange={(value) =>
+                    updateFieldValue('documentNumber', keepOnlyDigits(value))
+                  }
                 />
                 <AdminTextField
                   autoCapitalize="none"
@@ -412,13 +448,17 @@ export function UniversityRegisterStudentPage({
                   inputMode="numeric"
                   inputRef={phoneRef}
                   label="Celular"
+                  maxLength={PHONE_NUMBER_MAX_DIGITS}
                   name="phone"
+                  pattern="[0-9]*"
                   placeholder="3001234567"
                   type="tel"
                   value={values.phone}
                   onKeyDown={(event) => handleInputKeyDown(event, 'phone')}
                   onBlur={() => handleFieldBlur('phone')}
-                  onChange={(value) => updateFieldValue('phone', value.replace(/\D/g, ''))}
+                  onChange={(value) =>
+                    updateFieldValue('phone', normalizePhoneNumberInput(value))
+                  }
                 />
                 <div className="lg:col-span-2">
                   <AdminSelectField
@@ -448,7 +488,9 @@ export function UniversityRegisterStudentPage({
               ref={submitButtonRef}
               type="submit"
             >
-              {isSubmitting ? 'Registrando...' : universityAdminContent.registerStudentPage.submitLabel}
+              {isSubmitting
+                ? 'Registrando...'
+                : universityAdminContent.registerStudentPage.submitLabel}
             </button>
           </div>
         </form>

@@ -17,7 +17,6 @@ import type {
   PatientConversation,
   PatientConversationStatus,
 } from '@/content/types';
-import { useAutoDismissSystemMessage } from '@/hooks/useAutoDismissSystemMessage';
 import { classNames } from '@/lib/classNames';
 import { usePatientModuleStore } from '@/lib/patientModuleStore';
 
@@ -34,8 +33,36 @@ const conversationStatusOptions: Array<{
 
 const CONVERSATION_POLL_INTERVAL_MS = 5_000;
 
+function normalizeConversationText(value: string | null | undefined) {
+  return value?.trim().replace(/\s+/g, ' ') ?? '';
+}
+
+function isRequestReasonMessage(
+  conversation: PatientConversation,
+  message: PatientConversation['messages'][number],
+  messageIndex: number,
+) {
+  const reason = normalizeConversationText(conversation.reason);
+
+  return (
+    messageIndex === 0 &&
+    message.author === 'PACIENTE' &&
+    reason.length > 0 &&
+    normalizeConversationText(message.content) === reason
+  );
+}
+
+function getVisibleMessages(conversation: PatientConversation) {
+  return conversation.messages.filter(
+    (message, messageIndex) =>
+      !isRequestReasonMessage(conversation, message, messageIndex),
+  );
+}
+
 function getLastMessage(conversation: PatientConversation) {
-  return conversation.messages[conversation.messages.length - 1] ?? null;
+  const visibleMessages = getVisibleMessages(conversation);
+
+  return visibleMessages[visibleMessages.length - 1] ?? null;
 }
 
 function getStudentInitials(studentName: string) {
@@ -72,7 +99,6 @@ export function PatientConversationsPage() {
     useState<ConversationStatusFilter>('all');
   const [composerValue, setComposerValue] = useState('');
   const [composerError, setComposerError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const [isMobileThreadOpen, setIsMobileThreadOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -101,14 +127,15 @@ export function PatientConversationsPage() {
       null,
     [filteredConversations, selectedConversationId],
   );
+  const visibleSelectedMessages = useMemo(
+    () =>
+      selectedConversation ? getVisibleMessages(selectedConversation) : [],
+    [selectedConversation],
+  );
   const visibleErrorMessage =
     errorMessage && errorMessage.trim() !== 'No pudimos completar la solicitud.'
       ? errorMessage
       : null;
-
-  useAutoDismissSystemMessage(successMessage, () => {
-    setSuccessMessage(null);
-  });
 
   useEffect(() => {
     if (!isStatusMenuOpen) {
@@ -169,7 +196,6 @@ export function PatientConversationsPage() {
   useEffect(() => {
     setComposerValue('');
     setComposerError(null);
-    setSuccessMessage(null);
   }, [selectedConversation?.id]);
 
   useEffect(() => {
@@ -178,7 +204,11 @@ export function PatientConversationsPage() {
     }
 
     void refreshConversation(selectedConversation.id);
-  }, [selectedConversation?.id, selectedConversation?.status, refreshConversation]);
+  }, [
+    selectedConversation?.id,
+    selectedConversation?.status,
+    refreshConversation,
+  ]);
 
   useEffect(() => {
     if (!selectedConversation || selectedConversation.status !== 'ACTIVA') {
@@ -199,8 +229,7 @@ export function PatientConversationsPage() {
   ]);
 
   const lastMessageId =
-    selectedConversation?.messages[selectedConversation.messages.length - 1]
-      ?.id;
+    visibleSelectedMessages[visibleSelectedMessages.length - 1]?.id;
 
   useEffect(() => {
     if (typeof messagesEndRef.current?.scrollIntoView === 'function') {
@@ -222,7 +251,6 @@ export function PatientConversationsPage() {
 
     setComposerValue('');
     setComposerError(null);
-    setSuccessMessage(null);
 
     void (async () => {
       const sent = await sendConversationMessage(
@@ -232,10 +260,7 @@ export function PatientConversationsPage() {
 
       if (!sent) {
         setComposerValue(normalizedMessage);
-        return;
       }
-
-      setSuccessMessage('Mensaje enviado correctamente.');
     })();
   };
 
@@ -252,19 +277,6 @@ export function PatientConversationsPage() {
           paddingClassName="p-3.5"
         >
           <p role="alert">{visibleErrorMessage}</p>
-        </SurfaceCard>
-      ) : null}
-      {successMessage ? (
-        <SurfaceCard
-          className="border border-emerald-200 bg-emerald-50/90 text-sm font-medium text-emerald-800"
-          paddingClassName="p-3"
-        >
-          <p role="status">
-            <span className="font-semibold">
-              {patientContent.conversationsPage.successNoticePrefix}
-            </span>{' '}
-            {successMessage}
-          </p>
         </SurfaceCard>
       ) : null}
       <AdminPanelCard className="min-h-0 flex-1" panelClassName="bg-[#f4f8ff]">
@@ -434,7 +446,8 @@ export function PatientConversationsPage() {
                                 ) : null}
                               </div>
                               <p className="mt-1 line-clamp-1 break-words text-[0.7rem] leading-4 text-ink-muted">
-                                {lastMessage?.content ?? 'Sin mensajes todavia.'}
+                                {lastMessage?.content ??
+                                  'Sin mensajes todavia.'}
                               </p>
                               <div className="mt-1 flex items-center justify-end gap-1.5">
                                 <span className="text-[0.6rem] font-medium leading-none text-ink-muted">
@@ -493,7 +506,7 @@ export function PatientConversationsPage() {
                   className="admin-scrollbar min-h-0 flex-1 space-y-1.5 overflow-y-auto px-2.5 py-2 sm:px-3"
                   data-testid={`patient-conversation-thread-${selectedConversation.id}`}
                 >
-                  {selectedConversation.messages.map((message) => {
+                  {visibleSelectedMessages.map((message) => {
                     const isPatientAuthor = message.author === 'PACIENTE';
 
                     return (

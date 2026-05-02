@@ -22,12 +22,12 @@ function renderPatientApp(
     <MemoryRouter initialEntries={initialEntries}>
       <Routes>
         <Route element={<PatientLayout />} path={ROUTES.patientRoot}>
-          <Route
-            element={<Navigate replace to={ROUTES.patientHome} />}
-            index
-          />
+          <Route element={<Navigate replace to={ROUTES.patientHome} />} index />
           <Route element={<PatientHomePage />} path="inicio" />
-          <Route element={<PatientSearchStudentsPage />} path="buscar-estudiantes" />
+          <Route
+            element={<PatientSearchStudentsPage />}
+            path="buscar-estudiantes"
+          />
           <Route element={<PatientRequestsPage />} path="solicitudes" />
           <Route element={<PatientAgendaPage />} path="agenda" />
           <Route element={<PatientConversationsPage />} path="conversaciones" />
@@ -51,11 +51,15 @@ describe('Patient pages', () => {
     renderPatientApp([ROUTES.patientProfile]);
 
     await user.clear(screen.getByLabelText(/^celular$/i));
-    await user.type(screen.getByLabelText(/^celular$/i), '3012223344');
+    await user.type(screen.getByLabelText(/^celular$/i), '301222334455');
+    expect(screen.getByLabelText(/^celular$/i)).toHaveValue('3012223344');
     await user.clear(screen.getByLabelText(/ciudad principal/i));
     await user.type(screen.getByLabelText(/ciudad principal/i), 'Cali');
     await user.clear(screen.getByLabelText(/localidad principal/i));
-    await user.type(screen.getByLabelText(/localidad principal/i), 'San Fernando');
+    await user.type(
+      screen.getByLabelText(/localidad principal/i),
+      'San Fernando',
+    );
     await user.click(screen.getByRole('button', { name: /guardar cambios/i }));
 
     expect(await screen.findByRole('status')).toHaveTextContent(
@@ -63,6 +67,19 @@ describe('Patient pages', () => {
     );
     expect(screen.getByText(/3012223344/i)).toBeInTheDocument();
     expect(screen.getByText(/cali - san fernando/i)).toBeInTheDocument();
+  });
+
+  it('abre el perfil del paciente al presionar la foto del header', async () => {
+    const user = userEvent.setup();
+
+    renderPatientApp([ROUTES.patientHome]);
+
+    await user.click(screen.getByRole('link', { name: /ir a mi perfil/i }));
+
+    expect(
+      await screen.findByRole('heading', { name: /^perfil$/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText(/^celular$/i)).toBeInTheDocument();
   });
 
   it('muestra comentarios del paciente y permite filtrarlos por estrellas', async () => {
@@ -73,17 +90,33 @@ describe('Patient pages', () => {
     expect(
       await screen.findByRole('heading', { name: /bienvenido, sara lopez/i }),
     ).toBeInTheDocument();
-    expect(screen.getByTestId('patient-review-comments-dashboard')).toHaveTextContent('3');
-    expect(screen.getByTestId('patient-review-card-patient-review-1')).toBeInTheDocument();
-    expect(screen.getByTestId('patient-review-card-patient-review-2')).toBeInTheDocument();
-    expect(screen.getByTestId('patient-review-card-patient-review-3')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('patient-review-comments-dashboard'),
+    ).toHaveTextContent('3');
+    expect(
+      screen.getByTestId('patient-review-card-patient-review-1'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('patient-review-card-patient-review-2'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('patient-review-card-patient-review-3'),
+    ).toBeInTheDocument();
 
     await user.click(screen.getByTestId('patient-review-rating-filter-button'));
-    await user.click(screen.getByRole('menuitemradio', { name: /4 estrellas/i }));
+    await user.click(
+      screen.getByRole('menuitemradio', { name: /4 estrellas/i }),
+    );
 
-    expect(screen.queryByTestId('patient-review-card-patient-review-1')).not.toBeInTheDocument();
-    expect(screen.getByTestId('patient-review-card-patient-review-2')).toBeInTheDocument();
-    expect(screen.queryByTestId('patient-review-card-patient-review-3')).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('patient-review-card-patient-review-1'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId('patient-review-card-patient-review-2'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('patient-review-card-patient-review-3'),
+    ).not.toBeInTheDocument();
   });
 
   it('permite filtrar estudiantes y enviar una nueva solicitud', async () => {
@@ -92,7 +125,9 @@ describe('Patient pages', () => {
     renderPatientApp([ROUTES.patientSearchStudents]);
 
     expect(
-      screen.getByRole('heading', { name: /estudiantes recomendados para ti/i }),
+      screen.getByRole('heading', {
+        name: /estudiantes recomendados para ti/i,
+      }),
     ).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByLabelText(/ciudad/i)).toHaveValue('Bogota');
@@ -113,16 +148,25 @@ describe('Patient pages', () => {
       ).not.toBeInTheDocument();
     });
 
-    await user.clear(screen.getByPlaceholderText(/buscar por nombre de estudiante/i));
+    await user.clear(
+      screen.getByPlaceholderText(/buscar por nombre de estudiante/i),
+    );
     await user.selectOptions(screen.getByLabelText(/ciudad/i), 'all');
-    await user.selectOptions(screen.getByLabelText(/tratamiento/i), 'Rehabilitacion oral');
+    await user.selectOptions(
+      screen.getByLabelText(/tratamiento/i),
+      'Rehabilitacion oral',
+    );
 
     await waitFor(() => {
       expect(screen.queryByText(/daniel pardo/i)).not.toBeInTheDocument();
-      expect(screen.getByTestId('patient-student-card-patient-student-3')).toBeInTheDocument();
+      expect(
+        screen.getByTestId('patient-student-card-patient-student-3'),
+      ).toBeInTheDocument();
     });
 
-    await user.click(screen.getByTestId('patient-student-card-patient-student-3'));
+    await user.click(
+      screen.getByTestId('patient-student-card-patient-student-3'),
+    );
     await user.type(
       screen.getByLabelText(/motivo de la solicitud/i),
       'Necesito una nueva valoracion para seguimiento restaurativo.',
@@ -140,12 +184,16 @@ describe('Patient pages', () => {
     renderPatientApp([ROUTES.patientRequests]);
 
     await user.click(
-      within(screen.getByTestId('patient-request-row-patient-request-2')).getByRole('button', {
+      within(
+        screen.getByTestId('patient-request-row-patient-request-2'),
+      ).getByRole('button', {
         name: /cancelar solicitud/i,
       }),
     );
 
-    expect(await screen.findByRole('status')).toHaveTextContent(/solicitud actualizada:/i);
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      /solicitud actualizada:/i,
+    );
     await waitFor(() => {
       expect(
         screen.queryByTestId('patient-request-row-patient-request-2'),
@@ -166,7 +214,9 @@ describe('Patient pages', () => {
     ).not.toBeInTheDocument();
 
     await user.click(
-      within(screen.getByTestId('patient-request-row-patient-request-1')).getByRole('button', {
+      within(
+        screen.getByTestId('patient-request-row-patient-request-1'),
+      ).getByRole('button', {
         name: /cerrar solicitud/i,
       }),
     );
@@ -195,13 +245,14 @@ describe('Patient pages', () => {
     );
     await user.click(screen.getByRole('button', { name: /enviar mensaje/i }));
 
-    expect(await screen.findByRole('status')).toHaveTextContent(
-      /conversacion actualizada:/i,
-    );
     expect(
-      within(
-        screen.getByTestId('patient-conversation-thread-patient-conversation-1'),
-      ).getByText(/hola, confirmo que estare pendiente de la propuesta de horario/i),
+      await within(
+        screen.getByTestId(
+          'patient-conversation-thread-patient-conversation-1',
+        ),
+      ).findByText(
+        /hola, confirmo que estare pendiente de la propuesta de horario/i,
+      ),
     ).toBeInTheDocument();
   });
 
@@ -216,7 +267,9 @@ describe('Patient pages', () => {
       ).getByRole('button', { name: /aceptar/i }),
     );
 
-    expect(await screen.findByRole('status')).toHaveTextContent(/cita actualizada:/i);
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      /cita actualizada:/i,
+    );
     await waitFor(() => {
       expect(
         within(

@@ -31,15 +31,12 @@ export function PatientLayout() {
   } = usePatientModuleStore({
     autoLoad: shouldAutoLoadPatientModule,
   });
-  const {
-    markAllNotificationsAsRead,
-    markNotificationAsRead,
-    notifications,
-  } = usePatientPortalNotifications({
-    appointments,
-    conversations,
-    requests,
-  });
+  const { markAllNotificationsAsRead, markNotificationAsRead, notifications } =
+    usePatientPortalNotifications({
+      appointments,
+      conversations,
+      requests,
+    });
 
   const refreshRequestsIfVisible = useCallback(() => {
     if (document.visibilityState === 'visible' && !isLoading) {
@@ -75,7 +72,10 @@ export function PatientLayout() {
     return () => {
       clearInterval(requestInterval);
       clearInterval(moduleInterval);
-      document.removeEventListener('visibilitychange', refreshRequestsIfVisible);
+      document.removeEventListener(
+        'visibilitychange',
+        refreshRequestsIfVisible,
+      );
       window.removeEventListener('focus', refreshRequestsIfVisible);
     };
   }, [
@@ -90,7 +90,9 @@ export function PatientLayout() {
     }
 
     if (session.user.role !== 'PATIENT') {
-      return <Navigate replace to={getDefaultRouteForRole(session.user.role)} />;
+      return (
+        <Navigate replace to={getDefaultRouteForRole(session.user.role)} />
+      );
     }
   }
 
@@ -106,6 +108,7 @@ export function PatientLayout() {
       headerNotifications={notifications}
       onMarkAllNotificationsRead={markAllNotificationsAsRead}
       onOpenNotification={markNotificationAsRead}
+      profileTo={ROUTES.patientProfile}
       surfacePaddingMode="inner"
       {...(overrideName ? { overrideName } : {})}
     >

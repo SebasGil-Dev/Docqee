@@ -24,6 +24,7 @@ import type {
 import { IS_TEST_MODE } from '@/lib/apiClient';
 import { classNames } from '@/lib/classNames';
 import { isDigitsOnly } from '@/lib/documentNumber';
+import { PHONE_NUMBER_MAX_DIGITS } from '@/lib/phoneNumber';
 import { useUniversityAdminModuleStore } from '@/lib/universityAdminModuleStore';
 
 type SpreadsheetLibrary = typeof import('xlsx');
@@ -147,10 +148,19 @@ export function validateStudentRows(rows: (string | number)[][]): {
       );
     }
 
-    if (!celular)
+    if (!celular) {
       rowErrors.push(
         `Fila ${rowNum}, columna "celular": campo obligatorio vacío.`,
       );
+    } else if (!isDigitsOnly(celular)) {
+      rowErrors.push(
+        `Fila ${rowNum}, columna "celular": solo se aceptan números.`,
+      );
+    } else if (celular.length !== PHONE_NUMBER_MAX_DIGITS) {
+      rowErrors.push(
+        `Fila ${rowNum}, columna "celular": debe tener ${PHONE_NUMBER_MAX_DIGITS} dígitos.`,
+      );
+    }
 
     const semestreNum = Number(semestre);
     if (!semestre) {

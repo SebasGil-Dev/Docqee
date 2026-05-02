@@ -96,13 +96,14 @@ function renderAuthApp({
         <Route element={<HomePage />} path={ROUTES.home} />
         <Route element={<LoginPage />} path={ROUTES.login} />
         <Route
-          element={
-            <RegisterPage {...resolvedRegisterPageProps} />
-          }
+          element={<RegisterPage {...resolvedRegisterPageProps} />}
           path={ROUTES.register}
         />
         <Route element={<ForgotPasswordPage />} path={ROUTES.forgotPassword} />
-        <Route element={<VerifyEmailPage {...verifyEmailPageProps} />} path={ROUTES.verifyEmail} />
+        <Route
+          element={<VerifyEmailPage {...verifyEmailPageProps} />}
+          path={ROUTES.verifyEmail}
+        />
         <Route element={<NotFoundPage />} path="*" />
       </Routes>
     </MemoryRouter>,
@@ -134,8 +135,14 @@ function renderFirstLoginApp({
             element={<FirstLoginPasswordPage {...firstLoginPageProps} />}
             path={ROUTES.firstLoginPassword}
           />
-          <Route element={<div>Panel universidad</div>} path={ROUTES.universityHome} />
-          <Route element={<div>Inicio admin</div>} path={ROUTES.adminUniversities} />
+          <Route
+            element={<div>Panel universidad</div>}
+            path={ROUTES.universityHome}
+          />
+          <Route
+            element={<div>Inicio admin</div>}
+            path={ROUTES.adminUniversities}
+          />
           <Route element={<NotFoundPage />} path="*" />
         </Routes>
       </MemoryRouter>
@@ -180,19 +187,29 @@ async function fillValidRegisterForm(
 
   await user.type(screen.getByLabelText(/^nombres$/i), 'Ana');
   await user.type(screen.getByLabelText(/^apellidos$/i), 'Perez');
-  await user.selectOptions(screen.getByLabelText(/^tipo de documento$/i), 'document-cc');
+  await user.selectOptions(
+    screen.getByLabelText(/^tipo de documento$/i),
+    'document-cc',
+  );
   await user.type(screen.getByLabelText(/n.mero de documento$/i), '123456789');
   await user.selectOptions(screen.getByLabelText(/^sexo$/i), 'FEMENINO');
-  fireEvent.change(screen.getByLabelText(/fecha de nacimiento/i), { target: { value: birthDate } });
+  fireEvent.change(screen.getByLabelText(/fecha de nacimiento/i), {
+    target: { value: birthDate },
+  });
   await user.selectOptions(screen.getByLabelText(/^ciudad$/i), 'city-bogota');
   await screen.findByRole('option', { name: /suba/i });
-  await user.selectOptions(screen.getByLabelText(/^localidad$/i), 'locality-bogota-suba');
+  await user.selectOptions(
+    screen.getByLabelText(/^localidad$/i),
+    'locality-bogota-suba',
+  );
   await user.type(screen.getByLabelText(/^correo electr.nico$/i), email);
   await user.type(screen.getByLabelText(/^celular$/i), '3001234567');
   await user.type(screen.getByLabelText(/^contrase.a$/i), password);
   await user.type(screen.getByLabelText(/confirmar contrase.a/i), password);
   await user.click(screen.getByLabelText(/acepto los t.rminos y condiciones/i));
-  await user.click(screen.getByLabelText(/autorizo el tratamiento de mis datos/i));
+  await user.click(
+    screen.getByLabelText(/autorizo el tratamiento de mis datos/i),
+  );
 }
 
 async function requestForgotPasswordCode(
@@ -215,11 +232,17 @@ describe('Auth pages', () => {
   it('renderiza los campos principales del login', () => {
     renderAuthApp();
 
-    expect(screen.getByRole('heading', { level: 1, name: /bienvenido/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 1, name: /bienvenido/i }),
+    ).toBeInTheDocument();
     expect(screen.getByLabelText(/correo electr.nico/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^contrase.a$/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /iniciar sesi.n/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /olvid.*contrase.a/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /iniciar sesi.n/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /olvid.*contrase.a/i }),
+    ).toBeInTheDocument();
   });
 
   it('muestra errores inline y enfoca el primer campo invalido al enviar vacio en login', async () => {
@@ -231,7 +254,9 @@ describe('Auth pages', () => {
     const emailInput = screen.getByLabelText(/correo electr.nico/i);
 
     expect(screen.getByText(/el correo es obligatorio/i)).toBeInTheDocument();
-    expect(screen.getByText(/la contrase.a es obligatoria/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/la contrase.a es obligatoria/i),
+    ).toBeInTheDocument();
     expect(emailInput).toHaveFocus();
     expect(emailInput).toHaveAttribute('aria-invalid', 'true');
   });
@@ -240,7 +265,10 @@ describe('Auth pages', () => {
     const user = userEvent.setup();
 
     renderAuthApp();
-    await user.type(screen.getByLabelText(/correo electr.nico/i), 'correo-invalido');
+    await user.type(
+      screen.getByLabelText(/correo electr.nico/i),
+      'correo-invalido',
+    );
     await user.type(screen.getByLabelText(/^contrase.a$/i), 'clave-segura');
     await user.click(screen.getByRole('button', { name: /iniciar sesi.n/i }));
 
@@ -256,24 +284,26 @@ describe('Auth pages', () => {
 
     expect(passwordInput).toHaveAttribute('type', 'password');
 
-    await user.click(screen.getByRole('button', { name: /mostrar contrase.a/i }));
+    await user.click(
+      screen.getByRole('button', { name: /mostrar contrase.a/i }),
+    );
     expect(passwordInput).toHaveAttribute('type', 'text');
 
-    await user.click(screen.getByRole('button', { name: /ocultar contrase.a/i }));
+    await user.click(
+      screen.getByRole('button', { name: /ocultar contrase.a/i }),
+    );
     expect(passwordInput).toHaveAttribute('type', 'password');
   });
 
   it('mantiene los enlaces de recuperacion y registro desde login', () => {
     renderAuthApp();
 
-    expect(screen.getByRole('link', { name: /olvid.*contrase.a/i })).toHaveAttribute(
-      'href',
-      ROUTES.forgotPassword,
-    );
-    expect(screen.getByRole('link', { name: /^crear cuenta$/i })).toHaveAttribute(
-      'href',
-      ROUTES.register,
-    );
+    expect(
+      screen.getByRole('link', { name: /olvid.*contrase.a/i }),
+    ).toHaveAttribute('href', ROUTES.forgotPassword);
+    expect(
+      screen.getByRole('link', { name: /^crear cuenta$/i }),
+    ).toHaveAttribute('href', ROUTES.register);
   });
 
   it('renderiza la pantalla real de recuperacion de contrasena', () => {
@@ -285,7 +315,9 @@ describe('Auth pages', () => {
         name: /recuperar contrase.a/i,
       }),
     ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /enviar c.digo/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /enviar c.digo/i }),
+    ).toBeInTheDocument();
   });
 
   it('con correo valido avanza al paso de codigo sin revelar si la cuenta existe', async () => {
@@ -294,8 +326,12 @@ describe('Auth pages', () => {
     renderAuthApp({ initialEntries: [ROUTES.forgotPassword] });
     await requestForgotPasswordCode(user);
 
-    expect(await screen.findByText(/si aplica, se envi. un c.digo de recuperaci.n/i)).toBeInTheDocument();
-    expect(screen.getAllByLabelText(/c.digo de verificaci.n: d.gito/i)).toHaveLength(6);
+    expect(
+      await screen.findByText(/si aplica, se envi. un c.digo de recuperaci.n/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByLabelText(/c.digo de verificaci.n: d.gito/i),
+    ).toHaveLength(6);
   });
 
   it('un codigo incorrecto incrementa intentos y no habilita la nueva contrasena', async () => {
@@ -304,13 +340,19 @@ describe('Auth pages', () => {
     renderAuthApp({ initialEntries: [ROUTES.forgotPassword] });
     await requestForgotPasswordCode(user);
 
-    const firstCodeInput = screen.getAllByLabelText(/c.digo de verificaci.n: d.gito/i)[0]!;
+    const firstCodeInput = screen.getAllByLabelText(
+      /c.digo de verificaci.n: d.gito/i,
+    )[0]!;
     await user.click(firstCodeInput);
     await user.paste('000000');
     await user.click(screen.getByRole('button', { name: /validar c.digo/i }));
 
-    expect(await screen.findByText(/el c.digo ingresado no es correcto/i)).toBeInTheDocument();
-    expect(screen.queryByLabelText(/nueva contrase.a/i)).not.toBeInTheDocument();
+    expect(
+      await screen.findByText(/el c.digo ingresado no es correcto/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByLabelText(/nueva contrase.a/i),
+    ).not.toBeInTheDocument();
   });
 
   it('bloquea temporalmente el codigo tras demasiados intentos fallidos', async () => {
@@ -319,7 +361,9 @@ describe('Auth pages', () => {
     renderAuthApp({ initialEntries: [ROUTES.forgotPassword] });
     await requestForgotPasswordCode(user);
 
-    const firstCodeInput = screen.getAllByLabelText(/c.digo de verificaci.n: d.gito/i)[0]!;
+    const firstCodeInput = screen.getAllByLabelText(
+      /c.digo de verificaci.n: d.gito/i,
+    )[0]!;
     await user.click(firstCodeInput);
     await user.paste('000000');
 
@@ -327,8 +371,12 @@ describe('Auth pages', () => {
       await user.click(screen.getByRole('button', { name: /validar c.digo/i }));
     }
 
-    expect(await screen.findByText(/superaste el n.mero de intentos permitidos/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /validar c.digo/i })).toBeDisabled();
+    expect(
+      await screen.findByText(/superaste el n.mero de intentos permitidos/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /validar c.digo/i }),
+    ).toBeDisabled();
   });
 
   it('si cambia el correo, reinicia toda la sesion de recuperacion', async () => {
@@ -337,13 +385,17 @@ describe('Auth pages', () => {
     renderAuthApp({ initialEntries: [ROUTES.forgotPassword] });
     await requestForgotPasswordCode(user, 'correo-a@docqee.com');
 
-    expect(readForgotPasswordRecoverySession()?.email).toBe('correo-a@docqee.com');
+    expect(readForgotPasswordRecoverySession()?.email).toBe(
+      'correo-a@docqee.com',
+    );
 
     const emailInput = screen.getByLabelText(/correo electr.nico/i);
     await user.clear(emailInput);
     await user.type(emailInput, 'correo-b@docqee.com');
 
-    expect(screen.queryByRole('button', { name: /validar c.digo/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /validar c.digo/i }),
+    ).not.toBeInTheDocument();
     expect(readForgotPasswordRecoverySession()).toBeNull();
   });
 
@@ -365,8 +417,12 @@ describe('Auth pages', () => {
     });
 
     expect(screen.getByLabelText(/correo electr.nico/i)).toHaveValue('');
-    expect(screen.queryByRole('button', { name: /reenviar c.digo/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /validar c.digo/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /reenviar c.digo/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /validar c.digo/i }),
+    ).not.toBeInTheDocument();
   });
 
   it('con flujo valido completo cambia la contrasena y redirige a login con mensaje de exito', async () => {
@@ -378,19 +434,35 @@ describe('Auth pages', () => {
     const storedCode = readForgotPasswordRecoverySession()?.code ?? '';
     expect(storedCode).toBeTruthy();
 
-    const firstCodeInput = screen.getAllByLabelText(/c.digo de verificaci.n: d.gito/i)[0]!;
+    const firstCodeInput = screen.getAllByLabelText(
+      /c.digo de verificaci.n: d.gito/i,
+    )[0]!;
     await user.click(firstCodeInput);
     await user.paste(storedCode);
     await user.click(screen.getByRole('button', { name: /validar c.digo/i }));
 
-    expect(await screen.findByLabelText(/^nueva contrase.a$/i)).toBeInTheDocument();
+    expect(
+      await screen.findByLabelText(/^nueva contrase.a$/i),
+    ).toBeInTheDocument();
 
-    await user.type(screen.getByLabelText(/^nueva contrase.a$/i), 'ClaveSegura1!');
-    await user.type(screen.getByLabelText(/confirmar nueva contrase.a/i), 'ClaveSegura1!');
-    await user.click(screen.getByRole('button', { name: /cambiar contrase.a/i }));
+    await user.type(
+      screen.getByLabelText(/^nueva contrase.a$/i),
+      'ClaveSegura1!',
+    );
+    await user.type(
+      screen.getByLabelText(/confirmar nueva contrase.a/i),
+      'ClaveSegura1!',
+    );
+    await user.click(
+      screen.getByRole('button', { name: /cambiar contrase.a/i }),
+    );
 
-    expect(await screen.findByRole('heading', { level: 1, name: /bienvenido/i })).toBeInTheDocument();
-    expect(screen.getByText(/contrase.a cambiada correctamente/i)).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { level: 1, name: /bienvenido/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/contrase.a cambiada correctamente/i),
+    ).toBeInTheDocument();
   });
 
   it('renderiza la pantalla de primer ingreso y valida la nueva contrasena', async () => {
@@ -412,14 +484,23 @@ describe('Auth pages', () => {
     });
 
     expect(
-      screen.getByRole('heading', { level: 1, name: /actualiza tu contrase.a/i }),
+      screen.getByRole('heading', {
+        level: 1,
+        name: /actualiza tu contrase.a/i,
+      }),
     ).toBeInTheDocument();
     expect(screen.getByText(/admin.uni@docqee.com/i)).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /guardar y continuar/i }));
+    await user.click(
+      screen.getByRole('button', { name: /guardar y continuar/i }),
+    );
 
-    expect(screen.getByText(/la contrase.a es obligatoria/i)).toBeInTheDocument();
-    expect(screen.getByText(/debes confirmar la contrase.a/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/la contrase.a es obligatoria/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/debes confirmar la contrase.a/i),
+    ).toBeInTheDocument();
   });
 
   it('al completar el primer ingreso redirige a la ruta del rol y limpia la bandera', async () => {
@@ -446,11 +527,18 @@ describe('Auth pages', () => {
     });
 
     await user.type(screen.getByLabelText(/^contrase.a$/i), 'ClaveSegura1!');
-    await user.type(screen.getByLabelText(/confirmar contrase.a/i), 'ClaveSegura1!');
-    await user.click(screen.getByRole('button', { name: /guardar y continuar/i }));
+    await user.type(
+      screen.getByLabelText(/confirmar contrase.a/i),
+      'ClaveSegura1!',
+    );
+    await user.click(
+      screen.getByRole('button', { name: /guardar y continuar/i }),
+    );
 
     expect(await screen.findByText(/panel universidad/i)).toBeInTheDocument();
-    expect(JSON.parse(window.localStorage.getItem('docqee.auth-session') ?? '{}')).toMatchObject({
+    expect(
+      JSON.parse(window.localStorage.getItem('docqee.auth-session') ?? '{}'),
+    ).toMatchObject({
       requiresPasswordChange: false,
     });
   });
@@ -471,7 +559,9 @@ describe('Auth pages', () => {
     });
 
     fetchMock
-      .mockResolvedValueOnce(createJsonResponse({ message: 'Unauthorized' }, 401))
+      .mockResolvedValueOnce(
+        createJsonResponse({ message: 'Unauthorized' }, 401),
+      )
       .mockResolvedValueOnce(
         createJsonResponse({
           accessToken: 'access-renovado',
@@ -510,7 +600,9 @@ describe('Auth pages', () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(3);
     expect(fetchMock.mock.calls[0]?.[0]).toBe('http://localhost:3000/auth/me');
-    expect(fetchMock.mock.calls[1]?.[0]).toBe('http://localhost:3000/auth/refresh');
+    expect(fetchMock.mock.calls[1]?.[0]).toBe(
+      'http://localhost:3000/auth/refresh',
+    );
     expect(fetchMock.mock.calls[2]?.[0]).toBe('http://localhost:3000/auth/me');
     expect(
       JSON.parse(window.localStorage.getItem('docqee.auth-session') ?? '{}'),
@@ -536,7 +628,9 @@ describe('Auth pages', () => {
     });
 
     fetchMock
-      .mockResolvedValueOnce(createJsonResponse({ message: 'Unauthorized' }, 401))
+      .mockResolvedValueOnce(
+        createJsonResponse({ message: 'Unauthorized' }, 401),
+      )
       .mockRejectedValueOnce(new TypeError('Failed to fetch'));
 
     vi.stubGlobal('fetch', fetchMock);
@@ -553,12 +647,16 @@ describe('Auth pages', () => {
   it('renderiza la ruta real de registro con sus campos principales', async () => {
     renderAuthApp({ initialEntries: [ROUTES.register] });
 
-    expect(screen.getByRole('heading', { level: 1, name: /crear cuenta/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 1, name: /crear cuenta/i }),
+    ).toBeInTheDocument();
     expect(screen.getByLabelText(/^nombres$/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^apellidos$/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^tipo de documento$/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^localidad$/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/^sexo$/i)).toHaveDisplayValue('Selecciona una opción');
+    expect(screen.getByLabelText(/^sexo$/i)).toHaveDisplayValue(
+      'Selecciona una opción',
+    );
     expect(screen.getByLabelText(/fecha de nacimiento/i)).toHaveAttribute(
       'placeholder',
       'dd/mm/aaaa',
@@ -613,7 +711,9 @@ describe('Auth pages', () => {
       target: { value: '2010-04-04' },
     });
 
-    const tutorDocumentInput = screen.getByLabelText(/n.mero de documento del tutor/i);
+    const tutorDocumentInput = screen.getByLabelText(
+      /n.mero de documento del tutor/i,
+    );
     await user.type(tutorDocumentInput, '98x76-5');
     expect(tutorDocumentInput).toHaveValue('98765');
   });
@@ -622,8 +722,12 @@ describe('Auth pages', () => {
     renderAuthApp({ initialEntries: [ROUTES.register] });
 
     expect(screen.getByLabelText(/^sexo$/i)).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'Femenino' })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'Masculino' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('option', { name: 'Femenino' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('option', { name: 'Masculino' }),
+    ).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Otro' })).toBeInTheDocument();
   });
 
@@ -635,14 +739,20 @@ describe('Auth pages', () => {
 
     const birthDateInput = screen.getByLabelText(/fecha de nacimiento/i);
 
-    expect(screen.queryByLabelText(/nombres del tutor/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText(/nombres del tutor/i),
+    ).not.toBeInTheDocument();
 
     fireEvent.change(birthDateInput, { target: { value: '2010-04-04' } });
-    expect(await screen.findByLabelText(/nombres del tutor/i)).toBeInTheDocument();
+    expect(
+      await screen.findByLabelText(/nombres del tutor/i),
+    ).toBeInTheDocument();
 
     fireEvent.change(birthDateInput, { target: { value: '2000-04-03' } });
     await waitFor(() => {
-      expect(screen.queryByLabelText(/nombres del tutor/i)).not.toBeInTheDocument();
+      expect(
+        screen.queryByLabelText(/nombres del tutor/i),
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -657,7 +767,9 @@ describe('Auth pages', () => {
     await fillValidRegisterForm(user, { password: 'clave' });
     await user.click(screen.getByRole('button', { name: /^crear cuenta$/i }));
 
-    expect(screen.getByText(/la contrase.a debe cumplir todos los requisitos/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/la contrase.a debe cumplir todos los requisitos/i),
+    ).toBeInTheDocument();
   });
 
   it('envia un registro valido a la verificacion de correo con el email capturado', async () => {
@@ -695,57 +807,119 @@ describe('Auth pages', () => {
     expect(screen.getByText(/informaci.n personal/i)).toBeInTheDocument();
     expect(screen.queryByText(/registro m.vil/i)).not.toBeInTheDocument();
     expect(
-      screen.queryByText(/completa la informaci.n para iniciar el proceso de vinculaci.n/i),
+      screen.queryByText(
+        /completa la informaci.n para iniciar el proceso de vinculaci.n/i,
+      ),
     ).not.toBeInTheDocument();
-    expect(screen.queryByLabelText(/^correo electr.nico$/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText(/^correo electr.nico$/i),
+    ).not.toBeInTheDocument();
 
     await user.type(screen.getByLabelText(/^nombres$/i), 'Ana');
     await user.type(screen.getByLabelText(/^apellidos$/i), 'Perez');
-    await user.selectOptions(screen.getByLabelText(/^tipo de documento$/i), 'document-cc');
-    await user.type(screen.getByLabelText(/n.mero de documento$/i), '123456789');
+    await user.selectOptions(
+      screen.getByLabelText(/^tipo de documento$/i),
+      'document-cc',
+    );
+    await user.type(
+      screen.getByLabelText(/n.mero de documento$/i),
+      '123456789',
+    );
     await user.click(screen.getByRole('button', { name: /siguiente paso/i }));
 
     expect(screen.getByText(/paso 2\/3/i)).toBeInTheDocument();
     expect(
-      screen.queryByText(/registra tus datos para comenzar tu vinculaci.n con estudiantes de odontolog.a/i),
+      screen.queryByText(
+        /registra tus datos para comenzar tu vinculaci.n con estudiantes de odontolog.a/i,
+      ),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByText(/completa tu sexo, fecha de nacimiento y ubicaci.n principal/i),
+      screen.queryByText(
+        /completa tu sexo, fecha de nacimiento y ubicaci.n principal/i,
+      ),
     ).not.toBeInTheDocument();
-    expect(screen.queryByText(/debes seleccionar una opci.n de sexo/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/la fecha de nacimiento es obligatoria/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/la ciudad es obligatoria/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/la localidad es obligatoria/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/debes seleccionar una opci.n de sexo/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/la fecha de nacimiento es obligatoria/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/la ciudad es obligatoria/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/la localidad es obligatoria/i),
+    ).not.toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText(/^sexo$/i), 'FEMENINO');
-    fireEvent.change(screen.getByLabelText(/fecha de nacimiento/i), { target: { value: '2000-04-03' } });
+    fireEvent.change(screen.getByLabelText(/fecha de nacimiento/i), {
+      target: { value: '2000-04-03' },
+    });
     await screen.findByRole('option', { name: /bogot./i });
     await user.selectOptions(screen.getByLabelText(/^ciudad$/i), 'city-bogota');
     await screen.findByRole('option', { name: /suba/i });
-    await user.selectOptions(screen.getByLabelText(/^localidad$/i), 'locality-bogota-suba');
+    await user.selectOptions(
+      screen.getByLabelText(/^localidad$/i),
+      'locality-bogota-suba',
+    );
     await user.click(screen.getByRole('button', { name: /siguiente paso/i }));
 
     expect(screen.getByText(/paso 3\/3/i)).toBeInTheDocument();
     expect(
-      screen.queryByText(/registra tus datos para comenzar tu vinculaci.n con estudiantes de odontolog.a/i),
+      screen.queryByText(
+        /registra tus datos para comenzar tu vinculaci.n con estudiantes de odontolog.a/i,
+      ),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByText(/define un acceso seguro para continuar con tu vinculaci.n como paciente dentro de docqee/i),
+      screen.queryByText(
+        /define un acceso seguro para continuar con tu vinculaci.n como paciente dentro de docqee/i,
+      ),
     ).not.toBeInTheDocument();
-    expect(screen.queryByText(/el correo electr.nico es obligatorio/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/el celular es obligatorio/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/la contrase.a es obligatoria/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/debes confirmar la contrase.a/i)).not.toBeInTheDocument();
-    expect(screen.getByLabelText(/^correo electr.nico$/i)).toHaveAttribute('aria-invalid', 'false');
-    expect(screen.getByLabelText(/^celular$/i)).toHaveAttribute('aria-invalid', 'false');
-    expect(screen.getByLabelText(/^contrase.a$/i)).toHaveAttribute('aria-invalid', 'false');
-    expect(screen.getByLabelText(/confirmar contrase.a/i)).toHaveAttribute('aria-invalid', 'false');
+    expect(
+      screen.queryByText(/el correo electr.nico es obligatorio/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/el celular es obligatorio/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/la contrase.a es obligatoria/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/debes confirmar la contrase.a/i),
+    ).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/^correo electr.nico$/i)).toHaveAttribute(
+      'aria-invalid',
+      'false',
+    );
+    expect(screen.getByLabelText(/^celular$/i)).toHaveAttribute(
+      'aria-invalid',
+      'false',
+    );
+    expect(screen.getByLabelText(/^contrase.a$/i)).toHaveAttribute(
+      'aria-invalid',
+      'false',
+    );
+    expect(screen.getByLabelText(/confirmar contrase.a/i)).toHaveAttribute(
+      'aria-invalid',
+      'false',
+    );
 
-    await user.type(screen.getByLabelText(/^correo electr.nico$/i), 'paciente@correo.com');
-    await user.type(screen.getByLabelText(/^celular$/i), '3001234567');
+    await user.type(
+      screen.getByLabelText(/^correo electr.nico$/i),
+      'paciente@correo.com',
+    );
+    await user.type(screen.getByLabelText(/^celular$/i), '300123456789');
+    expect(screen.getByLabelText(/^celular$/i)).toHaveValue('3001234567');
     await user.type(screen.getByLabelText(/^contrase.a$/i), 'ClaveSegura1!');
-    await user.type(screen.getByLabelText(/confirmar contrase.a/i), 'ClaveSegura1!');
-    await user.click(screen.getByLabelText(/acepto los t.rminos y condiciones/i));
-    await user.click(screen.getByLabelText(/autorizo el tratamiento de mis datos/i));
+    await user.type(
+      screen.getByLabelText(/confirmar contrase.a/i),
+      'ClaveSegura1!',
+    );
+    await user.click(
+      screen.getByLabelText(/acepto los t.rminos y condiciones/i),
+    );
+    await user.click(
+      screen.getByLabelText(/autorizo el tratamiento de mis datos/i),
+    );
     await user.click(screen.getByRole('button', { name: /^crear cuenta$/i }));
 
     expect(
@@ -769,55 +943,119 @@ describe('Auth pages', () => {
 
     await user.type(screen.getByLabelText(/^nombres$/i), 'Ana');
     await user.type(screen.getByLabelText(/^apellidos$/i), 'Perez');
-    await user.selectOptions(screen.getByLabelText(/^tipo de documento$/i), 'document-cc');
-    await user.type(screen.getByLabelText(/n.mero de documento$/i), '123456789');
+    await user.selectOptions(
+      screen.getByLabelText(/^tipo de documento$/i),
+      'document-cc',
+    );
+    await user.type(
+      screen.getByLabelText(/n.mero de documento$/i),
+      '123456789',
+    );
     await user.click(screen.getByRole('button', { name: /siguiente paso/i }));
 
     await user.selectOptions(screen.getByLabelText(/^sexo$/i), 'FEMENINO');
-    fireEvent.change(screen.getByLabelText(/fecha de nacimiento/i), { target: { value: '2010-04-04' } });
+    fireEvent.change(screen.getByLabelText(/fecha de nacimiento/i), {
+      target: { value: '2010-04-04' },
+    });
     await screen.findByRole('option', { name: /bogot./i });
     await user.selectOptions(screen.getByLabelText(/^ciudad$/i), 'city-bogota');
     await screen.findByRole('option', { name: /suba/i });
-    await user.selectOptions(screen.getByLabelText(/^localidad$/i), 'locality-bogota-suba');
+    await user.selectOptions(
+      screen.getByLabelText(/^localidad$/i),
+      'locality-bogota-suba',
+    );
     await user.click(screen.getByRole('button', { name: /siguiente paso/i }));
 
     expect(screen.getByText(/paso 3\/4/i)).toBeInTheDocument();
     expect(
-      screen.queryByText(/registra tus datos para comenzar tu vinculaci.n con estudiantes de odontolog.a/i),
+      screen.queryByText(
+        /registra tus datos para comenzar tu vinculaci.n con estudiantes de odontolog.a/i,
+      ),
     ).not.toBeInTheDocument();
-    expect(screen.getByLabelText(/tipo de documento del tutor/i)).toHaveDisplayValue('Seleccione un tipo.');
+    expect(
+      screen.getByLabelText(/tipo de documento del tutor/i),
+    ).toHaveDisplayValue('Seleccione un tipo.');
 
     await user.type(screen.getByLabelText(/nombres del tutor/i), 'Maria');
     await user.type(screen.getByLabelText(/apellidos del tutor/i), 'Perez');
-    await user.selectOptions(screen.getByLabelText(/tipo de documento del tutor/i), 'document-cc');
-    await user.type(screen.getByLabelText(/n.mero de documento del tutor/i), '987654321');
-    await user.type(screen.getByLabelText(/correo electr.nico del tutor/i), 'tutor@correo.com');
-    await user.type(screen.getByLabelText(/celular del tutor/i), '3009876543');
+    await user.selectOptions(
+      screen.getByLabelText(/tipo de documento del tutor/i),
+      'document-cc',
+    );
+    await user.type(
+      screen.getByLabelText(/n.mero de documento del tutor/i),
+      '987654321',
+    );
+    await user.type(
+      screen.getByLabelText(/correo electr.nico del tutor/i),
+      'tutor@correo.com',
+    );
+    await user.type(
+      screen.getByLabelText(/celular del tutor/i),
+      '300987654321',
+    );
+    expect(screen.getByLabelText(/celular del tutor/i)).toHaveValue(
+      '3009876543',
+    );
     await user.click(screen.getByRole('button', { name: /siguiente paso/i }));
 
     expect(screen.getByText(/paso 4\/4/i)).toBeInTheDocument();
-    expect(screen.queryByText(/el correo electr.nico es obligatorio/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/el celular es obligatorio/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/la contrase.a es obligatoria/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/debes confirmar la contrase.a/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/debes aceptar los t.rminos y condiciones/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/el correo electr.nico es obligatorio/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/el celular es obligatorio/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/la contrase.a es obligatoria/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/debes confirmar la contrase.a/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/debes aceptar los t.rminos y condiciones/i),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByText(/debes autorizar el tratamiento de datos personales/i),
     ).not.toBeInTheDocument();
-    expect(screen.getByLabelText(/^correo electr.nico$/i)).toHaveAttribute('aria-invalid', 'false');
-    expect(screen.getByLabelText(/^celular$/i)).toHaveAttribute('aria-invalid', 'false');
-    expect(screen.getByLabelText(/^contrase.a$/i)).toHaveAttribute('aria-invalid', 'false');
-    expect(screen.getByLabelText(/confirmar contrase.a/i)).toHaveAttribute('aria-invalid', 'false');
-    expect(screen.getByLabelText(/acepto los t.rminos y condiciones/i)).toHaveAttribute('aria-invalid', 'false');
-    expect(screen.getByLabelText(/autorizo el tratamiento de mis datos/i)).toHaveAttribute('aria-invalid', 'false');
+    expect(screen.getByLabelText(/^correo electr.nico$/i)).toHaveAttribute(
+      'aria-invalid',
+      'false',
+    );
+    expect(screen.getByLabelText(/^celular$/i)).toHaveAttribute(
+      'aria-invalid',
+      'false',
+    );
+    expect(screen.getByLabelText(/^contrase.a$/i)).toHaveAttribute(
+      'aria-invalid',
+      'false',
+    );
+    expect(screen.getByLabelText(/confirmar contrase.a/i)).toHaveAttribute(
+      'aria-invalid',
+      'false',
+    );
+    expect(
+      screen.getByLabelText(/acepto los t.rminos y condiciones/i),
+    ).toHaveAttribute('aria-invalid', 'false');
+    expect(
+      screen.getByLabelText(/autorizo el tratamiento de mis datos/i),
+    ).toHaveAttribute('aria-invalid', 'false');
 
     await user.click(screen.getByRole('button', { name: /^crear cuenta$/i }));
 
-    expect(screen.getByText(/el correo electr.nico es obligatorio/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/el correo electr.nico es obligatorio/i),
+    ).toBeInTheDocument();
     expect(screen.getByText(/el celular es obligatorio/i)).toBeInTheDocument();
-    expect(screen.getByText(/la contrase.a es obligatoria/i)).toBeInTheDocument();
-    expect(screen.getByText(/debes confirmar la contrase.a/i)).toBeInTheDocument();
-    expect(screen.getByText(/debes aceptar los t.rminos y condiciones/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/la contrase.a es obligatoria/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/debes confirmar la contrase.a/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/debes aceptar los t.rminos y condiciones/i),
+    ).toBeInTheDocument();
     expect(
       screen.getByText(/debes autorizar el tratamiento de datos personales/i),
     ).toBeInTheDocument();
@@ -825,7 +1063,12 @@ describe('Auth pages', () => {
 
   it('renderiza la pantalla de verificacion con seis casillas para el codigo', () => {
     renderAuthApp({
-      initialEntries: [{ pathname: ROUTES.verifyEmail, state: { email: 'paciente@correo.com' } }],
+      initialEntries: [
+        {
+          pathname: ROUTES.verifyEmail,
+          state: { email: 'paciente@correo.com' },
+        },
+      ],
     });
 
     expect(
@@ -836,15 +1079,24 @@ describe('Auth pages', () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/paciente@correo.com/i)).toBeInTheDocument();
     expect(screen.getAllByRole('textbox')).toHaveLength(6);
-    expect(screen.getByRole('button', { name: /^verificar$/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /reenviar c.digo/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /^verificar$/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /reenviar c.digo/i }),
+    ).toBeInTheDocument();
   });
 
   it('valida que el codigo tenga exactamente 6 digitos antes de verificar', async () => {
     const user = userEvent.setup();
 
     renderAuthApp({
-      initialEntries: [{ pathname: ROUTES.verifyEmail, state: { email: 'paciente@correo.com' } }],
+      initialEntries: [
+        {
+          pathname: ROUTES.verifyEmail,
+          state: { email: 'paciente@correo.com' },
+        },
+      ],
     });
 
     const codeInputs = screen.getAllByRole('textbox');
@@ -855,14 +1107,21 @@ describe('Auth pages', () => {
     await user.type(secondCodeInput, '2');
     await user.click(screen.getByRole('button', { name: /^verificar$/i }));
 
-    expect(screen.getByText(/ingresa un c.digo v.lido de 6 d.gitos/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/ingresa un c.digo v.lido de 6 d.gitos/i),
+    ).toBeInTheDocument();
   });
 
   it('acepta un codigo valido de 6 digitos y redirige al login', async () => {
     const user = userEvent.setup();
 
     renderAuthApp({
-      initialEntries: [{ pathname: ROUTES.verifyEmail, state: { email: 'paciente@correo.com' } }],
+      initialEntries: [
+        {
+          pathname: ROUTES.verifyEmail,
+          state: { email: 'paciente@correo.com' },
+        },
+      ],
     });
 
     const firstCodeInput = screen.getAllByRole('textbox')[0]!;
@@ -883,11 +1142,20 @@ describe('Auth pages', () => {
     persistVerifyEmailCooldown(60);
 
     renderAuthApp({
-      initialEntries: [{ pathname: ROUTES.verifyEmail, state: { email: 'paciente@correo.com' } }],
+      initialEntries: [
+        {
+          pathname: ROUTES.verifyEmail,
+          state: { email: 'paciente@correo.com' },
+        },
+      ],
     });
 
-    expect(screen.getByText(/podr.s solicitar un nuevo c.digo en/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /reenviar c.digo/i })).toBeDisabled();
+    expect(
+      screen.getByText(/podr.s solicitar un nuevo c.digo en/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /reenviar c.digo/i }),
+    ).toBeDisabled();
   });
 
   it('marca las rutas de registro y verificacion con noindex', async () => {
@@ -899,20 +1167,18 @@ describe('Auth pages', () => {
     });
 
     await waitFor(() => {
-      expect(document.head.querySelector('meta[name="robots"]')).toHaveAttribute(
-        'content',
-        'noindex, nofollow',
-      );
+      expect(
+        document.head.querySelector('meta[name="robots"]'),
+      ).toHaveAttribute('content', 'noindex, nofollow');
     });
 
     await fillValidRegisterForm(user);
     await user.click(screen.getByRole('button', { name: /^crear cuenta$/i }));
 
     await waitFor(() => {
-      expect(document.head.querySelector('meta[name="robots"]')).toHaveAttribute(
-        'content',
-        'noindex, nofollow',
-      );
+      expect(
+        document.head.querySelector('meta[name="robots"]'),
+      ).toHaveAttribute('content', 'noindex, nofollow');
     });
   });
 });

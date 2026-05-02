@@ -46,6 +46,11 @@ import { useAutoDismissSystemMessage } from '@/hooks/useAutoDismissSystemMessage
 import { formatDisplayName } from '@/lib/formatDisplayName';
 import { getOptimizedLogoUrl } from '@/lib/imageOptimization';
 import { patientRegisterCatalogDataSource } from '@/lib/patientRegisterCatalogDataSource';
+import {
+  PHONE_NUMBER_DIGITS_MESSAGE,
+  normalizePhoneNumberInput,
+  PHONE_NUMBER_MAX_DIGITS,
+} from '@/lib/phoneNumber';
 import { uploadUniversityAdminLogo } from '@/lib/universityAdminApi';
 import { useUniversityAdminProfileStore } from '@/lib/universityAdminProfileStore';
 
@@ -186,6 +191,13 @@ function validateInstitutionField(
 
   if (field === 'adminEmail' && !isValidEmail(normalizedValue)) {
     return 'Ingresa un correo electrónico válido';
+  }
+
+  if (
+    field === 'adminPhone' &&
+    normalizedValue.length !== PHONE_NUMBER_MAX_DIGITS
+  ) {
+    return PHONE_NUMBER_DIGITS_MESSAGE;
   }
 
   return undefined;
@@ -643,7 +655,7 @@ export function UniversityInstitutionPage({
   ) => {
     const normalizedNextValue =
       field === 'adminPhone' && typeof nextValue === 'string'
-        ? nextValue.replace(/\D/g, '')
+        ? normalizePhoneNumberInput(nextValue)
         : nextValue;
 
     setValues((currentValues) =>
@@ -1803,7 +1815,9 @@ export function UniversityInstitutionPage({
                           placeholder="3001234567"
                           inputMode="numeric"
                           type="tel"
+                          maxLength={PHONE_NUMBER_MAX_DIGITS}
                           value={values.adminPhone}
+                          pattern="[0-9]*"
                           onBlur={() =>
                             handleInstitutionFieldBlur('adminPhone')
                           }

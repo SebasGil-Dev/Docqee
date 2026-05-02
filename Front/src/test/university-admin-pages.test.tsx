@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import * as XLSX from 'xlsx';
 
 import { ROUTES } from '@/constants/routes';
+import type { PatientRegisterCatalogDataSource } from '@/content/types';
 import { resetUniversityAdminModuleState } from '@/lib/universityAdminModuleStore';
 import { UniversityAdminLayout } from '@/pages/university-admin/UniversityAdminLayout';
 import {
@@ -21,6 +22,55 @@ import { UniversityStudentsPage } from '@/pages/university-admin/students/Univer
 import { UniversityRegisterTeacherPage } from '@/pages/university-admin/teachers/UniversityRegisterTeacherPage';
 import { UniversityTeachersPage } from '@/pages/university-admin/teachers/UniversityTeachersPage';
 
+const testUniversityCatalogDataSource: PatientRegisterCatalogDataSource = {
+  getCities: () => [
+    { id: 'city-bogota', label: 'Bogota' },
+    { id: 'city-medellin', label: 'Medellin' },
+    { id: 'city-cali', label: 'Cali' },
+  ],
+  getDocumentTypes: () => [
+    {
+      code: 'CC',
+      id: 'document-cc',
+      label: 'Cedula de ciudadania',
+    },
+  ],
+  getLocalitiesByCity: (cityId) =>
+    ({
+      'city-bogota': [
+        {
+          cityId: 'city-bogota',
+          id: 'locality-bogota-usaquen',
+          label: 'Usaquen',
+        },
+        {
+          cityId: 'city-bogota',
+          id: 'locality-bogota-suba',
+          label: 'Suba',
+        },
+      ],
+      'city-cali': [
+        {
+          cityId: 'city-cali',
+          id: 'locality-cali-comuna-17',
+          label: 'Comuna 17',
+        },
+      ],
+      'city-medellin': [
+        {
+          cityId: 'city-medellin',
+          id: 'locality-medellin-laureles',
+          label: 'Laureles',
+        },
+      ],
+    })[cityId] ?? [],
+  loadCities: async () => testUniversityCatalogDataSource.getCities(),
+  loadDocumentTypes: async () =>
+    testUniversityCatalogDataSource.getDocumentTypes(),
+  loadLocalitiesByCity: async (cityId) =>
+    testUniversityCatalogDataSource.getLocalitiesByCity(cityId),
+};
+
 function renderUniversityApp(
   initialEntries: MemoryRouterProps['initialEntries'] = [ROUTES.universityHome],
 ) {
@@ -34,17 +84,29 @@ function renderUniversityApp(
           />
           <Route element={<UniversityHomePage />} path="inicio" />
           <Route
-            element={<UniversityInstitutionPage />}
+            element={
+              <UniversityInstitutionPage
+                catalogDataSource={testUniversityCatalogDataSource}
+              />
+            }
             path="informacion-institucional"
           />
           <Route element={<UniversityStudentsPage />} path="estudiantes" />
           <Route
-            element={<UniversityRegisterStudentPage />}
+            element={
+              <UniversityRegisterStudentPage
+                catalogDataSource={testUniversityCatalogDataSource}
+              />
+            }
             path="estudiantes/registrar"
           />
           <Route element={<UniversityTeachersPage />} path="docentes" />
           <Route
-            element={<UniversityRegisterTeacherPage />}
+            element={
+              <UniversityRegisterTeacherPage
+                catalogDataSource={testUniversityCatalogDataSource}
+              />
+            }
             path="docentes/registrar"
           />
           <Route element={<UniversityBulkUploadPage />} path="carga-masiva" />
@@ -74,6 +136,7 @@ function mockUniversityAdminViewport(matches: boolean) {
 async function fillStudentForm(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText(/^Nombres$/i), 'Juliana');
   await user.type(screen.getByLabelText(/^Apellidos$/i), 'Marin');
+  await screen.findByRole('option', { name: /cedula de ciudadania/i });
   await user.selectOptions(
     screen.getByLabelText(/tipo de documento/i),
     'document-cc',
@@ -86,13 +149,15 @@ async function fillStudentForm(user: ReturnType<typeof userEvent.setup>) {
     screen.getByLabelText(/correo electr[oó]nico/i),
     'juliana.marin@clinicadelnorte.edu.co',
   );
-  await user.type(screen.getByLabelText(/^Celular$/i), '3002223344');
+  await user.type(screen.getByLabelText(/^Celular$/i), '300222334455');
+  expect(screen.getByLabelText(/^Celular$/i)).toHaveValue('3002223344');
   await user.selectOptions(screen.getByLabelText(/^Semestre$/i), '7');
 }
 
 async function fillTeacherForm(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText(/^Nombres$/i), 'Patricia');
   await user.type(screen.getByLabelText(/^Apellidos$/i), 'Mendoza');
+  await screen.findByRole('option', { name: /cedula de ciudadania/i });
   await user.selectOptions(
     screen.getByLabelText(/tipo de documento/i),
     'document-cc',
@@ -251,7 +316,7 @@ describe('University admin pages', () => {
     await user.type(screen.getByLabelText(/^Apellidos$/i), 'Acevedo');
     const adminPhone = screen.getByLabelText(/^Celular$/i);
     await user.clear(adminPhone);
-    await user.type(adminPhone, '300abc-123 45x67');
+    await user.type(adminPhone, '300abc-123 45x6789');
     expect(adminPhone).toHaveValue('3001234567');
     await user.type(screen.getByLabelText(/nombre de la sede/i), 'Sede Centro');
     await user.type(screen.getByLabelText(/dirección/i), 'Cra. 45 # 10-22');
@@ -855,6 +920,41 @@ describe('University admin pages', () => {
     expect(teacherResult.errors).toContain(
       'Fila 2, columna "numero_documento": solo se aceptan números.',
     );
+  });
+
+  it('rechaza celulares que no tengan exactamente 10 digitos en la carga masiva', () => {
+    const { errors, parsed } = validateStudentRows([
+      [
+        'Juliana',
+        'Marin',
+        'CC',
+        '1032456789',
+        'juliana.marin@clinicadelnorte.edu.co',
+        '300222334455',
+        7,
+      ],
+      [
+        'Camilo',
+        'Rojas',
+        'CC',
+        '1032456790',
+        'camilo.rojas@clinicadelnorte.edu.co',
+        '300ABC3344',
+        8,
+      ],
+    ]);
+
+    expect(parsed).toHaveLength(0);
+    expect(
+      errors.some((error) =>
+        error.includes('columna "celular": debe tener 10'),
+      ),
+    ).toBe(true);
+    expect(
+      errors.some((error) =>
+        error.includes('columna "celular": solo se aceptan'),
+      ),
+    ).toBe(true);
   });
 
   it('editar el correo en credenciales tambien actualiza al estudiante', async () => {

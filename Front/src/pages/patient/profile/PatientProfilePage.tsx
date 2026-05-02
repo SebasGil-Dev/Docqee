@@ -29,6 +29,11 @@ import {
   readOptimizedImageFileAsDataUrl,
 } from '@/lib/imageOptimization';
 import { usePatientModuleStore } from '@/lib/patientModuleStore';
+import {
+  PHONE_NUMBER_DIGITS_MESSAGE,
+  normalizePhoneNumberInput,
+  PHONE_NUMBER_MAX_DIGITS,
+} from '@/lib/phoneNumber';
 import { calculateAverageRating } from '@/lib/ratings';
 
 function getInitialValues(profile: PatientProfile): PatientProfileFormValues {
@@ -41,11 +46,15 @@ function getInitialValues(profile: PatientProfile): PatientProfileFormValues {
   };
 }
 
-function validateProfile(values: PatientProfileFormValues): PatientProfileFormErrors {
+function validateProfile(
+  values: PatientProfileFormValues,
+): PatientProfileFormErrors {
   const errors: PatientProfileFormErrors = {};
 
   if (!values.phone.trim()) {
     errors.phone = 'Ingresa un numero de celular.';
+  } else if (values.phone.trim().length !== PHONE_NUMBER_MAX_DIGITS) {
+    errors.phone = PHONE_NUMBER_DIGITS_MESSAGE;
   }
 
   if (!values.city.trim()) {
@@ -60,12 +69,15 @@ function validateProfile(values: PatientProfileFormValues): PatientProfileFormEr
 }
 
 export function PatientProfilePage() {
-  const { errorMessage, isLoading, profile, reviews, updateProfile } = usePatientModuleStore();
+  const { errorMessage, isLoading, profile, reviews, updateProfile } =
+    usePatientModuleStore();
   const averageRating = useMemo(() => {
     if (reviews.length === 0) return null;
     return calculateAverageRating(reviews.map((review) => review.rating));
   }, [reviews]);
-  const [values, setValues] = useState<PatientProfileFormValues>(() => getInitialValues(profile));
+  const [values, setValues] = useState<PatientProfileFormValues>(() =>
+    getInitialValues(profile),
+  );
   const [errors, setErrors] = useState<PatientProfileFormErrors>({});
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
@@ -74,7 +86,8 @@ export function PatientProfilePage() {
   });
 
   const patientInitials = useMemo(
-    () => `${profile.firstName.charAt(0)}${profile.lastName.charAt(0)}`.toUpperCase(),
+    () =>
+      `${profile.firstName.charAt(0)}${profile.lastName.charAt(0)}`.toUpperCase(),
     [profile.firstName, profile.lastName],
   );
 
@@ -167,7 +180,10 @@ export function PatientProfilePage() {
       <AdminPanelCard className="flex-1" panelClassName="bg-[#f4f8ff]">
         <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6 sm:py-5">
           <div className="grid gap-4 xl:grid-cols-[minmax(0,23rem)_minmax(0,1fr)] 2xl:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
-            <SurfaceCard className="overflow-hidden bg-brand-gradient text-white shadow-none" paddingClassName="p-0">
+            <SurfaceCard
+              className="overflow-hidden bg-brand-gradient text-white shadow-none"
+              paddingClassName="p-0"
+            >
               <div className="flex h-full flex-col px-5 py-5">
                 <div className="flex items-center gap-4">
                   {values.avatarSrc ? (
@@ -186,7 +202,9 @@ export function PatientProfilePage() {
                     <h2 className="font-headline text-[1.45rem] font-extrabold tracking-tight text-white">
                       {profile.firstName} {profile.lastName}
                     </h2>
-                    <p className="text-sm font-medium text-white/88">{profile.email}</p>
+                    <p className="text-sm font-medium text-white/88">
+                      {profile.email}
+                    </p>
                     <span className="inline-flex rounded-full bg-white/14 px-3 py-1 text-xs font-semibold text-white ring-1 ring-white/18">
                       Paciente activo en la plataforma
                     </span>
@@ -194,16 +212,24 @@ export function PatientProfilePage() {
                 </div>
                 <div className="mt-5 space-y-3 text-sm text-white/90">
                   <div className="flex items-start gap-3 rounded-[1.25rem] bg-white/10 px-4 py-3">
-                    <Phone aria-hidden="true" className="mt-0.5 h-4.5 w-4.5 shrink-0 text-white" />
+                    <Phone
+                      aria-hidden="true"
+                      className="mt-0.5 h-4.5 w-4.5 shrink-0 text-white"
+                    />
                     <div className="min-w-0">
                       <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white/65">
                         Celular
                       </p>
-                      <p className="truncate font-semibold text-white">{profile.phone}</p>
+                      <p className="truncate font-semibold text-white">
+                        {profile.phone}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3 rounded-[1.25rem] bg-white/10 px-4 py-3">
-                    <MapPin aria-hidden="true" className="mt-0.5 h-4.5 w-4.5 shrink-0 text-white" />
+                    <MapPin
+                      aria-hidden="true"
+                      className="mt-0.5 h-4.5 w-4.5 shrink-0 text-white"
+                    />
                     <div className="min-w-0">
                       <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white/65">
                         Ubicacion
@@ -223,13 +249,18 @@ export function PatientProfilePage() {
                         Fecha de nacimiento
                       </p>
                       <p className="truncate font-semibold text-white">
-                        {new Date(`${profile.birthDate}T00:00:00`).toLocaleDateString('es-CO')}
+                        {new Date(
+                          `${profile.birthDate}T00:00:00`,
+                        ).toLocaleDateString('es-CO')}
                       </p>
                     </div>
                   </div>
                   {averageRating !== null ? (
                     <div className="flex items-start gap-3 rounded-[1.25rem] bg-white/10 px-4 py-3">
-                      <Star aria-hidden="true" className="mt-0.5 h-4.5 w-4.5 shrink-0 fill-amber-300 text-amber-300" />
+                      <Star
+                        aria-hidden="true"
+                        className="mt-0.5 h-4.5 w-4.5 shrink-0 fill-amber-300 text-amber-300"
+                      />
                       <div className="min-w-0">
                         <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white/65">
                           Calificacion promedio
@@ -237,7 +268,11 @@ export function PatientProfilePage() {
                         <p className="truncate font-semibold text-white">
                           {averageRating.toFixed(1)} / 5{' '}
                           <span className="text-xs font-normal text-white/70">
-                            ({reviews.length} {reviews.length === 1 ? 'valoracion' : 'valoraciones'})
+                            ({reviews.length}{' '}
+                            {reviews.length === 1
+                              ? 'valoracion'
+                              : 'valoraciones'}
+                            )
                           </span>
                         </p>
                       </div>
@@ -247,7 +282,10 @@ export function PatientProfilePage() {
               </div>
             </SurfaceCard>
             <div className="space-y-4">
-              <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-5">
+              <SurfaceCard
+                className="border border-slate-200/80 bg-white shadow-none"
+                paddingClassName="p-5"
+              >
                 <div className="space-y-5">
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div>
@@ -255,12 +293,15 @@ export function PatientProfilePage() {
                         Datos de contacto
                       </h2>
                       <p className="mt-1 text-sm leading-6 text-ink-muted">
-                        Actualiza la informacion que acompanara tus solicitudes y conversaciones.
+                        Actualiza la informacion que acompanara tus solicitudes
+                        y conversaciones.
                       </p>
                     </div>
                     <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-primary transition duration-300 hover:bg-slate-100">
                       <ImagePlus aria-hidden="true" className="h-4 w-4" />
-                      <span>{patientContent.profilePage.actionLabels.uploadPhoto}</span>
+                      <span>
+                        {patientContent.profilePage.actionLabels.uploadPhoto}
+                      </span>
                       <input
                         accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
                         className="sr-only"
@@ -271,16 +312,26 @@ export function PatientProfilePage() {
                   </div>
                   <div className="grid gap-4 lg:grid-cols-2">
                     <div className="space-y-1.5">
-                      <label className="block text-sm font-semibold text-ink">Correo electronico</label>
+                      <label className="block text-sm font-semibold text-ink">
+                        Correo electronico
+                      </label>
                       <div className="flex min-h-12 items-center rounded-[1.35rem] border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-ink">
-                        <Mail aria-hidden="true" className="mr-2 h-4 w-4 text-primary" />
+                        <Mail
+                          aria-hidden="true"
+                          className="mr-2 h-4 w-4 text-primary"
+                        />
                         {profile.email}
                       </div>
                     </div>
                     <div className="space-y-1.5">
-                      <label className="block text-sm font-semibold text-ink">Sexo</label>
+                      <label className="block text-sm font-semibold text-ink">
+                        Sexo
+                      </label>
                       <div className="flex min-h-12 items-center rounded-[1.35rem] border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-ink">
-                        <UserRound aria-hidden="true" className="mr-2 h-4 w-4 text-primary" />
+                        <UserRound
+                          aria-hidden="true"
+                          className="mr-2 h-4 w-4 text-primary"
+                        />
                         {profile.sex}
                       </div>
                     </div>
@@ -288,11 +339,20 @@ export function PatientProfilePage() {
                       error={errors.phone}
                       icon={Phone}
                       id="patient-profile-phone"
+                      inputMode="numeric"
                       label="Celular"
+                      maxLength={PHONE_NUMBER_MAX_DIGITS}
                       name="patientProfilePhone"
+                      pattern="[0-9]*"
                       placeholder="3001234567"
+                      type="tel"
                       value={values.phone}
-                      onChange={(value) => handleFieldChange('phone', value)}
+                      onChange={(value) =>
+                        handleFieldChange(
+                          'phone',
+                          normalizePhoneNumberInput(value),
+                        )
+                      }
                     />
                     <AdminTextField
                       error={errors.city}
@@ -319,14 +379,18 @@ export function PatientProfilePage() {
                 </div>
               </SurfaceCard>
               {profile.tutor ? (
-                <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-5">
+                <SurfaceCard
+                  className="border border-slate-200/80 bg-white shadow-none"
+                  paddingClassName="p-5"
+                >
                   <div className="space-y-4">
                     <div>
                       <h2 className="font-headline text-xl font-extrabold tracking-tight text-ink">
                         Tutor responsable
                       </h2>
                       <p className="mt-1 text-sm leading-6 text-ink-muted">
-                        Referencia disponible en caso de acompanamiento o validacion adicional.
+                        Referencia disponible en caso de acompanamiento o
+                        validacion adicional.
                       </p>
                     </div>
                     <div className="grid gap-3 md:grid-cols-3">
@@ -350,13 +414,18 @@ export function PatientProfilePage() {
                         <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-primary/70">
                           Celular
                         </p>
-                        <p className="mt-1 text-sm font-semibold text-ink">{profile.tutor.phone}</p>
+                        <p className="mt-1 text-sm font-semibold text-ink">
+                          {profile.tutor.phone}
+                        </p>
                       </div>
                     </div>
                   </div>
                 </SurfaceCard>
               ) : (
-                <SurfaceCard className="border border-slate-200/80 bg-white shadow-none" paddingClassName="p-5">
+                <SurfaceCard
+                  className="border border-slate-200/80 bg-white shadow-none"
+                  paddingClassName="p-5"
+                >
                   <div className="rounded-[1.25rem] border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-ink-muted">
                     No hay tutor responsable asociado a esta cuenta.
                   </div>

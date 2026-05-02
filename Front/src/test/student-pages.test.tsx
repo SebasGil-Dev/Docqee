@@ -140,6 +140,21 @@ describe('Student pages', () => {
     ).toBeInTheDocument();
   });
 
+  it('abre el perfil del estudiante al presionar la foto del header', async () => {
+    const user = userEvent.setup();
+
+    renderStudentApp([ROUTES.studentTreatments]);
+
+    await user.click(screen.getByRole('link', { name: /ir a mi perfil/i }));
+
+    expect(
+      await screen.findByRole('heading', { name: /^mi perfil$/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(/descripcion profesional/i),
+    ).toBeInTheDocument();
+  });
+
   it('solicita confirmacion para eliminar un enlace profesional y lo guarda de inmediato', async () => {
     const user = userEvent.setup();
 

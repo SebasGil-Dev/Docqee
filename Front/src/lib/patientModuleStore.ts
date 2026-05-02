@@ -1256,21 +1256,11 @@ function normalizeProfile(values: PatientProfileFormValues): PatientProfile {
 }
 
 function buildConversationFromRequest(request: PatientRequest) {
-  const firstMessage: PatientConversationMessage = {
-    author: 'PACIENTE',
-    authorName: `${state.profile.firstName} ${state.profile.lastName}`,
-    content:
-      request.reason ??
-      'Hola, quisiera iniciar la conversacion a partir de mi solicitud.',
-    id: `patient-message-${nextMessageSequence++}`,
-    sentAt: new Date().toISOString(),
-  };
-
   return {
     id:
       request.conversationId ??
       `patient-conversation-${nextConversationSequence++}`,
-    messages: [firstMessage],
+    messages: [],
     reason: request.reason,
     requestId: request.id,
     status: 'ACTIVA',

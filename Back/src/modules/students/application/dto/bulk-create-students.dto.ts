@@ -1,5 +1,14 @@
-import { Type } from 'class-transformer';
-import { IsArray, IsEmail, IsInt, IsString, Matches, Max, Min, ValidateNested } from 'class-validator';
+import { Type } from "class-transformer";
+import {
+  IsArray,
+  IsEmail,
+  IsInt,
+  IsString,
+  Matches,
+  Max,
+  Min,
+  ValidateNested,
+} from "class-validator";
 
 export class BulkStudentRowDto {
   @IsString()
@@ -12,13 +21,16 @@ export class BulkStudentRowDto {
   tipo_documento!: string;
 
   @IsString()
-  @Matches(/^\d+$/, { message: 'El número de documento solo debe contener números.' })
+  @Matches(/^\d+$/, {
+    message: "El número de documento solo debe contener números.",
+  })
   numero_documento!: string;
 
   @IsEmail()
   correo!: string;
 
   @IsString()
+  @Matches(/^\d{10}$/, { message: "El celular debe tener 10 digitos." })
   celular!: string;
 
   @IsInt()
