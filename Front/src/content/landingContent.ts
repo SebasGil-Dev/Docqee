@@ -12,7 +12,7 @@ export const landingContent: LandingContent = {
   hero: {
     badge: 'Estudiantes supervisados por docentes profesionales',
     description:
-      'Docqee conecta pacientes con estudiantes de odontología en formación clínica, brindando un espacio confiable, cercano y organizado para acceder a atención odontológica dentro de un entorno universitario.',
+      'Docqee conecta pacientes con estudiantes de odontología en formación clínica, brindando un espacio confiable, cercano y organizado para acceder a atención odontológica dentro de un entorno universitario supervisado.',
     highlights: [],
     image: {
       alt: 'Sillón odontológico en un entorno clínico luminoso y sereno.',
