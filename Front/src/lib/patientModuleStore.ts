@@ -2374,7 +2374,7 @@ async function updateAppointmentStatus(
         errorMessage: getErrorMessage(
           error,
           status === 'ACEPTADA' || status === 'RECHAZADA'
-            ? 'No pudimos responder la reprogramación. Verifica que la propuesta siga vigente y que la fecha no esté vencida.'
+            ? 'No pudimos responder la reprogramación. La propuesta puede haber vencido, ya no estar disponible o cruzarse con otra cita.'
             : 'No pudimos actualizar la cita.',
         ),
         isLoading: false,

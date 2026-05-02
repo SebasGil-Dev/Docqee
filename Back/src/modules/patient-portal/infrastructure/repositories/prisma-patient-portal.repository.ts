@@ -28,7 +28,7 @@ import { UpdatePatientRequestStatusDto } from "../../application/dto/update-pati
 import { PatientPortalRepository } from "../../domain/repositories/patient-portal.repository";
 
 const PATIENT_RESCHEDULE_RESPONSE_ERROR_MESSAGE =
-  "No pudimos responder la propuesta porque ya no cumple las reglas de agenda. Coordina con el estudiante una nueva fecha.";
+  "No pudimos responder la reprogramacion. La propuesta puede haber vencido, ya no estar disponible o cruzarse con otra cita.";
 const RESCHEDULE_NOTICE_HOURS = 8;
 const RESCHEDULE_NOTICE_MS = RESCHEDULE_NOTICE_HOURS * 60 * 60 * 1000;
 const CANCEL_NOTICE_HOURS = 24;
@@ -2000,10 +2000,6 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         pendingReschedule?.nueva_fecha_hora_fin ?? cita.fecha_hora_fin;
 
       this.assertAppointmentHasNotEnded(acceptedEndAt, responseDate);
-
-      if (pendingReschedule) {
-        this.assertAppointmentHasMinimumNotice(acceptedStartAt);
-      }
 
       const [studentConflict, patientConflict] = await Promise.all([
         this.checkStudentAppointmentConflicts(
