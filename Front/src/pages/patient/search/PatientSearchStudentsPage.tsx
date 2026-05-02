@@ -20,6 +20,7 @@ import { Seo } from '@/components/ui/Seo';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { patientContent } from '@/content/patientContent';
 import type {
+  PatientRequest,
   PatientStudentDirectoryItem,
   PatientStudentProfessionalLinkSummary,
   PatientStudentPracticeSiteSummary,
@@ -46,6 +47,13 @@ const TABLE_HEIGHT_PADDING_PX = 8;
 
 function getStudentFullName(student: PatientStudentDirectoryItem) {
   return formatDisplayName(`${student.firstName} ${student.lastName}`);
+}
+
+function isActiveRequestForStudent(request: PatientRequest, studentId: string) {
+  return (
+    request.studentId === studentId &&
+    (request.status === 'PENDIENTE' || request.status === 'ACEPTADA')
+  );
 }
 
 function getStudentInitials(student: PatientStudentDirectoryItem) {
@@ -281,10 +289,13 @@ export function PatientSearchStudentsPage() {
     null,
   );
   const [selectedReviewIndex, setSelectedReviewIndex] = useState(0);
+  const [isRefreshingSelectedRequest, setIsRefreshingSelectedRequest] =
+    useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const tableViewportRef = useRef<HTMLDivElement | null>(null);
   const tableHeaderRef = useRef<HTMLTableSectionElement | null>(null);
   const tableBodyRef = useRef<HTMLTableSectionElement | null>(null);
+  const requestRefreshSequenceRef = useRef(0);
   const latestSearchFiltersRef = useRef({
     city: initialCityFilter,
     locality: initialLocalityFilter,
@@ -365,9 +376,7 @@ export function PatientSearchStudentsPage() {
   const selectedReview = selectedStudentReviews[selectedReviewIndex] ?? null;
   const currentRequestForSelectedStudent = selectedStudent
     ? (requests.find(
-        (request) =>
-          request.studentId === selectedStudent.id &&
-          (request.status === 'PENDIENTE' || request.status === 'ACEPTADA'),
+        (request) => isActiveRequestForStudent(request, selectedStudent.id),
       ) ?? null)
     : null;
 
@@ -505,12 +514,25 @@ export function PatientSearchStudentsPage() {
   }, [selectedStudentId]);
 
   const handleOpenStudentModal = (studentId: string) => {
+    const refreshSequence = requestRefreshSequenceRef.current + 1;
+    const shouldWaitForRequestRefresh =
+      !IS_TEST_MODE &&
+      requests.some((request) => isActiveRequestForStudent(request, studentId));
+
+    requestRefreshSequenceRef.current = refreshSequence;
     setSelectedStudentId(studentId);
     setSuccessMessage(null);
-    void refreshRequests();
+    setIsRefreshingSelectedRequest(shouldWaitForRequestRefresh);
+    void refreshRequests().finally(() => {
+      if (requestRefreshSequenceRef.current === refreshSequence) {
+        setIsRefreshingSelectedRequest(false);
+      }
+    });
   };
 
   const handleCloseStudentModal = () => {
+    requestRefreshSequenceRef.current += 1;
+    setIsRefreshingSelectedRequest(false);
     setSelectedStudentId(null);
   };
 
@@ -1262,7 +1284,19 @@ export function PatientSearchStudentsPage() {
               )}
             </div>
 
-            {currentRequestForSelectedStudent ? (
+            {isRefreshingSelectedRequest ? (
+              <div
+                className="mt-3 rounded-[1rem] border border-sky-200/80 bg-sky-50/75 px-3 py-3 text-sm text-sky-800"
+                role="status"
+              >
+                <div className="flex items-center gap-2">
+                  <ShieldCheck aria-hidden="true" className="h-4 w-4" />
+                  <p className="font-medium">
+                    Validando el estado de tus solicitudes con este estudiante.
+                  </p>
+                </div>
+              </div>
+            ) : currentRequestForSelectedStudent ? (
               <div className="mt-3 rounded-[1rem] border border-amber-200/80 bg-amber-50/75 px-3 py-3 text-sm text-amber-800">
                 <div className="flex items-center gap-2">
                   <ShieldCheck aria-hidden="true" className="h-4 w-4" />
