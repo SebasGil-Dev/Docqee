@@ -1237,10 +1237,7 @@ export function StudentAppointmentsPage() {
                     appointment,
                     currentTimestamp,
                   );
-                  const appointmentRating =
-                    reviews.find(
-                      (review) => review.appointmentId === appointment.id,
-                    )?.rating ?? appointment.myRating;
+                  const appointmentRating = appointment.myRating;
                   const hasAppointmentRating =
                     appointmentRating !== null &&
                     appointmentRating !== undefined;

@@ -482,9 +482,27 @@ describe('Student pages', () => {
     const completedAppointmentRow = screen.getByTestId(
       'student-appointment-row-student-appointment-5',
     );
-    expect(
-      within(completedAppointmentRow).getByText(/5\/5/i),
-    ).toBeInTheDocument();
+    await user.click(
+      within(completedAppointmentRow).getByRole('button', {
+        name: /calificar paciente ricardo suarez/i,
+      }),
+    );
+
+    const ratingDialog = screen.getByRole('dialog');
+    await user.click(
+      within(ratingDialog).getByRole('button', { name: /5 estrellas/i }),
+    );
+    await user.click(
+      within(ratingDialog).getByRole('button', {
+        name: /enviar valoraci/i,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(
+        within(completedAppointmentRow).getByText(/5\/5/i),
+      ).toBeInTheDocument();
+    });
 
     await user.click(
       within(completedAppointmentRow).getByRole('button', {
