@@ -548,9 +548,21 @@ export function StudentAppointmentsPage() {
         : 'Agenda una cita a partir de una solicitud aceptada, con sede, docente supervisor y tratamientos validos.';
   const filteredAppointments = useMemo(() => {
     const filtered = appointments.filter((appointment) => {
-      const matchesSearch = appointment.patientName
-        .toLowerCase()
-        .includes(normalizedSearch);
+      const practiceSite = practiceSitesBySiteId.get(appointment.siteId);
+      const appointmentSearchText = [
+        appointment.patientName,
+        appointment.appointmentType,
+        appointment.siteName,
+        appointment.city,
+        practiceSite?.locality,
+        appointment.siteAddress,
+        practiceSite?.address,
+        appointment.supervisorName,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      const matchesSearch = appointmentSearchText.includes(normalizedSearch);
       return (
         matchesSearch &&
         (statusFilter === 'all' ||
@@ -580,6 +592,7 @@ export function StudentAppointmentsPage() {
     appointments,
     currentTimestamp,
     normalizedSearch,
+    practiceSitesBySiteId,
     sortOrder,
     statusFilter,
   ]);
@@ -1230,9 +1243,13 @@ export function StudentAppointmentsPage() {
                 className="divide-y divide-slate-200/80 bg-white"
               >
                 {paginatedAppointments.map((appointment) => {
+                  const practiceSite = practiceSitesBySiteId.get(
+                    appointment.siteId,
+                  );
                   const appointmentLocality =
-                    practiceSitesBySiteId.get(appointment.siteId)?.locality ??
-                    appointment.city;
+                    practiceSite?.locality ?? appointment.city;
+                  const appointmentAddress =
+                    appointment.siteAddress ?? practiceSite?.address ?? '';
                   const displayStatus = getAppointmentDisplayStatus(
                     appointment,
                     currentTimestamp,
@@ -1272,7 +1289,15 @@ export function StudentAppointmentsPage() {
                                 className="mt-0.5 h-2.5 w-2.5 shrink-0 text-primary"
                               />
                               <span className="min-w-0 break-words">
-                                {appointment.siteName} - {appointmentLocality}
+                                <span>
+                                  {appointment.siteName} -{' '}
+                                  {appointmentLocality}
+                                </span>
+                                {appointmentAddress ? (
+                                  <span className="block text-[0.6rem] leading-[0.82rem] text-ink-muted">
+                                    {appointmentAddress}
+                                  </span>
+                                ) : null}
                               </span>
                             </p>
                           </div>
@@ -1334,7 +1359,14 @@ export function StudentAppointmentsPage() {
                               className="mt-0.5 h-3 w-3 shrink-0 text-primary sm:h-3 sm:w-3"
                             />
                             <span className="min-w-0 break-words">
-                              {appointment.siteName} - {appointmentLocality}
+                              <span>
+                                {appointment.siteName} - {appointmentLocality}
+                              </span>
+                              {appointmentAddress ? (
+                                <span className="block text-[0.68rem] leading-4 text-ink-muted">
+                                  {appointmentAddress}
+                                </span>
+                              ) : null}
                             </span>
                           </p>
                         </div>

@@ -471,6 +471,7 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
             c.respondida_at?.toISOString() ??
             null,
           siteId: String(pendingReschedule?.nueva_id_sede ?? c.id_sede),
+          siteAddress: displaySite.direccion ?? null,
           siteName: displaySite.nombre,
           startAt: (pendingReschedule?.nueva_fecha_hora_inicio ?? c.fecha_hora_inicio).toISOString(),
           status: pendingReschedule
@@ -651,6 +652,7 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
             cita.respondida_at?.toISOString() ??
             null,
           siteId: String(pendingReschedule?.nueva_id_sede ?? cita.id_sede),
+          siteAddress: displaySite.direccion ?? null,
           siteName: displaySite.nombre,
           startAt: (
             pendingReschedule?.nueva_fecha_hora_inicio ?? cita.fecha_hora_inicio
@@ -1602,7 +1604,7 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       estado: string;
       id_docente_universidad: number;
       tipo_cita: { nombre: string };
-      sede: { nombre: string; localidad: { ciudad: { nombre: string } } };
+      sede: { direccion: string | null; nombre: string; localidad: { ciudad: { nombre: string } } };
       docente_universidad: { docente: { nombres: string; apellidos: string } };
       cita_tratamiento: { id_tipo_tratamiento: number; tipo_tratamiento: { nombre: string } }[];
       reprogramacion_cita?: {
@@ -1613,7 +1615,7 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
         nuevo_id_docente_universidad: number | null;
         nueva_fecha_hora_inicio: Date;
         nueva_fecha_hora_fin: Date;
-        nueva_sede: { nombre: string; localidad: { ciudad: { nombre: string } } } | null;
+        nueva_sede: { direccion: string | null; nombre: string; localidad: { ciudad: { nombre: string } } } | null;
         nuevo_docente_universidad: { docente: { nombres: string; apellidos: string } } | null;
       }[];
       solicitud: { id_solicitud: number; cuenta_paciente: { persona: { nombres: string; apellidos: string } } };
@@ -1647,6 +1649,7 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
         cita.respondida_at?.toISOString() ??
         null,
       siteId: String(pendingReschedule?.nueva_id_sede ?? cita.id_sede),
+      siteAddress: displaySite.direccion ?? null,
       siteName: displaySite.nombre,
       startAt: (pendingReschedule?.nueva_fecha_hora_inicio ?? cita.fecha_hora_inicio).toISOString(),
       status: displayStatus,
@@ -2195,6 +2198,7 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
           updated.sede.localidad.ciudad.nombre,
           updated.fecha_hora_inicio.toISOString(),
           updated.fecha_hora_fin.toISOString(),
+          updated.sede.direccion,
         );
       }
     }
@@ -2275,6 +2279,7 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       requestId: String(cita.solicitud.id_solicitud),
       respondedAt: cita.respondida_at?.toISOString() ?? null,
       siteId: String(cita.id_sede),
+      siteAddress: cita.sede.direccion ?? null,
       siteName: cita.sede.nombre,
       startAt: cita.fecha_hora_inicio.toISOString(),
       status: 'FINALIZADA',

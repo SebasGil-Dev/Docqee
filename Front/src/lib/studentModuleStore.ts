@@ -2069,6 +2069,7 @@ function upsertAppointmentMock(
     requestId: normalized.requestId,
     respondedAt: null,
     siteId: normalized.siteId,
+    siteAddress: site?.address ?? null,
     siteName: site?.name ?? '',
     startAt: buildDateTime(
       normalized.startDate,
@@ -2171,6 +2172,7 @@ function rescheduleAppointmentMock(
     isRescheduleProposal: true,
     respondedAt: null,
     siteId: normalized.siteId,
+    siteAddress: site?.address ?? currentAppointment.siteAddress ?? null,
     siteName: site?.name ?? currentAppointment.siteName,
     startAt: buildDateTime(
       normalized.startDate,

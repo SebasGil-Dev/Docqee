@@ -227,6 +227,8 @@ export function PatientAppointmentsPage() {
         appointment.studentName.toLowerCase().includes(normalizedSearch) ||
         appointment.universityName.toLowerCase().includes(normalizedSearch) ||
         appointment.siteName.toLowerCase().includes(normalizedSearch) ||
+        (appointment.siteAddress?.toLowerCase().includes(normalizedSearch) ??
+          false) ||
         appointment.appointmentType.toLowerCase().includes(normalizedSearch) ||
         appointment.teacherName.toLowerCase().includes(normalizedSearch);
 
@@ -692,7 +694,14 @@ export function PatientAppointmentsPage() {
                                 className="mt-0.5 h-2.5 w-2.5 shrink-0 text-primary"
                               />
                               <span className="min-w-0 break-words">
-                                {appointment.siteName} - {appointment.city}
+                                <span>
+                                  {appointment.siteName} - {appointment.city}
+                                </span>
+                                {appointment.siteAddress ? (
+                                  <span className="block text-[0.6rem] leading-[0.82rem] text-ink-muted">
+                                    {appointment.siteAddress}
+                                  </span>
+                                ) : null}
                               </span>
                             </p>
                           </div>
@@ -754,7 +763,14 @@ export function PatientAppointmentsPage() {
                               className="mt-0.5 h-3 w-3 shrink-0 text-primary sm:h-3 sm:w-3"
                             />
                             <span className="min-w-0 break-words">
-                              {appointment.siteName} - {appointment.city}
+                              <span>
+                                {appointment.siteName} - {appointment.city}
+                              </span>
+                              {appointment.siteAddress ? (
+                                <span className="block text-[0.68rem] leading-4 text-ink-muted">
+                                  {appointment.siteAddress}
+                                </span>
+                              ) : null}
                             </span>
                           </p>
                         </div>

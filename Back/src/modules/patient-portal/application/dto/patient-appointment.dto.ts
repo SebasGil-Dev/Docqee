@@ -8,6 +8,7 @@ export class PatientAppointmentDto {
   isRescheduleProposal!: boolean;
   myRating!: number | null;
   respondedAt!: string | null;
+  siteAddress!: string | null;
   siteName!: string;
   startAt!: string;
   status!: 'PROPUESTA' | 'ACEPTADA' | 'RECHAZADA' | 'CANCELADA' | 'FINALIZADA';

@@ -114,6 +114,7 @@ const studentDirectorySelect =
       select: {
         sede: {
           select: {
+            direccion: true,
             nombre: true,
             localidad: {
               select: {
@@ -180,6 +181,7 @@ type StudentDirectoryRow = {
   practice_site: string | null;
   practice_sites:
     | {
+        address: string | null;
         city: string;
         locality: string;
         name: string;
@@ -684,6 +686,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
   ): PatientStudentDirectoryItemDto {
     const location = this.getStudentDirectoryLocation(student);
     const practiceSites = student.estudiante_sede_practica.map((practice) => ({
+      address: practice.sede.direccion ?? null,
       city: practice.sede.localidad.ciudad.nombre,
       locality: practice.sede.localidad.nombre,
       name: practice.sede.nombre,
@@ -1127,6 +1130,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       LEFT JOIN LATERAL (
         SELECT jsonb_agg(
           jsonb_build_object(
+            'address', s.address,
             'name', s.name,
             'city', s.city,
             'locality', s.locality
@@ -1136,6 +1140,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         FROM (
           SELECT
             sede.nombre AS name,
+            sede.direccion AS address,
             c.nombre AS city,
             l.nombre AS locality,
             esp.fecha_creacion AS created_at,
@@ -1356,6 +1361,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
             pendingReschedule?.fecha_respuesta?.toISOString() ??
             c.respondida_at?.toISOString() ??
             null,
+          siteAddress: displaySite.direccion ?? null,
           siteName: displaySite.nombre,
           startAt: (
             pendingReschedule?.nueva_fecha_hora_inicio ?? c.fecha_hora_inicio
@@ -1522,6 +1528,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
             pendingReschedule?.fecha_respuesta?.toISOString() ??
             cita.respondida_at?.toISOString() ??
             null,
+          siteAddress: displaySite.direccion ?? null,
           siteName: displaySite.nombre,
           startAt: (
             pendingReschedule?.nueva_fecha_hora_inicio ?? cita.fecha_hora_inicio
@@ -2199,6 +2206,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
           updated.sede.localidad.ciudad.nombre,
           updated.fecha_hora_inicio.toISOString(),
           updated.fecha_hora_fin.toISOString(),
+          updated.sede.direccion,
         );
       }
     } else if (payload.status === "ACEPTADA" && !isAlreadyAcceptedResponse) {
@@ -2229,6 +2237,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
           updated.sede.localidad.ciudad.nombre,
           startAt,
           endAt,
+          updated.sede.direccion,
         );
         void this.mailService.sendAppointmentRescheduledToStudent(
           studentEmail,
@@ -2239,6 +2248,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
           updated.sede.localidad.ciudad.nombre,
           startAt,
           endAt,
+          updated.sede.direccion,
         );
       }
     } else if (
@@ -2268,6 +2278,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       isRescheduleProposal: false,
       myRating: null,
       respondedAt: updated.respondida_at?.toISOString() ?? null,
+      siteAddress: updated.sede.direccion ?? null,
       siteName: updated.sede.nombre,
       startAt: updated.fecha_hora_inicio.toISOString(),
       status: updated.estado,
@@ -2355,6 +2366,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       isRescheduleProposal: false,
       myRating: payload.rating,
       respondedAt: cita.respondida_at?.toISOString() ?? null,
+      siteAddress: cita.sede.direccion ?? null,
       siteName: cita.sede.nombre,
       startAt: cita.fecha_hora_inicio.toISOString(),
       status: "FINALIZADA",

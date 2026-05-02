@@ -935,6 +935,11 @@ export function PatientSearchStudentsPage() {
                                       )
                                     : getStudentLocation(student)}
                                 </p>
+                                {visiblePracticeSite?.address ? (
+                                  <p className="truncate text-[0.68rem] text-ink-muted">
+                                    {visiblePracticeSite.address}
+                                  </p>
+                                ) : null}
                               </div>
                             </td>
                             <td className="px-3 py-2">
@@ -1129,6 +1134,11 @@ export function PatientSearchStudentsPage() {
                         <p className="text-xs leading-5 text-ink-muted">
                           {getLocationLabel(site.city, site.locality)}
                         </p>
+                        {site.address ? (
+                          <p className="text-xs leading-5 text-ink-muted">
+                            {site.address}
+                          </p>
+                        ) : null}
                       </div>
                     ))
                   ) : (

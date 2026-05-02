@@ -1,4 +1,5 @@
 export class PatientStudentPracticeSiteDto {
+  address!: string | null;
   city!: string;
   locality!: string;
   name!: string;

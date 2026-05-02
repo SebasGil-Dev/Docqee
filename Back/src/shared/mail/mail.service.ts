@@ -172,6 +172,7 @@ export class MailService {
     city: string,
     startAt: string,
     endAt: string,
+    siteAddress?: string | null,
   ) {
     try {
       await this.client.transactionalEmails.sendTransacEmail({
@@ -183,7 +184,7 @@ export class MailService {
             <h2 style="color:#2563eb;">Nueva propuesta de cita</h2>
             <p>Hola <strong>${patientName}</strong>,</p>
             <p>El estudiante <strong>${studentName}</strong> ha propuesto una cita contigo en Docqee.</p>
-            ${this.appointmentDetailsBlock(appointmentType, siteName, city, startAt, endAt)}
+            ${this.appointmentDetailsBlock(appointmentType, siteName, city, startAt, endAt, siteAddress)}
             <p>Ingresa a la plataforma para aceptar o rechazar la propuesta.</p>
             <p style="color:#666;font-size:13px;">Si tienes dudas, comunícate con el estudiante a través del chat de Docqee.</p>
           </div>
@@ -204,6 +205,7 @@ export class MailService {
     city: string,
     startAt: string,
     endAt: string,
+    siteAddress?: string | null,
   ) {
     try {
       await this.client.transactionalEmails.sendTransacEmail({
@@ -215,7 +217,7 @@ export class MailService {
             <h2 style="color:#16a34a;">¡Tu cita fue aceptada!</h2>
             <p>Hola <strong>${studentName}</strong>,</p>
             <p>El paciente <strong>${patientName}</strong> ha aceptado tu propuesta de cita.</p>
-            ${this.appointmentDetailsBlock(appointmentType, siteName, city, startAt, endAt)}
+            ${this.appointmentDetailsBlock(appointmentType, siteName, city, startAt, endAt, siteAddress)}
             <div style="background:#fef9c3;border-left:4px solid #ca8a04;border-radius:6px;padding:12px 16px;margin:16px 0;font-size:13px;color:#713f12;">
               <strong>Importante:</strong> Una vez confirmada la cita, no es posible cancelarla cuando falten menos de 24 horas para la fecha programada.
             </div>
@@ -238,6 +240,7 @@ export class MailService {
     city: string,
     startAt: string,
     endAt: string,
+    siteAddress?: string | null,
   ) {
     try {
       await this.client.transactionalEmails.sendTransacEmail({
@@ -249,7 +252,7 @@ export class MailService {
             <h2 style="color:#16a34a;">Cita confirmada</h2>
             <p>Hola <strong>${patientName}</strong>,</p>
             <p>Has confirmado tu cita con el estudiante <strong>${studentName}</strong>.</p>
-            ${this.appointmentDetailsBlock(appointmentType, siteName, city, startAt, endAt)}
+            ${this.appointmentDetailsBlock(appointmentType, siteName, city, startAt, endAt, siteAddress)}
             <div style="background:#fef9c3;border-left:4px solid #ca8a04;border-radius:6px;padding:12px 16px;margin:16px 0;font-size:13px;color:#713f12;">
               <strong>Importante:</strong> Una vez confirmada la cita, no es posible cancelarla cuando falten menos de 24 horas para la fecha programada.
             </div>
@@ -272,6 +275,7 @@ export class MailService {
     city: string,
     startAt: string,
     endAt: string,
+    siteAddress?: string | null,
   ) {
     try {
       await this.client.transactionalEmails.sendTransacEmail({
@@ -283,7 +287,7 @@ export class MailService {
             <h2 style="color:#16a34a;">Cita reprogramada exitosamente</h2>
             <p>Hola <strong>${studentName}</strong>,</p>
             <p>El paciente <strong>${patientName}</strong> acepto la reprogramacion de la cita.</p>
-            ${this.appointmentDetailsBlock(appointmentType, siteName, city, startAt, endAt)}
+            ${this.appointmentDetailsBlock(appointmentType, siteName, city, startAt, endAt, siteAddress)}
             <p style="color:#666;font-size:13px;">La cita queda confirmada con esta nueva fecha y hora.</p>
           </div>
         `,
@@ -303,6 +307,7 @@ export class MailService {
     city: string,
     startAt: string,
     endAt: string,
+    siteAddress?: string | null,
   ) {
     try {
       await this.client.transactionalEmails.sendTransacEmail({
@@ -314,7 +319,7 @@ export class MailService {
             <h2 style="color:#16a34a;">Cita reprogramada exitosamente</h2>
             <p>Hola <strong>${patientName}</strong>,</p>
             <p>Confirmaste la reprogramacion de tu cita con el estudiante <strong>${studentName}</strong>.</p>
-            ${this.appointmentDetailsBlock(appointmentType, siteName, city, startAt, endAt)}
+            ${this.appointmentDetailsBlock(appointmentType, siteName, city, startAt, endAt, siteAddress)}
             <p style="color:#666;font-size:13px;">La cita queda confirmada con esta nueva fecha y hora.</p>
           </div>
         `,
@@ -334,6 +339,7 @@ export class MailService {
     city: string,
     startAt: string,
     endAt: string,
+    siteAddress?: string | null,
   ) {
     try {
       await this.client.transactionalEmails.sendTransacEmail({
@@ -345,7 +351,7 @@ export class MailService {
             <h2 style="color:#dc2626;">Cita cancelada</h2>
             <p>Hola <strong>${patientName}</strong>,</p>
             <p>El estudiante <strong>${studentName}</strong> ha cancelado la siguiente cita:</p>
-            ${this.appointmentDetailsBlock(appointmentType, siteName, city, startAt, endAt)}
+            ${this.appointmentDetailsBlock(appointmentType, siteName, city, startAt, endAt, siteAddress)}
             <p style="color:#666;font-size:13px;">Si tienes dudas, comunícate con el estudiante a través del chat de Docqee.</p>
           </div>
         `,
@@ -365,6 +371,7 @@ export class MailService {
     city: string,
     startAt: string,
     endAt: string,
+    siteAddress?: string | null,
   ) {
     try {
       await this.client.transactionalEmails.sendTransacEmail({
@@ -376,7 +383,7 @@ export class MailService {
             <h2 style="color:#dc2626;">Cita cancelada</h2>
             <p>Hola <strong>${studentName}</strong>,</p>
             <p>El paciente <strong>${patientName}</strong> ha cancelado la siguiente cita:</p>
-            ${this.appointmentDetailsBlock(appointmentType, siteName, city, startAt, endAt)}
+            ${this.appointmentDetailsBlock(appointmentType, siteName, city, startAt, endAt, siteAddress)}
             <p style="color:#666;font-size:13px;">Si tienes dudas, comunícate con el paciente a través del chat de Docqee.</p>
           </div>
         `,

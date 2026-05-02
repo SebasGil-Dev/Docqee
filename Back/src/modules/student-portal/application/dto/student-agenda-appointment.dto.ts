@@ -12,6 +12,7 @@ export class StudentAgendaAppointmentDto {
   requestId!: string;
   respondedAt!: string | null;
   siteId!: string;
+  siteAddress!: string | null;
   siteName!: string;
   startAt!: string;
   status!: string;

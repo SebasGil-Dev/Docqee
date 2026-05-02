@@ -1073,6 +1073,7 @@ export type StudentAgendaAppointment = {
   requestId: string;
   respondedAt: string | null;
   siteId: string;
+  siteAddress?: string | null;
   siteName: string;
   startAt: string;
   status: StudentAgendaAppointmentStatus;
@@ -1280,6 +1281,7 @@ export type PatientStudentDirectoryItem = {
 };
 
 export type PatientStudentPracticeSiteSummary = {
+  address?: string | null;
   city: string;
   locality: string;
   name: string;
@@ -1358,6 +1360,7 @@ export type PatientAppointment = {
   isRescheduleProposal?: boolean;
   myRating: number | null;
   respondedAt: string | null;
+  siteAddress?: string | null;
   siteName: string;
   startAt: string;
   status: PatientAppointmentStatus;
