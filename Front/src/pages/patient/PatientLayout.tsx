@@ -11,6 +11,7 @@ import { usePatientPortalNotifications } from '@/lib/portalNotifications';
 import { usePatientModuleStore } from '@/lib/patientModuleStore';
 
 const REQUEST_NOTIFICATION_POLL_INTERVAL_MS = 8_000;
+const APPOINTMENT_SYNC_POLL_INTERVAL_MS = 5_000;
 const MODULE_NOTIFICATION_POLL_INTERVAL_MS = 15_000;
 
 export function PatientLayout() {
@@ -27,6 +28,7 @@ export function PatientLayout() {
     profile,
     requests,
     refresh,
+    refreshAppointments,
     refreshRequests,
   } = usePatientModuleStore({
     autoLoad: shouldAutoLoadPatientModule,
@@ -50,16 +52,27 @@ export function PatientLayout() {
     }
   }, [isLoading, isSearchingStudentsRoute, refresh]);
 
+  const refreshAppointmentsIfVisible = useCallback(() => {
+    if (document.visibilityState === 'visible' && !isLoading) {
+      void refreshAppointments();
+    }
+  }, [isLoading, refreshAppointments]);
+
   useEffect(() => {
     if (IS_TEST_MODE || !shouldAutoLoadPatientModule) {
       return;
     }
 
     refreshRequestsIfVisible();
+    refreshAppointmentsIfVisible();
 
     const requestInterval = setInterval(
       refreshRequestsIfVisible,
       REQUEST_NOTIFICATION_POLL_INTERVAL_MS,
+    );
+    const appointmentInterval = setInterval(
+      refreshAppointmentsIfVisible,
+      APPOINTMENT_SYNC_POLL_INTERVAL_MS,
     );
     const moduleInterval = setInterval(
       refreshModuleIfVisible,
@@ -67,18 +80,27 @@ export function PatientLayout() {
     );
 
     document.addEventListener('visibilitychange', refreshRequestsIfVisible);
+    document.addEventListener('visibilitychange', refreshAppointmentsIfVisible);
     window.addEventListener('focus', refreshRequestsIfVisible);
+    window.addEventListener('focus', refreshAppointmentsIfVisible);
 
     return () => {
       clearInterval(requestInterval);
+      clearInterval(appointmentInterval);
       clearInterval(moduleInterval);
       document.removeEventListener(
         'visibilitychange',
         refreshRequestsIfVisible,
       );
+      document.removeEventListener(
+        'visibilitychange',
+        refreshAppointmentsIfVisible,
+      );
       window.removeEventListener('focus', refreshRequestsIfVisible);
+      window.removeEventListener('focus', refreshAppointmentsIfVisible);
     };
   }, [
+    refreshAppointmentsIfVisible,
     refreshModuleIfVisible,
     refreshRequestsIfVisible,
     shouldAutoLoadPatientModule,

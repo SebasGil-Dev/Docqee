@@ -23,6 +23,10 @@ export function getStudentPortalDashboard() {
   return apiRequest<StudentModuleState>('/student-portal/dashboard');
 }
 
+export function getStudentPortalAppointments() {
+  return apiRequest<StudentAgendaAppointment[]>('/student-portal/appointments');
+}
+
 export function getStudentPortalRequests() {
   return apiRequest<StudentRequest[]>('/student-portal/requests');
 }

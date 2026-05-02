@@ -18,6 +18,7 @@ import { readAuthSession } from '@/lib/authSession';
 import { scheduleSystemMessageDismiss } from '@/lib/systemMessages';
 import {
   createPatientPortalRequest,
+  getPatientPortalAppointments,
   getPatientPortalConversation,
   getPatientPortalDashboard,
   getPatientPortalRequests,
@@ -37,6 +38,7 @@ type PatientModuleActions = {
   ) => Promise<PatientRequest | null>;
   prefetchStudentDirectory: () => Promise<void>;
   refresh: (options?: { preserveStudents?: boolean }) => Promise<void>;
+  refreshAppointments: () => Promise<void>;
   refreshRequests: () => Promise<void>;
   refreshConversation: (conversationId: string) => Promise<void>;
   searchStudents: (
@@ -881,6 +883,7 @@ let nextMessageSequence =
     0,
   ) + 1;
 let runtimeLoadPromise: Promise<PatientStoreState> | null = null;
+let appointmentsRefreshPromise: Promise<void> | null = null;
 let requestsRefreshPromise: Promise<void> | null = null;
 let errorMessageDismissTimerId: number | null = null;
 
@@ -1558,6 +1561,35 @@ export async function refreshPatientModuleState(
   options: { preserveStudents?: boolean } = {},
 ) {
   await loadRuntimeState(true, options);
+}
+
+export async function refreshPatientAppointmentsState() {
+  if (IS_TEST_MODE) {
+    return;
+  }
+
+  if (appointmentsRefreshPromise) {
+    return appointmentsRefreshPromise;
+  }
+
+  appointmentsRefreshPromise = getPatientPortalAppointments()
+    .then((appointments) => {
+      setRuntimeState(
+        {
+          ...state,
+          appointments,
+        },
+        { persistCache: state.isReady },
+      );
+    })
+    .catch(() => {
+      // Background appointment sync should not interrupt the visible workflow.
+    })
+    .finally(() => {
+      appointmentsRefreshPromise = null;
+    });
+
+  return appointmentsRefreshPromise;
 }
 
 function buildMissingConversationsFromRequests(requests: PatientRequest[]) {
@@ -2301,6 +2333,7 @@ export function resetPatientModuleState() {
   studentDirectoryIndexUpdatedAt = 0;
   pendingPatientRequestStudentIds.clear();
   runtimeLoadPromise = null;
+  appointmentsRefreshPromise = null;
   requestsRefreshPromise = null;
   studentSearchCache.clear();
   studentSearchPromises.clear();
@@ -2336,6 +2369,7 @@ export function usePatientModuleStore(
     createRequest,
     prefetchStudentDirectory,
     refresh: refreshPatientModuleState,
+    refreshAppointments: refreshPatientAppointmentsState,
     refreshRequests: refreshPatientRequestsState,
     refreshConversation,
     searchStudents,

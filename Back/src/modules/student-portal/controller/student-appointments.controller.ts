@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   Param,
   ParseIntPipe,
   Patch,
@@ -26,6 +27,11 @@ class UpdateAppointmentStatusDto {
 @UseGuards(JwtAuthGuard)
 export class StudentAppointmentsController {
   constructor(private readonly studentPortalService: StudentPortalService) {}
+
+  @Get()
+  getAppointments(@CurrentUser() user: RequestUser) {
+    return this.studentPortalService.getAppointments(user);
+  }
 
   @Post()
   createAppointment(

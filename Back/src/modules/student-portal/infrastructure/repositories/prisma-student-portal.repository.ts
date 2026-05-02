@@ -548,6 +548,100 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     };
   }
 
+  async getAppointments(
+    studentAccountId: number,
+  ): Promise<StudentAgendaAppointmentDto[]> {
+    await this.finalizeEndedAcceptedAppointmentsForStudent(studentAccountId);
+
+    const solicitudes = await this.prisma.solicitud.findMany({
+      where: {
+        id_cuenta_estudiante: studentAccountId,
+        estado: { notIn: ['CANCELADA', 'RECHAZADA'] },
+      },
+      include: {
+        cuenta_paciente: {
+          include: {
+            persona: true,
+          },
+        },
+        cita: {
+          include: {
+            tipo_cita: true,
+            sede: { include: { localidad: { include: { ciudad: true } } } },
+            docente_universidad: { include: { docente: true } },
+            cita_tratamiento: { include: { tipo_tratamiento: true } },
+            reprogramacion_cita: {
+              where: { estado: 'PENDIENTE' },
+              orderBy: { fecha_creacion: 'desc' },
+              take: 1,
+              include: {
+                nueva_sede: { include: { localidad: { include: { ciudad: true } } } },
+                nuevo_docente_universidad: { include: { docente: true } },
+              },
+            },
+            valoracion: {
+              where: { id_cuenta_emisor: studentAccountId },
+              select: { calificacion: true },
+              take: 1,
+            },
+          },
+        },
+      },
+      orderBy: { fecha_envio: 'desc' },
+    });
+
+    return solicitudes.flatMap((solicitud) =>
+      solicitud.cita.map((cita) => {
+        const pendingReschedule = cita.reprogramacion_cita[0] ?? null;
+        const displaySite = pendingReschedule?.nueva_sede ?? cita.sede;
+        const displaySupervisor =
+          pendingReschedule?.nuevo_docente_universidad ?? cita.docente_universidad;
+
+        return {
+          additionalInfo:
+            pendingReschedule?.motivo ?? cita.informacion_adicional ?? null,
+          appointmentTypeId: String(cita.id_tipo_cita),
+          appointmentType: cita.tipo_cita.nombre,
+          city: displaySite.localidad.ciudad.nombre,
+          createdAt: (
+            pendingReschedule?.fecha_creacion ?? cita.fecha_creacion
+          ).toISOString(),
+          endAt: (
+            pendingReschedule?.nueva_fecha_hora_fin ?? cita.fecha_hora_fin
+          ).toISOString(),
+          id: String(cita.id_cita),
+          isRescheduleProposal: Boolean(pendingReschedule),
+          myRating: cita.valoracion[0]?.calificacion ?? null,
+          patientName: `${solicitud.cuenta_paciente.persona.nombres} ${solicitud.cuenta_paciente.persona.apellidos}`,
+          requestId: String(solicitud.id_solicitud),
+          respondedAt:
+            pendingReschedule?.fecha_respuesta?.toISOString() ??
+            cita.respondida_at?.toISOString() ??
+            null,
+          siteId: String(pendingReschedule?.nueva_id_sede ?? cita.id_sede),
+          siteName: displaySite.nombre,
+          startAt: (
+            pendingReschedule?.nueva_fecha_hora_inicio ?? cita.fecha_hora_inicio
+          ).toISOString(),
+          status: pendingReschedule
+            ? 'REPROGRAMACION_PENDIENTE'
+            : cita.estado,
+          supervisorId: String(
+            pendingReschedule?.nuevo_id_docente_universidad ??
+              cita.id_docente_universidad,
+          ),
+          supervisorName: `${displaySupervisor.docente.nombres} ${displaySupervisor.docente.apellidos}`,
+          treatmentIds: cita.cita_tratamiento.map((tratamiento) =>
+            String(tratamiento.id_tipo_tratamiento),
+          ),
+          treatmentNames: cita.cita_tratamiento.map(
+            (tratamiento) => tratamiento.tipo_tratamiento.nombre,
+          ),
+        };
+      }),
+    );
+  }
+
   async updateProfile(
     studentAccountId: number,
     payload: UpdateStudentProfileDto,

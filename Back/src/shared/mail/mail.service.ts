@@ -263,6 +263,68 @@ export class MailService {
     }
   }
 
+  async sendAppointmentRescheduledToStudent(
+    to: string,
+    studentName: string,
+    patientName: string,
+    appointmentType: string,
+    siteName: string,
+    city: string,
+    startAt: string,
+    endAt: string,
+  ) {
+    try {
+      await this.client.transactionalEmails.sendTransacEmail({
+        sender: { email: this.from },
+        to: [{ email: to }],
+        subject: 'Cita reprogramada exitosamente - Docqee',
+        htmlContent: `
+          <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1a1a2e;">
+            <h2 style="color:#16a34a;">Cita reprogramada exitosamente</h2>
+            <p>Hola <strong>${studentName}</strong>,</p>
+            <p>El paciente <strong>${patientName}</strong> acepto la reprogramacion de la cita.</p>
+            ${this.appointmentDetailsBlock(appointmentType, siteName, city, startAt, endAt)}
+            <p style="color:#666;font-size:13px;">La cita queda confirmada con esta nueva fecha y hora.</p>
+          </div>
+        `,
+      });
+      this.logger.log(`Appointment rescheduled email sent to student ${to}`);
+    } catch (error) {
+      this.logger.error(`Failed to send appointment rescheduled email to student ${to}`, error);
+    }
+  }
+
+  async sendAppointmentRescheduledToPatient(
+    to: string,
+    patientName: string,
+    studentName: string,
+    appointmentType: string,
+    siteName: string,
+    city: string,
+    startAt: string,
+    endAt: string,
+  ) {
+    try {
+      await this.client.transactionalEmails.sendTransacEmail({
+        sender: { email: this.from },
+        to: [{ email: to }],
+        subject: 'Tu cita fue reprogramada - Docqee',
+        htmlContent: `
+          <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1a1a2e;">
+            <h2 style="color:#16a34a;">Cita reprogramada exitosamente</h2>
+            <p>Hola <strong>${patientName}</strong>,</p>
+            <p>Confirmaste la reprogramacion de tu cita con el estudiante <strong>${studentName}</strong>.</p>
+            ${this.appointmentDetailsBlock(appointmentType, siteName, city, startAt, endAt)}
+            <p style="color:#666;font-size:13px;">La cita queda confirmada con esta nueva fecha y hora.</p>
+          </div>
+        `,
+      });
+      this.logger.log(`Appointment rescheduled email sent to patient ${to}`);
+    } catch (error) {
+      this.logger.error(`Failed to send appointment rescheduled email to patient ${to}`, error);
+    }
+  }
+
   async sendAppointmentCancelledToPatient(
     to: string,
     patientName: string,

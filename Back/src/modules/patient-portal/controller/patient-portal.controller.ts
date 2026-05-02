@@ -40,6 +40,11 @@ export class PatientPortalController {
     return this.patientPortalService.getRequests(user);
   }
 
+  @Get('appointments')
+  getAppointments(@CurrentUser() user: RequestUser) {
+    return this.patientPortalService.getAppointments(user);
+  }
+
   @Get('students')
   getStudentDirectory(
     @CurrentUser() user: RequestUser,

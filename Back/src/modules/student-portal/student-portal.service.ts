@@ -23,6 +23,10 @@ export class StudentPortalService {
     return this.studentPortalRepository.getDashboard(user.id);
   }
 
+  getAppointments(user: RequestUser) {
+    return this.studentPortalRepository.getAppointments(user.id);
+  }
+
   getRequests(user: RequestUser) {
     return this.studentPortalRepository.getRequests(user.id);
   }

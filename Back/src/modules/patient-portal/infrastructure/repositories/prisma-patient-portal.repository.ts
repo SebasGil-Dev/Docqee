@@ -1418,6 +1418,86 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     };
   }
 
+  async getAppointments(
+    patientAccountId: number,
+  ): Promise<PatientAppointmentDto[]> {
+    await this.finalizeEndedAcceptedAppointmentsForPatient(patientAccountId);
+
+    const solicitudes = await this.prisma.solicitud.findMany({
+      where: { id_cuenta_paciente: patientAccountId },
+      include: {
+        cuenta_estudiante: {
+          include: {
+            persona: true,
+            universidad: true,
+          },
+        },
+        cita: {
+          include: {
+            tipo_cita: true,
+            sede: { include: { localidad: { include: { ciudad: true } } } },
+            docente_universidad: { include: { docente: true } },
+            reprogramacion_cita: {
+              where: { estado: "PENDIENTE" },
+              orderBy: { fecha_creacion: "desc" },
+              take: 1,
+              include: {
+                nueva_sede: {
+                  include: { localidad: { include: { ciudad: true } } },
+                },
+                nuevo_docente_universidad: { include: { docente: true } },
+              },
+            },
+            valoracion: {
+              where: { id_cuenta_emisor: patientAccountId },
+              select: { calificacion: true },
+              take: 1,
+            },
+          },
+        },
+      },
+      orderBy: { fecha_envio: "desc" },
+    });
+
+    return solicitudes.flatMap((solicitud) =>
+      solicitud.cita.map((cita) => {
+        const pendingReschedule = cita.reprogramacion_cita[0] ?? null;
+        const displaySite = pendingReschedule?.nueva_sede ?? cita.sede;
+        const displayTeacher =
+          pendingReschedule?.nuevo_docente_universidad ??
+          cita.docente_universidad;
+
+        return {
+          additionalInfo:
+            pendingReschedule?.motivo ?? cita.informacion_adicional ?? null,
+          appointmentType: cita.tipo_cita.nombre,
+          city: displaySite.localidad.ciudad.nombre,
+          createdAt: (
+            pendingReschedule?.fecha_creacion ?? cita.fecha_creacion
+          ).toISOString(),
+          endAt: (
+            pendingReschedule?.nueva_fecha_hora_fin ?? cita.fecha_hora_fin
+          ).toISOString(),
+          id: String(cita.id_cita),
+          isRescheduleProposal: Boolean(pendingReschedule),
+          myRating: cita.valoracion[0]?.calificacion ?? null,
+          respondedAt:
+            pendingReschedule?.fecha_respuesta?.toISOString() ??
+            cita.respondida_at?.toISOString() ??
+            null,
+          siteName: displaySite.nombre,
+          startAt: (
+            pendingReschedule?.nueva_fecha_hora_inicio ?? cita.fecha_hora_inicio
+          ).toISOString(),
+          status: pendingReschedule ? "PROPUESTA" : cita.estado,
+          studentName: `${solicitud.cuenta_estudiante.persona.nombres} ${solicitud.cuenta_estudiante.persona.apellidos}`,
+          teacherName: `${displayTeacher.docente.nombres} ${displayTeacher.docente.apellidos}`,
+          universityName: solicitud.cuenta_estudiante.universidad.nombre,
+        };
+      }),
+    );
+  }
+
   async updateProfile(
     patientAccountId: number,
     payload: UpdatePatientProfileDto,
@@ -2092,6 +2172,38 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
           ? "El paciente acepto la reprogramacion de tu cita."
           : "El paciente acepto tu propuesta de cita.",
       });
+
+      if (isRescheduleResponse) {
+        const patientEmail =
+          updated.solicitud.cuenta_paciente.cuenta_acceso.correo;
+        const studentEmail =
+          updated.solicitud.cuenta_estudiante.cuenta_acceso.correo;
+        const patientName = `${updated.solicitud.cuenta_paciente.persona.nombres} ${updated.solicitud.cuenta_paciente.persona.apellidos}`;
+        const studentName = `${updated.solicitud.cuenta_estudiante.persona.nombres} ${updated.solicitud.cuenta_estudiante.persona.apellidos}`;
+        const startAt = updated.fecha_hora_inicio.toISOString();
+        const endAt = updated.fecha_hora_fin.toISOString();
+
+        void this.mailService.sendAppointmentRescheduledToPatient(
+          patientEmail,
+          patientName,
+          studentName,
+          updated.tipo_cita.nombre,
+          updated.sede.nombre,
+          updated.sede.localidad.ciudad.nombre,
+          startAt,
+          endAt,
+        );
+        void this.mailService.sendAppointmentRescheduledToStudent(
+          studentEmail,
+          studentName,
+          patientName,
+          updated.tipo_cita.nombre,
+          updated.sede.nombre,
+          updated.sede.localidad.ciudad.nombre,
+          startAt,
+          endAt,
+        );
+      }
     } else if (
       payload.status === "RECHAZADA" &&
       !isAlreadyRejectedRescheduleResponse

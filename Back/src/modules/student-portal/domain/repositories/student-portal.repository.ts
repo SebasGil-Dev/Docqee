@@ -17,6 +17,8 @@ import { UpsertStudentScheduleBlockDto } from '../../application/dto/upsert-stud
 export abstract class StudentPortalRepository {
   abstract getDashboard(studentAccountId: number): Promise<StudentPortalDashboardDto>;
 
+  abstract getAppointments(studentAccountId: number): Promise<StudentAgendaAppointmentDto[]>;
+
   abstract getRequests(studentAccountId: number): Promise<StudentRequestDto[]>;
 
   abstract getUniversitySites(studentAccountId: number): Promise<StudentPracticeSiteDto[]>;

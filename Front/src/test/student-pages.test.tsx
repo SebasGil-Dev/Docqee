@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { MemoryRouterProps } from 'react-router-dom';
 import { MemoryRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ROUTES } from '@/constants/routes';
 import { resetStudentModuleState } from '@/lib/studentModuleStore';
@@ -16,6 +16,8 @@ import {
   getStudentDisplayName,
   StudentTreatmentsPage,
 } from '@/pages/student/treatments/StudentTreatmentsPage';
+
+const TEST_NOW = new Date('2026-04-27T12:00:00.000-05:00');
 
 function renderStudentApp(
   initialEntries: MemoryRouterProps['initialEntries'] = [ROUTES.studentProfile],
@@ -89,9 +91,15 @@ async function selectTimeValue(
 describe('Student pages', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(TEST_NOW);
     window.localStorage.clear();
     mockStudentViewport(false);
     resetStudentModuleState();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('formatea el nombre del estudiante segun el tamano de pantalla', () => {
@@ -377,7 +385,9 @@ describe('Student pages', () => {
       screen.getByRole('button', { name: /^Semana$/i }),
     ).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /agregar bloqueo/i }));
+    await user.click(
+      screen.getAllByRole('button', { name: /agregar bloqueo/i })[0],
+    );
 
     const createDialog = screen.getByRole('dialog', {
       name: /agregar bloqueo/i,
@@ -595,9 +605,9 @@ describe('Student pages', () => {
       .getAllByRole('row')
       .slice(1)
       .map((row) => row.textContent ?? '');
+    expect(initialRequestRows).toHaveLength(2);
     expect(initialRequestRows[0]).toMatch(/ana maria perez/i);
     expect(initialRequestRows[1]).toMatch(/julian torres/i);
-    expect(initialRequestRows.at(-1)).toMatch(/claudia moreno/i);
     expect(
       within(
         screen.getByTestId('student-request-row-student-request-1'),

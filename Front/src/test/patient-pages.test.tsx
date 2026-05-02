@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { MemoryRouterProps } from 'react-router-dom';
 import { MemoryRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ROUTES } from '@/constants/routes';
 import { resetPatientModuleState } from '@/lib/patientModuleStore';
@@ -14,6 +14,8 @@ import { PatientLayout } from '@/pages/patient/PatientLayout';
 import { PatientProfilePage } from '@/pages/patient/profile/PatientProfilePage';
 import { PatientRequestsPage } from '@/pages/patient/requests/PatientRequestsPage';
 import { PatientSearchStudentsPage } from '@/pages/patient/search/PatientSearchStudentsPage';
+
+const TEST_NOW = new Date('2026-04-27T12:00:00.000-05:00');
 
 function renderPatientApp(
   initialEntries: MemoryRouterProps['initialEntries'] = [ROUTES.patientHome],
@@ -41,8 +43,14 @@ function renderPatientApp(
 
 describe('Patient pages', () => {
   beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(TEST_NOW);
     window.localStorage.clear();
     resetPatientModuleState();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('permite actualizar el perfil del paciente', async () => {

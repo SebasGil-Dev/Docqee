@@ -43,6 +43,10 @@ export function getPatientPortalDashboard() {
   return apiRequest<PatientModuleState>('/patient-portal/dashboard');
 }
 
+export function getPatientPortalAppointments() {
+  return apiRequest<PatientAppointment[]>('/patient-portal/appointments');
+}
+
 export function getPatientPortalRequests() {
   return apiRequest<PatientRequest[]>('/patient-portal/requests');
 }

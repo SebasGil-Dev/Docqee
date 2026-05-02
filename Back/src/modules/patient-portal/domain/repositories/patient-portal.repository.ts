@@ -15,6 +15,8 @@ import { UpdatePatientRequestStatusDto } from '../../application/dto/update-pati
 export abstract class PatientPortalRepository {
   abstract getDashboard(patientAccountId: number): Promise<PatientPortalDashboardDto>;
 
+  abstract getAppointments(patientAccountId: number): Promise<PatientAppointmentDto[]>;
+
   abstract getRequests(patientAccountId: number): Promise<PatientRequestDto[]>;
 
   abstract getStudentDirectory(

@@ -28,6 +28,7 @@ import {
   createStudentPortalAppointment,
   createStudentPortalScheduleBlock,
   deleteStudentPortalScheduleBlock,
+  getStudentPortalAppointments,
   getStudentPortalConversation,
   getStudentPortalDashboard,
   getStudentPortalRequests,
@@ -51,6 +52,7 @@ import {
 type StudentModuleActions = {
   deleteScheduleBlock: (blockId: string) => Promise<boolean>;
   refresh: () => Promise<void>;
+  refreshAppointments: () => Promise<void>;
   refreshRequests: () => Promise<void>;
   refreshConversation: (conversationId: string) => Promise<void>;
   updateAppointmentStatus: (
@@ -1187,6 +1189,7 @@ let nextConversationMessageSequence =
     0,
   ) + 1;
 let runtimeLoadPromise: Promise<StudentStoreState> | null = null;
+let appointmentsRefreshPromise: Promise<void> | null = null;
 let requestsRefreshPromise: Promise<void> | null = null;
 let errorMessageDismissTimerId: number | null = null;
 const pendingRequestResponseIds = new Set<string>();
@@ -1226,6 +1229,7 @@ function resetRuntimeStateForSession(nextUserId: number | null) {
   runtimeStateOwnerUserId = nextUserId;
   syncStudentRuntimeSequences(createEmptyRuntimeModuleState());
   runtimeLoadPromise = null;
+  appointmentsRefreshPromise = null;
   requestsRefreshPromise = null;
   pendingRequestResponseIds.clear();
   conversationRefreshPromises.clear();
@@ -2403,6 +2407,32 @@ export async function refreshStudentModuleState() {
   await loadRuntimeState(true);
 }
 
+export async function refreshStudentAppointmentsState() {
+  if (IS_TEST_MODE) {
+    return;
+  }
+
+  if (appointmentsRefreshPromise) {
+    return appointmentsRefreshPromise;
+  }
+
+  appointmentsRefreshPromise = getStudentPortalAppointments()
+    .then((appointments) => {
+      updateState({
+        ...state,
+        appointments,
+      });
+    })
+    .catch(() => {
+      // Background appointment sync should not interrupt the visible workflow.
+    })
+    .finally(() => {
+      appointmentsRefreshPromise = null;
+    });
+
+  return appointmentsRefreshPromise;
+}
+
 export async function refreshStudentRequestsState() {
   if (IS_TEST_MODE) {
     return;
@@ -3216,6 +3246,7 @@ export function resetStudentModuleState() {
     IS_TEST_MODE ? initialMockState : createEmptyRuntimeModuleState(),
   );
   runtimeLoadPromise = null;
+  appointmentsRefreshPromise = null;
   requestsRefreshPromise = null;
   pendingRequestResponseIds.clear();
   conversationRefreshPromises.clear();
@@ -3253,6 +3284,7 @@ export function useStudentModuleStore(
   const actions: StudentModuleActions = {
     deleteScheduleBlock,
     refresh: refreshStudentModuleState,
+    refreshAppointments: refreshStudentAppointmentsState,
     refreshRequests: refreshStudentRequestsState,
     refreshConversation,
     updateAppointmentStatus,

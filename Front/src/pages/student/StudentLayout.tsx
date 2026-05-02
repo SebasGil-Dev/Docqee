@@ -14,6 +14,7 @@ import { useStudentPortalNotifications } from '@/lib/portalNotifications';
 import { useStudentModuleStore } from '@/lib/studentModuleStore';
 
 const REQUEST_NOTIFICATION_POLL_INTERVAL_MS = 8_000;
+const APPOINTMENT_SYNC_POLL_INTERVAL_MS = 5_000;
 const MODULE_NOTIFICATION_POLL_INTERVAL_MS = 30_000;
 
 export function StudentLayout() {
@@ -30,6 +31,7 @@ export function StudentLayout() {
     profile,
     requests,
     refresh,
+    refreshAppointments,
     refreshRequests,
   } = useStudentModuleStore({
     autoLoad: shouldAutoLoadStudentModule,
@@ -53,16 +55,27 @@ export function StudentLayout() {
     }
   }, [isLoading, refresh]);
 
+  const refreshAppointmentsIfVisible = useCallback(() => {
+    if (document.visibilityState === 'visible' && !isLoading) {
+      void refreshAppointments();
+    }
+  }, [isLoading, refreshAppointments]);
+
   useEffect(() => {
     if (IS_TEST_MODE || !shouldAutoLoadStudentModule) {
       return;
     }
 
     refreshRequestsIfVisible();
+    refreshAppointmentsIfVisible();
 
     const requestInterval = setInterval(
       refreshRequestsIfVisible,
       REQUEST_NOTIFICATION_POLL_INTERVAL_MS,
+    );
+    const appointmentInterval = setInterval(
+      refreshAppointmentsIfVisible,
+      APPOINTMENT_SYNC_POLL_INTERVAL_MS,
     );
     const moduleInterval = setInterval(
       refreshModuleIfVisible,
@@ -70,18 +83,27 @@ export function StudentLayout() {
     );
 
     document.addEventListener('visibilitychange', refreshRequestsIfVisible);
+    document.addEventListener('visibilitychange', refreshAppointmentsIfVisible);
     window.addEventListener('focus', refreshRequestsIfVisible);
+    window.addEventListener('focus', refreshAppointmentsIfVisible);
 
     return () => {
       clearInterval(requestInterval);
+      clearInterval(appointmentInterval);
       clearInterval(moduleInterval);
       document.removeEventListener(
         'visibilitychange',
         refreshRequestsIfVisible,
       );
+      document.removeEventListener(
+        'visibilitychange',
+        refreshAppointmentsIfVisible,
+      );
       window.removeEventListener('focus', refreshRequestsIfVisible);
+      window.removeEventListener('focus', refreshAppointmentsIfVisible);
     };
   }, [
+    refreshAppointmentsIfVisible,
     refreshModuleIfVisible,
     refreshRequestsIfVisible,
     shouldAutoLoadStudentModule,
