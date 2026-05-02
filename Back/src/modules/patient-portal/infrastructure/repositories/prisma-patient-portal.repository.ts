@@ -404,6 +404,59 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     );
   }
 
+  private getDatabaseErrorMessage(error: unknown) {
+    if (!(error instanceof Error)) {
+      return "";
+    }
+
+    const postgresMessage = error.message.match(/message: "([^"]+)"/)?.[1];
+
+    if (postgresMessage) {
+      return postgresMessage;
+    }
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      const databaseError = error.meta?.database_error;
+
+      if (typeof databaseError === "string") {
+        return databaseError;
+      }
+    }
+
+    return error.message;
+  }
+
+  private getCreateRequestConstraintMessage(error: unknown) {
+    const message = this.getDatabaseErrorMessage(error);
+
+    if (!message) {
+      return null;
+    }
+
+    if (
+      message.includes("Límite excedido") ||
+      message.includes("Limite excedido") ||
+      message.includes("no puede enviar más de 3 solicitudes") ||
+      message.includes("no puede enviar mas de 3 solicitudes")
+    ) {
+      return "Alcanzaste el limite de 3 solicitudes en 24 horas. Intenta nuevamente mas tarde.";
+    }
+
+    if (message.includes("Ya existe otra solicitud activa")) {
+      return "Ya tienes una solicitud activa con este estudiante.";
+    }
+
+    if (message.includes("cuenta del paciente debe estar ACTIVA")) {
+      return "Tu cuenta debe estar activa para crear solicitudes.";
+    }
+
+    if (message.includes("cuenta del estudiante debe estar ACTIVA")) {
+      return "El estudiante seleccionado no esta disponible para recibir solicitudes.";
+    }
+
+    return null;
+  }
+
   private async createNotificationSafely(
     data: Prisma.notificacionUncheckedCreateInput,
   ) {
@@ -1573,6 +1626,18 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         if (fallbackRequest) {
           return this.toRequestDto(fallbackRequest);
         }
+      }
+
+      const constraintMessage = this.getCreateRequestConstraintMessage(error);
+
+      if (constraintMessage) {
+        throw new BadRequestException(constraintMessage);
+      }
+
+      if (this.isDatabaseConstraintError(error)) {
+        throw new BadRequestException(
+          "No pudimos crear la solicitud porque no cumple las reglas actuales.",
+        );
       }
 
       throw error;
