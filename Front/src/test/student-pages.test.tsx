@@ -692,7 +692,7 @@ describe('Student pages', () => {
       .getAllByRole('row')
       .slice(1)
       .map((row) => row.textContent ?? '');
-    expect(acceptedRequestRows.at(-1)).toMatch(/ana maria perez/i);
+    expect(acceptedRequestRows[0]).toMatch(/ana maria perez/i);
   });
 
   it('pide confirmacion en movil antes de aceptar una solicitud', async () => {

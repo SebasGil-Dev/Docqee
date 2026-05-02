@@ -151,7 +151,7 @@ function getRequestStatusPriority(status: StudentRequestStatus) {
   }
 }
 
-function getRequestResponseTime(request: StudentRequest) {
+function getRequestRecencyTime(request: StudentRequest) {
   return new Date(request.responseAt ?? request.sentAt).getTime();
 }
 
@@ -504,14 +504,12 @@ export function StudentRequestsPage() {
             return priorityDifference;
           }
 
-          if (
-            left.request.status === 'ACEPTADA' &&
-            right.request.status === 'ACEPTADA'
-          ) {
-            return (
-              getRequestResponseTime(left.request) -
-              getRequestResponseTime(right.request)
-            );
+          const recencyDifference =
+            getRequestRecencyTime(right.request) -
+            getRequestRecencyTime(left.request);
+
+          if (recencyDifference !== 0) {
+            return recencyDifference;
           }
 
           return left.index - right.index;
