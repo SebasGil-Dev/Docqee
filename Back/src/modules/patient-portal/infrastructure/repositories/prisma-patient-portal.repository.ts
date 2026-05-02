@@ -29,11 +29,12 @@ import { PatientPortalRepository } from "../../domain/repositories/patient-porta
 
 const PATIENT_RESCHEDULE_RESPONSE_ERROR_MESSAGE =
   "No pudimos responder la propuesta porque ya no cumple las reglas de agenda. Coordina con el estudiante una nueva fecha.";
-const APPOINTMENT_CHANGE_NOTICE_HOURS = 48;
-const APPOINTMENT_CHANGE_NOTICE_MS =
-  APPOINTMENT_CHANGE_NOTICE_HOURS * 60 * 60 * 1000;
+const RESCHEDULE_NOTICE_HOURS = 8;
+const RESCHEDULE_NOTICE_MS = RESCHEDULE_NOTICE_HOURS * 60 * 60 * 1000;
+const CANCEL_NOTICE_HOURS = 24;
+const CANCEL_NOTICE_MS = CANCEL_NOTICE_HOURS * 60 * 60 * 1000;
 const PATIENT_CANCEL_NOTICE_ERROR_MESSAGE =
-  "No puedes cancelar esta cita porque faltan menos de 48 horas para la hora programada.";
+  "No puedes cancelar esta cita porque faltan menos de 24 horas para la hora programada.";
 
 type AppointmentReminderCita = {
   estado: string;
@@ -359,8 +360,9 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
   private assertAppointmentHasMinimumNotice(
     startAt: Date,
     errorMessage = PATIENT_RESCHEDULE_RESPONSE_ERROR_MESSAGE,
+    noticeMs = RESCHEDULE_NOTICE_MS,
   ) {
-    const earliestStartAt = new Date(Date.now() + APPOINTMENT_CHANGE_NOTICE_MS);
+    const earliestStartAt = new Date(Date.now() + noticeMs);
 
     if (
       this.floorDateToMinute(startAt) <=
@@ -374,6 +376,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     this.assertAppointmentHasMinimumNotice(
       startAt,
       PATIENT_CANCEL_NOTICE_ERROR_MESSAGE,
+      CANCEL_NOTICE_MS,
     );
   }
 

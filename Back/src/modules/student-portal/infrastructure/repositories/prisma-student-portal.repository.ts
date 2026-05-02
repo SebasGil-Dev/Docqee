@@ -23,15 +23,16 @@ import { StudentSupervisorDto } from '../../application/dto/student-supervisor.d
 import { StudentTreatmentDto } from '../../application/dto/student-treatment.dto';
 import { StudentPortalRepository } from '../../domain/repositories/student-portal.repository';
 
-const APPOINTMENT_CHANGE_NOTICE_HOURS = 48;
-const APPOINTMENT_CHANGE_NOTICE_MS =
-  APPOINTMENT_CHANGE_NOTICE_HOURS * 60 * 60 * 1000;
+const RESCHEDULE_NOTICE_HOURS = 8;
+const RESCHEDULE_NOTICE_MS = RESCHEDULE_NOTICE_HOURS * 60 * 60 * 1000;
+const CANCEL_NOTICE_HOURS = 24;
+const CANCEL_NOTICE_MS = CANCEL_NOTICE_HOURS * 60 * 60 * 1000;
 const RESCHEDULE_NOTICE_ERROR_MESSAGE =
-  'No se puede reprogramar esta cita porque esta demasiado proxima o la fecha propuesta no cumple las reglas de agenda. Elige un horario con mas de 48 horas de anticipacion.';
+  'No se puede reprogramar esta cita porque esta demasiado proxima o la fecha propuesta no cumple las reglas de agenda. Elige un horario con mas de 8 horas de anticipacion.';
 const CREATE_APPOINTMENT_ERROR_MESSAGE =
   'No se pudo agendar la cita porque la fecha u hora no cumple las reglas de agenda.';
 const STUDENT_CANCEL_NOTICE_ERROR_MESSAGE =
-  'No se puede cancelar esta cita porque faltan menos de 48 horas para la hora programada.';
+  'No se puede cancelar esta cita porque faltan menos de 24 horas para la hora programada.';
 
 type StudentRequestPatientReviewRecord = {
   calificacion: number;
@@ -1510,7 +1511,7 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
   }
 
   private assertAppointmentHasMinimumNotice(startAt: Date) {
-    const earliestStartAt = new Date(Date.now() + APPOINTMENT_CHANGE_NOTICE_MS);
+    const earliestStartAt = new Date(Date.now() + RESCHEDULE_NOTICE_MS);
 
     if (this.floorDateToMinute(startAt) <= this.floorDateToMinute(earliestStartAt)) {
       throw new BadRequestException(RESCHEDULE_NOTICE_ERROR_MESSAGE);
@@ -1518,7 +1519,7 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
   }
 
   private assertAppointmentCanBeCancelled(startAt: Date) {
-    const earliestStartAt = new Date(Date.now() + APPOINTMENT_CHANGE_NOTICE_MS);
+    const earliestStartAt = new Date(Date.now() + CANCEL_NOTICE_MS);
 
     if (this.floorDateToMinute(startAt) <= this.floorDateToMinute(earliestStartAt)) {
       throw new BadRequestException(STUDENT_CANCEL_NOTICE_ERROR_MESSAGE);

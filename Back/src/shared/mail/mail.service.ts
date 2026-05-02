@@ -217,7 +217,7 @@ export class MailService {
             <p>El paciente <strong>${patientName}</strong> ha aceptado tu propuesta de cita.</p>
             ${this.appointmentDetailsBlock(appointmentType, siteName, city, startAt, endAt)}
             <div style="background:#fef9c3;border-left:4px solid #ca8a04;border-radius:6px;padding:12px 16px;margin:16px 0;font-size:13px;color:#713f12;">
-              <strong>Importante:</strong> Una vez confirmada la cita, no es posible cancelarla cuando falten menos de 48 horas para la fecha programada.
+              <strong>Importante:</strong> Una vez confirmada la cita, no es posible cancelarla cuando falten menos de 24 horas para la fecha programada.
             </div>
             <p style="color:#666;font-size:13px;">Asegúrate de estar disponible en la fecha y hora indicadas.</p>
           </div>
@@ -251,7 +251,7 @@ export class MailService {
             <p>Has confirmado tu cita con el estudiante <strong>${studentName}</strong>.</p>
             ${this.appointmentDetailsBlock(appointmentType, siteName, city, startAt, endAt)}
             <div style="background:#fef9c3;border-left:4px solid #ca8a04;border-radius:6px;padding:12px 16px;margin:16px 0;font-size:13px;color:#713f12;">
-              <strong>Importante:</strong> Una vez confirmada la cita, no es posible cancelarla cuando falten menos de 48 horas para la fecha programada.
+              <strong>Importante:</strong> Una vez confirmada la cita, no es posible cancelarla cuando falten menos de 24 horas para la fecha programada.
             </div>
             <p style="color:#666;font-size:13px;">Si necesitas reprogramar, contáctate con el estudiante desde el chat de Docqee.</p>
           </div>
