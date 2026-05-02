@@ -930,9 +930,33 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     const rawDow = bogotaStart.getUTCDay();
     const bogotaDow = rawDow === 0 ? 7 : rawDow;
 
-    const blocks = await this.prisma.horario_bloqueado.findMany({
-      where: { id_cuenta_estudiante: studentAccountId, estado: 'ACTIVO' },
-    });
+    const [blocks, conflictingAppointments, pendingRescheduleConflicts] = await Promise.all([
+      this.prisma.horario_bloqueado.findMany({
+        where: { id_cuenta_estudiante: studentAccountId, estado: 'ACTIVO' },
+      }),
+      this.prisma.cita.findMany({
+        where: {
+          solicitud: { id_cuenta_estudiante: studentAccountId },
+          estado: { in: ['PROPUESTA', 'ACEPTADA'] },
+          ...(excludeAppointmentId !== undefined ? { id_cita: { not: excludeAppointmentId } } : {}),
+          fecha_hora_inicio: { lt: normalizedEndAt },
+          fecha_hora_fin: { gt: normalizedStartAt },
+        },
+        include: { tipo_cita: true },
+      }),
+      this.prisma.reprogramacion_cita.findMany({
+        where: {
+          estado: 'PENDIENTE',
+          ...(excludeAppointmentId !== undefined ? { id_cita: { not: excludeAppointmentId } } : {}),
+          nueva_fecha_hora_inicio: { lt: normalizedEndAt },
+          nueva_fecha_hora_fin: { gt: normalizedStartAt },
+          cita: {
+            solicitud: { id_cuenta_estudiante: studentAccountId },
+          },
+        },
+        include: { cita: { include: { tipo_cita: true } } },
+      }),
+    ]);
 
     for (const block of blocks) {
       const blockStartMin = block.hora_inicio.getUTCHours() * 60 + block.hora_inicio.getUTCMinutes();
@@ -955,17 +979,6 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       }
     }
 
-    const conflictingAppointments = await this.prisma.cita.findMany({
-      where: {
-        solicitud: { id_cuenta_estudiante: studentAccountId },
-        estado: { in: ['PROPUESTA', 'ACEPTADA'] },
-        ...(excludeAppointmentId !== undefined ? { id_cita: { not: excludeAppointmentId } } : {}),
-        fecha_hora_inicio: { lt: normalizedEndAt },
-        fecha_hora_fin: { gt: normalizedStartAt },
-      },
-      include: { tipo_cita: true },
-    });
-
     const conflicting = conflictingAppointments.find((appointment) =>
       this.minuteRangesOverlap(
         normalizedStartAt,
@@ -978,19 +991,6 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     if (conflicting) {
       return `Ya tienes una cita (${conflicting.tipo_cita.nombre}) programada para ese horario.`;
     }
-
-    const pendingRescheduleConflicts = await this.prisma.reprogramacion_cita.findMany({
-      where: {
-        estado: 'PENDIENTE',
-        ...(excludeAppointmentId !== undefined ? { id_cita: { not: excludeAppointmentId } } : {}),
-        nueva_fecha_hora_inicio: { lt: normalizedEndAt },
-        nueva_fecha_hora_fin: { gt: normalizedStartAt },
-        cita: {
-          solicitud: { id_cuenta_estudiante: studentAccountId },
-        },
-      },
-      include: { cita: { include: { tipo_cita: true } } },
-    });
 
     const pendingRescheduleConflict = pendingRescheduleConflicts.find((reschedule) =>
       this.minuteRangesOverlap(
@@ -1016,16 +1016,30 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
   ): Promise<string | null> {
     const normalizedStartAt = this.floorDateToMinute(startAt);
     const normalizedEndAt = this.floorDateToMinute(endAt);
-    const conflictingAppointments = await this.prisma.cita.findMany({
-      where: {
-        solicitud: { id_cuenta_paciente: patientAccountId },
-        estado: { in: ['PROPUESTA', 'ACEPTADA'] },
-        ...(excludeAppointmentId !== undefined ? { id_cita: { not: excludeAppointmentId } } : {}),
-        fecha_hora_inicio: { lt: normalizedEndAt },
-        fecha_hora_fin: { gt: normalizedStartAt },
-      },
-      include: { tipo_cita: true },
-    });
+    const [conflictingAppointments, pendingRescheduleConflicts] = await Promise.all([
+      this.prisma.cita.findMany({
+        where: {
+          solicitud: { id_cuenta_paciente: patientAccountId },
+          estado: { in: ['PROPUESTA', 'ACEPTADA'] },
+          ...(excludeAppointmentId !== undefined ? { id_cita: { not: excludeAppointmentId } } : {}),
+          fecha_hora_inicio: { lt: normalizedEndAt },
+          fecha_hora_fin: { gt: normalizedStartAt },
+        },
+        include: { tipo_cita: true },
+      }),
+      this.prisma.reprogramacion_cita.findMany({
+        where: {
+          estado: 'PENDIENTE',
+          ...(excludeAppointmentId !== undefined ? { id_cita: { not: excludeAppointmentId } } : {}),
+          nueva_fecha_hora_inicio: { lt: normalizedEndAt },
+          nueva_fecha_hora_fin: { gt: normalizedStartAt },
+          cita: {
+            solicitud: { id_cuenta_paciente: patientAccountId },
+          },
+        },
+        include: { cita: { include: { tipo_cita: true } } },
+      }),
+    ]);
 
     const conflicting = conflictingAppointments.find((appointment) =>
       this.minuteRangesOverlap(
@@ -1039,19 +1053,6 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     if (conflicting) {
       return `El paciente ya tiene una cita (${conflicting.tipo_cita.nombre}) programada para ese horario.`;
     }
-
-    const pendingRescheduleConflicts = await this.prisma.reprogramacion_cita.findMany({
-      where: {
-        estado: 'PENDIENTE',
-        ...(excludeAppointmentId !== undefined ? { id_cita: { not: excludeAppointmentId } } : {}),
-        nueva_fecha_hora_inicio: { lt: normalizedEndAt },
-        nueva_fecha_hora_fin: { gt: normalizedStartAt },
-        cita: {
-          solicitud: { id_cuenta_paciente: patientAccountId },
-        },
-      },
-      include: { cita: { include: { tipo_cita: true } } },
-    });
 
     const pendingRescheduleConflict = pendingRescheduleConflicts.find((reschedule) =>
       this.minuteRangesOverlap(
@@ -1699,46 +1700,41 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       throw new BadRequestException('Solo puedes programar citas para solicitudes aceptadas.');
     }
 
-    // Verify supervisor belongs to the student's university
-    const student = await this.prisma.cuenta_estudiante.findUnique({
-      where: { id_cuenta: studentAccountId },
-      select: { id_universidad: true },
-    });
+    const [student, docente, sede, tipoCita, tratamientos] = await Promise.all([
+      this.prisma.cuenta_estudiante.findUnique({
+        where: { id_cuenta: studentAccountId },
+        select: { id_universidad: true },
+      }),
+      this.prisma.docente_universidad.findFirst({
+        where: {
+          id_docente_universidad: payload.supervisorId,
+          estado: 'ACTIVO',
+        },
+        select: { id_universidad: true },
+      }),
+      this.prisma.sede.findFirst({
+        where: { id_sede: payload.siteId, estado: 'ACTIVO' },
+      }),
+      this.prisma.tipo_cita.findUnique({
+        where: { id_tipo_cita: payload.appointmentTypeId },
+      }),
+      this.prisma.tipo_tratamiento.findMany({
+        where: { id_tipo_tratamiento: { in: payload.treatmentIds } },
+        select: { nombre: true },
+      }),
+    ]);
 
-    const docente = await this.prisma.docente_universidad.findFirst({
-      where: {
-        id_docente_universidad: payload.supervisorId,
-        id_universidad: student?.id_universidad,
-        estado: 'ACTIVO',
-      },
-    });
-
-    if (!docente) {
+    if (!docente || docente.id_universidad !== student?.id_universidad) {
       throw new NotFoundException('El docente supervisor no existe o no pertenece a tu universidad.');
     }
-
-    // Verify sede is valid
-    const sede = await this.prisma.sede.findFirst({
-      where: { id_sede: payload.siteId, estado: 'ACTIVO' },
-    });
 
     if (!sede) {
       throw new NotFoundException('La sede no existe o no esta activa.');
     }
 
-    const tipoCita = await this.prisma.tipo_cita.findUnique({
-      where: { id_tipo_cita: payload.appointmentTypeId },
-    });
-
     if (!tipoCita) {
       throw new NotFoundException('El tipo de cita seleccionado no existe.');
     }
-
-    // Verify all treatments exist
-    const tratamientos = await this.prisma.tipo_tratamiento.findMany({
-      where: { id_tipo_tratamiento: { in: payload.treatmentIds } },
-      select: { nombre: true },
-    });
 
     if (tratamientos.length !== payload.treatmentIds.length) {
       throw new BadRequestException('Uno o mas tratamientos seleccionados no son validos.');
@@ -1750,16 +1746,19 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     this.assertAppointmentDateRange(startAt, endAt);
     this.assertAppointmentStartsInFuture(startAt);
 
-    const conflict = await this.checkAppointmentConflicts(studentAccountId, startAt, endAt);
+    const [conflict, patientConflict] = await Promise.all([
+      this.checkAppointmentConflicts(studentAccountId, startAt, endAt),
+      this.checkPatientAppointmentConflicts(
+        solicitud.id_cuenta_paciente,
+        startAt,
+        endAt,
+      ),
+    ]);
+
     if (conflict) {
       throw new BadRequestException(conflict);
     }
 
-    const patientConflict = await this.checkPatientAppointmentConflicts(
-      solicitud.id_cuenta_paciente,
-      startAt,
-      endAt,
-    );
     if (patientConflict) {
       throw new BadRequestException(patientConflict);
     }
@@ -1852,46 +1851,41 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       );
     }
 
-    // Verify new sede
-    const sede = await this.prisma.sede.findFirst({
-      where: { id_sede: payload.siteId, estado: 'ACTIVO' },
-    });
+    const [student, docente, sede, tipoCita, tratamientos] = await Promise.all([
+      this.prisma.cuenta_estudiante.findUnique({
+        where: { id_cuenta: studentAccountId },
+        select: { id_universidad: true },
+      }),
+      this.prisma.docente_universidad.findFirst({
+        where: {
+          id_docente_universidad: payload.supervisorId,
+          estado: 'ACTIVO',
+        },
+        select: { id_universidad: true },
+      }),
+      this.prisma.sede.findFirst({
+        where: { id_sede: payload.siteId, estado: 'ACTIVO' },
+      }),
+      this.prisma.tipo_cita.findUnique({
+        where: { id_tipo_cita: payload.appointmentTypeId },
+      }),
+      this.prisma.tipo_tratamiento.findMany({
+        where: { id_tipo_tratamiento: { in: payload.treatmentIds } },
+        select: { nombre: true },
+      }),
+    ]);
 
     if (!sede) {
       throw new NotFoundException('La sede no existe o no esta activa.');
     }
 
-    const tipoCita = await this.prisma.tipo_cita.findUnique({
-      where: { id_tipo_cita: payload.appointmentTypeId },
-    });
-
     if (!tipoCita) {
       throw new NotFoundException('El tipo de cita seleccionado no existe.');
     }
 
-    // Verify supervisor
-    const student = await this.prisma.cuenta_estudiante.findUnique({
-      where: { id_cuenta: studentAccountId },
-      select: { id_universidad: true },
-    });
-
-    const docente = await this.prisma.docente_universidad.findFirst({
-      where: {
-        id_docente_universidad: payload.supervisorId,
-        id_universidad: student?.id_universidad,
-        estado: 'ACTIVO',
-      },
-    });
-
-    if (!docente) {
+    if (!docente || docente.id_universidad !== student?.id_universidad) {
       throw new NotFoundException('El docente supervisor no existe o no pertenece a tu universidad.');
     }
-
-    // Verify treatments
-    const tratamientos = await this.prisma.tipo_tratamiento.findMany({
-      where: { id_tipo_tratamiento: { in: payload.treatmentIds } },
-      select: { nombre: true },
-    });
 
     if (tratamientos.length !== payload.treatmentIds.length) {
       throw new BadRequestException('Uno o mas tratamientos seleccionados no son validos.');
@@ -1904,23 +1898,25 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     this.assertAppointmentStartsInFuture(startAt);
     this.assertAppointmentHasMinimumNotice(startAt);
 
-    const conflict = await this.checkAppointmentConflicts(studentAccountId, startAt, endAt, appointmentId);
+    const [conflict, patientConflict] = await Promise.all([
+      this.checkAppointmentConflicts(studentAccountId, startAt, endAt, appointmentId),
+      this.checkPatientAppointmentConflicts(
+        cita.solicitud.id_cuenta_paciente,
+        startAt,
+        endAt,
+        appointmentId,
+      ),
+    ]);
+
     if (conflict) {
       throw new BadRequestException(conflict);
     }
 
-    const patientConflict = await this.checkPatientAppointmentConflicts(
-      cita.solicitud.id_cuenta_paciente,
-      startAt,
-      endAt,
-      appointmentId,
-    );
     if (patientConflict) {
       throw new BadRequestException(patientConflict);
     }
 
-    // Delete old treatments and update the cita in a transaction
-    await this.prisma.$transaction([
+    const [, updated] = await this.prisma.$transaction([
       this.prisma.cita_tratamiento.deleteMany({ where: { id_cita: appointmentId } }),
       this.prisma.cita.update({
         where: { id_cita: appointmentId },
@@ -1935,13 +1931,9 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
             create: payload.treatmentIds.map((id_tipo_tratamiento) => ({ id_tipo_tratamiento })),
           },
         },
+        include: this.getCitaWithRelationsArgs(),
       }),
     ]);
-
-    const updated = await this.prisma.cita.findUniqueOrThrow({
-      where: { id_cita: appointmentId },
-      include: this.getCitaWithRelationsArgs(),
-    });
 
     return this.toCitaAppointmentDto(updated);
   }
@@ -1989,27 +1981,28 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
       throw new NotFoundException('No se encontro la cuenta del estudiante.');
     }
 
-    const sede = await this.prisma.sede.findFirst({
-      where: {
-        id_sede: payload.siteId,
-        id_universidad: student.id_universidad,
-        estado: 'ACTIVO',
-      },
-    });
+    const [sede, docente] = await Promise.all([
+      this.prisma.sede.findFirst({
+        where: {
+          id_sede: payload.siteId,
+          id_universidad: student.id_universidad,
+          estado: 'ACTIVO',
+        },
+      }),
+      this.prisma.docente_universidad.findFirst({
+        where: {
+          id_docente_universidad: payload.supervisorId,
+          id_universidad: student.id_universidad,
+          estado: 'ACTIVO',
+        },
+      }),
+    ]);
 
     if (!sede) {
       throw new NotFoundException(
         'La sede no existe, no esta activa o no pertenece a tu universidad.',
       );
     }
-
-    const docente = await this.prisma.docente_universidad.findFirst({
-      where: {
-        id_docente_universidad: payload.supervisorId,
-        id_universidad: student.id_universidad,
-        estado: 'ACTIVO',
-      },
-    });
 
     if (!docente) {
       throw new NotFoundException('El docente supervisor no existe o no pertenece a tu universidad.');
@@ -2021,17 +2014,20 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     this.assertAppointmentDateRange(startAt, endAt);
     this.assertAppointmentStartsInFuture(startAt);
 
-    const conflict = await this.checkAppointmentConflicts(studentAccountId, startAt, endAt, appointmentId);
+    const [conflict, patientConflict] = await Promise.all([
+      this.checkAppointmentConflicts(studentAccountId, startAt, endAt, appointmentId),
+      this.checkPatientAppointmentConflicts(
+        cita.solicitud.id_cuenta_paciente,
+        startAt,
+        endAt,
+        appointmentId,
+      ),
+    ]);
+
     if (conflict) {
       throw new BadRequestException(conflict);
     }
 
-    const patientConflict = await this.checkPatientAppointmentConflicts(
-      cita.solicitud.id_cuenta_paciente,
-      startAt,
-      endAt,
-      appointmentId,
-    );
     if (patientConflict) {
       throw new BadRequestException(patientConflict);
     }

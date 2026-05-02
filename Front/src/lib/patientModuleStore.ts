@@ -2304,10 +2304,42 @@ async function updateAppointmentStatus(
     return updateAppointmentStatusMock(appointmentId, status);
   }
 
-  patchState({
-    errorMessage: null,
-    isLoading: true,
-  });
+  const currentAppointment = state.appointments.find(
+    (appointment) => appointment.id === appointmentId,
+  );
+
+  if (!currentAppointment) {
+    patchState({
+      errorMessage: 'No encontramos la cita para actualizarla.',
+      isLoading: false,
+    });
+    return false;
+  }
+
+  const previousAppointments = state.appointments;
+  const optimisticAppointment: PatientAppointment = {
+    ...currentAppointment,
+    isRescheduleProposal: false,
+    respondedAt: new Date().toISOString(),
+    status:
+      currentAppointment.isRescheduleProposal && status === 'RECHAZADA'
+        ? 'ACEPTADA'
+        : status,
+  };
+
+  setRuntimeState(
+    {
+      ...state,
+      appointments: state.appointments.map((appointment) =>
+        appointment.id === appointmentId ? optimisticAppointment : appointment,
+      ),
+      errorMessage: null,
+      isLoading: false,
+      isReady: true,
+      shouldRefresh: false,
+    },
+    { persistCache: false },
+  );
 
   try {
     const appointment = await updatePatientPortalAppointmentStatus(
@@ -2335,15 +2367,20 @@ async function updateAppointmentStatus(
 
     return true;
   } catch (error) {
-    patchState({
-      errorMessage: getErrorMessage(
-        error,
-        status === 'ACEPTADA' || status === 'RECHAZADA'
-          ? 'No pudimos responder la reprogramación. Verifica que la propuesta siga vigente y que la fecha no esté vencida.'
-          : 'No pudimos actualizar la cita.',
-      ),
-      isLoading: false,
-    });
+    setRuntimeState(
+      {
+        ...state,
+        appointments: previousAppointments,
+        errorMessage: getErrorMessage(
+          error,
+          status === 'ACEPTADA' || status === 'RECHAZADA'
+            ? 'No pudimos responder la reprogramación. Verifica que la propuesta siga vigente y que la fecha no esté vencida.'
+            : 'No pudimos actualizar la cita.',
+        ),
+        isLoading: false,
+      },
+      { persistCache: false },
+    );
     return false;
   }
 }

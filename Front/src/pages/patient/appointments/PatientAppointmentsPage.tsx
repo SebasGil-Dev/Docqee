@@ -342,12 +342,17 @@ export function PatientAppointmentsPage() {
     status: PatientAppointmentStatus,
   ) => {
     void (async () => {
-      setSuccessMessage(null);
+      const optimisticMessage = getAppointmentUpdateMessage(
+        appointment,
+        status,
+      );
+
+      setSuccessMessage(optimisticMessage);
 
       const updated = await updateAppointmentStatus(appointment.id, status);
 
-      if (updated) {
-        setSuccessMessage(getAppointmentUpdateMessage(appointment, status));
+      if (!updated) {
+        setSuccessMessage(null);
       }
     })();
   };

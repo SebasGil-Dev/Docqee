@@ -497,18 +497,35 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
   ): Promise<string | null> {
     const normalizedStartAt = this.floorDateToMinute(startAt);
     const normalizedEndAt = this.floorDateToMinute(endAt);
-    const conflictingAppointments = await this.prisma.cita.findMany({
-      where: {
-        solicitud: { id_cuenta_estudiante: studentAccountId },
-        estado: { in: ["PROPUESTA", "ACEPTADA"] },
-        ...(excludeAppointmentId !== undefined
-          ? { id_cita: { not: excludeAppointmentId } }
-          : {}),
-        fecha_hora_inicio: { lt: normalizedEndAt },
-        fecha_hora_fin: { gt: normalizedStartAt },
-      },
-      include: { tipo_cita: true },
-    });
+    const [conflictingAppointments, pendingRescheduleConflict] =
+      await Promise.all([
+        this.prisma.cita.findMany({
+          where: {
+            solicitud: { id_cuenta_estudiante: studentAccountId },
+            estado: { in: ["PROPUESTA", "ACEPTADA"] },
+            ...(excludeAppointmentId !== undefined
+              ? { id_cita: { not: excludeAppointmentId } }
+              : {}),
+            fecha_hora_inicio: { lt: normalizedEndAt },
+            fecha_hora_fin: { gt: normalizedStartAt },
+          },
+          include: { tipo_cita: true },
+        }),
+        this.prisma.reprogramacion_cita.findMany({
+          where: {
+            estado: "PENDIENTE",
+            ...(excludeAppointmentId !== undefined
+              ? { id_cita: { not: excludeAppointmentId } }
+              : {}),
+            nueva_fecha_hora_inicio: { lt: normalizedEndAt },
+            nueva_fecha_hora_fin: { gt: normalizedStartAt },
+            cita: {
+              solicitud: { id_cuenta_estudiante: studentAccountId },
+            },
+          },
+          include: { cita: { include: { tipo_cita: true } } },
+        }),
+      ]);
 
     const conflicting = conflictingAppointments.find((appointment) =>
       this.minuteRangesOverlap(
@@ -522,22 +539,6 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     if (conflicting) {
       return `El estudiante ya tiene una cita (${conflicting.tipo_cita.nombre}) programada para ese horario.`;
     }
-
-    const pendingRescheduleConflict =
-      await this.prisma.reprogramacion_cita.findMany({
-        where: {
-          estado: "PENDIENTE",
-          ...(excludeAppointmentId !== undefined
-            ? { id_cita: { not: excludeAppointmentId } }
-            : {}),
-          nueva_fecha_hora_inicio: { lt: normalizedEndAt },
-          nueva_fecha_hora_fin: { gt: normalizedStartAt },
-          cita: {
-            solicitud: { id_cuenta_estudiante: studentAccountId },
-          },
-        },
-        include: { cita: { include: { tipo_cita: true } } },
-      });
 
     const conflictingReschedule = pendingRescheduleConflict.find((reschedule) =>
       this.minuteRangesOverlap(
@@ -563,18 +564,35 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
   ): Promise<string | null> {
     const normalizedStartAt = this.floorDateToMinute(startAt);
     const normalizedEndAt = this.floorDateToMinute(endAt);
-    const conflictingAppointments = await this.prisma.cita.findMany({
-      where: {
-        solicitud: { id_cuenta_paciente: patientAccountId },
-        estado: { in: ["PROPUESTA", "ACEPTADA"] },
-        ...(excludeAppointmentId !== undefined
-          ? { id_cita: { not: excludeAppointmentId } }
-          : {}),
-        fecha_hora_inicio: { lt: normalizedEndAt },
-        fecha_hora_fin: { gt: normalizedStartAt },
-      },
-      include: { tipo_cita: true },
-    });
+    const [conflictingAppointments, pendingRescheduleConflict] =
+      await Promise.all([
+        this.prisma.cita.findMany({
+          where: {
+            solicitud: { id_cuenta_paciente: patientAccountId },
+            estado: { in: ["PROPUESTA", "ACEPTADA"] },
+            ...(excludeAppointmentId !== undefined
+              ? { id_cita: { not: excludeAppointmentId } }
+              : {}),
+            fecha_hora_inicio: { lt: normalizedEndAt },
+            fecha_hora_fin: { gt: normalizedStartAt },
+          },
+          include: { tipo_cita: true },
+        }),
+        this.prisma.reprogramacion_cita.findMany({
+          where: {
+            estado: "PENDIENTE",
+            ...(excludeAppointmentId !== undefined
+              ? { id_cita: { not: excludeAppointmentId } }
+              : {}),
+            nueva_fecha_hora_inicio: { lt: normalizedEndAt },
+            nueva_fecha_hora_fin: { gt: normalizedStartAt },
+            cita: {
+              solicitud: { id_cuenta_paciente: patientAccountId },
+            },
+          },
+          include: { cita: { include: { tipo_cita: true } } },
+        }),
+      ]);
 
     const conflicting = conflictingAppointments.find((appointment) =>
       this.minuteRangesOverlap(
@@ -588,22 +606,6 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     if (conflicting) {
       return `Ya tienes una cita (${conflicting.tipo_cita.nombre}) programada para ese horario.`;
     }
-
-    const pendingRescheduleConflict =
-      await this.prisma.reprogramacion_cita.findMany({
-        where: {
-          estado: "PENDIENTE",
-          ...(excludeAppointmentId !== undefined
-            ? { id_cita: { not: excludeAppointmentId } }
-            : {}),
-          nueva_fecha_hora_inicio: { lt: normalizedEndAt },
-          nueva_fecha_hora_fin: { gt: normalizedStartAt },
-          cita: {
-            solicitud: { id_cuenta_paciente: patientAccountId },
-          },
-        },
-        include: { cita: { include: { tipo_cita: true } } },
-      });
 
     const conflictingReschedule = pendingRescheduleConflict.find((reschedule) =>
       this.minuteRangesOverlap(
@@ -2003,22 +2005,25 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         this.assertAppointmentHasMinimumNotice(acceptedStartAt);
       }
 
-      const studentConflict = await this.checkStudentAppointmentConflicts(
-        cita.solicitud.id_cuenta_estudiante,
-        acceptedStartAt,
-        acceptedEndAt,
-        appointmentId,
-      );
+      const [studentConflict, patientConflict] = await Promise.all([
+        this.checkStudentAppointmentConflicts(
+          cita.solicitud.id_cuenta_estudiante,
+          acceptedStartAt,
+          acceptedEndAt,
+          appointmentId,
+        ),
+        this.checkPatientAppointmentConflicts(
+          patientAccountId,
+          acceptedStartAt,
+          acceptedEndAt,
+          appointmentId,
+        ),
+      ]);
+
       if (studentConflict) {
         throw new BadRequestException(studentConflict);
       }
 
-      const patientConflict = await this.checkPatientAppointmentConflicts(
-        patientAccountId,
-        acceptedStartAt,
-        acceptedEndAt,
-        appointmentId,
-      );
       if (patientConflict) {
         throw new BadRequestException(patientConflict);
       }
@@ -2161,7 +2166,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     }
 
     if (payload.status === "ACEPTADA" && isRescheduleResponse) {
-      await this.resetAppointmentReminderSafely(appointmentId);
+      void this.resetAppointmentReminderSafely(appointmentId);
     }
 
     const updated = await this.prisma.cita.findUnique({
@@ -2210,7 +2215,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
         );
       }
     } else if (payload.status === "ACEPTADA" && !isAlreadyAcceptedResponse) {
-      await this.createNotificationSafely({
+      void this.createNotificationSafely({
         id_cuenta_destino: updated.solicitud.id_cuenta_estudiante,
         tipo: "RESPUESTA_CITA",
         contenido: isRescheduleResponse
@@ -2255,7 +2260,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       payload.status === "RECHAZADA" &&
       !isAlreadyRejectedRescheduleResponse
     ) {
-      await this.createNotificationSafely({
+      void this.createNotificationSafely({
         id_cuenta_destino: updated.solicitud.id_cuenta_estudiante,
         tipo: "RESPUESTA_CITA",
         contenido: isRescheduleResponse
@@ -2265,7 +2270,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     }
 
     if (payload.status === "ACEPTADA") {
-      await this.sendSameDayAppointmentReminderSafely(updated, responseDate);
+      void this.sendSameDayAppointmentReminderSafely(updated, responseDate);
     }
 
     return {
