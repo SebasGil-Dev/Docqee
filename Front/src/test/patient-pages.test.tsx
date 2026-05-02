@@ -134,7 +134,7 @@ describe('Patient pages', () => {
     );
   });
 
-  it('permite cancelar una solicitud pendiente', async () => {
+  it('permite cancelar una solicitud pendiente y la retira de la tabla activa', async () => {
     const user = userEvent.setup();
 
     renderPatientApp([ROUTES.patientRequests]);
@@ -148,10 +148,8 @@ describe('Patient pages', () => {
     expect(await screen.findByRole('status')).toHaveTextContent(/solicitud actualizada:/i);
     await waitFor(() => {
       expect(
-        within(screen.getByTestId('patient-request-row-patient-request-2')).getByText(
-          /^Cancelada$/i,
-        ),
-      ).toBeInTheDocument();
+        screen.queryByTestId('patient-request-row-patient-request-2'),
+      ).not.toBeInTheDocument();
     });
   });
 

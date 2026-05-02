@@ -1724,17 +1724,40 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
       );
     }
 
-    const updated = await this.prisma.solicitud.update({
-      where: { id_solicitud: requestId },
-      data: { estado: payload.status, fecha_respuesta: new Date() },
-      include: {
-        cita: { select: { id_cita: true } },
-        conversacion: { select: { estado: true, id_conversacion: true } },
-        cuenta_estudiante: { include: { persona: true, universidad: true } },
-      },
-    });
+    const canceledAt = new Date();
 
-    return this.toRequestDto(updated);
+    try {
+      const updated = await this.prisma.solicitud.update({
+        where: { id_solicitud: requestId },
+        data: {
+          cerrada_por_cuenta: patientAccountId,
+          estado: payload.status,
+          fecha_actualizacion: canceledAt,
+          fecha_cierre: canceledAt,
+        },
+        include: {
+          cita: { select: { id_cita: true } },
+          conversacion: { select: { estado: true, id_conversacion: true } },
+          cuenta_estudiante: { include: { persona: true, universidad: true } },
+        },
+      });
+
+      void this.createNotificationSafely({
+        id_cuenta_destino: updated.id_cuenta_estudiante,
+        tipo: "RESPUESTA_SOLICITUD",
+        contenido: "El paciente cancelo la solicitud pendiente.",
+      });
+
+      return this.toRequestDto(updated);
+    } catch (error) {
+      if (this.isDatabaseConstraintError(error)) {
+        throw new BadRequestException(
+          "No pudimos cancelar la solicitud porque no cumple las reglas actuales.",
+        );
+      }
+
+      throw error;
+    }
   }
 
   async updateAppointmentStatus(
