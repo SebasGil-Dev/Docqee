@@ -386,7 +386,7 @@ describe('Student pages', () => {
     ).toBeInTheDocument();
 
     await user.click(
-      screen.getAllByRole('button', { name: /agregar bloqueo/i })[0],
+      screen.getAllByRole('button', { name: /agregar bloqueo/i })[0]!,
     );
 
     const createDialog = screen.getByRole('dialog', {
