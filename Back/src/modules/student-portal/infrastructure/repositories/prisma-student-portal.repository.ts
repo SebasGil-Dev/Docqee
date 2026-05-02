@@ -548,6 +548,37 @@ export class PrismaStudentPortalRepository extends StudentPortalRepository {
     };
   }
 
+  async getReviews(
+    studentAccountId: number,
+  ): Promise<StudentAppointmentReviewDto[]> {
+    const valoraciones = await this.prisma.valoracion.findMany({
+      where: { id_cuenta_receptor: studentAccountId },
+      include: {
+        cita: {
+          include: {
+            tipo_cita: true,
+            sede: true,
+            solicitud: {
+              include: { cuenta_paciente: { include: { persona: true } } },
+            },
+          },
+        },
+      },
+      orderBy: { fecha_creacion: 'desc' },
+    });
+
+    return valoraciones.map((v) => ({
+      appointmentId: String(v.id_cita),
+      appointmentLabel: v.cita.tipo_cita.nombre,
+      comment: v.comentario ?? null,
+      createdAt: v.fecha_creacion.toISOString(),
+      id: String(v.id_valoracion),
+      patientName: `${v.cita.solicitud.cuenta_paciente.persona.nombres} ${v.cita.solicitud.cuenta_paciente.persona.apellidos}`,
+      rating: v.calificacion,
+      siteName: v.cita.sede.nombre,
+    }));
+  }
+
   async getAppointments(
     studentAccountId: number,
   ): Promise<StudentAgendaAppointmentDto[]> {

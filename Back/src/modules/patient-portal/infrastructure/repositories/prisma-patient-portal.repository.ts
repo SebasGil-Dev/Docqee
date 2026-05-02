@@ -1418,6 +1418,40 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
     };
   }
 
+  async getReviews(
+    patientAccountId: number,
+  ): Promise<PatientAppointmentReviewDto[]> {
+    const valoraciones = await this.prisma.valoracion.findMany({
+      where: { id_cuenta_receptor: patientAccountId },
+      include: {
+        cita: {
+          include: {
+            tipo_cita: true,
+            sede: true,
+            solicitud: {
+              include: {
+                cuenta_estudiante: {
+                  include: { persona: true },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { fecha_creacion: "desc" },
+    });
+
+    return valoraciones.map((valoracion) => ({
+      appointmentLabel: valoracion.cita.tipo_cita.nombre,
+      comment: valoracion.comentario ?? null,
+      createdAt: valoracion.fecha_creacion.toISOString(),
+      id: String(valoracion.id_valoracion),
+      rating: valoracion.calificacion,
+      siteName: valoracion.cita.sede.nombre,
+      studentName: `${valoracion.cita.solicitud.cuenta_estudiante.persona.nombres} ${valoracion.cita.solicitud.cuenta_estudiante.persona.apellidos}`,
+    }));
+  }
+
   async getAppointments(
     patientAccountId: number,
   ): Promise<PatientAppointmentDto[]> {

@@ -1,5 +1,6 @@
 import type {
   PatientAppointment,
+  PatientAppointmentReview,
   PatientAppointmentStatus,
   PatientConversation,
   PatientConversationMessage,
@@ -45,6 +46,10 @@ export function getPatientPortalDashboard() {
 
 export function getPatientPortalAppointments() {
   return apiRequest<PatientAppointment[]>('/patient-portal/appointments');
+}
+
+export function getPatientPortalReviews() {
+  return apiRequest<PatientAppointmentReview[]>('/patient-portal/reviews');
 }
 
 export function getPatientPortalRequests() {

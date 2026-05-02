@@ -15,6 +15,7 @@ import { useStudentModuleStore } from '@/lib/studentModuleStore';
 
 const REQUEST_NOTIFICATION_POLL_INTERVAL_MS = 8_000;
 const APPOINTMENT_SYNC_POLL_INTERVAL_MS = 5_000;
+const REVIEW_SYNC_POLL_INTERVAL_MS = 5_000;
 const MODULE_NOTIFICATION_POLL_INTERVAL_MS = 30_000;
 
 export function StudentLayout() {
@@ -32,6 +33,7 @@ export function StudentLayout() {
     requests,
     refresh,
     refreshAppointments,
+    refreshReviews,
     refreshRequests,
   } = useStudentModuleStore({
     autoLoad: shouldAutoLoadStudentModule,
@@ -61,6 +63,12 @@ export function StudentLayout() {
     }
   }, [isLoading, refreshAppointments]);
 
+  const refreshReviewsIfVisible = useCallback(() => {
+    if (document.visibilityState === 'visible' && !isLoading) {
+      void refreshReviews();
+    }
+  }, [isLoading, refreshReviews]);
+
   useEffect(() => {
     if (IS_TEST_MODE || !shouldAutoLoadStudentModule) {
       return;
@@ -68,6 +76,7 @@ export function StudentLayout() {
 
     refreshRequestsIfVisible();
     refreshAppointmentsIfVisible();
+    refreshReviewsIfVisible();
 
     const requestInterval = setInterval(
       refreshRequestsIfVisible,
@@ -77,6 +86,10 @@ export function StudentLayout() {
       refreshAppointmentsIfVisible,
       APPOINTMENT_SYNC_POLL_INTERVAL_MS,
     );
+    const reviewInterval = setInterval(
+      refreshReviewsIfVisible,
+      REVIEW_SYNC_POLL_INTERVAL_MS,
+    );
     const moduleInterval = setInterval(
       refreshModuleIfVisible,
       MODULE_NOTIFICATION_POLL_INTERVAL_MS,
@@ -84,12 +97,15 @@ export function StudentLayout() {
 
     document.addEventListener('visibilitychange', refreshRequestsIfVisible);
     document.addEventListener('visibilitychange', refreshAppointmentsIfVisible);
+    document.addEventListener('visibilitychange', refreshReviewsIfVisible);
     window.addEventListener('focus', refreshRequestsIfVisible);
     window.addEventListener('focus', refreshAppointmentsIfVisible);
+    window.addEventListener('focus', refreshReviewsIfVisible);
 
     return () => {
       clearInterval(requestInterval);
       clearInterval(appointmentInterval);
+      clearInterval(reviewInterval);
       clearInterval(moduleInterval);
       document.removeEventListener(
         'visibilitychange',
@@ -99,12 +115,18 @@ export function StudentLayout() {
         'visibilitychange',
         refreshAppointmentsIfVisible,
       );
+      document.removeEventListener(
+        'visibilitychange',
+        refreshReviewsIfVisible,
+      );
       window.removeEventListener('focus', refreshRequestsIfVisible);
       window.removeEventListener('focus', refreshAppointmentsIfVisible);
+      window.removeEventListener('focus', refreshReviewsIfVisible);
     };
   }, [
     refreshAppointmentsIfVisible,
     refreshModuleIfVisible,
+    refreshReviewsIfVisible,
     refreshRequestsIfVisible,
     shouldAutoLoadStudentModule,
   ]);

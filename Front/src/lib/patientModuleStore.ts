@@ -21,6 +21,7 @@ import {
   getPatientPortalAppointments,
   getPatientPortalConversation,
   getPatientPortalDashboard,
+  getPatientPortalReviews,
   getPatientPortalRequests,
   getPatientPortalStudents,
   sendPatientPortalConversationMessage,
@@ -39,6 +40,7 @@ type PatientModuleActions = {
   prefetchStudentDirectory: () => Promise<void>;
   refresh: (options?: { preserveStudents?: boolean }) => Promise<void>;
   refreshAppointments: () => Promise<void>;
+  refreshReviews: () => Promise<void>;
   refreshRequests: () => Promise<void>;
   refreshConversation: (conversationId: string) => Promise<void>;
   searchStudents: (
@@ -884,6 +886,7 @@ let nextMessageSequence =
   ) + 1;
 let runtimeLoadPromise: Promise<PatientStoreState> | null = null;
 let appointmentsRefreshPromise: Promise<void> | null = null;
+let reviewsRefreshPromise: Promise<void> | null = null;
 let requestsRefreshPromise: Promise<void> | null = null;
 let errorMessageDismissTimerId: number | null = null;
 
@@ -952,6 +955,30 @@ function extractPatientModuleState(
     studentFilters: storeState.studentFilters,
     students: storeState.students,
   };
+}
+
+function arePatientAppointmentReviewsEqual(
+  firstReviews: PatientAppointmentReview[],
+  secondReviews: PatientAppointmentReview[],
+) {
+  if (firstReviews.length !== secondReviews.length) {
+    return false;
+  }
+
+  return firstReviews.every((firstReview, index) => {
+    const secondReview = secondReviews[index];
+
+    return (
+      secondReview !== undefined &&
+      firstReview.appointmentLabel === secondReview.appointmentLabel &&
+      firstReview.comment === secondReview.comment &&
+      firstReview.createdAt === secondReview.createdAt &&
+      firstReview.id === secondReview.id &&
+      firstReview.rating === secondReview.rating &&
+      firstReview.siteName === secondReview.siteName &&
+      firstReview.studentName === secondReview.studentName
+    );
+  });
 }
 
 function setRuntimeState(
@@ -1590,6 +1617,46 @@ export async function refreshPatientAppointmentsState() {
     });
 
   return appointmentsRefreshPromise;
+}
+
+export async function refreshPatientReviewsState() {
+  if (IS_TEST_MODE) {
+    return;
+  }
+
+  if (!state.isReady) {
+    await loadRuntimeState();
+    return;
+  }
+
+  if (reviewsRefreshPromise) {
+    return reviewsRefreshPromise;
+  }
+
+  reviewsRefreshPromise = getPatientPortalReviews()
+    .then((reviews) => {
+      if (arePatientAppointmentReviewsEqual(state.reviews, reviews)) {
+        return;
+      }
+
+      setRuntimeState(
+        {
+          ...state,
+          isReady: true,
+          reviews,
+          shouldRefresh: false,
+        },
+        { persistCache: true },
+      );
+    })
+    .catch(() => {
+      // Background review sync should not interrupt the visible workflow.
+    })
+    .finally(() => {
+      reviewsRefreshPromise = null;
+    });
+
+  return reviewsRefreshPromise;
 }
 
 function buildMissingConversationsFromRequests(requests: PatientRequest[]) {
@@ -2334,6 +2401,7 @@ export function resetPatientModuleState() {
   pendingPatientRequestStudentIds.clear();
   runtimeLoadPromise = null;
   appointmentsRefreshPromise = null;
+  reviewsRefreshPromise = null;
   requestsRefreshPromise = null;
   studentSearchCache.clear();
   studentSearchPromises.clear();
@@ -2370,6 +2438,7 @@ export function usePatientModuleStore(
     prefetchStudentDirectory,
     refresh: refreshPatientModuleState,
     refreshAppointments: refreshPatientAppointmentsState,
+    refreshReviews: refreshPatientReviewsState,
     refreshRequests: refreshPatientRequestsState,
     refreshConversation,
     searchStudents,

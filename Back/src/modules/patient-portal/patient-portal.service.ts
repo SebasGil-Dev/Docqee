@@ -27,6 +27,10 @@ export class PatientPortalService {
     return this.patientPortalRepository.getAppointments(user.id);
   }
 
+  getReviews(user: RequestUser) {
+    return this.patientPortalRepository.getReviews(user.id);
+  }
+
   getRequests(user: RequestUser) {
     return this.patientPortalRepository.getRequests(user.id);
   }

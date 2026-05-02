@@ -31,6 +31,7 @@ import {
   getStudentPortalAppointments,
   getStudentPortalConversation,
   getStudentPortalDashboard,
+  getStudentPortalReviews,
   getStudentPortalRequests,
   sendStudentPortalConversationMessage,
   toggleStudentPortalPracticeSiteStatus,
@@ -53,6 +54,7 @@ type StudentModuleActions = {
   deleteScheduleBlock: (blockId: string) => Promise<boolean>;
   refresh: () => Promise<void>;
   refreshAppointments: () => Promise<void>;
+  refreshReviews: () => Promise<void>;
   refreshRequests: () => Promise<void>;
   refreshConversation: (conversationId: string) => Promise<void>;
   updateAppointmentStatus: (
@@ -1190,6 +1192,7 @@ let nextConversationMessageSequence =
   ) + 1;
 let runtimeLoadPromise: Promise<StudentStoreState> | null = null;
 let appointmentsRefreshPromise: Promise<void> | null = null;
+let reviewsRefreshPromise: Promise<void> | null = null;
 let requestsRefreshPromise: Promise<void> | null = null;
 let errorMessageDismissTimerId: number | null = null;
 const pendingRequestResponseIds = new Set<string>();
@@ -1230,6 +1233,7 @@ function resetRuntimeStateForSession(nextUserId: number | null) {
   syncStudentRuntimeSequences(createEmptyRuntimeModuleState());
   runtimeLoadPromise = null;
   appointmentsRefreshPromise = null;
+  reviewsRefreshPromise = null;
   requestsRefreshPromise = null;
   pendingRequestResponseIds.clear();
   conversationRefreshPromises.clear();
@@ -1314,6 +1318,31 @@ function didStudentStoreStateChange(
     previousState.isReady !== nextState.isReady ||
     previousState.shouldRefresh !== nextState.shouldRefresh
   );
+}
+
+function areStudentAppointmentReviewsEqual(
+  firstReviews: StudentAppointmentReview[],
+  secondReviews: StudentAppointmentReview[],
+) {
+  if (firstReviews.length !== secondReviews.length) {
+    return false;
+  }
+
+  return firstReviews.every((firstReview, index) => {
+    const secondReview = secondReviews[index];
+
+    return (
+      secondReview !== undefined &&
+      firstReview.appointmentId === secondReview.appointmentId &&
+      firstReview.appointmentLabel === secondReview.appointmentLabel &&
+      firstReview.comment === secondReview.comment &&
+      firstReview.createdAt === secondReview.createdAt &&
+      firstReview.id === secondReview.id &&
+      firstReview.patientName === secondReview.patientName &&
+      firstReview.rating === secondReview.rating &&
+      firstReview.siteName === secondReview.siteName
+    );
+  });
 }
 
 function updateState(nextState: StudentStoreState) {
@@ -2433,6 +2462,53 @@ export async function refreshStudentAppointmentsState() {
   return appointmentsRefreshPromise;
 }
 
+export async function refreshStudentReviewsState() {
+  if (IS_TEST_MODE) {
+    return;
+  }
+
+  const requestUserId = ensureRuntimeStateMatchesCurrentStudentSession();
+
+  if (!requestUserId) {
+    return;
+  }
+
+  if (!state.isReady) {
+    await loadRuntimeState();
+    return;
+  }
+
+  if (reviewsRefreshPromise) {
+    return reviewsRefreshPromise;
+  }
+
+  reviewsRefreshPromise = getStudentPortalReviews()
+    .then((reviews) => {
+      if (getCurrentStudentSessionUserId() !== requestUserId) {
+        return;
+      }
+
+      if (areStudentAppointmentReviewsEqual(state.reviews, reviews)) {
+        return;
+      }
+
+      updateState({
+        ...state,
+        isReady: true,
+        reviews,
+        shouldRefresh: false,
+      });
+    })
+    .catch(() => {
+      // Background review sync should not interrupt the visible workflow.
+    })
+    .finally(() => {
+      reviewsRefreshPromise = null;
+    });
+
+  return reviewsRefreshPromise;
+}
+
 export async function refreshStudentRequestsState() {
   if (IS_TEST_MODE) {
     return;
@@ -3247,6 +3323,7 @@ export function resetStudentModuleState() {
   );
   runtimeLoadPromise = null;
   appointmentsRefreshPromise = null;
+  reviewsRefreshPromise = null;
   requestsRefreshPromise = null;
   pendingRequestResponseIds.clear();
   conversationRefreshPromises.clear();
@@ -3285,6 +3362,7 @@ export function useStudentModuleStore(
     deleteScheduleBlock,
     refresh: refreshStudentModuleState,
     refreshAppointments: refreshStudentAppointmentsState,
+    refreshReviews: refreshStudentReviewsState,
     refreshRequests: refreshStudentRequestsState,
     refreshConversation,
     updateAppointmentStatus,

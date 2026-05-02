@@ -38,6 +38,11 @@ export class StudentPortalController {
     return this.studentPortalService.getRequests(user);
   }
 
+  @Get('reviews')
+  getReviews(@CurrentUser() user: RequestUser) {
+    return this.studentPortalService.getReviews(user);
+  }
+
   @Get('university-sites')
   getUniversitySites(@CurrentUser() user: RequestUser) {
     return this.studentPortalService.getUniversitySites(user);

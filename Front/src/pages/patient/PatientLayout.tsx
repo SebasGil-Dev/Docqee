@@ -12,6 +12,7 @@ import { usePatientModuleStore } from '@/lib/patientModuleStore';
 
 const REQUEST_NOTIFICATION_POLL_INTERVAL_MS = 8_000;
 const APPOINTMENT_SYNC_POLL_INTERVAL_MS = 5_000;
+const REVIEW_SYNC_POLL_INTERVAL_MS = 5_000;
 const MODULE_NOTIFICATION_POLL_INTERVAL_MS = 15_000;
 
 export function PatientLayout() {
@@ -29,6 +30,7 @@ export function PatientLayout() {
     requests,
     refresh,
     refreshAppointments,
+    refreshReviews,
     refreshRequests,
   } = usePatientModuleStore({
     autoLoad: shouldAutoLoadPatientModule,
@@ -58,6 +60,12 @@ export function PatientLayout() {
     }
   }, [isLoading, refreshAppointments]);
 
+  const refreshReviewsIfVisible = useCallback(() => {
+    if (document.visibilityState === 'visible' && !isLoading) {
+      void refreshReviews();
+    }
+  }, [isLoading, refreshReviews]);
+
   useEffect(() => {
     if (IS_TEST_MODE || !shouldAutoLoadPatientModule) {
       return;
@@ -65,6 +73,7 @@ export function PatientLayout() {
 
     refreshRequestsIfVisible();
     refreshAppointmentsIfVisible();
+    refreshReviewsIfVisible();
 
     const requestInterval = setInterval(
       refreshRequestsIfVisible,
@@ -74,6 +83,10 @@ export function PatientLayout() {
       refreshAppointmentsIfVisible,
       APPOINTMENT_SYNC_POLL_INTERVAL_MS,
     );
+    const reviewInterval = setInterval(
+      refreshReviewsIfVisible,
+      REVIEW_SYNC_POLL_INTERVAL_MS,
+    );
     const moduleInterval = setInterval(
       refreshModuleIfVisible,
       MODULE_NOTIFICATION_POLL_INTERVAL_MS,
@@ -81,12 +94,15 @@ export function PatientLayout() {
 
     document.addEventListener('visibilitychange', refreshRequestsIfVisible);
     document.addEventListener('visibilitychange', refreshAppointmentsIfVisible);
+    document.addEventListener('visibilitychange', refreshReviewsIfVisible);
     window.addEventListener('focus', refreshRequestsIfVisible);
     window.addEventListener('focus', refreshAppointmentsIfVisible);
+    window.addEventListener('focus', refreshReviewsIfVisible);
 
     return () => {
       clearInterval(requestInterval);
       clearInterval(appointmentInterval);
+      clearInterval(reviewInterval);
       clearInterval(moduleInterval);
       document.removeEventListener(
         'visibilitychange',
@@ -96,12 +112,18 @@ export function PatientLayout() {
         'visibilitychange',
         refreshAppointmentsIfVisible,
       );
+      document.removeEventListener(
+        'visibilitychange',
+        refreshReviewsIfVisible,
+      );
       window.removeEventListener('focus', refreshRequestsIfVisible);
       window.removeEventListener('focus', refreshAppointmentsIfVisible);
+      window.removeEventListener('focus', refreshReviewsIfVisible);
     };
   }, [
     refreshAppointmentsIfVisible,
     refreshModuleIfVisible,
+    refreshReviewsIfVisible,
     refreshRequestsIfVisible,
     shouldAutoLoadPatientModule,
   ]);

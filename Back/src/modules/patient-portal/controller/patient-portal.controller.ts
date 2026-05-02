@@ -45,6 +45,11 @@ export class PatientPortalController {
     return this.patientPortalService.getAppointments(user);
   }
 
+  @Get('reviews')
+  getReviews(@CurrentUser() user: RequestUser) {
+    return this.patientPortalService.getReviews(user);
+  }
+
   @Get('students')
   getStudentDirectory(
     @CurrentUser() user: RequestUser,

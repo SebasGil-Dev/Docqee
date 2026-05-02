@@ -1,6 +1,7 @@
 import type {
   StudentAgendaAppointment,
   StudentAgendaAppointmentStatus,
+  StudentAppointmentReview,
   StudentAppointmentFormValues,
   StudentConversation,
   StudentConversationMessage,
@@ -25,6 +26,10 @@ export function getStudentPortalDashboard() {
 
 export function getStudentPortalAppointments() {
   return apiRequest<StudentAgendaAppointment[]>('/student-portal/appointments');
+}
+
+export function getStudentPortalReviews() {
+  return apiRequest<StudentAppointmentReview[]>('/student-portal/reviews');
 }
 
 export function getStudentPortalRequests() {

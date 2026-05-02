@@ -1,6 +1,7 @@
 import { CreatePatientAppointmentReviewDto } from '../../application/dto/create-patient-appointment-review.dto';
 import { CreatePatientRequestDto } from '../../application/dto/create-patient-request.dto';
 import { PatientAppointmentDto } from '../../application/dto/patient-appointment.dto';
+import { PatientAppointmentReviewDto } from '../../application/dto/patient-appointment-review.dto';
 import { PatientConversationDto } from '../../application/dto/patient-conversation.dto';
 import { PatientConversationMessageDto } from '../../application/dto/patient-conversation-message.dto';
 import { PatientPortalDashboardDto } from '../../application/dto/patient-portal-dashboard.dto';
@@ -16,6 +17,8 @@ export abstract class PatientPortalRepository {
   abstract getDashboard(patientAccountId: number): Promise<PatientPortalDashboardDto>;
 
   abstract getAppointments(patientAccountId: number): Promise<PatientAppointmentDto[]>;
+
+  abstract getReviews(patientAccountId: number): Promise<PatientAppointmentReviewDto[]>;
 
   abstract getRequests(patientAccountId: number): Promise<PatientRequestDto[]>;
 

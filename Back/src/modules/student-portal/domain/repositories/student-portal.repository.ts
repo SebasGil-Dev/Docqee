@@ -1,5 +1,6 @@
 import { CreateStudentAppointmentReviewDto } from '../../application/dto/create-student-appointment-review.dto';
 import { StudentAgendaAppointmentDto } from '../../application/dto/student-agenda-appointment.dto';
+import { StudentAppointmentReviewDto } from '../../application/dto/student-appointment-review.dto';
 import { StudentConversationDto } from '../../application/dto/student-conversation.dto';
 import { StudentConversationMessageDto } from '../../application/dto/student-conversation-message.dto';
 import { StudentPortalDashboardDto } from '../../application/dto/student-portal-dashboard.dto';
@@ -18,6 +19,8 @@ export abstract class StudentPortalRepository {
   abstract getDashboard(studentAccountId: number): Promise<StudentPortalDashboardDto>;
 
   abstract getAppointments(studentAccountId: number): Promise<StudentAgendaAppointmentDto[]>;
+
+  abstract getReviews(studentAccountId: number): Promise<StudentAppointmentReviewDto[]>;
 
   abstract getRequests(studentAccountId: number): Promise<StudentRequestDto[]>;
 
