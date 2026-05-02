@@ -101,8 +101,13 @@ if ($missingTests.Count -gt 0) {
 }
 
 Write-Host ""
-Write-Host " Ejecutando pruebas... (~3 minutos)" -ForegroundColor Yellow
+if ($env:E2E_FAST_RATING_TIME -match '^(1|true|yes|si)$') {
+    Write-Host " Ejecutando pruebas... (~3 minutos, valoraciones en modo rapido)" -ForegroundColor Yellow
+} else {
+    Write-Host " Ejecutando pruebas... (~10-15 minutos, valoraciones con horario real)" -ForegroundColor Yellow
+}
 Write-Host " Orden: auth -> solicitudes -> chat -> citas -> valoraciones -> perfil" -ForegroundColor DarkCyan
+Write-Host " Nota: el tiempo entre parentesis es total; las lineas METRICA_E2E miden solo la accion real." -ForegroundColor DarkGray
 Write-Host ""
 
 $blobReportDir = Join-Path $frontPath ("blob-report-ordered-" + (Get-Date -Format "yyyyMMdd-HHmmss"))

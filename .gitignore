@@ -38,6 +38,7 @@ Front/playwright-report/
 Front/test-results/
 Front/e2e/fixtures/sesion-paciente.json
 Front/e2e/fixtures/sesion-estudiante.json
+Front/e2e/fixtures/.rating-appointment.json
 
 # Claude config local
 .claude/

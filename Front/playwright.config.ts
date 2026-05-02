@@ -28,7 +28,7 @@ export default defineConfig({
     trace: 'retain-on-failure',
 
     viewport: { width: 1280, height: 720 },
-    actionTimeout:     15_000,
+    actionTimeout: 15_000,
     navigationTimeout: 20_000,
   },
 
@@ -45,5 +45,5 @@ export default defineConfig({
   ],
 
   timeout: 45_000,
-  globalTimeout: 600_000,
+  globalTimeout: 1_800_000,
 });

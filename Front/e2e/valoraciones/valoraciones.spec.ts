@@ -13,6 +13,13 @@ import {
   type Page,
 } from '@playwright/test';
 import { RUTAS, SESIONES } from '../fixtures/credenciales';
+import { medirAccion } from '../fixtures/metricas';
+import {
+  clearRatingAppointmentState,
+  loadRatingAppointmentState,
+  saveRatingAppointmentState,
+  type RatingAppointmentState,
+} from '../fixtures/ratingAppointmentState';
 
 test.describe.configure({ mode: 'serial', timeout: 180_000 });
 
@@ -24,13 +31,18 @@ const API_BASE_URL =
 const ESTUDIANTE_PRUEBA = /sebasti/i;
 const PACIENTE_PRUEBA = /fernanda/i;
 const BUSQUEDA_ESTUDIANTE_PRUEBA = 'Sebasti';
-// Por API usamos el siguiente minuto disponible para mantener la suite corta.
-const RATING_SLOT_DURATION_MINUTES = 1;
+const FAST_RATING_TIME_VALUES = new Set(['1', 'true', 'yes', 'si']);
+const USE_FAST_RATING_TIME = FAST_RATING_TIME_VALUES.has(
+  (process.env.E2E_FAST_RATING_TIME ?? '').toLowerCase(),
+);
+// Por defecto imitamos el selector manual: proximo bloque de 5 minutos.
+const RATING_SLOT_STEP_MINUTES = USE_FAST_RATING_TIME ? 1 : 5;
+const RATING_SLOT_DURATION_MINUTES = USE_FAST_RATING_TIME ? 1 : 5;
 const RATING_SLOT_SETTLE_MS = 3_000;
+const RATING_HOOK_TIMEOUT_MS = USE_FAST_RATING_TIME ? 240_000 : 1_200_000;
 const RUN_ID = Date.now().toString(36);
 
-let patientRatingAppointmentId: string | null = null;
-let studentRatingAppointmentId: string | null = null;
+let ratingAppointmentId: string | null = null;
 
 type ApiResult<T> = {
   ok: boolean;
@@ -39,11 +51,24 @@ type ApiResult<T> = {
 };
 
 type StudentDashboard = {
+  appointments: RatingDashboardAppointment[];
   appointmentTypes: Array<{ id: string; name: string }>;
   practiceSites: Array<{ siteId: string; status: string }>;
   requests: Array<{ id: string; patientName: string; status: string }>;
   supervisors: Array<{ id: string; status: string }>;
   treatments: Array<{ status: string; treatmentTypeId: string }>;
+};
+
+type RatingDashboardAppointment = {
+  endAt: string;
+  id: string;
+  myRating: number | null;
+  startAt: string;
+  status: string;
+};
+
+type PatientDashboard = {
+  appointments: RatingDashboardAppointment[];
 };
 
 type StudentAppointment = {
@@ -119,9 +144,25 @@ function toTimeInputValue(value: Date) {
   return `${parts.hour}:${parts.minute}`;
 }
 
-function getRatingSlot(attempt: number) {
-  let startAt = new Date(Date.now() + (attempt + 1) * 60_000);
+function getNextRatingSlotStart(attempt: number) {
+  const now = new Date();
+  const parts = getBogotaDateTimeParts(now);
+  const currentMinute = Number(parts.minute);
+  const minuteRemainder = currentMinute % RATING_SLOT_STEP_MINUTES;
+  const minutesUntilNextStep =
+    RATING_SLOT_STEP_MINUTES - minuteRemainder || RATING_SLOT_STEP_MINUTES;
+  const delayMs =
+    (minutesUntilNextStep + attempt * RATING_SLOT_STEP_MINUTES) * 60_000 -
+    now.getSeconds() * 1000 -
+    now.getMilliseconds();
+  const startAt = new Date(Date.now() + delayMs);
   startAt.setSeconds(0, 0);
+
+  return startAt;
+}
+
+function getRatingSlot(attempt: number) {
+  let startAt = getNextRatingSlotStart(attempt);
   let endAt = new Date(
     startAt.getTime() + RATING_SLOT_DURATION_MINUTES * 60_000,
   );
@@ -137,6 +178,38 @@ function getRatingSlot(attempt: number) {
     startAt,
     startDate: toDateInputValue(startAt),
     startTime: toTimeInputValue(startAt),
+  };
+}
+
+function serializeRatingAppointment(
+  appointment: {
+    id: string;
+    slot: ReturnType<typeof getRatingSlot>;
+  },
+  source: RatingAppointmentState['source'],
+): RatingAppointmentState {
+  return {
+    createdAt: new Date().toISOString(),
+    endAt: appointment.slot.endAt.toISOString(),
+    endTime: appointment.slot.endTime,
+    id: appointment.id,
+    source,
+    startAt: appointment.slot.startAt.toISOString(),
+    startDate: appointment.slot.startDate,
+    startTime: appointment.slot.startTime,
+  };
+}
+
+function deserializeRatingAppointment(state: RatingAppointmentState) {
+  return {
+    id: state.id,
+    slot: {
+      endAt: new Date(state.endAt),
+      endTime: state.endTime,
+      startAt: new Date(state.startAt),
+      startDate: state.startDate,
+      startTime: state.startTime,
+    },
   };
 }
 
@@ -386,6 +459,7 @@ async function createAcceptedRatingAppointment(
   let createdAppointment: StudentAppointment | null = null;
   let selectedSlot: ReturnType<typeof getRatingSlot> | null = null;
   let lastCreateResult: ApiResult<StudentAppointment> | null = null;
+  const attemptedSlots: string[] = [];
 
   for (let attempt = 0; attempt < 10; attempt += 1) {
     const slot = getRatingSlot(attempt);
@@ -402,13 +476,16 @@ async function createAcceptedRatingAppointment(
     }
 
     lastCreateResult = result;
+    attemptedSlots.push(
+      `${slot.startDate} ${slot.startTime}-${slot.endTime} -> HTTP ${result.status}: ${JSON.stringify(result.payload)}`,
+    );
   }
 
   await closeContext(studentContext);
 
   expect(
     createdAppointment,
-    `No se pudo crear la cita cercana para valoracion: ${JSON.stringify(lastCreateResult?.payload)}`,
+    `No se pudo crear la cita cercana para valoracion. Intentos: ${attemptedSlots.join(' | ')}. Ultima respuesta: ${JSON.stringify(lastCreateResult?.payload)}`,
   ).toBeTruthy();
   expect(selectedSlot).toBeTruthy();
 
@@ -434,6 +511,49 @@ async function createAcceptedRatingAppointment(
     id: createdAppointment!.id,
     slot: selectedSlot!,
   };
+}
+
+async function canUseStoredRatingAppointment(
+  browser: Browser,
+  state: RatingAppointmentState,
+) {
+  const studentContext = await browser.newContext({
+    storageState: SESIONES.estudiante,
+  });
+  const studentPage = await studentContext.newPage();
+  await studentPage.goto(RUTAS.estudianteCitas);
+  await studentPage.waitForLoadState('networkidle');
+  const studentDashboard = await apiRequest<StudentDashboard>(
+    studentPage,
+    '/student-portal/dashboard',
+  );
+  await closeContext(studentContext);
+
+  const patientContext = await browser.newContext({
+    storageState: SESIONES.paciente,
+  });
+  const patientPage = await patientContext.newPage();
+  await patientPage.goto(RUTAS.pacienteCitas);
+  await patientPage.waitForLoadState('networkidle');
+  const patientDashboard = await apiRequest<PatientDashboard>(
+    patientPage,
+    '/patient-portal/dashboard',
+  );
+  await closeContext(patientContext);
+
+  const studentAppointment = studentDashboard.appointments.find(
+    (appointment) => appointment.id === state.id,
+  );
+  const patientAppointment = patientDashboard.appointments.find(
+    (appointment) => appointment.id === state.id,
+  );
+
+  return Boolean(
+    studentAppointment &&
+    patientAppointment &&
+    studentAppointment.myRating === null &&
+    patientAppointment.myRating === null,
+  );
 }
 
 async function waitForRatingAppointments(
@@ -487,23 +607,36 @@ async function getAppointmentRow(
 }
 
 test.beforeAll(async ({ browser }, testInfo) => {
-  testInfo.setTimeout(240_000);
-  const patientAppointment = await createAcceptedRatingAppointment(
-    browser,
-    'Valoracion paciente',
-  );
-  const studentAppointment = await createAcceptedRatingAppointment(
-    browser,
-    'Valoracion estudiante',
-  );
+  testInfo.setTimeout(RATING_HOOK_TIMEOUT_MS);
+  let storedAppointment = loadRatingAppointmentState();
 
-  patientRatingAppointmentId = patientAppointment.id;
-  studentRatingAppointmentId = studentAppointment.id;
+  if (
+    storedAppointment &&
+    !(await canUseStoredRatingAppointment(browser, storedAppointment))
+  ) {
+    clearRatingAppointmentState();
+    storedAppointment = null;
+  }
 
-  await waitForRatingAppointments([patientAppointment, studentAppointment]);
+  if (!storedAppointment) {
+    const fallbackAppointment = await createAcceptedRatingAppointment(
+      browser,
+      'Valoracion compartida',
+    );
+    storedAppointment = serializeRatingAppointment(
+      fallbackAppointment,
+      'fallback',
+    );
+    saveRatingAppointmentState(storedAppointment);
+  }
+
+  const appointment = deserializeRatingAppointment(storedAppointment);
+  ratingAppointmentId = appointment.id;
+
+  await waitForRatingAppointments([appointment]);
 
   console.log(
-    `E2E valoraciones: citas listas para valorar (${patientRatingAppointmentId}, ${studentRatingAppointmentId}).`,
+    `E2E valoraciones: cita lista para valorar (${ratingAppointmentId}) ${storedAppointment.startTime}-${storedAppointment.endTime}, origen ${storedAppointment.source}.`,
   );
 });
 
@@ -511,7 +644,7 @@ test('E2E-21 | Paciente califica al estudiante tras cita finalizada', async ({
   browser,
 }) => {
   const appointmentId = requireRatingAppointmentId(
-    patientRatingAppointmentId,
+    ratingAppointmentId,
     'paciente',
   );
   const context = await browser.newContext({ storageState: SESIONES.paciente });
@@ -538,15 +671,21 @@ test('E2E-21 | Paciente califica al estudiante tras cita finalizada', async ({
     await textarea.fill('Excelente atencion - prueba E2E-21 Playwright.');
   }
 
-  await page
-    .getByRole('button', { name: /enviar|guardar|calificar/i })
-    .last()
-    .click();
+  await medirAccion(
+    'E2E-21',
+    'enviar calificacion paciente hasta visible',
+    async () => {
+      await page
+        .getByRole('button', { name: /enviar|guardar|calificar/i })
+        .last()
+        .click();
 
-  await expect(modal).toBeHidden({ timeout: 15_000 });
-  await expect(fila).toContainText(/5\/5/, {
-    timeout: 15_000,
-  });
+      await expect(modal).toBeHidden({ timeout: 15_000 });
+      await expect(fila).toContainText(/5\/5/, {
+        timeout: 15_000,
+      });
+    },
+  );
   console.log('E2E-21: Calificacion del estudiante enviada.');
   await closeContext(context);
 });
@@ -555,7 +694,7 @@ test('E2E-22 | Estudiante califica al paciente tras cita finalizada', async ({
   browser,
 }) => {
   const appointmentId = requireRatingAppointmentId(
-    studentRatingAppointmentId,
+    ratingAppointmentId,
     'estudiante',
   );
   const context = await browser.newContext({
@@ -584,15 +723,21 @@ test('E2E-22 | Estudiante califica al paciente tras cita finalizada', async ({
     await textarea.fill('Paciente muy colaborador - prueba E2E-22 Playwright.');
   }
 
-  await page
-    .getByRole('button', { name: /enviar|guardar|calificar/i })
-    .last()
-    .click();
+  await medirAccion(
+    'E2E-22',
+    'enviar calificacion estudiante hasta visible',
+    async () => {
+      await page
+        .getByRole('button', { name: /enviar|guardar|calificar/i })
+        .last()
+        .click();
 
-  await expect(modal).toBeHidden({ timeout: 15_000 });
-  await expect(fila).toContainText(/5\/5/, {
-    timeout: 15_000,
-  });
+      await expect(modal).toBeHidden({ timeout: 15_000 });
+      await expect(fila).toContainText(/5\/5/, {
+        timeout: 15_000,
+      });
+    },
+  );
   console.log('E2E-22: Calificacion del paciente enviada.');
   await closeContext(context);
 });
@@ -601,7 +746,7 @@ test('E2E-23 | Calificacion duplicada - sistema bloquea el segundo intento', asy
   browser,
 }) => {
   const appointmentId = requireRatingAppointmentId(
-    patientRatingAppointmentId,
+    ratingAppointmentId,
     'duplicada paciente',
   );
   const context = await browser.newContext({ storageState: SESIONES.paciente });
@@ -621,6 +766,13 @@ test('E2E-23 | Calificacion duplicada - sistema bloquea el segundo intento', asy
     : false;
 
   if (!visible || !habilitado) {
+    await medirAccion(
+      'E2E-23',
+      'validar duplicado bloqueado sin boton',
+      async () => {
+        expect(visible && habilitado).toBe(false);
+      },
+    );
     console.log(
       'E2E-23: Calificacion duplicada bloqueada - boton ausente o deshabilitado.',
     );
@@ -628,16 +780,22 @@ test('E2E-23 | Calificacion duplicada - sistema bloquea el segundo intento', asy
     return;
   }
 
-  await btnCalificar.click();
-  await expect(
-    page
-      .getByText(/ya calificaste|ya enviaste|duplicad/i)
-      .or(
+  await medirAccion(
+    'E2E-23',
+    'intentar duplicado hasta rechazo visible',
+    async () => {
+      await btnCalificar.click();
+      await expect(
         page
-          .locator('[role="status"], [role="alert"]')
-          .filter({ hasText: /ya califica/i }),
-      ),
-  ).toBeVisible({ timeout: 8_000 });
+          .getByText(/ya calificaste|ya enviaste|duplicad/i)
+          .or(
+            page
+              .locator('[role="status"], [role="alert"]')
+              .filter({ hasText: /ya califica/i }),
+          ),
+      ).toBeVisible({ timeout: 8_000 });
+    },
+  );
 
   console.log('E2E-23: Sistema rechazo la calificacion duplicada.');
   await closeContext(context);
