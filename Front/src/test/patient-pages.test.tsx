@@ -287,6 +287,35 @@ describe('Patient pages', () => {
     });
   });
 
+  it('permite ver el detalle completo de una cita', async () => {
+    const user = userEvent.setup();
+
+    renderPatientApp([ROUTES.patientAppointments]);
+
+    await user.click(
+      within(
+        screen.getByTestId('patient-appointment-row-patient-appointment-1'),
+      ).getByRole('button', { name: /ver detalle de cita con valentina rios/i }),
+    );
+
+    const detailDialog = await screen.findByRole('dialog', {
+      name: /valoracion inicial/i,
+    });
+
+    expect(
+      within(detailDialog).getByText(/detalle de cita/i),
+    ).toBeInTheDocument();
+    expect(
+      within(detailDialog).getByText(/calle 80 # 24-19/i),
+    ).toBeInTheDocument();
+    expect(
+      within(detailDialog).getByText(/dr\. sebastian mora/i),
+    ).toBeInTheDocument();
+    expect(
+      within(detailDialog).getByText(/recuerda llevar radiografia panoramica/i),
+    ).toBeInTheDocument();
+  });
+
   it('marca como rechazada una cita propuesta cuando ya vencio', () => {
     renderPatientApp([ROUTES.patientAppointments]);
 
