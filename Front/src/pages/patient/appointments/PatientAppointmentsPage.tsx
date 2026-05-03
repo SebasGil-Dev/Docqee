@@ -12,10 +12,12 @@ import {
   SlidersHorizontal,
   Star,
   Stethoscope,
+  UserRound,
   X,
   XCircle,
+  type LucideIcon,
 } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
@@ -101,23 +103,20 @@ function formatDateTimeRange(startAt: string, endAt: string) {
   return `${formatter.format(startDate)} a ${timeFormatter.format(endDate)}`;
 }
 
-function formatFullDateTimeRange(startAt: string, endAt: string) {
-  const startDate = new Date(startAt);
-  const endDate = new Date(endAt);
-  const dateFormatter = new Intl.DateTimeFormat('es-CO', {
+function formatFullDate(value: string) {
+  return new Intl.DateTimeFormat('es-CO', {
     day: 'numeric',
     month: 'long',
     weekday: 'long',
     year: 'numeric',
-  });
-  const timeFormatter = new Intl.DateTimeFormat('es-CO', {
+  }).format(new Date(value));
+}
+
+function formatTime(value: string) {
+  return new Intl.DateTimeFormat('es-CO', {
     hour: 'numeric',
     minute: '2-digit',
-  });
-
-  return `${dateFormatter.format(startDate)}, ${timeFormatter.format(
-    startDate,
-  )} a ${timeFormatter.format(endDate)}`;
+  }).format(new Date(value));
 }
 
 function formatFullDateTime(value: string | null) {
@@ -194,6 +193,105 @@ function getAppointmentUpdateMessage(
 
 type RatingTarget = { appointmentId: string; studentName: string };
 
+function PatientAppointmentsDialogFrame({
+  children,
+  description,
+  onClose,
+  title,
+}: {
+  children: ReactNode;
+  description?: string;
+  onClose: () => void;
+  title: string;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto px-2 py-2 sm:px-4 sm:py-4">
+      <button
+        aria-label="Cerrar ventana"
+        className="fixed inset-0 bg-slate-950/40 backdrop-blur-[2px]"
+        type="button"
+        onClick={onClose}
+      />
+      <div
+        aria-describedby={
+          description ? 'patient-appointments-dialog-description' : undefined
+        }
+        aria-labelledby="patient-appointments-dialog-title"
+        aria-modal="true"
+        className="student-appointment-dialog relative mx-auto w-full max-w-3xl overflow-visible rounded-[1.35rem] border border-slate-200/80 bg-white shadow-[0_34px_90px_-36px_rgba(15,23,42,0.55)] lg:max-w-5xl xl:max-w-6xl"
+        role="dialog"
+      >
+        <div className="absolute right-2.5 top-2.5 z-30">
+          <button
+            aria-label="Cerrar ventana"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-ink-muted transition duration-200 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200"
+            type="button"
+            onClick={onClose}
+          >
+            <X aria-hidden="true" className="h-3.5 w-3.5" />
+          </button>
+        </div>
+        <div className="px-3 pb-3 pt-3 sm:px-4 sm:pb-4 sm:pt-4">
+          <div className="space-y-1">
+            <h2
+              className="font-headline text-[1.05rem] font-extrabold tracking-tight text-ink sm:text-[1.18rem]"
+              id="patient-appointments-dialog-title"
+            >
+              {title}
+            </h2>
+            {description ? (
+              <p
+                className="pr-8 text-[0.72rem] leading-5 text-ink-muted sm:text-[0.76rem]"
+                id="patient-appointments-dialog-description"
+              >
+                {description}
+              </p>
+            ) : null}
+          </div>
+          <div className="mt-3">{children}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ReadOnlyAppointmentField({
+  icon: Icon,
+  id,
+  label,
+  value,
+}: {
+  icon: LucideIcon;
+  id: string;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="admin-text-field student-appointment-dialog-field space-y-1.5">
+      <label
+        className="admin-text-field__label block text-sm font-semibold text-ink"
+        htmlFor={id}
+      >
+        {label}
+      </label>
+      <div className="relative">
+        <Icon
+          aria-hidden="true"
+          className="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-ghost"
+        />
+        <input
+          readOnly
+          className="admin-text-field__input w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-ink transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+          id={id}
+          name={id}
+          type="text"
+          value={value}
+        />
+      </div>
+    </div>
+  );
+}
+
 type AppointmentDetailModalProps = {
   appointment: PatientAppointment;
   displayStatus: PatientAppointmentStatus;
@@ -205,73 +303,12 @@ function AppointmentDetailModal({
   displayStatus,
   onClose,
 }: AppointmentDetailModalProps) {
-  const overlayRef = useRef<HTMLDivElement | null>(null);
-  const titleId = `patient-appointment-detail-title-${appointment.id}`;
   const statusLabel =
     appointment.isRescheduleProposal && displayStatus === 'PROPUESTA'
       ? 'Reprogramacion propuesta'
       : getStatusLabel(displayStatus);
-  const detailItems = [
-    {
-      label: 'Codigo de cita',
-      value: appointment.id,
-    },
-    {
-      label: 'Estado',
-      value: statusLabel,
-    },
-    {
-      label: 'Fecha y hora',
-      value: formatFullDateTimeRange(appointment.startAt, appointment.endAt),
-    },
-    {
-      label: 'Estudiante',
-      value: appointment.studentName,
-    },
-    {
-      label: 'Universidad',
-      value: appointment.universityName,
-    },
-    {
-      label: 'Atencion clinica',
-      value: appointment.appointmentType,
-    },
-    {
-      label: 'Docente',
-      value: appointment.teacherName,
-    },
-    {
-      label: 'Sede',
-      value: appointment.siteName,
-    },
-    {
-      label: 'Ciudad',
-      value: appointment.city,
-    },
-    {
-      label: 'Direccion de sede',
-      value: appointment.siteAddress || 'Sin direccion registrada',
-    },
-    {
-      label: 'Informacion adicional',
-      value: appointment.additionalInfo || 'Sin informacion adicional',
-    },
-    {
-      label: 'Fecha de solicitud',
-      value: formatFullDateTime(appointment.createdAt),
-    },
-    {
-      label: 'Fecha de respuesta',
-      value: formatFullDateTime(appointment.respondedAt),
-    },
-    {
-      label: 'Mi valoracion',
-      value:
-        appointment.myRating !== null
-          ? `${appointment.myRating}/5`
-          : 'Sin valorar',
-    },
-  ];
+  const ratingValue =
+    appointment.myRating !== null ? `${appointment.myRating}/5` : 'Sin valorar';
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -284,77 +321,156 @@ function AppointmentDetailModal({
   }, [onClose]);
 
   return (
-    <div
-      ref={overlayRef}
-      aria-labelledby={titleId}
-      aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/30 p-3 backdrop-blur-sm sm:p-4"
-      role="dialog"
-      onClick={(event) => {
-        if (event.target === overlayRef.current) onClose();
-      }}
+    <PatientAppointmentsDialogFrame
+      description="Consulta los detalles completos de la cita."
+      title="Ver cita"
+      onClose={onClose}
     >
-      <div className="flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-[1.4rem] border border-slate-200/80 bg-white shadow-[0_32px_80px_-24px_rgba(15,23,42,0.38)]">
-        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-100 px-5 py-4">
-          <div className="min-w-0">
-            <p className="text-[0.6rem] font-bold uppercase tracking-[0.18em] text-primary/70">
-              Detalle de cita
-            </p>
-            <h2
-              className="mt-0.5 break-words text-base font-bold text-ink sm:text-lg"
-              id={titleId}
-            >
-              {appointment.appointmentType}
-            </h2>
-            <p className="mt-1 break-words text-xs font-medium text-ink-muted sm:text-sm">
-              {appointment.studentName} - {appointment.siteName}
-            </p>
-          </div>
+      <div className="space-y-2.5">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span
+            className={classNames(
+              'inline-flex rounded-full px-2.5 py-1 text-[0.68rem] font-semibold ring-1 ring-inset',
+              getStatusBadgeClasses(displayStatus),
+            )}
+          >
+            {statusLabel}
+          </span>
+          {appointment.isRescheduleProposal ? (
+            <span className="inline-flex rounded-full bg-primary/10 px-2.5 py-1 text-[0.68rem] font-semibold text-primary">
+              Reprogramacion
+            </span>
+          ) : null}
+        </div>
+
+        <div className="grid gap-2 sm:grid-cols-2">
+          <ReadOnlyAppointmentField
+            icon={UserRound}
+            id={`patient-appointment-student-${appointment.id}`}
+            label="Estudiante"
+            value={appointment.studentName}
+          />
+          <ReadOnlyAppointmentField
+            icon={GraduationCap}
+            id={`patient-appointment-university-${appointment.id}`}
+            label="Universidad"
+            value={appointment.universityName}
+          />
+        </div>
+
+        <div className="grid gap-2 lg:grid-cols-2">
+          <ReadOnlyAppointmentField
+            icon={Stethoscope}
+            id={`patient-appointment-type-${appointment.id}`}
+            label="Tipo de cita"
+            value={appointment.appointmentType}
+          />
+          <ReadOnlyAppointmentField
+            icon={GraduationCap}
+            id={`patient-appointment-teacher-${appointment.id}`}
+            label="Docente supervisor"
+            value={appointment.teacherName}
+          />
+        </div>
+
+        <div className="student-appointment-datetime-row grid w-full grid-cols-[minmax(0,1.18fr)_minmax(0,0.91fr)_minmax(0,0.91fr)] items-start gap-1 sm:grid-cols-3 sm:gap-2">
+          <ReadOnlyAppointmentField
+            icon={CalendarCheck2}
+            id={`patient-appointment-date-${appointment.id}`}
+            label="Fecha de la cita"
+            value={formatFullDate(appointment.startAt)}
+          />
+          <ReadOnlyAppointmentField
+            icon={Clock3}
+            id={`patient-appointment-start-time-${appointment.id}`}
+            label="Hora de inicio"
+            value={formatTime(appointment.startAt)}
+          />
+          <ReadOnlyAppointmentField
+            icon={Clock3}
+            id={`patient-appointment-end-time-${appointment.id}`}
+            label="Hora de finalizacion"
+            value={formatTime(appointment.endAt)}
+          />
+        </div>
+
+        <div className="grid gap-2 lg:grid-cols-2">
+          <ReadOnlyAppointmentField
+            icon={MapPin}
+            id={`patient-appointment-site-${appointment.id}`}
+            label="Sede"
+            value={`${appointment.siteName} - ${appointment.city}`}
+          />
+          <ReadOnlyAppointmentField
+            icon={MapPin}
+            id={`patient-appointment-address-${appointment.id}`}
+            label="Direccion de sede"
+            value={appointment.siteAddress || 'Sin direccion registrada'}
+          />
+        </div>
+
+        <div className="grid gap-2 sm:grid-cols-3">
+          <ReadOnlyAppointmentField
+            icon={BriefcaseMedical}
+            id={`patient-appointment-code-${appointment.id}`}
+            label="Codigo de cita"
+            value={appointment.id}
+          />
+          <ReadOnlyAppointmentField
+            icon={CalendarCheck2}
+            id={`patient-appointment-created-${appointment.id}`}
+            label="Fecha de solicitud"
+            value={formatFullDateTime(appointment.createdAt)}
+          />
+          <ReadOnlyAppointmentField
+            icon={Star}
+            id={`patient-appointment-rating-${appointment.id}`}
+            label="Mi valoracion"
+            value={ratingValue}
+          />
+        </div>
+
+        <div className="grid gap-2 sm:grid-cols-2">
+          <ReadOnlyAppointmentField
+            icon={CheckCircle2}
+            id={`patient-appointment-status-${appointment.id}`}
+            label="Estado"
+            value={statusLabel}
+          />
+          <ReadOnlyAppointmentField
+            icon={CalendarCheck2}
+            id={`patient-appointment-responded-${appointment.id}`}
+            label="Fecha de respuesta"
+            value={formatFullDateTime(appointment.respondedAt)}
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label
+            className="block text-[0.72rem] font-semibold text-ink"
+            htmlFor={`patient-appointment-additional-info-${appointment.id}`}
+          >
+            Informacion adicional
+          </label>
+          <textarea
+            readOnly
+            className="student-appointment-dialog-notes min-h-[3rem] w-full rounded-[0.85rem] border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[0.72rem] text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+            id={`patient-appointment-additional-info-${appointment.id}`}
+            value={appointment.additionalInfo || 'Sin informacion adicional'}
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center justify-center gap-2">
           <button
-            aria-label="Cerrar detalle de cita"
-            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-ghost transition duration-150 hover:bg-slate-100 hover:text-ink focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+            className="inline-flex items-center justify-center rounded-full bg-slate-100 px-3 py-1.5 text-[0.76rem] font-semibold text-ink-muted transition duration-200 hover:bg-slate-200"
             type="button"
             onClick={onClose}
           >
-            <X aria-hidden="true" className="h-4 w-4" />
+            Cerrar
           </button>
         </div>
-
-        <div className="admin-scrollbar min-h-0 overflow-y-auto px-5 py-4">
-          <div className="mb-4 flex flex-wrap items-center gap-2">
-            <span
-              className={classNames(
-                'inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset',
-                getStatusBadgeClasses(displayStatus),
-              )}
-            >
-              {statusLabel}
-            </span>
-            {appointment.isRescheduleProposal ? (
-              <span className="inline-flex rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
-                Reprogramacion
-              </span>
-            ) : null}
-          </div>
-
-          <dl className="grid gap-2 sm:grid-cols-2">
-            {detailItems.map((item) => (
-              <div
-                key={item.label}
-                className="rounded-[1rem] border border-slate-100 bg-slate-50/70 px-3.5 py-3"
-              >
-                <dt className="text-[0.65rem] font-bold uppercase tracking-[0.16em] text-primary/65">
-                  {item.label}
-                </dt>
-                <dd className="mt-1 break-words text-sm font-semibold leading-5 text-ink">
-                  {item.value}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </div>
       </div>
-    </div>
+    </PatientAppointmentsDialogFrame>
   );
 }
 

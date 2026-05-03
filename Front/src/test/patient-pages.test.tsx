@@ -299,20 +299,22 @@ describe('Patient pages', () => {
     );
 
     const detailDialog = await screen.findByRole('dialog', {
-      name: /valoracion inicial/i,
+      name: /ver cita/i,
     });
 
     expect(
-      within(detailDialog).getByText(/detalle de cita/i),
+      within(detailDialog).getByText(/consulta los detalles completos/i),
     ).toBeInTheDocument();
     expect(
-      within(detailDialog).getByText(/calle 80 # 24-19/i),
+      within(detailDialog).getByDisplayValue(/calle 80 # 24-19/i),
     ).toBeInTheDocument();
     expect(
-      within(detailDialog).getByText(/dr\. sebastian mora/i),
+      within(detailDialog).getByDisplayValue(/dr\. sebastian mora/i),
     ).toBeInTheDocument();
     expect(
-      within(detailDialog).getByText(/recuerda llevar radiografia panoramica/i),
+      within(detailDialog).getByDisplayValue(
+        /recuerda llevar radiografia panoramica/i,
+      ),
     ).toBeInTheDocument();
   });
 
