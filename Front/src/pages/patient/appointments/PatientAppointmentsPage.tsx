@@ -789,7 +789,7 @@ export function PatientAppointmentsPage() {
                         >
                           {appointment.isRescheduleProposal &&
                           displayStatus === 'PROPUESTA'
-                            ? 'Reprogramacion propuesta'
+                            ? 'Reprogramacion'
                             : getStatusLabel(displayStatus)}
                         </span>
                       </td>
