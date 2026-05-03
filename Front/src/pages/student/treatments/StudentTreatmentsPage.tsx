@@ -528,11 +528,11 @@ export function StudentTreatmentsPage() {
         </div>
         <div
           ref={reviewTableViewportRef}
-          className="min-h-0 flex-1 overflow-hidden px-2 py-1.5 sm:px-3 sm:py-2.5"
+          className="student-mobile-table-shell min-h-0 flex-1 overflow-hidden px-2 py-1.5 sm:px-3 sm:py-2.5"
         >
           {filteredReviews.length > 0 ? (
             <div className="h-full overflow-hidden">
-              <table className="w-full table-fixed text-left">
+              <table className="student-mobile-compact-table student-review-mobile-table w-full table-fixed text-left">
                 <thead className="border-b border-slate-200/80">
                   <tr className="text-[0.54rem] font-bold uppercase tracking-[0.12em] text-ink-muted sm:text-[0.6rem] sm:tracking-[0.16em]">
                     <th className="w-[31%] px-2 py-1.5 font-bold sm:w-[24%] sm:px-3 sm:py-2">

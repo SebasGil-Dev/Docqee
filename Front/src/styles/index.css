@@ -275,6 +275,88 @@
     padding: 0;
   }
 
+  @media (max-width: 639px) {
+    .student-page-compact .student-mobile-table-shell {
+      padding: 0.18rem 0.22rem !important;
+    }
+
+    .student-page-compact .student-mobile-compact-table thead tr {
+      font-size: 0.45rem !important;
+      letter-spacing: 0.045em !important;
+      line-height: 0.58rem !important;
+    }
+
+    .student-page-compact .student-mobile-compact-table th {
+      padding: 0.18rem 0.24rem !important;
+    }
+
+    .student-page-compact .student-mobile-compact-table td {
+      padding: 0.3rem 0.24rem !important;
+    }
+
+    .student-page-compact .student-mobile-compact-table td:first-child {
+      padding-left: 0.32rem !important;
+    }
+
+    .student-page-compact .student-mobile-compact-table td:last-child {
+      padding-right: 0.28rem !important;
+    }
+
+    .student-page-compact .student-mobile-compact-table p,
+    .student-page-compact .student-mobile-compact-table span {
+      font-size: 0.56rem !important;
+      line-height: 0.74rem !important;
+    }
+
+    .student-page-compact .student-mobile-compact-table td:first-child p:first-child {
+      font-size: 0.65rem !important;
+      line-height: 0.82rem !important;
+    }
+
+    .student-page-compact .student-mobile-compact-table svg {
+      height: 0.62rem !important;
+      width: 0.62rem !important;
+    }
+
+    .student-page-compact .student-mobile-compact-table button {
+      gap: 0.12rem !important;
+      min-height: 1.08rem !important;
+      padding: 0.16rem 0.34rem !important;
+    }
+
+    .student-page-compact .student-mobile-compact-table button span {
+      font-size: 0.48rem !important;
+      line-height: 0.6rem !important;
+    }
+
+    .student-page-compact .student-mobile-compact-table td > span {
+      padding: 0.08rem 0.3rem !important;
+    }
+
+    .student-page-compact .student-mobile-compact-table td > div {
+      gap: 0.18rem !important;
+    }
+
+    .student-page-compact .student-mobile-compact-table td:first-child div {
+      row-gap: 0.08rem !important;
+    }
+
+    .student-page-compact .student-appointment-mobile-table td:first-child div > div {
+      margin-top: 0.2rem !important;
+      row-gap: 0.08rem !important;
+    }
+
+    .student-page-compact .student-review-mobile-table td:last-child p {
+      max-height: 1.55rem !important;
+      font-size: 0.58rem !important;
+      line-height: 0.78rem !important;
+    }
+
+    .student-page-compact .student-review-mobile-table td:nth-child(3) > div {
+      padding-top: 0 !important;
+    }
+  }
+
   .student-page-compact
     .student-appointment-dialog-field
     > :not([hidden])

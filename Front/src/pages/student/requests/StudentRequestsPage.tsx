@@ -931,7 +931,7 @@ export function StudentRequestsPage() {
             ref={tableViewportRef}
             className="min-h-0 w-full min-w-0 flex-1 overflow-hidden bg-white"
           >
-            <table className="h-auto w-full min-w-full table-fixed">
+            <table className="student-mobile-compact-table student-request-mobile-table h-auto w-full min-w-full table-fixed">
               <thead
                 ref={tableHeaderRef}
                 className="sticky top-0 z-10 bg-slate-100 text-left"
