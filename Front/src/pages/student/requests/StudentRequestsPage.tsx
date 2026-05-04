@@ -1,5 +1,7 @@
 import {
   Check,
+  ChevronLeft,
+  ChevronRight,
   Eye,
   Search,
   ShieldX,
@@ -191,6 +193,16 @@ function preloadPatientAvatar(src: string | undefined) {
   image.src = src;
 }
 
+function formatPatientRatingSummary(
+  averageRating: number | null,
+  reviewsCount: number,
+) {
+  const peopleLabel = reviewsCount === 1 ? 'persona' : 'personas';
+  const ratingLabel = averageRating !== null ? averageRating.toFixed(1) : '0.0';
+
+  return `${ratingLabel} · ${reviewsCount} ${peopleLabel}`;
+}
+
 function StudentRequestProfileDialog({
   isActionPending,
   onAccept,
@@ -208,6 +220,36 @@ function StudentRequestProfileDialog({
     patientProfile?.avatarSrc,
   );
   const averageRating = patientProfile?.averageRating ?? null;
+  const reviewsCount = patientReviews.length;
+  const [activeCommentIndex, setActiveCommentIndex] = useState(0);
+  const activePatientComment =
+    patientComments[activeCommentIndex] ?? patientComments[0] ?? null;
+
+  useEffect(() => {
+    setActiveCommentIndex(0);
+  }, [request.id]);
+
+  useEffect(() => {
+    if (activeCommentIndex >= patientComments.length) {
+      setActiveCommentIndex(0);
+    }
+  }, [activeCommentIndex, patientComments.length]);
+
+  const handlePreviousComment = () => {
+    setActiveCommentIndex((currentIndex) =>
+      patientComments.length > 0
+        ? (currentIndex - 1 + patientComments.length) % patientComments.length
+        : 0,
+    );
+  };
+
+  const handleNextComment = () => {
+    setActiveCommentIndex((currentIndex) =>
+      patientComments.length > 0
+        ? (currentIndex + 1) % patientComments.length
+        : 0,
+    );
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
@@ -281,12 +323,15 @@ function StudentRequestProfileDialog({
                     <div
                       aria-label={
                         averageRating !== null
-                          ? `Valoracion ${averageRating.toFixed(1)} de 5`
-                          : 'Sin valoracion'
+                          ? `Valoracion ${averageRating.toFixed(1)} de 5, ${reviewsCount} calificaciones`
+                          : `Sin valoracion, ${reviewsCount} calificaciones`
                       }
-                      className="mt-2 flex items-center gap-1.5"
+                      className="mt-2 flex flex-wrap items-center gap-1.5"
                     >
                       {renderRatingStars(averageRating ?? 0, 'h-4 w-4')}
+                      <span className="ml-0.5 text-xs font-bold text-white/90">
+                        {formatPatientRatingSummary(averageRating, reviewsCount)}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -334,41 +379,63 @@ function StudentRequestProfileDialog({
                         {patientComments.length} registrados
                       </p>
                     </div>
+                    {patientComments.length > 1 ? (
+                      <div className="flex items-center gap-1">
+                        <button
+                          aria-label="Comentario anterior"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-ink transition duration-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                          type="button"
+                          onClick={handlePreviousComment}
+                        >
+                          <ChevronLeft aria-hidden="true" className="h-4 w-4" />
+                        </button>
+                        <button
+                          aria-label="Comentario siguiente"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-ink transition duration-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                          type="button"
+                          onClick={handleNextComment}
+                        >
+                          <ChevronRight aria-hidden="true" className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : null}
                   </div>
 
-                  {patientComments.length > 0 ? (
-                    <div className="space-y-2.5">
-                      {patientComments.map((review) => (
-                        <div
-                          className="rounded-[1.2rem] border border-slate-200 bg-slate-50 px-3.5 py-3"
-                          key={review.id}
-                        >
-                          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                            <div className="min-w-0">
-                              <p className="text-sm font-semibold text-ink">
-                                {review.authorName}
-                              </p>
-                              <p className="text-xs text-ink-muted">
-                                {requestProfileDateFormatter.format(
-                                  new Date(review.createdAt),
-                                )}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2 text-xs font-semibold text-amber-700">
-                              <span className="flex items-center gap-1">
-                                {renderRatingStars(
-                                  review.rating,
-                                  'h-3.5 w-3.5',
-                                )}
-                              </span>
-                              <span>{review.rating.toFixed(1)}</span>
-                            </div>
-                          </div>
-                          <p className="mt-2 text-sm leading-6 text-ink-muted">
-                            {review.comment}
+                  {activePatientComment ? (
+                    <div
+                      aria-live="polite"
+                      className="rounded-[1.2rem] border border-slate-200 bg-slate-50 px-3.5 py-3"
+                      key={activePatientComment.id}
+                    >
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-ink">
+                            {activePatientComment.authorName}
+                          </p>
+                          <p className="text-xs text-ink-muted">
+                            {requestProfileDateFormatter.format(
+                              new Date(activePatientComment.createdAt),
+                            )}
                           </p>
                         </div>
-                      ))}
+                        <div className="flex items-center gap-2 text-xs font-semibold text-amber-700">
+                          <span className="flex items-center gap-1">
+                            {renderRatingStars(
+                              activePatientComment.rating,
+                              'h-3.5 w-3.5',
+                            )}
+                          </span>
+                          <span>{activePatientComment.rating.toFixed(1)}</span>
+                        </div>
+                      </div>
+                      <p className="mt-2 text-sm leading-6 text-ink-muted">
+                        {activePatientComment.comment}
+                      </p>
+                      {patientComments.length > 1 ? (
+                        <p className="mt-2 text-right text-[0.68rem] font-bold uppercase tracking-[0.14em] text-ink-muted">
+                          {activeCommentIndex + 1}/{patientComments.length}
+                        </p>
+                      ) : null}
                     </div>
                   ) : (
                     <div className="rounded-[1.2rem] border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-ink-muted">
