@@ -1005,7 +1005,7 @@ export function StudentRequestsPage() {
                               aria-hidden="true"
                               className="h-2.5 w-2.5 sm:h-3 sm:w-3"
                             />
-                            <span className="text-[0.52rem] leading-none sm:text-[0.72rem]">
+                            <span className="student-request-action-label text-[0.52rem] leading-none sm:text-[0.72rem]">
                               {
                                 studentContent.requestsPage.actionLabels
                                   .viewProfile
@@ -1013,6 +1013,7 @@ export function StudentRequestsPage() {
                             </span>
                           </button>
                           <button
+                            aria-label={studentContent.requestsPage.actionLabels.accept}
                             className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full bg-emerald-50 px-1 py-0.5 text-[0.56rem] font-semibold text-emerald-700 transition duration-200 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60 sm:gap-1 sm:px-2 sm:py-1 sm:text-[0.72rem]"
                             disabled={pendingRequestActionIds.has(request.id)}
                             type="button"
@@ -1028,11 +1029,12 @@ export function StudentRequestsPage() {
                               aria-hidden="true"
                               className="h-2.5 w-2.5 sm:h-3 sm:w-3"
                             />
-                            <span className="text-[0.52rem] leading-none sm:text-[0.72rem]">
+                            <span className="student-request-action-label text-[0.52rem] leading-none sm:text-[0.72rem]">
                               {studentContent.requestsPage.actionLabels.accept}
                             </span>
                           </button>
                           <button
+                            aria-label={studentContent.requestsPage.actionLabels.reject}
                             className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full bg-rose-50 px-1 py-0.5 text-[0.56rem] font-semibold text-rose-700 transition duration-200 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60 sm:gap-1 sm:px-2 sm:py-1 sm:text-[0.72rem]"
                             disabled={pendingRequestActionIds.has(request.id)}
                             type="button"
@@ -1048,7 +1050,7 @@ export function StudentRequestsPage() {
                               aria-hidden="true"
                               className="h-2.5 w-2.5 sm:h-3 sm:w-3"
                             />
-                            <span className="text-[0.52rem] leading-none sm:text-[0.72rem]">
+                            <span className="student-request-action-label text-[0.52rem] leading-none sm:text-[0.72rem]">
                               {studentContent.requestsPage.actionLabels.reject}
                             </span>
                           </button>
@@ -1065,7 +1067,7 @@ export function StudentRequestsPage() {
                               aria-hidden="true"
                               className="h-2.5 w-2.5 sm:h-3 sm:w-3"
                             />
-                            <span className="text-[0.52rem] leading-none sm:text-[0.72rem]">
+                            <span className="student-request-action-label text-[0.52rem] leading-none sm:text-[0.72rem]">
                               {
                                 studentContent.requestsPage.actionLabels
                                   .viewProfile
@@ -1073,6 +1075,7 @@ export function StudentRequestsPage() {
                             </span>
                           </button>
                           <button
+                            aria-label={studentContent.requestsPage.actionLabels.close}
                             className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full bg-slate-100 px-1 py-0.5 text-[0.56rem] font-semibold text-slate-700 transition duration-200 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60 sm:gap-1 sm:px-2 sm:py-1 sm:text-[0.72rem]"
                             disabled={pendingRequestActionIds.has(request.id)}
                             type="button"
@@ -1082,7 +1085,7 @@ export function StudentRequestsPage() {
                               aria-hidden="true"
                               className="h-2.5 w-2.5 sm:h-3 sm:w-3"
                             />
-                            <span className="text-[0.52rem] leading-none sm:text-[0.72rem]">
+                            <span className="student-request-action-label text-[0.52rem] leading-none sm:text-[0.72rem]">
                               {studentContent.requestsPage.actionLabels.close}
                             </span>
                           </button>
@@ -1099,7 +1102,7 @@ export function StudentRequestsPage() {
                               aria-hidden="true"
                               className="h-2.5 w-2.5 sm:h-3 sm:w-3"
                             />
-                            <span className="text-[0.52rem] leading-none sm:text-[0.72rem]">
+                            <span className="student-request-action-label text-[0.52rem] leading-none sm:text-[0.72rem]">
                               {
                                 studentContent.requestsPage.actionLabels
                                   .viewProfile

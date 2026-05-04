@@ -965,23 +965,23 @@ export function StudentAppointmentsPage() {
           <p role="status">{appointmentSaveNotice}</p>
         </SurfaceCard>
       ) : null}
-      <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+      <div className="grid grid-cols-3 gap-1 sm:gap-2">
         <SurfaceCard
           className="min-w-0 overflow-hidden bg-brand-gradient text-white"
           paddingClassName="p-0"
         >
-          <div className="flex min-w-0 items-center gap-1.5 px-2 py-1.5 sm:gap-2 sm:px-3 sm:py-1.5">
-            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-[0.7rem] bg-white/12 text-white sm:h-7 sm:w-7 sm:rounded-[0.8rem]">
+          <div className="flex min-w-0 items-center gap-1 px-1.5 py-1 sm:gap-2 sm:px-3 sm:py-1.5">
+            <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-[0.58rem] bg-white/12 text-white sm:h-7 sm:w-7 sm:rounded-[0.8rem]">
               <Clock3
                 aria-hidden="true"
-                className="h-3.5 w-3.5 sm:h-3.5 sm:w-3.5"
+                className="h-3 w-3 sm:h-3.5 sm:w-3.5"
               />
             </span>
-            <span className="font-headline text-[0.98rem] font-extrabold tracking-tight text-white sm:text-[1.08rem]">
+            <span className="font-headline text-[0.82rem] font-extrabold tracking-tight text-white sm:text-[1.08rem]">
               {pendingCount}
             </span>
-            <p className="min-w-0 text-[0.62rem] font-semibold leading-3 text-white/90 sm:text-[0.74rem] sm:leading-none">
-              Propuestas activas
+            <p className="min-w-0 text-[0.52rem] font-semibold leading-[0.65rem] text-white/90 sm:text-[0.74rem] sm:leading-none">
+              Propuestas
             </p>
           </div>
         </SurfaceCard>
@@ -989,17 +989,17 @@ export function StudentAppointmentsPage() {
           className="border border-slate-200/80 bg-white shadow-none"
           paddingClassName="p-0"
         >
-          <div className="flex min-w-0 items-center gap-1.5 px-2 py-1.5 sm:gap-2 sm:px-3 sm:py-1.5">
-            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-[0.7rem] bg-emerald-50 text-emerald-700 sm:h-7 sm:w-7 sm:rounded-[0.8rem]">
+          <div className="flex min-w-0 items-center gap-1 px-1.5 py-1 sm:gap-2 sm:px-3 sm:py-1.5">
+            <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-[0.58rem] bg-emerald-50 text-emerald-700 sm:h-7 sm:w-7 sm:rounded-[0.8rem]">
               <CalendarCheck2
                 aria-hidden="true"
-                className="h-3.5 w-3.5 sm:h-3.5 sm:w-3.5"
+                className="h-3 w-3 sm:h-3.5 sm:w-3.5"
               />
             </span>
-            <span className="font-headline text-[0.98rem] font-extrabold tracking-tight text-ink sm:text-[1.08rem]">
+            <span className="font-headline text-[0.82rem] font-extrabold tracking-tight text-ink sm:text-[1.08rem]">
               {acceptedCount}
             </span>
-            <p className="min-w-0 text-[0.62rem] font-semibold leading-3 text-ink-muted sm:text-[0.74rem] sm:leading-none">
+            <p className="min-w-0 text-[0.52rem] font-semibold leading-[0.65rem] text-ink-muted sm:text-[0.74rem] sm:leading-none">
               Aceptadas
             </p>
           </div>
@@ -1008,17 +1008,17 @@ export function StudentAppointmentsPage() {
           className="border border-slate-200/80 bg-white shadow-none"
           paddingClassName="p-0"
         >
-          <div className="flex min-w-0 items-center gap-1.5 px-2 py-1.5 sm:gap-2 sm:px-3 sm:py-1.5">
-            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-[0.7rem] bg-sky-50 text-sky-700 sm:h-7 sm:w-7 sm:rounded-[0.8rem]">
+          <div className="flex min-w-0 items-center gap-1 px-1.5 py-1 sm:gap-2 sm:px-3 sm:py-1.5">
+            <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-[0.58rem] bg-sky-50 text-sky-700 sm:h-7 sm:w-7 sm:rounded-[0.8rem]">
               <CheckCircle2
                 aria-hidden="true"
-                className="h-3.5 w-3.5 sm:h-3.5 sm:w-3.5"
+                className="h-3 w-3 sm:h-3.5 sm:w-3.5"
               />
             </span>
-            <span className="font-headline text-[0.98rem] font-extrabold tracking-tight text-ink sm:text-[1.08rem]">
+            <span className="font-headline text-[0.82rem] font-extrabold tracking-tight text-ink sm:text-[1.08rem]">
               {completedCount}
             </span>
-            <p className="min-w-0 text-[0.62rem] font-semibold leading-3 text-ink-muted sm:text-[0.74rem] sm:leading-none">
+            <p className="min-w-0 text-[0.52rem] font-semibold leading-[0.65rem] text-ink-muted sm:text-[0.74rem] sm:leading-none">
               Finalizadas
             </p>
           </div>

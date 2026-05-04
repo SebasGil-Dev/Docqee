@@ -329,6 +329,21 @@
       line-height: 0.6rem !important;
     }
 
+    .student-page-compact
+      .student-request-mobile-table
+      .student-request-action-label {
+      display: none !important;
+    }
+
+    .student-page-compact .student-request-mobile-table td:last-child button {
+      gap: 0 !important;
+      height: 1.08rem !important;
+      min-height: 1.08rem !important;
+      min-width: 1.08rem !important;
+      padding: 0 !important;
+      width: 1.08rem !important;
+    }
+
     .student-page-compact .student-mobile-compact-table td > span {
       padding: 0.08rem 0.3rem !important;
     }
@@ -346,14 +361,40 @@
       row-gap: 0.08rem !important;
     }
 
+    .student-page-compact .student-review-mobile-table td {
+      padding-top: 0.24rem !important;
+      padding-bottom: 0.24rem !important;
+    }
+
+    .student-page-compact .student-review-mobile-table td:first-child p:first-child {
+      font-size: 0.6rem !important;
+      line-height: 0.74rem !important;
+    }
+
     .student-page-compact .student-review-mobile-table td:last-child p {
-      max-height: 1.55rem !important;
-      font-size: 0.58rem !important;
-      line-height: 0.78rem !important;
+      max-height: 1.34rem !important;
+      font-size: 0.54rem !important;
+      line-height: 0.68rem !important;
     }
 
     .student-page-compact .student-review-mobile-table td:nth-child(3) > div {
       padding-top: 0 !important;
+    }
+
+    .student-page-compact .student-agenda-legend {
+      scrollbar-width: none;
+    }
+
+    .student-page-compact .student-agenda-legend::-webkit-scrollbar {
+      display: none;
+    }
+
+    .student-page-compact .student-agenda-period-controls {
+      max-width: 100%;
+    }
+
+    .student-page-compact .student-agenda-range-label {
+      min-width: 0;
     }
   }
 

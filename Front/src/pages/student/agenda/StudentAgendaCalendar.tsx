@@ -379,13 +379,13 @@ export function StudentAgendaCalendar({
     >
       <div className="flex h-full min-h-0 flex-col gap-1.5 sm:gap-2">
         <div className="flex shrink-0 flex-col gap-1.5 border-b border-slate-200/70 pb-1.5 sm:gap-2 sm:pb-2">
-          <div className="flex min-w-0 flex-wrap items-center justify-between gap-1.5 xl:flex-nowrap">
-            <div className="inline-flex shrink-0 rounded-full border border-slate-200/80 bg-white/90 p-0.5 shadow-[0_12px_28px_-24px_rgba(15,23,42,0.28)]">
+          <div className="flex min-w-0 flex-wrap items-center justify-between gap-1 xl:flex-nowrap">
+            <div className="student-agenda-view-switch inline-flex shrink-0 rounded-full border border-slate-200/80 bg-white/90 p-[0.12rem] shadow-[0_12px_28px_-24px_rgba(15,23,42,0.28)] sm:p-0.5">
               {(['day', 'week', 'month'] as const).map((option) => (
                 <button
                   key={option}
                   className={classNames(
-                    'rounded-full px-2 py-0.5 text-[0.62rem] font-semibold transition duration-200 sm:px-2.5 sm:text-[0.66rem]',
+                    'rounded-full px-1.5 py-0 text-[0.56rem] font-semibold leading-5 transition duration-200 sm:px-2.5 sm:py-0.5 sm:text-[0.66rem] sm:leading-normal',
                     viewMode === option
                       ? 'bg-brand-gradient text-white shadow-[0_12px_24px_-18px_rgba(0,100,124,0.55)]'
                       : 'text-ink-muted hover:text-ink',
@@ -397,17 +397,17 @@ export function StudentAgendaCalendar({
                 </button>
               ))}
             </div>
-            <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-1 sm:flex-none">
+            <div className="student-agenda-period-controls flex min-w-0 flex-1 flex-nowrap items-center justify-end gap-0.5 sm:flex-none sm:gap-1">
               <button
                 aria-label="Periodo anterior"
-                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-ink transition duration-200 hover:border-primary/20 hover:bg-white sm:h-8 sm:w-8"
+                className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-ink transition duration-200 hover:border-primary/20 hover:bg-white sm:h-8 sm:w-8"
                 type="button"
                 onClick={() => stepCalendar('previous')}
               >
-                <ChevronLeft aria-hidden="true" className="h-3.5 w-3.5" />
+                <ChevronLeft aria-hidden="true" className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               </button>
               <button
-                className="inline-flex shrink-0 rounded-full border border-slate-200/90 bg-white/95 px-2 py-0.5 text-[0.66rem] font-semibold text-ink transition duration-200 hover:border-primary/20 hover:bg-white sm:px-2.5 sm:py-1 sm:text-[0.72rem]"
+                className="inline-flex shrink-0 rounded-full border border-slate-200/90 bg-white/95 px-1.5 py-0 text-[0.56rem] font-semibold leading-5 text-ink transition duration-200 hover:border-primary/20 hover:bg-white sm:px-2.5 sm:py-1 sm:text-[0.72rem] sm:leading-normal"
                 type="button"
                 onClick={() => {
                   closeDetailsPanel();
@@ -418,13 +418,13 @@ export function StudentAgendaCalendar({
               </button>
               <button
                 aria-label="Periodo siguiente"
-                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-ink transition duration-200 hover:border-primary/20 hover:bg-white sm:h-8 sm:w-8"
+                className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-ink transition duration-200 hover:border-primary/20 hover:bg-white sm:h-8 sm:w-8"
                 type="button"
                 onClick={() => stepCalendar('next')}
               >
-                <ChevronRight aria-hidden="true" className="h-3.5 w-3.5" />
+                <ChevronRight aria-hidden="true" className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               </button>
-              <span className="max-w-full truncate rounded-full border border-slate-200/80 bg-white/90 px-2 py-0.5 text-[0.66rem] font-semibold text-ink shadow-[0_10px_22px_-24px_rgba(15,23,42,0.3)] sm:px-2.5 sm:py-1 sm:text-[0.72rem]">
+              <span className="student-agenda-range-label max-w-[6.25rem] truncate rounded-full border border-slate-200/80 bg-white/90 px-1.5 py-0 text-[0.56rem] font-semibold leading-5 text-ink shadow-[0_10px_22px_-24px_rgba(15,23,42,0.3)] sm:max-w-full sm:px-2.5 sm:py-1 sm:text-[0.72rem] sm:leading-normal">
                 {rangeLabel}
               </span>
             </div>
@@ -439,7 +439,7 @@ export function StudentAgendaCalendar({
               </button>
             ) : null}
           </div>
-          <div className="flex max-h-[1.2rem] w-full flex-nowrap items-center justify-between gap-[0.1rem] overflow-hidden text-[0.48rem] font-semibold uppercase tracking-normal text-ink-muted sm:max-h-[1.6rem] sm:flex-wrap sm:justify-start sm:gap-1 sm:text-[0.5rem] sm:tracking-[0.08em]">
+          <div className="student-agenda-legend flex max-h-[1.35rem] w-full flex-nowrap items-center justify-start gap-0.5 overflow-x-auto overflow-y-hidden text-[0.44rem] font-semibold uppercase tracking-normal text-ink-muted sm:max-h-[1.6rem] sm:flex-wrap sm:justify-start sm:gap-1 sm:text-[0.5rem] sm:tracking-[0.08em]">
             {[
               ['Pendiente', 'proposal'],
               ['Aceptada', 'accepted'],
@@ -450,7 +450,7 @@ export function StudentAgendaCalendar({
             ].map(([label, tone]) => (
               <span
                 key={label}
-                className="inline-flex shrink-0 items-center gap-[0.1rem] rounded-full border border-slate-200/70 bg-white/78 px-px py-px sm:gap-1 sm:px-1.5 sm:py-0.5"
+                className="inline-flex shrink-0 items-center gap-[0.08rem] rounded-full border border-slate-200/70 bg-white/78 px-0.5 py-px sm:gap-1 sm:px-1.5 sm:py-0.5"
               >
                 <span className={classNames('h-1.5 w-1.5 rounded-full sm:h-2 sm:w-2', getToneClasses(tone as AgendaTone).dot)} />
                 <span>{label}</span>

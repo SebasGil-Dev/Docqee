@@ -336,25 +336,25 @@ export function StudentTreatmentsPage() {
         className="overflow-hidden bg-brand-gradient text-white"
         paddingClassName="p-0"
       >
-        <div className="flex flex-col gap-3 px-4 py-3.5 sm:px-5 sm:py-4 lg:flex-row lg:items-center lg:justify-between lg:gap-3 2xl:px-6">
-          <div className="flex min-w-0 flex-1 items-start gap-3 sm:items-center">
+        <div className="flex flex-col gap-2 px-3 py-2.5 sm:gap-3 sm:px-5 sm:py-4 lg:flex-row lg:items-center lg:justify-between lg:gap-3 2xl:px-6">
+          <div className="flex min-w-0 flex-1 items-center gap-2.5 sm:gap-3">
             <div className="shrink-0">
               {profile.avatarSrc ? (
                 <img
                   alt={profile.avatarAlt}
-                  className="h-12 w-12 rounded-[1.2rem] object-cover ring-4 ring-white/20 sm:h-14 sm:w-14"
+                  className="h-10 w-10 rounded-[0.9rem] object-cover ring-2 ring-white/20 sm:h-14 sm:w-14 sm:rounded-[1.2rem] sm:ring-4"
                   decoding="async"
                   src={getOptimizedAvatarUrl(profile.avatarSrc, 160)}
                 />
               ) : (
-                <span className="inline-flex h-12 w-12 items-center justify-center rounded-[1.2rem] bg-white/14 text-base font-extrabold uppercase text-white ring-4 ring-white/15 sm:h-14 sm:w-14 sm:text-lg">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-[0.9rem] bg-white/14 text-sm font-extrabold uppercase text-white ring-2 ring-white/15 sm:h-14 sm:w-14 sm:rounded-[1.2rem] sm:text-lg sm:ring-4">
                   {studentInitials}
                 </span>
               )}
             </div>
-            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+            <div className="flex min-w-0 flex-1 flex-col gap-1 sm:gap-1.5">
               <div className="flex min-w-0 items-center gap-1.5 sm:gap-2.5">
-                <h2 className="min-w-0 max-w-[calc(100%-4.25rem)] truncate font-headline text-[1.02rem] font-extrabold tracking-tight text-white sm:max-w-[calc(100%-4.75rem)] sm:text-[1.18rem] lg:max-w-none lg:flex-none lg:whitespace-normal lg:overflow-visible xl:max-w-none">
+                <h2 className="min-w-0 max-w-[calc(100%-3.25rem)] truncate font-headline text-[0.95rem] font-extrabold tracking-tight text-white sm:max-w-[calc(100%-4.75rem)] sm:text-[1.18rem] lg:max-w-none lg:flex-none lg:whitespace-normal lg:overflow-visible xl:max-w-none">
                   {studentDisplayName.compactName ===
                   studentDisplayName.fullName ? (
                     <>Bienvenido, {studentDisplayName.fullName}</>
@@ -370,25 +370,28 @@ export function StudentTreatmentsPage() {
                   )}
                 </h2>
                 {reviews.length > 0 ? (
-                  <span className="inline-flex shrink-0 items-center rounded-full bg-white/12 px-2 py-1 text-white/92 lg:hidden">
+                  <span className="inline-flex shrink-0 items-center rounded-full bg-white/12 px-1.5 py-0.5 text-white/92 lg:hidden">
                     <span className="flex shrink-0 items-center gap-0.5">
-                      {renderStars(averageRating, 'h-2.5 w-2.5 sm:h-3 w-3')}
+                      {renderStars(averageRating, 'h-2 w-2 sm:h-3 sm:w-3')}
                     </span>
                   </span>
                 ) : null}
               </div>
-              <div className="flex min-w-0 flex-wrap items-center gap-2 lg:flex-nowrap">
-                <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-[0.75rem] font-semibold text-white/88">
+              <div className="flex min-w-0 flex-wrap items-center gap-1 sm:gap-1.5 lg:flex-nowrap">
+                <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-white/12 px-1.5 py-0.5 text-[0.65rem] font-semibold text-white/88 sm:px-2.5 sm:py-1 sm:text-[0.75rem]">
                   <Building2
                     aria-hidden="true"
-                    className="h-3.5 w-3.5 shrink-0"
+                    className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5"
                   />
-                  <span className="max-w-[10rem] truncate sm:max-w-[12rem] xl:max-w-[14rem]">
+                  <span className="max-w-[9rem] truncate sm:max-w-[12rem] xl:max-w-[14rem]">
                     {profile.universityName}
                   </span>
                 </span>
-                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-[0.75rem] font-semibold text-white/88">
-                  <GraduationCap aria-hidden="true" className="h-3.5 w-3.5" />
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-white/12 px-1.5 py-0.5 text-[0.65rem] font-semibold text-white/88 sm:px-2.5 sm:py-1 sm:text-[0.75rem]">
+                  <GraduationCap
+                    aria-hidden="true"
+                    className="h-3 w-3 sm:h-3.5 sm:w-3.5"
+                  />
                   <span>Semestre {profile.semester}</span>
                 </span>
                 {reviews.length > 0 ? (

@@ -474,7 +474,7 @@ describe('Student pages', () => {
 
     renderStudentApp([ROUTES.studentAppointments]);
 
-    expect(screen.getByText(/propuestas activas/i)).toBeInTheDocument();
+    expect(screen.getByText(/^Propuestas$/i)).toBeInTheDocument();
     expect(
       screen.getByRole('columnheader', { name: /^Valoraci[o\u00f3]n$/i }),
     ).toBeInTheDocument();
