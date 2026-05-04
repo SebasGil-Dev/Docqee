@@ -846,4 +846,19 @@ test('E2E-20 | Valoracion queda reservada para citas finalizadas', async ({
     'E2E-20: Una cita aceptada y futura no muestra valoracion hasta finalizar.',
   );
   await context.close();
+
+  // Limpiar la cita principal para que no quede acumulada entre runs.
+  // Sin esto, el slot rescheduled (dia RESCHEDULE_SLOT a las 16:00) permanece
+  // ACEPTADA y la siguiente corrida falla con "Ya existe otra cita en esa franja".
+  const cleanupCtx = await browser.newContext({ storageState: SESIONES.estudiante });
+  const cleanupPage = await cleanupCtx.newPage();
+  await cleanupPage.goto(RUTAS.estudianteCitas);
+  await cleanupPage.waitForLoadState('networkidle');
+  await apiRequest(cleanupPage, `/student-portal/appointments/${requireMainAppointmentId()}/status`, {
+    method: 'PATCH',
+    body: { status: 'CANCELADA', reason: 'Limpieza automatica post-test E2E-20' },
+  }).catch(() => {
+    console.log('E2E-20 cleanup: no se pudo cancelar la cita principal (puede ya estar cancelada).');
+  });
+  await cleanupCtx.close();
 });
