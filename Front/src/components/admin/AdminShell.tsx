@@ -463,7 +463,7 @@ export function AdminShell({
               <div className="inline-flex max-w-full items-center gap-2 self-start sm:self-center">
                 {showHeaderNotifications ? (
                   <div
-                    className="relative -translate-x-1 sm:-translate-x-0.5"
+                    className="relative sm:-translate-x-0.5"
                     ref={notificationsRef}
                   >
                     <button
@@ -501,7 +501,7 @@ export function AdminShell({
                         className={classNames(
                           'z-30 overflow-hidden border border-slate-200/80 bg-white shadow-[0_24px_60px_-28px_rgba(15,23,42,0.45)]',
                           isMobileViewport
-                            ? 'fixed left-2 right-2 top-16 max-h-[calc(100dvh-4.5rem)] w-auto rounded-[1rem]'
+                            ? 'fixed inset-x-3 top-[3.9rem] max-h-[min(78dvh,27rem)] w-auto rounded-[1.1rem]'
                             : 'absolute right-0 top-[calc(100%+0.65rem)] w-[20rem] max-w-[calc(100vw-2rem)] rounded-[1.4rem]',
                         )}
                         id="admin-header-notifications"
@@ -540,7 +540,7 @@ export function AdminShell({
                                 No tienes notificaciones sin leer.
                               </div>
                             ) : null}
-                            <div className="max-h-[calc(100dvh-9rem)] overflow-y-auto sm:max-h-[22rem]">
+                            <div className="max-h-[calc(min(78dvh,27rem)-3.35rem)] overflow-y-auto sm:max-h-[22rem]">
                               {visibleNotifications.map((notification) => {
                                 const notificationDestination =
                                   notification.to ??
@@ -564,11 +564,11 @@ export function AdminShell({
                                       )}
                                     />
                                     <div className="min-w-0 flex-1">
-                                      <div className="flex items-start justify-between gap-2">
+                                      <div className="flex flex-col gap-0.5 sm:flex-row sm:items-start sm:justify-between sm:gap-2">
                                         <p className="text-[0.78rem] font-semibold leading-4 text-ink sm:text-sm sm:leading-5">
                                           {notification.title}
                                         </p>
-                                        <span className="shrink-0 text-[0.62rem] font-medium text-ink-muted sm:text-[0.68rem]">
+                                        <span className="shrink-0 text-[0.62rem] font-medium leading-3 text-ink-muted sm:text-[0.68rem] sm:leading-normal">
                                           {formatNotificationTimestamp(
                                             notification.createdAt,
                                           )}
