@@ -593,11 +593,14 @@ test('E2E-16 | Estudiante solicita reprogramacion con mas de 48 horas', async ({
     storageState: SESIONES.estudiante,
   });
   const page = await context.newPage();
-  // Hora de reprogramacion = hora actual de ejecucion redondeada hacia arriba.
-  // Cada corrida produce una hora diferente, evitando colisiones con runs anteriores
-  // sin necesidad de limpiar la cita al final.
-  const nowHour = new Date().getHours();
-  const rescheduleHour = (nowHour + 1) % 24;
+  // Reprogramar al dia siguiente a la misma hora de ejecucion.
+  // Semanticamente correcto (se reprograma para manana a la misma hora)
+  // y evita colisiones porque cada dia es un slot diferente.
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const RESCHEDULE_DATE  = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+  const rescheduleHour   = now.getHours();
   const RESCHEDULE_START = `${String(rescheduleHour).padStart(2, '0')}:00`;
   const RESCHEDULE_END   = `${String((rescheduleHour + 1) % 24).padStart(2, '0')}:00`;
 
@@ -613,7 +616,7 @@ test('E2E-16 | Estudiante solicita reprogramacion con mas de 48 horas', async ({
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible({ timeout: 10_000 });
 
-  await page.locator('#student-appointment-date').fill(futureDateInput(RESCHEDULE_SLOT));
+  await page.locator('#student-appointment-date').fill(RESCHEDULE_DATE);
   await selectTime(page, 'student-appointment-start-time', RESCHEDULE_START);
   await selectTime(page, 'student-appointment-end-time', RESCHEDULE_END);
 
