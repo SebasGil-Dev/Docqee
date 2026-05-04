@@ -197,10 +197,10 @@ function formatPatientRatingSummary(
   averageRating: number | null,
   reviewsCount: number,
 ) {
-  const peopleLabel = reviewsCount === 1 ? 'persona' : 'personas';
+  const reviewsLabel = reviewsCount === 1 ? 'reseña' : 'reseñas';
   const ratingLabel = averageRating !== null ? averageRating.toFixed(1) : '0.0';
 
-  return `${ratingLabel} · ${reviewsCount} ${peopleLabel}`;
+  return `${ratingLabel} · (${reviewsCount} ${reviewsLabel})`;
 }
 
 function StudentRequestProfileDialog({
@@ -326,10 +326,10 @@ function StudentRequestProfileDialog({
                           ? `Valoracion ${averageRating.toFixed(1)} de 5, ${reviewsCount} calificaciones`
                           : `Sin valoracion, ${reviewsCount} calificaciones`
                       }
-                      className="mt-2 flex flex-wrap items-center gap-1.5"
+                      className="mt-2 flex min-w-0 items-center gap-1 whitespace-nowrap"
                     >
-                      {renderRatingStars(averageRating ?? 0, 'h-4 w-4')}
-                      <span className="ml-0.5 text-xs font-bold text-white/90">
+                      {renderRatingStars(averageRating ?? 0, 'h-3.5 w-3.5')}
+                      <span className="ml-0.5 min-w-0 text-[0.72rem] font-bold leading-none text-white/90">
                         {formatPatientRatingSummary(averageRating, reviewsCount)}
                       </span>
                     </div>

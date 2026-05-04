@@ -752,7 +752,7 @@ describe('Student pages', () => {
     expect(
       within(dialog).queryByText(/sin valoraciones registradas/i),
     ).not.toBeInTheDocument();
-    expect(within(dialog).getByText(/4\.8 · 2 personas/i)).toBeInTheDocument();
+    expect(within(dialog).getByText(/4\.8 · \(2 reseñas\)/i)).toBeInTheDocument();
     expect(
       within(dialog).getByText(
         /fue muy respetuosa con el proceso, llego puntual/i,
