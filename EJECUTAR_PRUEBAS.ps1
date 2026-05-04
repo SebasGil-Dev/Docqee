@@ -121,7 +121,7 @@ Write-Host " Orden: auth -> registro -> solicitudes -> solicitudes-filtros -> ch
 Write-Host " Nota: el tiempo entre parentesis es total; las lineas METRICA_E2E miden solo la accion real." -ForegroundColor DarkGray
 Write-Host ""
 
-$blobReportDir = Join-Path $frontPath ("blob-report-ordered-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
+$blobReportDir = Join-Path (Join-Path $frontPath "Historial_reports") ("blob-report-ordered-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
 $failedSuites = @()
 $previousBlobOutputDir = $env:PLAYWRIGHT_BLOB_OUTPUT_DIR
 $previousBlobOutputName = $env:PLAYWRIGHT_BLOB_OUTPUT_NAME
