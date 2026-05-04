@@ -1,12 +1,24 @@
-# UniversityAdmin module
+# University admin module
 
-Informacion institucional y datos editables del administrador universitario.
+Modulo del administrador de universidad. Gestiona tablero institucional, informacion de la universidad, perfil del administrador, sedes, logo y cambio de contrasena.
 
-## Planned folders
-- controller: HTTP entrypoints.
-- application/use-cases: business flows.
-- application/dto: transport DTOs.
-- domain/entities: domain models.
-- domain/repositories: repository contracts.
-- infrastructure/repositories: Prisma adapters.
-- infrastructure/services: integrations like mail, storage or tokens.
+## Endpoints
+
+- `GET /university-admin/overview`
+- `GET /university-admin/profile`
+- `PATCH /university-admin/profile`
+- `POST /university-admin/profile/logo`
+- `PATCH /university-admin/password`
+
+## Capacidades
+
+- Resumen institucional.
+- Datos del administrador.
+- Datos de universidad.
+- Sedes de atencion.
+- Logo institucional por storage.
+- Cambio de contrasena.
+
+## Seguridad
+
+Los datos de la universidad se resuelven desde la cuenta autenticada. No se deben aceptar identificadores de universidad del cliente para saltar el alcance del admin.

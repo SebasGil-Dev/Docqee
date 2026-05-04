@@ -1,12 +1,21 @@
 # Catalogs module
 
-Catalogos reutilizables como ciudades, localidades y tipos de documento.
+Expone catalogos reutilizables para formularios publicos y privados.
 
-## Planned folders
-- controller: HTTP entrypoints.
-- application/use-cases: business flows.
-- application/dto: transport DTOs.
-- domain/entities: domain models.
-- domain/repositories: repository contracts.
-- infrastructure/repositories: Prisma adapters.
-- infrastructure/services: integrations like mail, storage or tokens.
+## Endpoints
+
+- `GET /catalogs/register`
+- `GET /catalogs/cities`
+- `GET /catalogs/document-types`
+- `GET /catalogs/localities/:cityId`
+
+## Datos principales
+
+- Tipos de documento.
+- Ciudades.
+- Localidades por ciudad.
+- Catalogo combinado para registro de paciente.
+
+## Notas
+
+Los catalogos salen de la base de datos por Prisma. El frontend no deberia duplicar estas listas como datos fijos salvo para estados visuales temporales.
