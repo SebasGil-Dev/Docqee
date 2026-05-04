@@ -359,6 +359,31 @@
       width: 0.72rem !important;
     }
 
+    .student-page-compact .student-request-mobile-table th:first-child,
+    .student-page-compact .student-request-mobile-table td:first-child {
+      width: 43% !important;
+      padding-right: 0.34rem !important;
+    }
+
+    .student-page-compact .student-request-mobile-table th:nth-child(3),
+    .student-page-compact .student-request-mobile-table td:nth-child(3) {
+      width: 24% !important;
+      padding-left: 0.24rem !important;
+      padding-right: 0.24rem !important;
+      text-align: center !important;
+    }
+
+    .student-page-compact .student-request-mobile-table td:nth-child(3) > span {
+      justify-content: center !important;
+    }
+
+    .student-page-compact .student-request-mobile-table th:last-child,
+    .student-page-compact .student-request-mobile-table td:last-child {
+      width: 33% !important;
+      padding-left: 0.24rem !important;
+      padding-right: 0.1rem !important;
+    }
+
     .student-page-compact .student-appointment-mobile-table td:last-child .student-appointment-actions {
       align-items: center !important;
       gap: 0.28rem !important;
@@ -403,6 +428,31 @@
     .student-page-compact .student-review-mobile-table td {
       padding-top: 0.24rem !important;
       padding-bottom: 0.24rem !important;
+    }
+
+    .student-page-compact .student-review-mobile-table th:first-child,
+    .student-page-compact .student-review-mobile-table td:first-child {
+      width: 34% !important;
+      padding-right: 0.34rem !important;
+    }
+
+    .student-page-compact .student-review-mobile-table th:nth-child(3),
+    .student-page-compact .student-review-mobile-table td:nth-child(3) {
+      width: 27% !important;
+      padding-left: 0.28rem !important;
+      padding-right: 0.28rem !important;
+      text-align: center !important;
+    }
+
+    .student-page-compact .student-review-mobile-table td:nth-child(3) > div {
+      justify-content: center !important;
+    }
+
+    .student-page-compact .student-review-mobile-table th:last-child,
+    .student-page-compact .student-review-mobile-table td:last-child {
+      width: 39% !important;
+      padding-left: 0.34rem !important;
+      padding-right: 0.08rem !important;
     }
 
     .student-page-compact .student-review-mobile-table td:first-child p:first-child {
@@ -551,8 +601,22 @@
     .student-page-compact
       .student-appointment-dialog
       .student-appointment-datetime-row {
-      column-gap: 0.24rem !important;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) !important;
+      column-gap: 0.18rem !important;
+      grid-template-columns: minmax(0, 1.04fr) minmax(0, 0.98fr) minmax(0, 0.98fr) !important;
+      overflow: visible;
+    }
+
+    .student-page-compact
+      .student-appointment-dialog
+      .student-appointment-datetime-row
+      > .student-appointment-dialog-field,
+    .student-page-compact
+      .student-appointment-dialog
+      .student-appointment-datetime-row
+      > .student-appointment-dialog-field
+      > .relative {
+      min-width: 0;
+      width: 100%;
     }
 
     .student-page-compact
@@ -565,17 +629,20 @@
       .admin-time-picker
       > .relative
       > button {
+      box-sizing: border-box;
       display: block;
+      inline-size: 100%;
       max-width: 100%;
       min-height: 1.78rem;
+      min-inline-size: 0;
       min-width: 0;
       overflow: hidden;
       padding-top: 0.26rem;
       padding-bottom: 0.26rem;
-      padding-left: 1.18rem;
-      padding-right: 0.18rem;
+      padding-left: 1.04rem;
+      padding-right: 0.12rem;
       border-radius: 0.72rem;
-      font-size: 0.54rem;
+      font-size: 0.5rem;
       line-height: 0.86rem;
       text-overflow: clip;
       white-space: nowrap;
@@ -587,12 +654,14 @@
       .student-appointment-datetime-row
       .admin-text-field:first-child
       .admin-text-field__input {
+      appearance: none;
+      -webkit-appearance: none;
       min-width: 0;
       overflow: hidden;
-      padding-left: 0.26rem;
-      padding-right: 0.04rem;
+      padding-left: 1.04rem;
+      padding-right: 0.02rem;
       text-overflow: clip;
-      font-size: 0.5rem;
+      font-size: 0.48rem;
       width: 100%;
     }
 
@@ -601,10 +670,11 @@
       .student-appointment-datetime-row
       .admin-text-field:first-child
       .admin-text-field__input::-webkit-calendar-picker-indicator {
-      height: 0.58rem;
+      height: 0.01rem;
       margin-left: 0;
+      opacity: 0;
       padding: 0;
-      width: 0.58rem;
+      width: 0.01rem;
     }
 
     .student-page-compact
@@ -621,10 +691,10 @@
       .admin-text-field:first-child
       > .relative
       > svg:first-of-type {
-      display: none;
+      display: block;
       left: 0.42rem;
-      width: 0.72rem;
-      height: 0.72rem;
+      width: 0.62rem;
+      height: 0.62rem;
     }
 
     .student-page-compact
