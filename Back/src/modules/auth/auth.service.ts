@@ -1,6 +1,7 @@
 ﻿import {
   BadRequestException,
   ConflictException,
+  HttpException,
   Injectable,
   Logger,
   NotFoundException,
@@ -272,83 +273,107 @@ export class AuthService {
       }
 
       const payload = this.parsePendingPatientRegistrationPayload(pendingRegistration.payload);
+      const patientBirthDate = this.parsePatientBirthDate(payload.patient.birthDate);
 
-      await this.prisma.$transaction(async (transaction) => {
-        const existingAccount = await transaction.cuenta_acceso.findUnique({
-          where: { correo: email },
-          select: { id_cuenta: true },
-        });
+      await this.assertPatientDocumentAvailable(
+        payload.patient.documentTypeId,
+        payload.patient.documentNumber,
+      );
 
-        if (existingAccount) {
-          throw new ConflictException(
-            'No pudimos finalizar el registro con estos datos. Revisa la informacion o intenta recuperar tu cuenta.',
-          );
-        }
+      try {
+        await this.prisma.$transaction(async (transaction) => {
+          const existingAccount = await transaction.cuenta_acceso.findUnique({
+            where: { correo: email },
+            select: { id_cuenta: true },
+          });
 
-        const person = await transaction.persona.create({
-          data: {
-            id_tipo_documento: payload.patient.documentTypeId,
-            numero_documento: payload.patient.documentNumber,
-            nombres: payload.patient.firstName,
-            apellidos: payload.patient.lastName,
-          },
-        });
+          if (existingAccount) {
+            throw new ConflictException(
+              'No pudimos finalizar el registro con estos datos. Revisa la informacion o intenta recuperar tu cuenta.',
+            );
+          }
 
-        const tutor = payload.tutor
-          ? await transaction.tutor_responsable.upsert({
-              where: {
-                id_tipo_documento_numero_documento: {
+          const existingPerson = await transaction.persona.findFirst({
+            where: {
+              id_tipo_documento: payload.patient.documentTypeId,
+              numero_documento: payload.patient.documentNumber,
+            },
+            select: { id_persona: true },
+          });
+
+          if (existingPerson) {
+            throw new ConflictException(
+              'El numero de documento ya esta registrado en Docqee. Inicia sesion o recupera tu cuenta si ya la tienes.',
+            );
+          }
+
+          const person = await transaction.persona.create({
+            data: {
+              id_tipo_documento: payload.patient.documentTypeId,
+              numero_documento: payload.patient.documentNumber,
+              nombres: payload.patient.firstName,
+              apellidos: payload.patient.lastName,
+            },
+          });
+
+          const tutor = payload.tutor
+            ? await transaction.tutor_responsable.upsert({
+                where: {
+                  id_tipo_documento_numero_documento: {
+                    id_tipo_documento: payload.tutor.documentTypeId,
+                    numero_documento: payload.tutor.documentNumber,
+                  },
+                },
+                create: {
                   id_tipo_documento: payload.tutor.documentTypeId,
                   numero_documento: payload.tutor.documentNumber,
+                  nombres: payload.tutor.firstName,
+                  apellidos: payload.tutor.lastName,
+                  correo: payload.tutor.email,
+                  celular: payload.tutor.phone,
                 },
-              },
-              create: {
-                id_tipo_documento: payload.tutor.documentTypeId,
-                numero_documento: payload.tutor.documentNumber,
-                nombres: payload.tutor.firstName,
-                apellidos: payload.tutor.lastName,
-                correo: payload.tutor.email,
-                celular: payload.tutor.phone,
-              },
-              update: {
-                nombres: payload.tutor.firstName,
-                apellidos: payload.tutor.lastName,
-                correo: payload.tutor.email,
-                celular: payload.tutor.phone,
-              },
-            })
-          : null;
+                update: {
+                  nombres: payload.tutor.firstName,
+                  apellidos: payload.tutor.lastName,
+                  correo: payload.tutor.email,
+                  celular: payload.tutor.phone,
+                },
+              })
+            : null;
 
-        const account = await transaction.cuenta_acceso.create({
-          data: {
-            tipo_cuenta: tipo_cuenta_enum.PACIENTE,
-            correo: payload.patient.email,
-            password_hash: payload.patient.passwordHash,
-            correo_verificado: true,
-            correo_verificado_at: new Date(),
-            primer_ingreso_pendiente: false,
-          },
-        });
+          const account = await transaction.cuenta_acceso.create({
+            data: {
+              tipo_cuenta: tipo_cuenta_enum.PACIENTE,
+              correo: payload.patient.email,
+              password_hash: payload.patient.passwordHash,
+              correo_verificado: true,
+              correo_verificado_at: new Date(),
+              primer_ingreso_pendiente: false,
+            },
+          });
 
-        await transaction.cuenta_paciente.create({
-          data: {
-            id_cuenta: account.id_cuenta,
-            id_persona: person.id_persona,
-            id_localidad: payload.patient.localityId,
-            id_tutor_responsable: tutor?.id_tutor_responsable ?? null,
-            sexo: payload.patient.sex,
-            fecha_nacimiento: new Date(payload.patient.birthDate),
-            celular: payload.patient.phone,
-          },
-        });
+          await transaction.cuenta_paciente.create({
+            data: {
+              id_cuenta: account.id_cuenta,
+              id_persona: person.id_persona,
+              id_localidad: payload.patient.localityId,
+              id_tutor_responsable: tutor?.id_tutor_responsable ?? null,
+              sexo: payload.patient.sex,
+              fecha_nacimiento: patientBirthDate,
+              celular: payload.patient.phone,
+            },
+          });
 
-        await transaction.registro_paciente_pendiente.delete({
-          where: {
-            id_registro_paciente_pendiente:
-              pendingRegistration.id_registro_paciente_pendiente,
-          },
+          await transaction.registro_paciente_pendiente.delete({
+            where: {
+              id_registro_paciente_pendiente:
+                pendingRegistration.id_registro_paciente_pendiente,
+            },
+          });
         });
-      });
+      } catch (error) {
+        this.handlePatientVerificationPersistenceError(error, email);
+      }
 
       return { ok: true };
     }
@@ -911,6 +936,61 @@ export class AuthService {
     }
 
     return value;
+  }
+
+  private parsePatientBirthDate(value: string) {
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      throw new BadRequestException(
+        'La fecha de nacimiento del registro no es valida. Inicia el registro nuevamente.',
+      );
+    }
+
+    return date;
+  }
+
+  private async assertPatientDocumentAvailable(
+    documentTypeId: number,
+    documentNumber: string,
+  ) {
+    const existingPerson = await this.prisma.persona.findFirst({
+      where: {
+        id_tipo_documento: documentTypeId,
+        numero_documento: documentNumber,
+      },
+      select: { id_persona: true },
+    });
+
+    if (existingPerson) {
+      throw new ConflictException(
+        'El numero de documento ya esta registrado en Docqee. Inicia sesion o recupera tu cuenta si ya la tienes.',
+      );
+    }
+  }
+
+  private handlePatientVerificationPersistenceError(error: unknown, email: string): never {
+    if (error instanceof HttpException) {
+      throw error;
+    }
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        throw new ConflictException(
+          'El correo o documento ya esta registrado en Docqee. Inicia sesion o recupera tu cuenta si ya la tienes.',
+        );
+      }
+
+      if (error.code === 'P2003') {
+        throw new BadRequestException(
+          'No pudimos validar los datos del registro. Inicia el registro nuevamente.',
+        );
+      }
+    }
+
+    const message = error instanceof Error ? error.message : 'Error desconocido';
+    this.logger.error(`No pudimos verificar el registro del paciente ${email}: ${message}`);
+    throw error;
   }
 
   private async deleteUnverifiedPatientAccountIfUnused(email: string) {
