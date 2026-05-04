@@ -355,19 +355,7 @@ export function StudentTreatmentsPage() {
             <div className="flex min-w-0 flex-1 flex-col gap-1 sm:gap-1.5">
               <div className="flex min-w-0 items-center gap-1.5 sm:gap-2.5">
                 <h2 className="min-w-0 max-w-[calc(100%-3.25rem)] truncate font-headline text-[0.95rem] font-extrabold tracking-tight text-white sm:max-w-[calc(100%-4.75rem)] sm:text-[1.18rem] lg:max-w-none lg:flex-none lg:whitespace-normal lg:overflow-visible xl:max-w-none">
-                  {studentDisplayName.compactName ===
-                  studentDisplayName.fullName ? (
-                    <>Bienvenido, {studentDisplayName.fullName}</>
-                  ) : (
-                    <>
-                      <span className="lg:hidden">
-                        Bienvenido, {studentDisplayName.compactName}
-                      </span>
-                      <span className="hidden lg:inline">
-                        Bienvenido, {studentDisplayName.fullName}
-                      </span>
-                    </>
-                  )}
+                  Bienvenido, {studentDisplayName.compactName}
                 </h2>
                 {reviews.length > 0 ? (
                   <span className="inline-flex shrink-0 items-center rounded-full bg-white/12 px-1.5 py-0.5 text-white/92 lg:hidden">

@@ -498,19 +498,24 @@ export function AdminShell({
                     {isNotificationsOpen ? (
                       <div
                         aria-label="Panel de notificaciones"
-                        className="absolute right-0 top-[calc(100%+0.65rem)] z-30 w-[20rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-[1.4rem] border border-slate-200/80 bg-white shadow-[0_24px_60px_-28px_rgba(15,23,42,0.45)]"
+                        className={classNames(
+                          'z-30 overflow-hidden border border-slate-200/80 bg-white shadow-[0_24px_60px_-28px_rgba(15,23,42,0.45)]',
+                          isMobileViewport
+                            ? 'fixed left-2 right-2 top-16 max-h-[calc(100dvh-4.5rem)] w-auto rounded-[1rem]'
+                            : 'absolute right-0 top-[calc(100%+0.65rem)] w-[20rem] max-w-[calc(100vw-2rem)] rounded-[1.4rem]',
+                        )}
                         id="admin-header-notifications"
                         role="dialog"
                       >
-                        <div className="flex items-center justify-between gap-3 border-b border-slate-200/80 px-4 py-3">
-                          <p className="text-sm font-extrabold tracking-tight text-ink">
+                        <div className="flex items-center justify-between gap-2 border-b border-slate-200/80 px-3 py-2 sm:gap-3 sm:px-4 sm:py-3">
+                          <p className="text-[0.82rem] font-extrabold tracking-tight text-ink sm:text-sm">
                             Notificaciones
                           </p>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5 sm:gap-2">
                             {onMarkAllNotificationsRead &&
                             hasUnreadNotifications ? (
                               <button
-                                className="text-[0.72rem] font-semibold text-primary transition-colors duration-200 hover:text-primary/80"
+                                className="text-[0.66rem] font-semibold text-primary transition-colors duration-200 hover:text-primary/80 sm:text-[0.72rem]"
                                 type="button"
                                 onClick={onMarkAllNotificationsRead}
                               >
@@ -519,7 +524,7 @@ export function AdminShell({
                             ) : null}
                             {notificationsPageTo ? (
                               <Link
-                                className="text-[0.72rem] font-semibold text-primary transition-colors duration-200 hover:text-primary/80"
+                                className="text-[0.66rem] font-semibold text-primary transition-colors duration-200 hover:text-primary/80 sm:text-[0.72rem]"
                                 to={notificationsPageTo}
                                 onClick={() => setIsNotificationsOpen(false)}
                               >
@@ -531,11 +536,11 @@ export function AdminShell({
                         {visibleNotifications.length > 0 ? (
                           <>
                             {!hasUnreadNotifications ? (
-                              <div className="border-b border-slate-200/80 px-4 py-3 text-[0.78rem] font-medium text-ink-muted">
+                              <div className="border-b border-slate-200/80 px-3 py-2 text-[0.72rem] font-medium text-ink-muted sm:px-4 sm:py-3 sm:text-[0.78rem]">
                                 No tienes notificaciones sin leer.
                               </div>
                             ) : null}
-                            <div className="max-h-[22rem] overflow-y-auto">
+                            <div className="max-h-[calc(100dvh-9rem)] overflow-y-auto sm:max-h-[22rem]">
                               {visibleNotifications.map((notification) => {
                                 const notificationDestination =
                                   notification.to ??
@@ -545,7 +550,7 @@ export function AdminShell({
                                 const itemContent = (
                                   <div
                                     className={classNames(
-                                      'flex items-start gap-3 px-4 py-3 transition-colors duration-200 hover:bg-slate-50',
+                                      'flex items-start gap-2.5 px-3 py-2.5 transition-colors duration-200 hover:bg-slate-50 sm:gap-3 sm:px-4 sm:py-3',
                                       notification.isRead !== true &&
                                         'bg-primary/[0.035]',
                                     )}
@@ -560,16 +565,16 @@ export function AdminShell({
                                     />
                                     <div className="min-w-0 flex-1">
                                       <div className="flex items-start justify-between gap-2">
-                                        <p className="text-sm font-semibold text-ink">
+                                        <p className="text-[0.78rem] font-semibold leading-4 text-ink sm:text-sm sm:leading-5">
                                           {notification.title}
                                         </p>
-                                        <span className="shrink-0 text-[0.68rem] font-medium text-ink-muted">
+                                        <span className="shrink-0 text-[0.62rem] font-medium text-ink-muted sm:text-[0.68rem]">
                                           {formatNotificationTimestamp(
                                             notification.createdAt,
                                           )}
                                         </span>
                                       </div>
-                                      <p className="mt-1 text-[0.78rem] leading-5 text-ink-muted">
+                                      <p className="mt-1 text-[0.7rem] leading-4 text-ink-muted sm:text-[0.78rem] sm:leading-5">
                                         {notification.description}
                                       </p>
                                     </div>
@@ -598,7 +603,7 @@ export function AdminShell({
                             </div>
                           </>
                         ) : (
-                          <div className="px-4 py-5 text-sm text-ink-muted">
+                          <div className="px-3 py-4 text-[0.78rem] text-ink-muted sm:px-4 sm:py-5 sm:text-sm">
                             No tienes notificaciones sin leer.
                           </div>
                         )}

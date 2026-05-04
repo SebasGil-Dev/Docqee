@@ -335,13 +335,44 @@
       display: none !important;
     }
 
+    .student-page-compact .student-request-mobile-table td:last-child > div {
+      align-items: center !important;
+      gap: 0.28rem !important;
+      justify-content: center !important;
+    }
+
     .student-page-compact .student-request-mobile-table td:last-child button {
       gap: 0 !important;
-      height: 1.08rem !important;
-      min-height: 1.08rem !important;
-      min-width: 1.08rem !important;
+      height: 1.22rem !important;
+      min-height: 1.22rem !important;
+      min-width: 1.22rem !important;
       padding: 0 !important;
-      width: 1.08rem !important;
+      width: 1.22rem !important;
+    }
+
+    .student-page-compact .student-request-mobile-table td:last-child button svg {
+      height: 0.72rem !important;
+      width: 0.72rem !important;
+    }
+
+    .student-page-compact .student-appointment-mobile-table td:last-child .student-appointment-actions {
+      align-items: center !important;
+      gap: 0.28rem !important;
+      justify-content: center !important;
+    }
+
+    .student-page-compact .student-appointment-mobile-table td:last-child .student-appointment-actions button {
+      gap: 0 !important;
+      height: 1.22rem !important;
+      min-height: 1.22rem !important;
+      min-width: 1.22rem !important;
+      padding: 0 !important;
+      width: 1.22rem !important;
+    }
+
+    .student-page-compact .student-appointment-mobile-table td:last-child .student-appointment-actions button svg {
+      height: 0.72rem !important;
+      width: 0.72rem !important;
     }
 
     .student-page-compact .student-mobile-compact-table td > span {
@@ -382,7 +413,18 @@
     }
 
     .student-page-compact .student-agenda-legend {
+      justify-content: space-between;
       scrollbar-width: none;
+    }
+
+    .student-page-compact .student-agenda-legend > span {
+      gap: 0.08rem !important;
+      padding: 0.04rem 0.1rem !important;
+    }
+
+    .student-page-compact .student-agenda-legend > span > span:first-child {
+      height: 0.32rem !important;
+      width: 0.32rem !important;
     }
 
     .student-page-compact .student-agenda-legend::-webkit-scrollbar {
@@ -500,6 +542,13 @@
 
     .student-page-compact
       .student-appointment-dialog
+      .student-appointment-datetime-row {
+      column-gap: 0.24rem !important;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) !important;
+    }
+
+    .student-page-compact
+      .student-appointment-dialog
       .student-appointment-datetime-row
       .admin-text-field__input,
     .student-page-compact
@@ -510,16 +559,16 @@
       > button {
       display: block;
       max-width: 100%;
-      min-height: 1.9rem;
+      min-height: 1.78rem;
       min-width: 0;
       overflow: hidden;
-      padding-top: 0.3rem;
-      padding-bottom: 0.3rem;
-      padding-left: 1.45rem;
-      padding-right: 0.32rem;
+      padding-top: 0.26rem;
+      padding-bottom: 0.26rem;
+      padding-left: 1.18rem;
+      padding-right: 0.18rem;
       border-radius: 0.72rem;
-      font-size: 0.6rem;
-      line-height: 0.95rem;
+      font-size: 0.54rem;
+      line-height: 0.86rem;
       text-overflow: clip;
       white-space: nowrap;
       width: 100%;
@@ -532,11 +581,11 @@
       .admin-text-field__input {
       min-width: 0;
       overflow: hidden;
-      padding-left: 1.4rem;
-      padding-right: 0.12rem;
+      padding-left: 0.26rem;
+      padding-right: 0.04rem;
       text-overflow: clip;
-      font-size: 0.54rem;
-      width: calc(100% - 0.18rem);
+      font-size: 0.5rem;
+      width: 100%;
     }
 
     .student-page-compact
@@ -564,7 +613,7 @@
       .admin-text-field:first-child
       > .relative
       > svg:first-of-type {
-      display: block;
+      display: none;
       left: 0.42rem;
       width: 0.72rem;
       height: 0.72rem;
@@ -582,9 +631,9 @@
       .admin-time-picker
       > .relative
       > svg:first-of-type {
-      left: 0.5rem;
-      width: 0.72rem;
-      height: 0.72rem;
+      left: 0.42rem;
+      width: 0.64rem;
+      height: 0.64rem;
     }
   }
 

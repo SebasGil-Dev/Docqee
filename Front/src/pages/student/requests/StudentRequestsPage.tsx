@@ -248,7 +248,7 @@ function StudentRequestProfileDialog({
               className="overflow-hidden bg-brand-gradient text-white shadow-none"
               paddingClassName="p-0"
             >
-              <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-3 px-4 py-4 sm:px-5 sm:py-5 lg:grid-cols-[auto_minmax(0,1fr)_minmax(9rem,0.7fr)_minmax(10rem,0.75fr)] lg:items-stretch">
+              <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-3 px-4 py-4 sm:px-5 sm:py-5 lg:grid-cols-[auto_minmax(0,1fr)_minmax(10rem,0.75fr)] lg:items-stretch">
                 <div className="flex shrink-0 items-center">
                   {optimizedAvatarSrc ? (
                     <img
@@ -278,27 +278,17 @@ function StudentRequestProfileDialog({
                     <p className="text-sm font-medium text-white/88">
                       {`${request.patientAge} a\u00f1os - ${request.patientCity}`}
                     </p>
+                    <div
+                      aria-label={
+                        averageRating !== null
+                          ? `Valoracion ${averageRating.toFixed(1)} de 5`
+                          : 'Sin valoracion'
+                      }
+                      className="mt-2 flex items-center gap-1.5"
+                    >
+                      {renderRatingStars(averageRating ?? 0, 'h-4 w-4')}
+                    </div>
                   </div>
-                </div>
-                <div className="col-span-2 flex min-w-0 flex-col justify-center rounded-[1.15rem] bg-white/10 px-3.5 py-2.5 lg:col-span-1">
-                  <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white/65">
-                    {'Valoraci\u00f3n'}
-                  </p>
-                  <div
-                    aria-label={
-                      averageRating !== null
-                        ? `Valoracion ${averageRating.toFixed(1)} de 5`
-                        : 'Sin valoracion'
-                    }
-                    className="mt-2 flex items-center gap-1.5"
-                  >
-                    {renderRatingStars(averageRating ?? 0, 'h-4 w-4')}
-                  </div>
-                  <p className="mt-1 text-sm font-semibold text-white">
-                    {averageRating !== null
-                      ? `${averageRating.toFixed(1)} / 5 (${patientReviews.length})`
-                      : 'Sin valoraciones'}
-                  </p>
                 </div>
                 <div className="col-span-2 flex min-w-0 flex-col justify-center rounded-[1.15rem] bg-white/10 px-3.5 py-2.5 lg:col-span-1">
                   <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white/65">

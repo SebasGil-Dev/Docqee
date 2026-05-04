@@ -1029,7 +1029,7 @@ export function StudentAppointmentsPage() {
         panelClassName="h-full w-full min-w-0 bg-[#f4f8ff]"
         shellPaddingClassName="p-0.5 sm:p-1"
       >
-        <div className="border-b border-slate-200/80 px-3 py-2.5 sm:px-4 sm:py-2.5">
+        <div className="border-b border-slate-200/80 px-2 py-1.5 sm:px-4 sm:py-2.5">
           <div className="flex items-center gap-2 sm:justify-between sm:gap-2.5">
             <label
               className="relative min-w-0 flex-1 sm:max-w-[32rem] xl:max-w-[36rem]"
@@ -1040,10 +1040,10 @@ export function StudentAppointmentsPage() {
               </span>
               <Search
                 aria-hidden="true"
-                className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ghost sm:left-3.5 sm:h-3.5 sm:w-3.5"
+                className="pointer-events-none absolute left-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-ghost sm:left-3.5 sm:h-3.5 sm:w-3.5"
               />
               <input
-                className="h-9 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-9 pr-3 text-[0.78rem] text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-10 sm:pl-10 sm:pr-3.5 sm:text-[0.82rem]"
+                className="h-8 w-full rounded-full border border-slate-200/90 bg-white/98 py-0 pl-7 pr-2.5 text-[0.68rem] text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 placeholder:text-ghost/80 focus-visible:border-primary focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-10 sm:pl-10 sm:pr-3.5 sm:text-[0.82rem]"
                 id="student-appointment-search"
                 placeholder={studentContent.appointmentsPage.searchPlaceholder}
                 type="search"
@@ -1051,16 +1051,16 @@ export function StudentAppointmentsPage() {
                 onChange={(event) => setSearchTerm(event.target.value)}
               />
             </label>
-            <div className="flex shrink-0 items-center justify-end gap-1.5 sm:gap-2">
+            <div className="flex shrink-0 items-center justify-end gap-1 sm:gap-2">
               <button
-                className="inline-flex h-9 shrink-0 items-center justify-center gap-1 rounded-full bg-brand-gradient px-2 text-[0.72rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-70 sm:h-10 sm:gap-1.5 sm:px-3.5 sm:text-[0.82rem]"
+                className="inline-flex h-8 shrink-0 items-center justify-center gap-1 rounded-full bg-brand-gradient px-1.5 text-[0.62rem] font-semibold text-white shadow-ambient transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-70 sm:h-10 sm:gap-1.5 sm:px-3.5 sm:text-[0.82rem]"
                 disabled={isAppointmentSavePending}
                 type="button"
                 onClick={openCreateDialog}
               >
                 <Plus
                   aria-hidden="true"
-                  className="h-3.5 w-3.5 sm:h-3.5 sm:w-3.5"
+                  className="h-3 w-3 sm:h-3.5 sm:w-3.5"
                 />
                 <span>
                   {studentContent.appointmentsPage.actionLabels.create}
@@ -1081,7 +1081,7 @@ export function StudentAppointmentsPage() {
                         }`
                   }
                   className={classNames(
-                    'relative inline-flex h-9 w-9 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-10 sm:w-10',
+                    'relative inline-flex h-8 w-8 items-center justify-center rounded-full border bg-white/98 text-ink shadow-[0_10px_28px_-18px_rgba(15,23,42,0.38)] transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:h-10 sm:w-10',
                     statusFilter !== 'all' || sortOrder !== 'arrival'
                       ? 'border-primary/25 bg-primary/[0.08] text-primary hover:bg-primary/[0.12]'
                       : 'border-slate-200/90 hover:border-primary/30 hover:bg-white',
@@ -1093,7 +1093,7 @@ export function StudentAppointmentsPage() {
                 >
                   <SlidersHorizontal
                     aria-hidden="true"
-                    className="h-4 w-4 sm:h-4 sm:w-4"
+                    className="h-3.5 w-3.5 sm:h-4 sm:w-4"
                   />
                   {statusFilter !== 'all' || sortOrder !== 'arrival' ? (
                     <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary ring-2 ring-white" />
@@ -1101,7 +1101,7 @@ export function StudentAppointmentsPage() {
                 </button>
                 {isStatusMenuOpen ? (
                   <div
-                    className="absolute right-0 top-[calc(100%+0.6rem)] z-20 w-[14rem] overflow-hidden rounded-[1.4rem] border border-slate-200/80 bg-white/95 p-2 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.45)] backdrop-blur"
+                    className="student-appointment-filter-menu admin-scrollbar absolute right-0 top-[calc(100%+0.45rem)] z-20 max-h-[min(70dvh,22rem)] w-[12.5rem] overflow-y-auto rounded-[1rem] border border-slate-200/80 bg-white/95 p-1.5 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.45)] backdrop-blur sm:top-[calc(100%+0.6rem)] sm:w-[14rem] sm:rounded-[1.4rem] sm:p-2"
                     id="student-appointment-status-menu"
                     role="menu"
                   >
@@ -1248,8 +1248,6 @@ export function StudentAppointmentsPage() {
                   );
                   const appointmentLocality =
                     practiceSite?.locality ?? appointment.city;
-                  const appointmentAddress =
-                    appointment.siteAddress ?? practiceSite?.address ?? '';
                   const displayStatus = getAppointmentDisplayStatus(
                     appointment,
                     currentTimestamp,
@@ -1293,11 +1291,6 @@ export function StudentAppointmentsPage() {
                                   {appointment.siteName} -{' '}
                                   {appointmentLocality}
                                 </span>
-                                {appointmentAddress ? (
-                                  <span className="block text-[0.6rem] leading-[0.82rem] text-ink-muted">
-                                    {appointmentAddress}
-                                  </span>
-                                ) : null}
                               </span>
                             </p>
                           </div>
@@ -1362,11 +1355,6 @@ export function StudentAppointmentsPage() {
                               <span>
                                 {appointment.siteName} - {appointmentLocality}
                               </span>
-                              {appointmentAddress ? (
-                                <span className="block text-[0.68rem] leading-4 text-ink-muted">
-                                  {appointmentAddress}
-                                </span>
-                              ) : null}
                             </span>
                           </p>
                         </div>
@@ -1416,7 +1404,7 @@ export function StudentAppointmentsPage() {
                       <td className="px-1.5 py-2 text-center sm:px-4 sm:py-2">
                         {displayStatus === 'PROPUESTA' ||
                         displayStatus === 'REPROGRAMACION_PENDIENTE' ? (
-                          <div className="flex max-w-full flex-wrap items-center justify-center gap-1 sm:gap-1">
+                          <div className="student-appointment-actions flex max-w-full flex-wrap items-center justify-center gap-1 sm:gap-1">
                             <button
                               className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-white px-1.5 py-1 text-[0.62rem] font-semibold text-primary ring-1 ring-slate-200 transition duration-200 hover:bg-slate-100 sm:px-2 sm:py-1 sm:text-[0.72rem]"
                               type="button"
@@ -1450,7 +1438,7 @@ export function StudentAppointmentsPage() {
                             </button>
                           </div>
                         ) : displayStatus === 'ACEPTADA' ? (
-                          <div className="flex max-w-full flex-wrap items-center justify-center gap-1 sm:gap-1">
+                          <div className="student-appointment-actions flex max-w-full flex-wrap items-center justify-center gap-1 sm:gap-1">
                             <button
                               className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-white px-1.5 py-1 text-[0.62rem] font-semibold text-primary ring-1 ring-slate-200 transition duration-200 hover:bg-slate-100 sm:px-2 sm:py-1 sm:text-[0.72rem]"
                               type="button"
@@ -1499,7 +1487,7 @@ export function StudentAppointmentsPage() {
                             </button>
                           </div>
                         ) : displayStatus === 'FINALIZADA' ? (
-                          <div className="flex max-w-full flex-wrap items-center justify-center gap-1 sm:gap-1">
+                          <div className="student-appointment-actions flex max-w-full flex-wrap items-center justify-center gap-1 sm:gap-1">
                             <button
                               className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-white px-1.5 py-1 text-[0.62rem] font-semibold text-primary ring-1 ring-slate-200 transition duration-200 hover:bg-slate-100 sm:px-2 sm:py-1 sm:text-[0.72rem]"
                               type="button"
@@ -1650,7 +1638,7 @@ export function StudentAppointmentsPage() {
               />
             </div>
             <div
-              className="student-appointment-datetime-row grid w-full grid-cols-[minmax(0,1.18fr)_minmax(0,0.91fr)_minmax(0,0.91fr)] items-start gap-1 sm:grid-cols-3 sm:gap-2"
+              className="student-appointment-datetime-row grid w-full grid-cols-3 items-start gap-1 sm:gap-2"
             >
               <AdminTextField
                 containerClassName="student-appointment-dialog-field"

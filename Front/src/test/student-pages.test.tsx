@@ -748,7 +748,7 @@ describe('Student pages', () => {
 
     expect(within(dialog).queryByText(/^Numero$/i)).not.toBeInTheDocument();
     expect(within(dialog).queryByText(/^3001234567$/i)).not.toBeInTheDocument();
-    expect(within(dialog).getByText(/valoraci[o\u00f3]n/i)).toBeInTheDocument();
+    expect(within(dialog).queryByText(/^Valoraci[o\u00f3]n$/i)).not.toBeInTheDocument();
     expect(
       within(dialog).queryByText(/sin valoraciones registradas/i),
     ).not.toBeInTheDocument();

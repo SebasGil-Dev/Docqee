@@ -127,7 +127,7 @@ function getStatusLabel(status: StudentAgendaAppointmentStatus) {
     case 'FINALIZADA':
       return 'Finalizada';
     case 'REPROGRAMACION_PENDIENTE':
-      return 'Reprogramacion';
+      return 'Reprogramaci\u00f3n';
     default:
       return 'Pendiente';
   }
@@ -404,7 +404,7 @@ export function StudentAgendaCalendar({
                 type="button"
                 onClick={() => stepCalendar('previous')}
               >
-                <ChevronLeft aria-hidden="true" className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                <ChevronLeft aria-hidden="true" className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
               </button>
               <button
                 className="inline-flex shrink-0 rounded-full border border-slate-200/90 bg-white/95 px-1.5 py-0 text-[0.56rem] font-semibold leading-5 text-ink transition duration-200 hover:border-primary/20 hover:bg-white sm:px-2.5 sm:py-1 sm:text-[0.72rem] sm:leading-normal"
@@ -422,7 +422,7 @@ export function StudentAgendaCalendar({
                 type="button"
                 onClick={() => stepCalendar('next')}
               >
-                <ChevronRight aria-hidden="true" className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                <ChevronRight aria-hidden="true" className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
               </button>
               <span className="student-agenda-range-label max-w-[6.25rem] truncate rounded-full border border-slate-200/80 bg-white/90 px-1.5 py-0 text-[0.56rem] font-semibold leading-5 text-ink shadow-[0_10px_22px_-24px_rgba(15,23,42,0.3)] sm:max-w-full sm:px-2.5 sm:py-1 sm:text-[0.72rem] sm:leading-normal">
                 {rangeLabel}
@@ -439,13 +439,13 @@ export function StudentAgendaCalendar({
               </button>
             ) : null}
           </div>
-          <div className="student-agenda-legend flex max-h-[1.35rem] w-full flex-nowrap items-center justify-start gap-0.5 overflow-x-auto overflow-y-hidden text-[0.44rem] font-semibold uppercase tracking-normal text-ink-muted sm:max-h-[1.6rem] sm:flex-wrap sm:justify-start sm:gap-1 sm:text-[0.5rem] sm:tracking-[0.08em]">
+          <div className="student-agenda-legend flex max-h-[1.35rem] w-full flex-nowrap items-center justify-between gap-[0.08rem] overflow-hidden text-[0.39rem] font-semibold tracking-normal text-ink-muted sm:max-h-[1.6rem] sm:flex-wrap sm:justify-start sm:gap-1 sm:text-[0.5rem] sm:uppercase sm:tracking-[0.08em]">
             {[
               ['Pendiente', 'proposal'],
               ['Aceptada', 'accepted'],
               ['Finalizada', 'completed'],
               ['Cancelada', 'cancelled'],
-              ['Reprogramacion', 'reschedule'],
+              ['Reprogramaci\u00f3n', 'reschedule'],
               ...(showBlockLegend ? [['Bloqueo', 'block']] : []),
             ].map(([label, tone]) => (
               <span
