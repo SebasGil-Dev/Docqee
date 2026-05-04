@@ -25,7 +25,12 @@ const API_BASE_URL =
 
 const PACIENTE_PRUEBA = /fernanda/i;
 const RUN_ID = Date.now().toString(36);
-const RUN_DAY_OFFSET = 4 + (Math.floor(Date.now() / 1000) % 90);
+// Minimo 5 dias para cumplir la regla de negocio: no se puede reprogramar
+// si quedan 40 horas o menos. El modulo 90 rota el dia base entre corridas.
+const RUN_DAY_OFFSET = 5 + (Math.floor(Date.now() / 1000) % 90);
+// Slot de reprogramacion: varia por corrida (3-7) para evitar conflictos
+// con citas creadas en corridas anteriores en el mismo dia+hora.
+const RESCHEDULE_SLOT = 3 + (RUN_DAY_OFFSET % 5);
 
 let mainAppointmentId: string | null = null;
 
@@ -588,7 +593,11 @@ test('E2E-16 | Estudiante solicita reprogramacion con mas de 48 horas', async ({
     storageState: SESIONES.estudiante,
   });
   const page = await context.newPage();
-  const times = slotTimes(3);
+  // Hora fija 16:00-17:00: slotTimes() genera horas entre 08:00 y 14:00,
+  // por lo que usar 16:00 garantiza que nunca colisione con citas de otros
+  // tests ni de corridas anteriores en el mismo dia.
+  const RESCHEDULE_START = '16:00';
+  const RESCHEDULE_END   = '17:00';
 
   await page.goto(RUTAS.estudianteCitas);
   await page.waitForLoadState('networkidle');
@@ -602,9 +611,9 @@ test('E2E-16 | Estudiante solicita reprogramacion con mas de 48 horas', async ({
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible({ timeout: 10_000 });
 
-  await page.locator('#student-appointment-date').fill(futureDateInput(3));
-  await selectTime(page, 'student-appointment-start-time', times.startTime);
-  await selectTime(page, 'student-appointment-end-time', times.endTime);
+  await page.locator('#student-appointment-date').fill(futureDateInput(RESCHEDULE_SLOT));
+  await selectTime(page, 'student-appointment-start-time', RESCHEDULE_START);
+  await selectTime(page, 'student-appointment-end-time', RESCHEDULE_END);
 
   const rescheduleResponsePromise = page.waitForResponse(
     (response) =>

@@ -36,6 +36,7 @@ Thumbs.db
 # Playwright — archivos generados en ejecucion (no subir)
 Front/playwright-report/
 Front/test-results/
+Front/Historial_reports/
 Front/e2e/generados/sesion-paciente.json
 Front/e2e/generados/sesion-estudiante.json
 Front/e2e/generados/sesion-admin-plataforma.json

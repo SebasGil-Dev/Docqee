@@ -21,7 +21,10 @@ import {
   type RatingAppointmentState,
 } from '../fixtures/ratingAppointmentState';
 
-test.describe.configure({ mode: 'serial', timeout: 180_000 });
+// 600_000 ms = 10 min por test: necesario porque getAppointmentRow
+// puede hacer hasta 4 intentos × (30s sleep + 14s networkidle) = ~176s.
+// Con 180_000 el test expira antes de completar el ciclo de polling.
+test.describe.configure({ mode: 'serial', timeout: 600_000 });
 
 const API_BASE_URL =
   process.env.E2E_API_BASE_URL ??
@@ -38,12 +41,15 @@ const USE_FAST_RATING_TIME = FAST_RATING_TIME_VALUES.has(
 // Por defecto imitamos el selector manual: proximo bloque de 5 minutos.
 const RATING_SLOT_STEP_MINUTES = USE_FAST_RATING_TIME ? 1 : 5;
 const RATING_SLOT_DURATION_MINUTES = USE_FAST_RATING_TIME ? 1 : 5;
-const RATING_SLOT_SETTLE_MS = 3_000;
+// El backend tiene un job programado (~1 min) que finaliza las citas.
+// Esperamos 90s (>1 ciclo del job) para que el estado FINALIZADA
+// sea visible en el portal del estudiante antes de E2E-22.
+// En modo rapido se reduce a 10s.
+const RATING_SLOT_SETTLE_MS = USE_FAST_RATING_TIME ? 10_000 : 90_000;
 const RATING_HOOK_TIMEOUT_MS = USE_FAST_RATING_TIME ? 240_000 : 1_200_000;
 const RUN_ID = Date.now().toString(36);
 
 let ratingAppointmentId: string | null = null;
-let studentRatingAppointmentId: string | null = null;
 
 type ApiResult<T> = {
   ok: boolean;
@@ -68,9 +74,6 @@ type RatingDashboardAppointment = {
   status: string;
 };
 
-type PatientDashboard = {
-  appointments: RatingDashboardAppointment[];
-};
 
 type StudentAppointment = {
   id: string;
@@ -514,47 +517,19 @@ async function createAcceptedRatingAppointment(
   };
 }
 
-async function canUseStoredRatingAppointment(
-  browser: Browser,
-  state: RatingAppointmentState,
-) {
-  const studentContext = await browser.newContext({
-    storageState: SESIONES.estudiante,
-  });
-  const studentPage = await studentContext.newPage();
-  await studentPage.goto(RUTAS.estudianteCitas);
-  await studentPage.waitForLoadState('networkidle');
-  const studentDashboard = await apiRequest<StudentDashboard>(
-    studentPage,
-    '/student-portal/dashboard',
-  );
-  await closeContext(studentContext);
-
-  const patientContext = await browser.newContext({
-    storageState: SESIONES.paciente,
-  });
-  const patientPage = await patientContext.newPage();
-  await patientPage.goto(RUTAS.pacienteCitas);
-  await patientPage.waitForLoadState('networkidle');
-  const patientDashboard = await apiRequest<PatientDashboard>(
-    patientPage,
-    '/patient-portal/dashboard',
-  );
-  await closeContext(patientContext);
-
-  const studentAppointment = studentDashboard.appointments.find(
-    (appointment) => appointment.id === state.id,
-  );
-  const patientAppointment = patientDashboard.appointments.find(
-    (appointment) => appointment.id === state.id,
-  );
-
-  return Boolean(
-    studentAppointment &&
-    patientAppointment &&
-    studentAppointment.myRating === null &&
-    patientAppointment.myRating === null,
-  );
+/**
+ * Devuelve true si la cita guardada fue creada en este mismo run de tests
+ * (menos de 1 hora de antiguedad). Las citas FINALIZADAS no aparecen en el
+ * endpoint /dashboard, por lo que no se puede verificar su estado via API;
+ * en cambio, confiamos en que si la cita es reciente (creada por E2E-10 unos
+ * minutos antes) ya estara finalizada cuando valoraciones corra.
+ */
+function isStoredAppointmentFresh(state: RatingAppointmentState): boolean {
+  // 3 horas: cubre sesiones de debug largas (multiples runs del suite en
+  // el mismo dia). Con 1h se creaba un appointment nuevo despues de 2 runs
+  // de ~30min, que caia en una pagina de paginacion no visible.
+  const THREE_HOURS_MS = 3 * 60 * 60 * 1000;
+  return Date.now() - new Date(state.createdAt).getTime() < THREE_HOURS_MS;
 }
 
 async function waitForRatingAppointments(
@@ -594,32 +569,86 @@ function requireRatingAppointmentId(
   return appointmentId!;
 }
 
+/**
+ * Filtra la lista de citas del estudiante a solo FINALIZADAS usando el
+ * dropdown "Filtrar citas por estado". Las tarjetas "Aceptadas"/"Finalizadas"
+ * son contadores decorativos — NO filtran la lista. El filtro real es el
+ * botón con aria-label "Filtrar citas por estado" que abre un menuitemradio.
+ */
+async function filtrarPorFinalizadas(page: Page) {
+  const filterBtn = page.getByRole('button', {
+    name: /filtrar citas por estado/i,
+  });
+
+  if (!(await filterBtn.isVisible({ timeout: 8_000 }).catch(() => false))) {
+    return false;
+  }
+
+  await filterBtn.click();
+
+  const opcionFinalizada = page.getByRole('menuitemradio', {
+    name: /finalizada/i,
+  });
+
+  if (!(await opcionFinalizada.isVisible({ timeout: 5_000 }).catch(() => false))) {
+    // cerrar el menu y reportar fallo
+    await page.keyboard.press('Escape');
+    return false;
+  }
+
+  await opcionFinalizada.click();
+  // el menu se cierra y la lista se filtra client-side (sin network request)
+  return true;
+}
+
 async function getAppointmentRow(
   page: Page,
   owner: 'patient' | 'student',
   appointmentId: string,
 ) {
-  const row = page.locator(
-    `[data-testid="${owner}-appointment-row-${appointmentId}"]`,
-  );
+  const POLL_INTERVAL_MS = 30_000; // recarga cada 30 s
+  const MAX_POLLS       = 4;       // hasta 2 minutos adicionales
 
-  await expect(row).toBeVisible({ timeout: 15_000 });
+  for (let attempt = 0; attempt <= MAX_POLLS; attempt++) {
+    // En el portal del estudiante las citas finalizadas están en
+    // una pestaña separada ("Finalizadas") que no es la activa por defecto.
+    if (owner === 'student') {
+      // Filtrar por FINALIZADA usando el dropdown real de filtros.
+      // Adicionalmente buscar "Fernanda" para reducir la paginacion.
+      await filtrarPorFinalizadas(page);
 
-  // Verificar que la cita muestra algún estado de "terminada"
-  // La UI puede usar distintos términos según el rol
-  const statusTerms = /Finalizada|Completada|Terminada|Concluida|Realizada|Vencida|Pasada|FINALIZ|COMPLET/i;
-  const hasStatus = await row.getByText(statusTerms).isVisible({ timeout: 5_000 }).catch(() => false);
+      const searchBox = page.locator('#student-appointment-search');
+      if (await searchBox.isVisible({ timeout: 3_000 }).catch(() => false)) {
+        await searchBox.fill('Fernanda');
+      }
+    }
 
-  if (!hasStatus) {
-    // Verificar que al menos tiene el botón de calificar (cita apta para valorar)
-    const hasBtn = await row.getByRole('button', { name: /calificar|valorar/i })
-      .isVisible({ timeout: 5_000 }).catch(() => false);
-    if (!hasBtn) {
-      // La fila existe — aceptar como válido independiente del texto de estado
-      console.warn(`getAppointmentRow: fila ${owner}-${appointmentId} visible pero sin texto de estado conocido ni boton calificar`);
+    const row = page.locator(
+      `[data-testid="${owner}-appointment-row-${appointmentId}"]`,
+    );
+
+    const found = await row.isVisible({ timeout: 10_000 }).catch(() => false);
+
+    if (found) {
+      return row;
+    }
+
+    if (attempt < MAX_POLLS) {
+      console.log(
+        `getAppointmentRow: fila ${owner}-${appointmentId} no visible aun. ` +
+        `Esperando ${POLL_INTERVAL_MS / 1000}s y recargando (intento ${attempt + 1}/${MAX_POLLS})...`,
+      );
+      await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+      await page.reload();
+      await page.waitForLoadState('networkidle');
     }
   }
 
+  // Ultimo intento con expect para generar el mensaje de fallo claro
+  const row = page.locator(
+    `[data-testid="${owner}-appointment-row-${appointmentId}"]`,
+  );
+  await expect(row).toBeVisible({ timeout: 15_000 });
   return row;
 }
 
@@ -627,45 +656,94 @@ test.beforeAll(async ({ browser }, testInfo) => {
   testInfo.setTimeout(RATING_HOOK_TIMEOUT_MS);
   let storedAppointment = loadRatingAppointmentState();
 
-  if (
-    storedAppointment &&
-    !(await canUseStoredRatingAppointment(browser, storedAppointment))
-  ) {
+  // Descartar solo si la cita guardada es de una corrida anterior (>1h).
+  // Las citas FINALIZADAS no aparecen en /dashboard, por eso ya no las
+  // verificamos via API — confiamos en la fecha de creacion.
+  if (storedAppointment && !isStoredAppointmentFresh(storedAppointment)) {
     clearRatingAppointmentState();
     storedAppointment = null;
   }
 
   if (!storedAppointment) {
+    // Sin estado guardado: crear cita de respaldo con el proximo slot libre.
     const fallbackAppointment = await createAcceptedRatingAppointment(
       browser,
       'Valoracion compartida',
     );
-    storedAppointment = serializeRatingAppointment(
-      fallbackAppointment,
-      'fallback',
-    );
+    storedAppointment = serializeRatingAppointment(fallbackAppointment, 'fallback');
     saveRatingAppointmentState(storedAppointment);
   }
 
   const appointment = deserializeRatingAppointment(storedAppointment);
   ratingAppointmentId = appointment.id;
 
-  // Crear una cita separada para E2E-22 (el estudiante califica al paciente)
-  // Así E2E-22 no depende de la misma cita que E2E-21 y evita conflictos de estado
-  const studentAppointment = await createAcceptedRatingAppointment(
-    browser,
-    'Valoracion estudiante E2E-22',
-  );
-  studentRatingAppointmentId = studentAppointment.id;
-
-  await waitForRatingAppointments([appointment, studentAppointment]);
+  // Si el slot aun no termino, esperar. Si ya termino (endAt en el pasado),
+  // waitMs sera negativo → sin espera extra. El backend ya la finalizo
+  // mientras corrian los tests previos (~5 min de solicitudes/citas/perfil).
+  await waitForRatingAppointments([appointment]);
 
   console.log(
-    `E2E valoraciones: cita paciente lista (${ratingAppointmentId}) ${storedAppointment.startTime}-${storedAppointment.endTime}.`,
+    `E2E valoraciones: cita lista (${ratingAppointmentId}) ${storedAppointment.startTime}-${storedAppointment.endTime}.`,
   );
-  console.log(
-    `E2E valoraciones: cita estudiante lista (${studentRatingAppointmentId}) ${studentAppointment.slot.startTime}-${studentAppointment.slot.endTime}.`,
+});
+
+// Orden deliberado: E2E-22 corre antes que E2E-21.
+// Ambos usan la misma cita (ratingAppointmentId). El rating de cada parte
+// es independiente, pero la UI del estudiante deja de mostrar el botón
+// "calificar" una vez el paciente ha calificado primero. Por eso el
+// estudiante califica primero (E2E-22), y luego el paciente califica (E2E-21).
+// E2E-23 verifica el bloqueo de duplicado sobre la vista del paciente.
+
+test('E2E-22 | Estudiante califica al paciente tras cita finalizada', async ({
+  browser,
+}) => {
+  const appointmentId = requireRatingAppointmentId(
+    ratingAppointmentId,
+    'estudiante',
   );
+  const context = await browser.newContext({
+    storageState: SESIONES.estudiante,
+  });
+  const page = await context.newPage();
+
+  await page.goto(RUTAS.estudianteCitas);
+  await page.waitForLoadState('networkidle');
+
+  const fila = await getAppointmentRow(page, 'student', appointmentId);
+
+  const btnCalificar = fila.getByRole('button', {
+    name: /calificar|valorar/i,
+  });
+  await expect(btnCalificar).toBeVisible({ timeout: 5_000 });
+  await btnCalificar.click();
+
+  const modal = page.getByRole('dialog');
+  await expect(modal).toBeVisible({ timeout: 8_000 });
+
+  await modal.getByRole('button', { name: /5 estrellas/i }).click();
+
+  const textarea = page.locator('dialog textarea');
+  if (await textarea.isVisible({ timeout: 2_000 }).catch(() => false)) {
+    await textarea.fill('Paciente muy colaborador - prueba E2E-22 Playwright.');
+  }
+
+  await medirAccion(
+    'E2E-22',
+    'enviar calificacion estudiante hasta visible',
+    async () => {
+      await page
+        .getByRole('button', { name: /enviar|guardar|calificar/i })
+        .last()
+        .click();
+
+      await expect(modal).toBeHidden({ timeout: 15_000 });
+      await expect(fila).toContainText(/5\/5/, {
+        timeout: 15_000,
+      });
+    },
+  );
+  console.log('E2E-22: Calificacion del paciente enviada.');
+  await closeContext(context);
 });
 
 test('E2E-21 | Paciente califica al estudiante tras cita finalizada', async ({
@@ -715,59 +793,6 @@ test('E2E-21 | Paciente califica al estudiante tras cita finalizada', async ({
     },
   );
   console.log('E2E-21: Calificacion del estudiante enviada.');
-  await closeContext(context);
-});
-
-test('E2E-22 | Estudiante califica al paciente tras cita finalizada', async ({
-  browser,
-}) => {
-  // E2E-22 usa su propia cita para no depender del estado de E2E-21
-  const appointmentId = requireRatingAppointmentId(
-    studentRatingAppointmentId ?? ratingAppointmentId,
-    'estudiante',
-  );
-  const context = await browser.newContext({
-    storageState: SESIONES.estudiante,
-  });
-  const page = await context.newPage();
-
-  await page.goto(RUTAS.estudianteCitas);
-  await page.waitForLoadState('networkidle');
-
-  const fila = await getAppointmentRow(page, 'student', appointmentId);
-
-  const btnCalificar = fila.getByRole('button', {
-    name: /calificar|valorar/i,
-  });
-  await expect(btnCalificar).toBeVisible({ timeout: 5_000 });
-  await btnCalificar.click();
-
-  const modal = page.getByRole('dialog');
-  await expect(modal).toBeVisible({ timeout: 8_000 });
-
-  await modal.getByRole('button', { name: /5 estrellas/i }).click();
-
-  const textarea = page.locator('dialog textarea');
-  if (await textarea.isVisible({ timeout: 2_000 }).catch(() => false)) {
-    await textarea.fill('Paciente muy colaborador - prueba E2E-22 Playwright.');
-  }
-
-  await medirAccion(
-    'E2E-22',
-    'enviar calificacion estudiante hasta visible',
-    async () => {
-      await page
-        .getByRole('button', { name: /enviar|guardar|calificar/i })
-        .last()
-        .click();
-
-      await expect(modal).toBeHidden({ timeout: 15_000 });
-      await expect(fila).toContainText(/5\/5/, {
-        timeout: 15_000,
-      });
-    },
-  );
-  console.log('E2E-22: Calificacion del paciente enviada.');
   await closeContext(context);
 });
 

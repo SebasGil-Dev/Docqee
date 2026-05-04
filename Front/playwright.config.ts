@@ -7,6 +7,15 @@ import { defineConfig, devices } from '@playwright/test';
  * Para sobrescribir la URL:
  *   BASE_URL=http://localhost:5173 npx playwright test
  */
+
+// Genera un timestamp para nombrar la carpeta del blob-report: blob-report-YYYYMMDD-HHmmss
+function getBlobReportFolder() {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+  return `Historial_reports/blob-report-${stamp}`;
+}
+
 export default defineConfig({
   testDir: './e2e',
 
@@ -17,6 +26,7 @@ export default defineConfig({
 
   reporter: [
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
+    ['blob', { outputDir: getBlobReportFolder() }],
     ['list'],
   ],
 
