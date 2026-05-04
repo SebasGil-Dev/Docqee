@@ -593,11 +593,13 @@ test('E2E-16 | Estudiante solicita reprogramacion con mas de 48 horas', async ({
     storageState: SESIONES.estudiante,
   });
   const page = await context.newPage();
-  // Hora fija 16:00-17:00: slotTimes() genera horas entre 08:00 y 14:00,
-  // por lo que usar 16:00 garantiza que nunca colisione con citas de otros
-  // tests ni de corridas anteriores en el mismo dia.
-  const RESCHEDULE_START = '16:00';
-  const RESCHEDULE_END   = '17:00';
+  // Hora de reprogramacion = hora actual de ejecucion redondeada hacia arriba.
+  // Cada corrida produce una hora diferente, evitando colisiones con runs anteriores
+  // sin necesidad de limpiar la cita al final.
+  const nowHour = new Date().getHours();
+  const rescheduleHour = (nowHour + 1) % 24;
+  const RESCHEDULE_START = `${String(rescheduleHour).padStart(2, '0')}:00`;
+  const RESCHEDULE_END   = `${String((rescheduleHour + 1) % 24).padStart(2, '0')}:00`;
 
   await page.goto(RUTAS.estudianteCitas);
   await page.waitForLoadState('networkidle');
@@ -847,18 +849,4 @@ test('E2E-20 | Valoracion queda reservada para citas finalizadas', async ({
   );
   await context.close();
 
-  // Limpiar la cita principal para que no quede acumulada entre runs.
-  // Sin esto, el slot rescheduled (dia RESCHEDULE_SLOT a las 16:00) permanece
-  // ACEPTADA y la siguiente corrida falla con "Ya existe otra cita en esa franja".
-  const cleanupCtx = await browser.newContext({ storageState: SESIONES.estudiante });
-  const cleanupPage = await cleanupCtx.newPage();
-  await cleanupPage.goto(RUTAS.estudianteCitas);
-  await cleanupPage.waitForLoadState('networkidle');
-  await apiRequest(cleanupPage, `/student-portal/appointments/${requireMainAppointmentId()}/status`, {
-    method: 'PATCH',
-    body: { status: 'CANCELADA', reason: 'Limpieza automatica post-test E2E-20' },
-  }).catch(() => {
-    console.log('E2E-20 cleanup: no se pudo cancelar la cita principal (puede ya estar cancelada).');
-  });
-  await cleanupCtx.close();
 });
