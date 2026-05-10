@@ -298,6 +298,8 @@ export function PatientSearchStudentsPage() {
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
     null,
   );
+  const [selectedPracticeSiteIndex, setSelectedPracticeSiteIndex] =
+    useState(0);
   const [selectedReviewIndex, setSelectedReviewIndex] = useState(0);
   const [isRefreshingSelectedRequest, setIsRefreshingSelectedRequest] =
     useState(false);
@@ -383,6 +385,8 @@ export function PatientSearchStudentsPage() {
   const selectedStudentProfessionalLinks = selectedStudent
     ? getStudentProfessionalLinks(selectedStudent)
     : [];
+  const selectedPracticeSite =
+    selectedStudentPracticeSites[selectedPracticeSiteIndex] ?? null;
   const selectedReview = selectedStudentReviews[selectedReviewIndex] ?? null;
   const currentRequestForSelectedStudent = selectedStudent
     ? (requests.find(
@@ -494,8 +498,17 @@ export function PatientSearchStudentsPage() {
   useEffect(() => {
     setReason('');
     setReasonError(null);
+    setSelectedPracticeSiteIndex(0);
     setSelectedReviewIndex(0);
   }, [selectedStudentId]);
+
+  useEffect(() => {
+    setSelectedPracticeSiteIndex((currentIndex) =>
+      selectedStudentPracticeSites.length === 0
+        ? 0
+        : Math.min(currentIndex, selectedStudentPracticeSites.length - 1),
+    );
+  }, [selectedStudentPracticeSites.length]);
 
   useEffect(() => {
     setSelectedReviewIndex((currentIndex) =>
@@ -544,6 +557,22 @@ export function PatientSearchStudentsPage() {
     requestRefreshSequenceRef.current += 1;
     setIsRefreshingSelectedRequest(false);
     setSelectedStudentId(null);
+  };
+
+  const handleShowPreviousPracticeSite = () => {
+    setSelectedPracticeSiteIndex((currentIndex) =>
+      currentIndex === 0
+        ? Math.max(selectedStudentPracticeSites.length - 1, 0)
+        : currentIndex - 1,
+    );
+  };
+
+  const handleShowNextPracticeSite = () => {
+    setSelectedPracticeSiteIndex((currentIndex) =>
+      selectedStudentPracticeSites.length === 0
+        ? 0
+        : (currentIndex + 1) % selectedStudentPracticeSites.length,
+    );
   };
 
   const handleShowPreviousReview = () => {
@@ -1139,35 +1168,72 @@ export function PatientSearchStudentsPage() {
 
             <div className="mt-3 grid items-start gap-3 lg:grid-cols-3">
               <div className="rounded-[1rem] border border-slate-200/80 bg-slate-50 px-3 py-3">
-                <div className="flex items-center gap-2">
-                  <MapPin
-                    aria-hidden="true"
-                    className="h-4 w-4 text-primary"
-                  />
-                  <p className="text-xs font-semibold text-ink sm:text-sm">
-                    Sedes donde atiende
-                  </p>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <MapPin
+                      aria-hidden="true"
+                      className="h-4 w-4 text-primary"
+                    />
+                    <p className="text-xs font-semibold text-ink sm:text-sm">
+                      Sedes donde atiende
+                    </p>
+                  </div>
+                  {selectedStudentPracticeSites.length > 1 ? (
+                    <span className="text-[0.68rem] font-semibold text-ink-muted">
+                      {selectedPracticeSiteIndex + 1} de{' '}
+                      {selectedStudentPracticeSites.length}
+                    </span>
+                  ) : null}
                 </div>
-                <div className="mt-2 space-y-2">
-                  {selectedStudentPracticeSites.length > 0 ? (
-                    selectedStudentPracticeSites.map((site) => (
+                <div className="mt-2">
+                  {selectedPracticeSite ? (
+                    <div className="flex items-stretch gap-2">
+                      {selectedStudentPracticeSites.length > 1 ? (
+                        <button
+                          aria-label="Sede anterior"
+                          className="inline-flex w-8 shrink-0 items-center justify-center rounded-[0.85rem] border border-slate-200 bg-white text-ink-muted transition duration-200 hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                          type="button"
+                          onClick={handleShowPreviousPracticeSite}
+                        >
+                          <ChevronLeft
+                            aria-hidden="true"
+                            className="h-4 w-4"
+                          />
+                        </button>
+                      ) : null}
                       <div
-                        key={`${site.name}-${site.city}-${site.locality}`}
-                        className="rounded-[0.85rem] border border-slate-200 bg-white px-3 py-2"
+                        key={`${selectedPracticeSite.name}-${selectedPracticeSite.city}-${selectedPracticeSite.locality}`}
+                        className="min-w-0 flex-1 rounded-[0.85rem] border border-slate-200 bg-white px-3 py-2"
                       >
                         <p className="text-xs font-semibold text-ink sm:text-sm">
-                          {site.name}
+                          {selectedPracticeSite.name}
                         </p>
                         <p className="text-xs leading-5 text-ink-muted">
-                          {getLocationLabel(site.city, site.locality)}
+                          {getLocationLabel(
+                            selectedPracticeSite.city,
+                            selectedPracticeSite.locality,
+                          )}
                         </p>
-                        {site.address ? (
+                        {selectedPracticeSite.address ? (
                           <p className="text-xs leading-5 text-ink-muted">
-                            {site.address}
+                            {selectedPracticeSite.address}
                           </p>
                         ) : null}
                       </div>
-                    ))
+                      {selectedStudentPracticeSites.length > 1 ? (
+                        <button
+                          aria-label="Sede siguiente"
+                          className="inline-flex w-8 shrink-0 items-center justify-center rounded-[0.85rem] border border-slate-200 bg-white text-ink-muted transition duration-200 hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                          type="button"
+                          onClick={handleShowNextPracticeSite}
+                        >
+                          <ChevronRight
+                            aria-hidden="true"
+                            className="h-4 w-4"
+                          />
+                        </button>
+                      ) : null}
+                    </div>
                   ) : (
                     <p className="text-xs leading-5 text-ink-muted sm:text-sm">
                       Sedes por confirmar.
