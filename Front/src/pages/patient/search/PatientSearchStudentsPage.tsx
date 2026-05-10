@@ -1166,8 +1166,8 @@ export function PatientSearchStudentsPage() {
               </div>
             </div>
 
-            <div className="mt-3 grid items-start gap-3 lg:grid-cols-3">
-              <div className="rounded-[1rem] border border-slate-200/80 bg-slate-50 px-3 py-3">
+            <div className="mt-3 grid items-stretch gap-3 lg:grid-cols-3">
+              <div className="flex h-full flex-col rounded-[1rem] border border-slate-200/80 bg-slate-50 px-3 py-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <MapPin
@@ -1185,19 +1185,19 @@ export function PatientSearchStudentsPage() {
                     </span>
                   ) : null}
                 </div>
-                <div className="mt-2">
+                <div className="mt-2 flex flex-1 flex-col">
                   {selectedPracticeSite ? (
-                    <div className="flex items-stretch gap-2">
+                    <div className="flex flex-1 items-center gap-2">
                       {selectedStudentPracticeSites.length > 1 ? (
                         <button
                           aria-label="Sede anterior"
-                          className="inline-flex w-8 shrink-0 items-center justify-center rounded-[0.85rem] border border-slate-200 bg-white text-ink-muted transition duration-200 hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[0.7rem] border border-slate-200 bg-white text-ink-muted transition duration-200 hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
                           type="button"
                           onClick={handleShowPreviousPracticeSite}
                         >
                           <ChevronLeft
                             aria-hidden="true"
-                            className="h-4 w-4"
+                            className="h-3.5 w-3.5"
                           />
                         </button>
                       ) : null}
@@ -1223,13 +1223,13 @@ export function PatientSearchStudentsPage() {
                       {selectedStudentPracticeSites.length > 1 ? (
                         <button
                           aria-label="Sede siguiente"
-                          className="inline-flex w-8 shrink-0 items-center justify-center rounded-[0.85rem] border border-slate-200 bg-white text-ink-muted transition duration-200 hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[0.7rem] border border-slate-200 bg-white text-ink-muted transition duration-200 hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
                           type="button"
                           onClick={handleShowNextPracticeSite}
                         >
                           <ChevronRight
                             aria-hidden="true"
-                            className="h-4 w-4"
+                            className="h-3.5 w-3.5"
                           />
                         </button>
                       ) : null}
@@ -1241,7 +1241,7 @@ export function PatientSearchStudentsPage() {
                   )}
                 </div>
               </div>
-              <div className="rounded-[1rem] border border-slate-200/80 bg-slate-50 px-3 py-3">
+              <div className="flex h-full flex-col rounded-[1rem] border border-slate-200/80 bg-slate-50 px-3 py-3">
                 <div className="flex items-center gap-2">
                   <UserRound
                     aria-hidden="true"
@@ -1255,7 +1255,7 @@ export function PatientSearchStudentsPage() {
                   {getStudentBiography(selectedStudent)}
                 </p>
               </div>
-              <div className="rounded-[1rem] border border-slate-200/80 bg-slate-50 px-3 py-3">
+              <div className="flex h-full flex-col rounded-[1rem] border border-slate-200/80 bg-slate-50 px-3 py-3">
                 <div className="flex items-center gap-2">
                   <UserRound
                     aria-hidden="true"
