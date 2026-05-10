@@ -44,6 +44,7 @@ const MIN_ROWS_PER_PAGE = 3;
 const TABLE_HEADER_HEIGHT_PX = 32;
 const TABLE_ROW_HEIGHT_FALLBACK_PX = 64;
 const TABLE_HEIGHT_PADDING_PX = 8;
+const PROFESSIONAL_LINKS_PER_PAGE = 2;
 
 function getStudentFullName(student: PatientStudentDirectoryItem) {
   return formatDisplayName(`${student.firstName} ${student.lastName}`);
@@ -300,6 +301,8 @@ export function PatientSearchStudentsPage() {
   );
   const [selectedPracticeSiteIndex, setSelectedPracticeSiteIndex] =
     useState(0);
+  const [selectedProfessionalLinkPageIndex, setSelectedProfessionalLinkPageIndex] =
+    useState(0);
   const [selectedReviewIndex, setSelectedReviewIndex] = useState(0);
   const [isRefreshingSelectedRequest, setIsRefreshingSelectedRequest] =
     useState(false);
@@ -385,6 +388,17 @@ export function PatientSearchStudentsPage() {
   const selectedStudentProfessionalLinks = selectedStudent
     ? getStudentProfessionalLinks(selectedStudent)
     : [];
+  const selectedProfessionalLinksTotalPages = Math.max(
+    1,
+    Math.ceil(
+      selectedStudentProfessionalLinks.length / PROFESSIONAL_LINKS_PER_PAGE,
+    ),
+  );
+  const visibleSelectedProfessionalLinks = selectedStudentProfessionalLinks.slice(
+    selectedProfessionalLinkPageIndex * PROFESSIONAL_LINKS_PER_PAGE,
+    selectedProfessionalLinkPageIndex * PROFESSIONAL_LINKS_PER_PAGE +
+      PROFESSIONAL_LINKS_PER_PAGE,
+  );
   const selectedPracticeSite =
     selectedStudentPracticeSites[selectedPracticeSiteIndex] ?? null;
   const selectedReview = selectedStudentReviews[selectedReviewIndex] ?? null;
@@ -499,6 +513,7 @@ export function PatientSearchStudentsPage() {
     setReason('');
     setReasonError(null);
     setSelectedPracticeSiteIndex(0);
+    setSelectedProfessionalLinkPageIndex(0);
     setSelectedReviewIndex(0);
   }, [selectedStudentId]);
 
@@ -517,6 +532,12 @@ export function PatientSearchStudentsPage() {
         : Math.min(currentIndex, selectedStudentReviews.length - 1),
     );
   }, [selectedStudentReviews.length]);
+
+  useEffect(() => {
+    setSelectedProfessionalLinkPageIndex((currentIndex) =>
+      Math.min(currentIndex, selectedProfessionalLinksTotalPages - 1),
+    );
+  }, [selectedProfessionalLinksTotalPages]);
 
   useEffect(() => {
     if (!selectedStudentId) {
@@ -572,6 +593,21 @@ export function PatientSearchStudentsPage() {
       selectedStudentPracticeSites.length === 0
         ? 0
         : (currentIndex + 1) % selectedStudentPracticeSites.length,
+    );
+  };
+
+  const handleShowPreviousProfessionalLinks = () => {
+    setSelectedProfessionalLinkPageIndex((currentIndex) =>
+      currentIndex === 0
+        ? selectedProfessionalLinksTotalPages - 1
+        : currentIndex - 1,
+    );
+  };
+
+  const handleShowNextProfessionalLinks = () => {
+    setSelectedProfessionalLinkPageIndex(
+      (currentIndex) =>
+        (currentIndex + 1) % selectedProfessionalLinksTotalPages,
     );
   };
 
@@ -1271,10 +1307,10 @@ export function PatientSearchStudentsPage() {
               </div>
             </div>
 
-            <div className="mt-3 grid items-start gap-3 lg:grid-cols-2">
-              <div className="rounded-[1rem] border border-slate-200/80 bg-slate-50 px-3 py-3">
+            <div className="mt-3 grid items-stretch gap-3 lg:grid-cols-2">
+              <div className="flex h-full flex-col rounded-[1rem] border border-slate-200/80 bg-slate-50 px-3 py-3">
                 <p className="text-xs font-semibold text-ink sm:text-sm">
-                  Tratamientos visibles
+                  Tratamientos
                 </p>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {selectedStudent.treatments.length > 0 ? (
@@ -1293,40 +1329,78 @@ export function PatientSearchStudentsPage() {
                   )}
                 </div>
               </div>
-              <div className="rounded-[1rem] border border-slate-200/80 bg-slate-50 px-3 py-3">
-                <div className="flex items-center gap-2">
-                  <Link2
-                    aria-hidden="true"
-                    className="h-4 w-4 text-primary"
-                  />
-                  <p className="text-xs font-semibold text-ink sm:text-sm">
-                    Enlaces profesionales
-                  </p>
+              <div className="flex h-full flex-col rounded-[1rem] border border-slate-200/80 bg-slate-50 px-3 py-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Link2
+                      aria-hidden="true"
+                      className="h-4 w-4 text-primary"
+                    />
+                    <p className="text-xs font-semibold text-ink sm:text-sm">
+                      Enlaces profesionales
+                    </p>
+                  </div>
+                  {selectedProfessionalLinksTotalPages > 1 ? (
+                    <span className="text-[0.68rem] font-semibold text-ink-muted">
+                      {selectedProfessionalLinkPageIndex + 1} de{' '}
+                      {selectedProfessionalLinksTotalPages}
+                    </span>
+                  ) : null}
                 </div>
-                <div className="mt-2 space-y-2">
+                <div className="mt-2 flex flex-1 flex-col">
                   {selectedStudentProfessionalLinks.length > 0 ? (
-                    selectedStudentProfessionalLinks.map((link) => (
-                      <a
-                        key={link.id}
-                        className="flex items-center justify-between gap-3 rounded-[0.85rem] border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-primary transition duration-200 hover:border-primary/30 hover:bg-primary/5 sm:text-sm"
-                        href={link.url}
-                        rel="noreferrer"
-                        target="_blank"
-                      >
-                        <span className="min-w-0">
-                          <span className="block text-xs font-bold uppercase tracking-[0.12em] text-primary/70">
-                            {getProfessionalLinkTypeLabel(link.type)}
-                          </span>
-                          <span className="block truncate text-ink">
-                            {link.url}
-                          </span>
-                        </span>
-                        <ExternalLink
-                          aria-hidden="true"
-                          className="h-4 w-4 shrink-0"
-                        />
-                      </a>
-                    ))
+                    <div className="flex flex-1 items-center gap-2">
+                      {selectedProfessionalLinksTotalPages > 1 ? (
+                        <button
+                          aria-label="Enlaces anteriores"
+                          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[0.7rem] border border-slate-200 bg-white text-ink-muted transition duration-200 hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                          type="button"
+                          onClick={handleShowPreviousProfessionalLinks}
+                        >
+                          <ChevronLeft
+                            aria-hidden="true"
+                            className="h-3.5 w-3.5"
+                          />
+                        </button>
+                      ) : null}
+                      <div className="grid min-w-0 flex-1 gap-1.5 sm:grid-cols-2">
+                        {visibleSelectedProfessionalLinks.map((link) => (
+                          <a
+                            key={link.id}
+                            className="flex min-w-0 items-center justify-between gap-2 rounded-[0.72rem] border border-slate-200 bg-white px-2.5 py-1.5 text-[0.68rem] font-semibold text-primary transition duration-200 hover:border-primary/30 hover:bg-primary/5"
+                            href={link.url}
+                            rel="noreferrer"
+                            target="_blank"
+                          >
+                            <span className="min-w-0">
+                              <span className="block truncate text-[0.58rem] font-bold uppercase tracking-[0.1em] text-primary/70">
+                                {getProfessionalLinkTypeLabel(link.type)}
+                              </span>
+                              <span className="block truncate text-[0.68rem] leading-4 text-ink">
+                                {link.url}
+                              </span>
+                            </span>
+                            <ExternalLink
+                              aria-hidden="true"
+                              className="h-3.5 w-3.5 shrink-0"
+                            />
+                          </a>
+                        ))}
+                      </div>
+                      {selectedProfessionalLinksTotalPages > 1 ? (
+                        <button
+                          aria-label="Enlaces siguientes"
+                          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[0.7rem] border border-slate-200 bg-white text-ink-muted transition duration-200 hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                          type="button"
+                          onClick={handleShowNextProfessionalLinks}
+                        >
+                          <ChevronRight
+                            aria-hidden="true"
+                            className="h-3.5 w-3.5"
+                          />
+                        </button>
+                      ) : null}
+                    </div>
                   ) : (
                     <p className="text-xs leading-5 text-ink-muted sm:text-sm">
                       Sin enlaces profesionales publicados.
