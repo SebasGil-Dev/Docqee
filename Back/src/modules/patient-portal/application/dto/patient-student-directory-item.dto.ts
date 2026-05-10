@@ -9,6 +9,7 @@ export class PatientStudentDirectoryReviewDto {
   comment!: string | null;
   createdAt!: string;
   id!: string;
+  patientName!: string;
   rating!: number;
 }
 

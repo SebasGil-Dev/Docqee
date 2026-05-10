@@ -199,6 +199,7 @@ type StudentDirectoryRow = {
         comment: string | null;
         createdAt: string;
         id: string;
+        patientName: string;
         rating: number;
       }[]
     | null;
@@ -1193,6 +1194,7 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
             'id', review.id,
             'rating', review.rating,
             'comment', review.comment,
+            'patientName', review.patient_name,
             'createdAt', review.created_at
           )
           ORDER BY review.created_at DESC
@@ -1202,8 +1204,16 @@ export class PrismaPatientPortalRepository extends PatientPortalRepository {
             v.id_valoracion::text AS id,
             v.calificacion AS rating,
             v.comentario AS comment,
-            v.fecha_creacion AS created_at
+            v.fecha_creacion AS created_at,
+            COALESCE(
+              NULLIF(TRIM(CONCAT_WS(' ', patient_person.nombres, patient_person.apellidos)), ''),
+              'Paciente'
+            ) AS patient_name
           FROM valoracion v
+          LEFT JOIN cuenta_paciente review_patient
+            ON review_patient.id_cuenta = v.id_cuenta_emisor
+          LEFT JOIN persona patient_person
+            ON patient_person.id_persona = review_patient.id_persona
           WHERE v.id_cuenta_receptor = ce.id_cuenta
           ORDER BY v.fecha_creacion DESC
         ) review

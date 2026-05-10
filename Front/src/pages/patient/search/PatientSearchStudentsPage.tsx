@@ -150,6 +150,12 @@ function formatStudentReviewDate(value: string) {
   }).format(date);
 }
 
+function getStudentReviewPatientName(review: PatientStudentReviewSummary) {
+  const formattedName = formatDisplayName(review.patientName ?? '');
+
+  return formattedName || 'Paciente';
+}
+
 function formatStudentRatingSummary(
   averageRating: number | null,
   reviewsCount: number,
@@ -1413,7 +1419,7 @@ export function PatientSearchStudentsPage() {
             <div className="mt-3 rounded-[1rem] border border-slate-200/80 bg-slate-50 px-3 py-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-xs font-semibold text-ink sm:text-sm">
-                  Comentarios de valoraciones
+                  Comentarios de pacientes
                 </p>
                 {selectedStudentReviews.length > 1 ? (
                   <div className="flex items-center gap-2">
@@ -1443,9 +1449,18 @@ export function PatientSearchStudentsPage() {
               {selectedReview ? (
                 <div className="mt-2 rounded-[0.85rem] border border-slate-200 bg-white px-3 py-2.5">
                   <div className="flex flex-wrap items-center gap-2">
-                    <div className="flex items-center gap-0.5">
+                    <span className="max-w-[11rem] truncate text-xs font-semibold text-ink sm:max-w-[16rem] sm:text-sm">
+                      {getStudentReviewPatientName(selectedReview)}
+                    </span>
+                    <div
+                      aria-label={`Valoracion ${selectedReview.rating.toFixed(1)} de 5`}
+                      className="flex items-center gap-0.5"
+                    >
                       {renderStars(selectedReview.rating, 'h-3.5 w-3.5')}
                     </div>
+                    <span className="text-xs font-semibold text-ink-muted">
+                      {selectedReview.rating.toFixed(1)}
+                    </span>
                     <span className="text-xs font-semibold text-ink-muted">
                       {formatStudentReviewDate(selectedReview.createdAt)}
                     </span>
@@ -1499,7 +1514,7 @@ export function PatientSearchStudentsPage() {
                     }
                     aria-invalid={Boolean(reasonError)}
                     className={classNames(
-                      'min-h-[6rem] w-full rounded-[1rem] border bg-surface px-3 py-2.5 text-sm text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
+                      'min-h-[4.25rem] w-full rounded-[1rem] border bg-surface px-3 py-2.5 text-sm text-ink placeholder:text-ghost/80 transition duration-300 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10',
                       reasonError
                         ? 'border-rose-300 focus-visible:border-rose-400 focus-visible:ring-rose-200/70'
                         : 'border-slate-200 focus-visible:border-primary',
