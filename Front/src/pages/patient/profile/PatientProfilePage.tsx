@@ -10,7 +10,7 @@ import {
   UserRound,
 } from 'lucide-react';
 import type { ChangeEvent } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminPanelCard } from '@/components/admin/AdminPanelCard';
@@ -46,6 +46,19 @@ function getInitialValues(profile: PatientProfile): PatientProfileFormValues {
   };
 }
 
+function areProfileFormValuesEqual(
+  firstValues: PatientProfileFormValues,
+  secondValues: PatientProfileFormValues,
+) {
+  return (
+    firstValues.avatarFileName === secondValues.avatarFileName &&
+    firstValues.avatarSrc === secondValues.avatarSrc &&
+    firstValues.city === secondValues.city &&
+    firstValues.locality === secondValues.locality &&
+    firstValues.phone === secondValues.phone
+  );
+}
+
 function validateProfile(
   values: PatientProfileFormValues,
 ): PatientProfileFormErrors {
@@ -78,6 +91,11 @@ export function PatientProfilePage() {
   const [values, setValues] = useState<PatientProfileFormValues>(() =>
     getInitialValues(profile),
   );
+  const valuesRef = useRef(values);
+  const lastSyncedProfileValuesRef = useRef<PatientProfileFormValues>(
+    getInitialValues(profile),
+  );
+  const lastSyncedProfileIdRef = useRef(profile.id);
   const [errors, setErrors] = useState<PatientProfileFormErrors>({});
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
@@ -92,7 +110,26 @@ export function PatientProfilePage() {
   );
 
   useEffect(() => {
-    setValues(getInitialValues(profile));
+    valuesRef.current = values;
+  }, [values]);
+
+  useEffect(() => {
+    const nextProfileValues = getInitialValues(profile);
+    const previousProfileValues = lastSyncedProfileValuesRef.current;
+    const isSameProfile = lastSyncedProfileIdRef.current === profile.id;
+    const hasUnsavedChanges =
+      isSameProfile &&
+      !areProfileFormValuesEqual(valuesRef.current, previousProfileValues);
+
+    lastSyncedProfileValuesRef.current = nextProfileValues;
+    lastSyncedProfileIdRef.current = profile.id;
+
+    if (hasUnsavedChanges) {
+      return;
+    }
+
+    valuesRef.current = nextProfileValues;
+    setValues(nextProfileValues);
     setErrors({});
     setSaveMessage(null);
   }, [profile]);
@@ -101,10 +138,15 @@ export function PatientProfilePage() {
     field: K,
     nextValue: PatientProfileFormValues[K],
   ) => {
-    setValues((currentValues) => ({
-      ...currentValues,
-      [field]: nextValue,
-    }));
+    setValues((currentValues) => {
+      const nextValues = {
+        ...currentValues,
+        [field]: nextValue,
+      };
+
+      valuesRef.current = nextValues;
+      return nextValues;
+    });
     setErrors((currentErrors) => {
       const nextErrors = { ...currentErrors };
       delete nextErrors[field];
@@ -352,7 +394,7 @@ export function PatientProfilePage() {
                       placeholder="3001234567"
                       type="tel"
                       value={values.phone}
-                      inputClassName="lg:rounded-[1rem] lg:py-2 lg:text-[0.78rem]"
+                      inputClassName="lg:rounded-[1rem] lg:py-2 lg:text-[0.72rem]"
                       onChange={(value) =>
                         handleFieldChange(
                           'phone',
@@ -369,7 +411,7 @@ export function PatientProfilePage() {
                       name="patientProfileCity"
                       placeholder="Ingresa la ciudad"
                       value={values.city}
-                      inputClassName="lg:rounded-[1rem] lg:py-2 lg:text-[0.78rem]"
+                      inputClassName="lg:rounded-[1rem] lg:py-2 lg:text-[0.72rem]"
                       onChange={(value) => handleFieldChange('city', value)}
                     />
                     <AdminTextField
@@ -382,7 +424,7 @@ export function PatientProfilePage() {
                       name="patientProfileLocality"
                       placeholder="Ingresa la localidad"
                       value={values.locality}
-                      inputClassName="lg:rounded-[1rem] lg:py-2 lg:text-[0.78rem]"
+                      inputClassName="lg:rounded-[1rem] lg:py-2 lg:text-[0.72rem]"
                       onChange={(value) => handleFieldChange('locality', value)}
                     />
                   </div>
@@ -450,7 +492,9 @@ export function PatientProfilePage() {
             disabled={isLoading}
             type="button"
             onClick={() => {
-              setValues(getInitialValues(profile));
+              const nextValues = getInitialValues(profile);
+              valuesRef.current = nextValues;
+              setValues(nextValues);
               setErrors({});
               setSaveMessage(null);
             }}
